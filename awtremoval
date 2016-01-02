@@ -1,0 +1,223 @@
+Categories
+Trivial:
+ rectangle, point etc just implement
+import java.awt.Rectangle;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.geom.AffineTransform;
+
+ Unused:
+ Text3D hence Font3D etc, disabled for now
+ 
+ Unlikely to be used soon:
+ WakeUpOnAWTEvent,Raster
+ disabled for now
+ 
+ Superceeded by Newt
+Screen3D,Canvas3D, GraphicsConfiguration, GraphicsDevice
+
+Totally new elements - mouse and keyboard listneing
+
+Possibly new systems - HUD, Newt gear? or just stick with HudShape for now?
+
+
+
+
+Font3D
+import java.awt.Font;
+import java.awt.Shape;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphMetrics;
+import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
+
+J3DGraphics2D
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
+
+
+J3DGraphics2DImpl
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
+import java.awt.image.renderable.RenderableImage;
+
+JoglGraphicsConfiguration
+import java.awt.AWTException;
+import java.awt.DisplayMode;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.ImageCapabilities;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.VolatileImage;
+
+ImageComponentRetained
+import java.awt.color.ColorSpace;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.PixelInterleavedSampleModel;
+import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+
+ImageComponent2D
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+
+ImageComponent2DRetained
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+
+ImageComponent#D
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+
+ImageComponent#DRetained
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
+
+
+BehaviorStructure
+import java.awt.AWTEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+
+
+Canvas3D
+import java.awt.AWTEvent;
+import java.awt.Canvas;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.IllegalComponentStateException;
+import java.awt.Point;
+import java.awt.Window;
+import java.awt.image.BufferedImage;
+
+SoundScheduler
+import java.awt.AWTEvent;
+import java.awt.event.WindowEvent;
+
+View
+import java.awt.AWTEvent;
+
+WakeUpOnAWTEvent
+import java.awt.AWTEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+
+JoglPipeLine
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.DisplayMode;
+import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.GraphicsConfigTemplate;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+
+CanvasViewEventCatcher
+import java.awt.IllegalComponentStateException;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
+EventCatcher
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+
+TextureRetained
+import java.awt.image.DataBufferByte;
+import java.awt.image.RenderedImage;
+
+CanvasViewCache
+import java.awt.Rectangle;
+
+Raster
+import java.awt.Dimension;
+import java.awt.Point;
+
+RasterRetained
+import java.awt.Dimension;
+import java.awt.Point;
+
+Screen3D
+import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.Rectangle;
+
+Text3DRetained
+import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
+
+Renderer
+import java.awt.GraphicsConfiguration;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
+
+VirtualUniverse
+java.awt.GraphicsEnvironment
+java.awt.HeadlessException
