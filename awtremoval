@@ -4,34 +4,59 @@ Trivial:
 import java.awt.Rectangle;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.geom.AffineTransform;
+import java.awt.geom.AffineTransform; ?? is this trivial??
 
- Unused:
- Text3D hence Font3D etc, disabled for now
+Unused or little used and hence removed
  
- Unlikely to be used soon:
- WakeUpOnAWTEvent,Raster
- disabled for now
+Text3D, Font3D, FontExtrusion = removed completely
+Text3DRetained
  
- Superceeded by Newt
-Screen3D,Canvas3D, GraphicsConfiguration, GraphicsDevice
+Raster ?? maybe bufferedimage solution gives methis?
+ 
+ 
+ 
+ 
+AWTEvent based gear totally replaced by Android equivilent, hence removed
 
-Totally new elements - mouse and keyboard listneing
+WakeUpOnAWTEvent
+BehaviorStructure WakeupOnAWTEvent is used by it and hence requires awt gear, update to remove
+ 
+ 
+SoundScheduler - is interested in window iconification so something very different required I suspect
+ 
+ 
+Superceeded by Newt/ jogl 
+Screen3D
+Canvas3D
+GraphicsConfiguration
+GraphicsDevice
+GraphicsContext3D
+GraphicsConfigTemplate3D
+
+CanvasViewCache
+CanvasViewEventCatcher
+EventCatcher
+
+
+Things that rely on BufferedImage etc?
+
+
+
+Not sure extactly the status
+JoglGraphicsConfiguration
+JoglPipeline - many bits and pieces some are pointless anyway
+	createQueryContext methods does crazy awt type crap
+	getBestConfiguration also does canvasy stuff
+	QueryCanvas sub class does lots of madness
+
+
+Totally new elements - mouse and keyboard listening
 
 Possibly new systems - HUD, Newt gear? or just stick with HudShape for now?
 
 
 
-
-Font3D
-import java.awt.Font;
-import java.awt.Shape;
-import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphMetrics;
-import java.awt.font.GlyphVector;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
+ 
 
 J3DGraphics2D
 import java.awt.Color;

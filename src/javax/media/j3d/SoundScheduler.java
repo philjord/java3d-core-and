@@ -26,8 +26,8 @@
 
 package javax.media.j3d;
 
-import java.awt.AWTEvent;
-import java.awt.event.WindowEvent;
+//<AND>import java.awt.AWTEvent;
+//import java.awt.event.WindowEvent;</AND>
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -171,7 +171,7 @@ class SoundScheduler extends J3dStructure {
 
     private boolean     stallThread = false;
 
-    int lastEventReceived = WindowEvent.WINDOW_CLOSED;
+  //<AND>int lastEventReceived = 0;WindowEvent.WINDOW_CLOSED;</>
 
     /**
      * Constructs a new SoundScheduler
@@ -929,22 +929,22 @@ class SoundScheduler extends J3dStructure {
 	return;
     }
 
-
-    void receiveAWTEvent(AWTEvent evt) {
-	int eventId = evt.getID();
-	if (debugFlag)
-	    debugPrint(".receiveAWTEvent " + eventId);
-	if (ready && eventId == WindowEvent.WINDOW_ICONIFIED) {
-	    lastEventReceived = eventId;
-	}
-	else if (ready &&
-		 (lastEventReceived == WindowEvent.WINDOW_ICONIFIED &&
-		  eventId == WindowEvent.WINDOW_DEICONIFIED) ) {
-	    lastEventReceived = eventId;
-	    // used to notify
-	}
-    }
-
+//<AND>
+//    void receiveAWTEvent(AWTEvent evt) {
+//	int eventId = evt.getID();
+//	if (debugFlag)
+//	    debugPrint(".receiveAWTEvent " + eventId);
+//	if (ready && eventId == WindowEvent.WINDOW_ICONIFIED) {
+//	    lastEventReceived = eventId;
+//	}
+//	else if (ready &&
+//		 (lastEventReceived == WindowEvent.WINDOW_ICONIFIED &&
+//		  eventId == WindowEvent.WINDOW_DEICONIFIED) ) {
+//	    lastEventReceived = eventId;
+//	    // used to notify
+//	}
+//    }
+//</AND>
 
     /**
      * The main loop for the Sound Scheduler.
@@ -2540,11 +2540,12 @@ class SoundScheduler extends J3dStructure {
 
 	if (audioDevice3D == null)
 	    return;
-
-	if (lastEventReceived == WindowEvent.WINDOW_ICONIFIED) {
-	    return;  // leave sounds playing
-	}
-
+//<AND>
+//	if (lastEventReceived == WindowEvent.WINDOW_ICONIFIED) {
+//	    return;  // leave sounds playing
+//	}
+//</AND>
+	
 	// sync this method from interrupting run() while loop
 	synchronized (prioritizedSounds) {
 	    if (prioritizedSounds != null) {

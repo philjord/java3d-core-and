@@ -51,7 +51,7 @@ abstract class GeometryRetained extends NodeComponentRetained {
     static final int GEO_TYPE_INDEXED_LINE_STRIP_SET      = 14;
 
     static final int GEO_TYPE_RASTER                      = 15;
-    static final int GEO_TYPE_TEXT3D                      = 16;
+    //<AND>static final int GEO_TYPE_TEXT3D                      = 16;</>
     static final int GEO_TYPE_COMPRESSED                  = 17;
 
     static final int GEO_TYPE_TOTAL                       = 17;

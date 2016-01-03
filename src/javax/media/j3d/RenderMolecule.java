@@ -200,7 +200,7 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
 
     int primaryMoleculeType = 0;
     static int COMPRESSED_MOLECULE 	= 0x1;
-    static int TEXT3D_MOLECULE     	= 0x2;
+    //<AND>static int TEXT3D_MOLECULE     	= 0x2;</>
     static int DLIST_MOLECULE      	= 0x4;
     static int RASTER_MOLECULE     	= 0x8;
     static int ORIENTEDSHAPE3D_MOLECULE	= 0x10;
@@ -418,17 +418,17 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
 		appHandle = this;
 
 	// If its of type GeometryArrayRetained
-	if (ga.geoType <= GeometryRetained.GEO_TYPE_GEOMETRYARRAY ||
-	    ga.geoType == GeometryRetained.GEO_TYPE_TEXT3D) {
+	if (ga.geoType <= GeometryRetained.GEO_TYPE_GEOMETRYARRAY ){//<AND>||
+	   // ga.geoType == GeometryRetained.GEO_TYPE_TEXT3D) {
 
             if (ga.source instanceof OrientedShape3DRetained) {
                 primaryRenderMethod =
                     VirtualUniverse.mc.getOrientedShape3DRenderMethod();
                 primaryMoleculeType = ORIENTEDSHAPE3D_MOLECULE;
-	    } else if (ga.geoType == GeometryRetained.GEO_TYPE_TEXT3D) {
-	        primaryRenderMethod =
-		    VirtualUniverse.mc.getText3DRenderMethod();
-		primaryMoleculeType = TEXT3D_MOLECULE;
+	    //} else if (ga.geoType == GeometryRetained.GEO_TYPE_TEXT3D) {
+	    //    primaryRenderMethod =
+		//    VirtualUniverse.mc.getText3DRenderMethod();
+		//primaryMoleculeType = TEXT3D_MOLECULE;</AND>
 	    } else {
 		// Make determination of dlist or not during addRenderAtom
 		secondaryRenderMethod = cachedVertexArrayRenderMethod;
@@ -810,12 +810,13 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
 	    return (false);
 	}
 	*/
-	if (ga.geoType == GeometryRetained.GEO_TYPE_TEXT3D &&
-	    primaryMoleculeType != 0 &&
-	    ((primaryMoleculeType & TEXT3D_MOLECULE) == 0)) {
-	    return (false);
-	}
-
+	//<AND>
+	//if (ga.geoType == GeometryRetained.GEO_TYPE_TEXT3D &&
+	//    primaryMoleculeType != 0 &&
+	//    ((primaryMoleculeType & TEXT3D_MOLECULE) == 0)) {
+	//    return (false);
+	//}
+	//</>
 
 	if(!(ra.geometryAtom.source instanceof OrientedShape3DRetained)
 	   && ((primaryMoleculeType & ORIENTEDSHAPE3D_MOLECULE) != 0)) {
@@ -1417,7 +1418,7 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
 
 	if ((primaryMoleculeType & (COMPRESSED_MOLECULE |
 				    RASTER_MOLECULE     |
-				    TEXT3D_MOLECULE	|
+				    //<AND>TEXT3D_MOLECULE	|</>
 				    ORIENTEDSHAPE3D_MOLECULE)) != 0) {
 	    groupType = RenderAtom.OTHER;
 	}
@@ -1813,7 +1814,9 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
 	System.err.println("primaryMoleculeType = "+primaryMoleculeType+" primaryRenderAtomList ="+primaryRenderAtomList+" separateDlistRenderAtomList ="+separateDlistRenderAtomList+" vertexArrayRenderAtomList ="+vertexArrayRenderAtomList);
 	*/
 	// Send down the model view only once, if its not of type text
-	if ((primaryMoleculeType & (TEXT3D_MOLECULE| ORIENTEDSHAPE3D_MOLECULE)) == 0) {
+	if ((primaryMoleculeType & (
+			//<AND>TEXT3D_MOLECULE| </>
+			ORIENTEDSHAPE3D_MOLECULE)) == 0) {
 
 	    if (primaryRenderAtomList != null) {
 		if ((primaryRenderMethod != VirtualUniverse.mc.getDisplayListRenderMethod()) ||
@@ -2057,7 +2060,9 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
 
 	}
 
-	if ((primaryMoleculeType & (TEXT3D_MOLECULE| ORIENTEDSHAPE3D_MOLECULE)) == 0) {
+	if ((primaryMoleculeType & (
+			//<AND>TEXT3D_MOLECULE|</>
+			ORIENTEDSHAPE3D_MOLECULE)) == 0) {
 	    /* System.err.println("updateAttributes  setModelViewMatrix (1)"); */
 
 	    Transform3D modelMatrix =

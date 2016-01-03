@@ -222,7 +222,7 @@ class BehaviorScheduler extends J3dThread {
 	    list.clear();
 	}
 
-	behaviorStructure.handleAWTEvent();
+	//<AND>behaviorStructure.handleAWTEvent();</AND>
 	behaviorStructure.handleBehaviorPost();
 	lastStopTime = J3dClock.currentTimeMillis();
 

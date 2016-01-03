@@ -26,7 +26,7 @@
 
 package javax.media.j3d;
 
-import java.awt.AWTEvent;
+//<AND>import java.awt.AWTEvent;</>
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -3308,11 +3308,12 @@ private ArrayList<ArrayList<Canvas3D>> canvasList = new ArrayList<ArrayList<Canv
     /**
      * This method passes window event to SoundScheduler
      */
-    void sendEventToSoundScheduler(AWTEvent evt) {
-        if (soundScheduler != null) {
-            soundScheduler.receiveAWTEvent(evt);
-        }
-    }
+    //<AND>
+//    void sendEventToSoundScheduler(AWTEvent evt) {
+//        if (soundScheduler != null) {
+//            soundScheduler.receiveAWTEvent(evt);
+//        }
+//    }</AND>
 
     void reset() {
 

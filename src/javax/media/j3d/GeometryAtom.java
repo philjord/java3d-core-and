@@ -181,7 +181,7 @@ RenderAtom getRenderAtom(View view) {
 			ra.geometryAtom = this;
 
 			// Allocate space based on number of geometry in the list
-			boolean isGeoTypeText3D = (geoType == GeometryRetained.GEO_TYPE_TEXT3D);
+			boolean isGeoTypeText3D = false;//<AND>(geoType == GeometryRetained.GEO_TYPE_TEXT3D);</>
 			ra.rListInfo = new RenderAtomListInfo[geometryArray.length];
 			for (int j = 0; j < ra.rListInfo.length; j++) {
 				ra.rListInfo[j] = new RenderAtomListInfo(ra, j);

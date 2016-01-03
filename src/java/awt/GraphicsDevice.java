@@ -1,8 +1,6 @@
 package java.awt;
 
-public class SunHints
+public class GraphicsDevice
 {
-
-	
 
 }
