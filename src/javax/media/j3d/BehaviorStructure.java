@@ -98,7 +98,7 @@ class BehaviorStructure extends J3dStructure {
      * The lists of the WakeupCriterion objects that the
      * behavior scheduler keeps.
      */
-    WakeupIndexedList wakeupOnAWTEvent;
+    //<AND>WakeupIndexedList wakeupOnAWTEvent;</>
     WakeupIndexedList wakeupOnActivation;
     WakeupIndexedList wakeupOnDeactivation;
     WakeupIndexedList wakeupOnBehaviorPost;
@@ -439,7 +439,7 @@ class BehaviorStructure extends J3dStructure {
 
 	// Since BehaviorScheduler will run after BehaviorStructure
 	// (not in parallel). It is safe to do cleanup here.
-	wakeupOnAWTEvent.clearMirror();
+	//<AND>wakeupOnAWTEvent.clearMirror();</>
 	//<AND>awtEventsBuffer.clearMirror();</>
 	wakeupOnBehaviorPost.clearMirror();
 	behaviorPostBuffer.clearMirror();
@@ -1591,7 +1591,7 @@ Sensor sensorIntersect(Bounds behregion) {
      * when view deactivate/unregister.
      */
     void resetConditionMet() {
-	resetConditionMet(wakeupOnAWTEvent);
+    	//<AND>resetConditionMet(wakeupOnAWTEvent);</>
 	resetConditionMet(wakeupOnActivation);
 	resetConditionMet(wakeupOnDeactivation);
 	resetConditionMet(wakeupOnBehaviorPost);
@@ -1665,7 +1665,7 @@ Sensor sensorIntersect(Bounds behregion) {
 	boundsExitList.clear();
 	currentSensorEntryList.clear();
 	currentSensorExitList.clear();
-	wakeupOnAWTEvent.clear();
+	//<AND>wakeupOnAWTEvent.clear();</>
 	wakeupOnActivation.clear();
 	wakeupOnDeactivation.clear();
 	wakeupOnBehaviorPost.clear();

@@ -26,7 +26,7 @@
 
 package javax.media.j3d;
 
-import java.awt.AWTEvent;
+//<AND>import java.awt.AWTEvent;
 import java.awt.Canvas;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -581,7 +581,7 @@ public class Canvas3D extends Canvas {
 
     // The Java 3D Graphics2D object used for Java2D/AWT rendering
     // into this Canvas3D
-    J3DGraphics2DImpl graphics2D = null;
+    //<AND>J3DGraphics2DImpl graphics2D = null;</>
 
     // Lock used to synchronize the creation of the 2D and 3D
     // graphics context objects
@@ -1037,6 +1037,8 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
 
 	super(graphicsConfiguration2);
 
+	//<AND>
+	System.out.println("Using J3d-Andy");
 	this.offScreen = offScreen;
 	this.graphicsConfiguration = graphicsConfiguration;
 
@@ -1152,19 +1154,20 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
     /**
      * This method overrides AWT's handleEvent class...
      */
-    void sendEventToBehaviorScheduler(AWTEvent evt) {
-
-	ViewPlatform vp;
-
-
-	if ((view != null) && ((vp = view.getViewPlatform()) != null)) {
-	    VirtualUniverse univ =
-		((ViewPlatformRetained)(vp.retained)).universe;
-	    if (univ != null) {
-		univ.behaviorStructure.handleAWTEvent(evt);
-	    }
-	}
-    }
+//<AND>    
+//    void sendEventToBehaviorScheduler(AWTEvent evt) {
+//
+//	ViewPlatform vp;
+//
+//
+//	if ((view != null) && ((vp = view.getViewPlatform()) != null)) {
+//	    VirtualUniverse univ =
+//		((ViewPlatformRetained)(vp.retained)).universe;
+//	    if (univ != null) {
+//		univ.behaviorStructure.handleAWTEvent(evt);
+//	    }
+//	}
+//    }</>
 
     /**
      * Method to return whether or not the Canvas3D is recursively visible;
@@ -1424,7 +1427,7 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
 	ctx = null;
 	// must be after removeCtx() because
 	// it will free graphics2D textureID
-	graphics2D = null;
+	//<AND>graphics2D = null;</>
 
 	super.removeNotify();
 
@@ -1570,14 +1573,15 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
      *
      * @since Java 3D 1.2
      */
-    public J3DGraphics2D getGraphics2D() {
-	synchronized(gfxCreationLock) {
-	    if (graphics2D == null)
-		graphics2D = new J3DGraphics2DImpl(this);
-	}
-
-	return graphics2D;
-    }
+//<AND>    
+//    public J3DGraphics2D getGraphics2D() {
+//	synchronized(gfxCreationLock) {
+//	    if (graphics2D == null)
+//		graphics2D = new J3DGraphics2DImpl(this);
+//	}
+//
+//	return graphics2D;
+//    }</AND>
 
     /**
      * This routine is called by the Java 3D rendering loop after clearing
@@ -4544,12 +4548,14 @@ void addTextureResource(int id, TextureRetained obj) {
 	    return;
 	}
 
-	if (freeBackground) {
-	    // Dispose of Graphics2D Texture
-            if (graphics2D != null) {
-                graphics2D.dispose();
-            }
-	}
+//<AND>
+//	if (freeBackground) {
+//	    // Dispose of Graphics2D Texture
+//            if (graphics2D != null) {
+//                graphics2D.dispose();
+//            }
+//	}</AND>
+	
 
 	for (int id = textureIDResourceTable.size()-1; id >= 0; id--) {
 		tex = textureIDResourceTable.get(id);

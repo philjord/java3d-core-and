@@ -99,7 +99,8 @@ class JoglGraphicsConfiguration extends GraphicsConfiguration {
 
   @Override
   public VolatileImage createCompatibleVolatileImage(int width, int height,
-                                                     ImageCapabilities caps) throws AWTException {
+                                                     ImageCapabilities caps) throws AWTException
+  {
     throw new RuntimeException("Unimplemented");
   }
 

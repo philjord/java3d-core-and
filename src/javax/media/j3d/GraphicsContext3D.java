@@ -291,10 +291,10 @@ public class GraphicsContext3D extends Object   {
     static final int SET_FRONT_BUFFER_RENDERING	= 20;
     static final int SET_STEREO_MODE	= 21;
     static final int FLUSH		= 22;
-    static final int FLUSH2D		= 23;
-    static final int DRAWANDFLUSH2D	= 24;
+    //<AND>static final int FLUSH2D		= 23;
+    //<AND>static final int DRAWANDFLUSH2D	= 24;
     static final int SET_MODELCLIP	= 25;
-    static final int DISPOSE2D		= 26;
+    //<AND>static final int DISPOSE2D		= 26;
     static final int NCOMMANDS		= 27; // needs to be incremented
 					      // when a new command is to be
 					      // added to the list
@@ -1736,9 +1736,11 @@ public int numSounds() {
                         canvas3d.screen.renderer.listOfCtxs.add(canvas3d.ctx);
                         canvas3d.screen.renderer.listOfCanvases.add(canvas3d);
 
-                        if (canvas3d.graphics2D != null) {
-                            canvas3d.graphics2D.init();
-                        }
+                        //<AND>
+                        //if (canvas3d.graphics2D != null) {
+                       //     canvas3d.graphics2D.init();
+                       // }
+                        //</>
 
                         // enable separate specular color
                         canvas3d.enableSeparateSpecularColor();
@@ -2062,11 +2064,15 @@ public int numSounds() {
 
 	        geoRetained.setVertexFormat(false, ignoreVertexColors, canvas3d.ctx );
 
-	    } else if (geometry.retained instanceof Text3DRetained) {
-	        ((Text3DRetained)geometry.retained).setModelViewMatrix(
-			vpcToEc, this.drawTransform);
-		drawGeo = (GeometryRetained)geometry.retained;
-            } else if (geometry.retained instanceof RasterRetained) {
+	    } 
+	    //<AND>
+	    //else if (geometry.retained instanceof Text3DRetained) {
+	    //    ((Text3DRetained)geometry.retained).setModelViewMatrix(
+		//	vpcToEc, this.drawTransform);
+		//drawGeo = (GeometryRetained)geometry.retained;
+        //    } 
+	    //</AND>
+	    else if (geometry.retained instanceof RasterRetained) {
                 ImageComponent2DRetained img = ((RasterRetained)geometry.retained).image;
                 if (img != null) {
                     if(img.isByReference()) {
