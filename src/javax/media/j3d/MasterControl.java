@@ -819,13 +819,15 @@ private static String getProperty(final String prop) {
         // dynamic selection scheme via an API call.
 
         // Default rendering pipeline is the JOGL pipeline
-        Pipeline.Type pipelineType = Pipeline.Type.JOGL;
+        Pipeline.Type pipelineType = Pipeline.Type.JOGLES;
 
         final String rendStr = getProperty("j3d.rend");
         if (rendStr == null) {
             // Use default pipeline
         } else if (rendStr.equals("jogl")) {
             pipelineType = Pipeline.Type.JOGL;
+        } else if (rendStr.equals("jogles")) {
+            pipelineType = Pipeline.Type.JOGLES;
         } else if (rendStr.equals("noop")) {
             pipelineType = Pipeline.Type.NOOP;
         } else {

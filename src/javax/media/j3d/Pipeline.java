@@ -40,6 +40,8 @@ abstract class Pipeline {
     enum Type {
         // Java rendering pipeline using Java Bindings for OpenGL
         JOGL,
+        
+        JOGLES,
 
         // No-op rendering pipeline
         NOOP,
@@ -72,6 +74,8 @@ public Pipeline run() {
 		switch (pipeType) {
 		case JOGL:
 			return (Pipeline)Class.forName("javax.media.j3d.JoglPipeline").newInstance();
+		case JOGLES:
+			return (Pipeline)Class.forName("javax.media.j3d.JoglesPipeline").newInstance();
 		case NOOP:
 			return (Pipeline)Class.forName("javax.media.j3d.NoopPipeline").newInstance();
 		}
@@ -129,6 +133,8 @@ public Pipeline run() {
         switch (pipelineType) {
         case JOGL:
             return "JOGL";
+        case JOGLES:
+            return "JOGLES";
         case NOOP:
             return "NOOP";
         default:
@@ -144,6 +150,8 @@ public Pipeline run() {
         switch (pipelineType) {
         case JOGL:
             return "OpenGL";
+        case JOGLES:
+            return "OpenGLES";
         case NOOP:
             return "None";
         default:
