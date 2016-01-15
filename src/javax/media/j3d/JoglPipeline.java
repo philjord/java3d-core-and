@@ -2458,14 +2458,67 @@ class JoglPipeline extends Pipeline
 	//
 	// TextureAttributesRetained methods
 	//
-	//NOT IN USE BY MORROWIND
+	//IN USE BY MORROWIND something is still calling setTextureAttributes other than J3dNiTextureTransformController
+	//in skyrim
 	@Override
 	@Deprecated
 	void updateTextureAttributes(Context ctx, double[] transform, boolean isIdentity, int textureMode, int perspCorrectionMode,
 			float textureBlendColorRed, float textureBlendColorGreen, float textureBlendColorBlue, float textureBlendColorAlpha,
 			int textureFormat)
 	{
-		throw new UnsupportedOperationException();
+		  if (VERBOSE) System.err.println("JoglPipeline.updateTextureAttributes()");
+
+			GL2 gl = context(ctx).getGL().getGL2();
+	        gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT,
+	                (perspCorrectionMode == TextureAttributes.NICEST) ? GL.GL_NICEST : GL.GL_FASTEST);
+
+	        // set OGL texture matrix
+	        gl.glPushAttrib(GL2.GL_TRANSFORM_BIT);
+	        gl.glMatrixMode(GL.GL_TEXTURE);
+
+	        if (isIdentity) {
+	            gl.glLoadIdentity();
+	        } else if (gl.isExtensionAvailable("GL_VERSION_1_3")) {
+	            gl.glLoadTransposeMatrixd(transform, 0);
+	        } else {
+	            double[] mx = new double[16];
+	            copyTranspose(transform, mx);
+	            gl.glLoadMatrixd(mx, 0);
+	        }
+
+	        gl.glPopAttrib();
+
+	        // set texture color
+	        float[] color = new float[4];
+	        color[0] = textureBlendColorRed;
+	        color[1] = textureBlendColorGreen;
+	        color[2] = textureBlendColorBlue;
+	        color[3] = textureBlendColorAlpha;
+	        gl.glTexEnvfv(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_COLOR, color, 0);
+
+	        // set texture environment mode
+
+	        switch (textureMode) {
+	            case TextureAttributes.MODULATE:
+	                gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
+	                break;
+	            case TextureAttributes.DECAL:
+	                gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_DECAL);
+	                break;
+	            case TextureAttributes.BLEND:
+	                gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL.GL_BLEND);
+	                break;
+	            case TextureAttributes.REPLACE:
+	                gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL.GL_REPLACE);
+	                break;
+	            case TextureAttributes.COMBINE:
+	                gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_COMBINE);
+	                break;
+	        }
+	// FIXME: GL_SGI_texture_color_table
+//	        if (gl.isExtensionAvailable("GL_SGI_texture_color_table")) {
+//	            gl.glDisable(GL.GL_TEXTURE_COLOR_TABLE_SGI);
+//	        }
 	}
 
 	//NOT IN USE BY MORROWIND
@@ -2503,27 +2556,6 @@ class JoglPipeline extends Pipeline
 	{
 		throw new UnsupportedOperationException();
 	}
-
-	// mapping from java enum to gl enum
-	private static final int[] _gl_combineRgbSrcIndex = { GL2.GL_SOURCE0_RGB, GL2.GL_SOURCE1_RGB, GL2.GL_SOURCE2_RGB, };
-
-	private static final int[] _gl_combineAlphaSrcIndex = { GL2.GL_SOURCE0_ALPHA, GL2.GL_SOURCE1_ALPHA, GL2.GL_SOURCE2_ALPHA, };
-
-	private static final int[] _gl_combineRgbOpIndex = { GL2.GL_OPERAND0_RGB, GL2.GL_OPERAND1_RGB, GL2.GL_OPERAND2_RGB, };
-
-	private static final int[] _gl_combineAlphaOpIndex = { GL2.GL_OPERAND0_ALPHA, GL2.GL_OPERAND1_ALPHA, GL2.GL_OPERAND2_ALPHA, };
-
-	private static final int[] _gl_combineSrc = { GL2.GL_PRIMARY_COLOR, // TextureAttributes.COMBINE_OBJECT_COLOR
-			GL.GL_TEXTURE, // TextureAttributes.COMBINE_TEXTURE
-			GL2.GL_CONSTANT, // TextureAttributes.COMBINE_CONSTANT_COLOR
-			GL2.GL_PREVIOUS, // TextureAttributes.COMBINE_PREVIOUS_TEXTURE_UNIT_STATE
-	};
-
-	private static final int[] _gl_combineFcn = { GL.GL_SRC_COLOR, // TextureAttributes.COMBINE_SRC_COLOR
-			GL.GL_ONE_MINUS_SRC_COLOR, // TextureAttributes.COMBINE_ONE_MINUS_SRC_COLOR
-			GL.GL_SRC_ALPHA, // TextureAttributes.COMBINE_SRC_ALPHA
-			GL.GL_ONE_MINUS_SRC_ALPHA, // TextureAttributes.COMBINE_ONE_MINUS_SRC_ALPHA
-	};
 
 	// ---------------------------------------------------------------------
 
@@ -2605,6 +2637,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	//IN USE BY MORROWIND
+	//oddly in use when I press escape twice???
 	@Override
 	void updateTexture2DSubImage(Context ctx, int level, int xoffset, int yoffset, int textureFormat, int imageFormat, int imgXOffset,
 			int imgYOffset, int tilew, int width, int height, int dataType, Object data, boolean useAutoMipMap)
@@ -2620,7 +2653,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	//IN USE BY MORROWIND
-	@Override
+	@Override	
 	void updateTexture2DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
 		if (VERBOSE)
@@ -2631,12 +2664,10 @@ class JoglPipeline extends Pipeline
 
 	//IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture2DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTexture2DLodOffset()");
-
-		updateTextureLodOffset(ctx, GL.GL_TEXTURE_2D, lodOffsetS, lodOffsetT, lodOffsetR);
+		throw new UnsupportedOperationException();
 	}
 
 	//IN USE BY MORROWIND
@@ -2661,24 +2692,20 @@ class JoglPipeline extends Pipeline
 		updateTextureFilterModes(ctx, GL.GL_TEXTURE_2D, minFilter, magFilter);
 	}
 
-	//IN USE BY MORROWIND
+	 
 	@Override
+	@Deprecated
 	void updateTexture2DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTexture2DSharpenFunc()");
-
-		updateTextureSharpenFunc(ctx, GL.GL_TEXTURE_2D, numSharpenTextureFuncPts, sharpenTextureFuncPts);
+		throw new UnsupportedOperationException();
 	}
 
-	//IN USE BY MORROWIND
+	 
 	@Override
+	@Deprecated
 	void updateTexture2DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTexture2DFilter4Func()");
-
-		updateTextureFilter4Func(ctx, GL.GL_TEXTURE_2D, numFilter4FuncPts, filter4FuncPts);
+		throw new UnsupportedOperationException();
 	}
 
 	//IN USE BY MORROWIND
@@ -2851,14 +2878,7 @@ class JoglPipeline extends Pipeline
 	void updateTextureCubeMapSubImage(Context ctx, int face, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data, boolean useAutoMipMap)
 	{
-
-		/* Note: useAutoMipMap is not use for SubImage in the jogl pipe */
-
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTextureCubeMapSubImage()");
-
-		updateTexture2DSubImage(ctx, _gl_textureCubeMapFace[face], level, xoffset, yoffset, textureFormat, imageFormat, imgXOffset,
-				imgYOffset, tilew, width, height, dataType, data);
+		throw new UnsupportedOperationException();
 	}
 
 	//IN USE BY MORROWIND
@@ -2871,14 +2891,12 @@ class JoglPipeline extends Pipeline
 		updateTextureLodRange(ctx, GL.GL_TEXTURE_CUBE_MAP, baseLevel, maximumLevel, minimumLod, maximumLod);
 	}
 
-	//IN USE BY MORROWIND
+	 
 	@Override
+	@Deprecated
 	void updateTextureCubeMapLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTextureCubeMapLodOffset()");
-
-		updateTextureLodOffset(ctx, GL.GL_TEXTURE_CUBE_MAP, lodOffsetS, lodOffsetT, lodOffsetR);
+		throw new UnsupportedOperationException();
 	}
 
 	//IN USE BY MORROWIND
@@ -2903,24 +2921,20 @@ class JoglPipeline extends Pipeline
 		updateTextureFilterModes(ctx, GL.GL_TEXTURE_CUBE_MAP, minFilter, magFilter);
 	}
 
-	//IN USE BY MORROWIND
+	 
 	@Override
+	@Deprecated
 	void updateTextureCubeMapSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTextureCubeMapSharpenFunc()");
-
-		updateTextureSharpenFunc(ctx, GL.GL_TEXTURE_CUBE_MAP, numSharpenTextureFuncPts, sharpenTextureFuncPts);
+		throw new UnsupportedOperationException();
 	}
 
-	//IN USE BY MORROWIND
+	 
 	@Override
+	@Deprecated
 	void updateTextureCubeMapFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTextureCubeMapFilter4Func()");
-
-		updateTextureFilter4Func(ctx, GL.GL_TEXTURE_CUBE_MAP, numFilter4FuncPts, filter4FuncPts);
+		throw new UnsupportedOperationException();
 	}
 
 	//IN USE BY MORROWIND
@@ -3160,6 +3174,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	//IN USE BY MORROWIND
+	// only used when I press escape twice
 	private void updateTexture2DSubImage(Context ctx, int target, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data)
 	{
@@ -3541,25 +3556,19 @@ class JoglPipeline extends Pipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	 
+	@Deprecated
 	private void updateTextureSharpenFunc(Context ctx, int target, int numPts, float[] pts)
 	{
-		// checking of the availability of sharpen texture functionality
-		// is already done in shared code
-		// FIXME: GL_SGIS_sharpen_texture
-		//        GL gl = context(ctx).getGL();
-		//        gl.glSharpenTexFuncSGIS(target, numPts, pts, 0);
+		throw new UnsupportedOperationException();
+		
 	}
 
-	//IN USE BY MORROWIND
+	 
+	@Deprecated
 	private void updateTextureFilter4Func(Context ctx, int target, int numPts, float[] pts)
 	{
-		// checking of the availability of filter4 functionality
-		// is already done in shared code
-		// FIXME: GL_SGIS_texture_filter4
-		//        GL gl = context(ctx).getGL();
-		//        gl.glTexFilterFuncSGIS(target, GL.GL_FILTER4_SGIS,
-		//                numPts, pts, 0);
+		throw new UnsupportedOperationException();		
 	}
 
 	//IN USE BY MORROWIND
@@ -4055,6 +4064,7 @@ class JoglPipeline extends Pipeline
 	// native method for setting blend color
 	@Override
 	//IN USE BY MORROWIND
+	// part of TUS updateNative, though not in fact used
 	void setBlendColor(Context ctx, float red, float green, float blue, float alpha)
 	{
 		if (VERBOSE)
@@ -4070,6 +4080,7 @@ class JoglPipeline extends Pipeline
 	// native method for setting blend func
 	@Override
 	//IN USE BY MORROWIND
+	// part of TUS updateNative
 	void setBlendFunc(Context ctx, int srcBlendFunction, int dstBlendFunction)
 	{
 		if (VERBOSE)
@@ -4099,6 +4110,7 @@ class JoglPipeline extends Pipeline
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
 	@Override
 	//IN USE BY MORROWIND
+	// looks like one tie call in renderer.doWork
 	void setFullSceneAntialiasing(Context absCtx, boolean enable)
 	{
 		if (VERBOSE)
@@ -4121,6 +4133,7 @@ class JoglPipeline extends Pipeline
 
 	// Native method to update separate specular color control
 	//IN USE BY MORROWIND
+	// looks like a one time call at the start of renderer.doWork
 	@Override
 	void updateSeparateSpecularColorEnable(Context ctx, boolean enable)
 	{
@@ -4296,6 +4309,7 @@ class JoglPipeline extends Pipeline
 	// native method for setting default TexCoordGeneration
 	@Override
 	//IN USE BY MORROWIND
+	// part of TUS updateNative
 	void resetTexCoordGeneration(Context ctx)
 	{
 		if (VERBOSE)
@@ -4311,6 +4325,7 @@ class JoglPipeline extends Pipeline
 	// native method for setting default TextureAttributes
 	@Override
 	//IN USE BY MORROWIND
+	// part of TUS updateNative
 	void resetTextureAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -4381,6 +4396,8 @@ class JoglPipeline extends Pipeline
 	// native method for setting default PointAttributes
 	@Override
 	//IN USE BY MORROWIND
+	
+	//looks like one time call in renderer.doWork
 	void resetPointAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -4666,7 +4683,6 @@ class JoglPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	int numInvalidLists = 0;
 
 	@Override
 	@Deprecated
@@ -6041,14 +6057,14 @@ class JoglPipeline extends Pipeline
 	}
 
 	///PJPJPJPJ requesting caps is expensive caps are unlikely to change during live times
-	private int glisExtensionAvailableGL_VERSION_1_3 = 0;
+	private int isExtensionAvailableGL_VERSION_1_3 = 0;
 
 	private boolean isExtensionAvailableGL_VERSION_1_3(GL2 gl)
 	{
-		if (glisExtensionAvailableGL_VERSION_1_3 == 0)
-			glisExtensionAvailableGL_VERSION_1_3 = gl.isExtensionAvailable("GL_VERSION_1_3") ? 1 : -1;
+		if (isExtensionAvailableGL_VERSION_1_3 == 0)
+			isExtensionAvailableGL_VERSION_1_3 = gl.isExtensionAvailable("GL_VERSION_1_3") ? 1 : -1;
 
-		return glisExtensionAvailableGL_VERSION_1_3 == 1;
+		return isExtensionAvailableGL_VERSION_1_3 == 1;
 	}
 
 	private int isExtensionAvailableGL_EXT_multi_draw_arrays = 0;
