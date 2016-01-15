@@ -113,6 +113,7 @@ class JoglPipeline extends Pipeline
 	// used for GeometryArrays by Copy or interleaved
 	//NOT USED BY MORROWIND - but drawTrivial used it
 	@Override
+	@Deprecated
 	void execute(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
 			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
@@ -122,7 +123,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	// used by GeometryArray by Reference with java arrays
-	// USED BY MORROWIND
+	// NOT USED BY MORROWIND  
 	@Override
 	void executeVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors, int vcount,
 			int vformat, int vdefined, int initialCoordIndex, float[] vfcoords, double[] vdcoords, int initialColorIndex, float[] cfdata,
@@ -130,82 +131,11 @@ class JoglPipeline extends Pipeline
 			float[][] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState, int[] texIndex, int texstride,
 			Object[] texCoords, int cdirty)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.executeVA()");
-
-		boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
-		boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
-		boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
-		boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
-		boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
-		boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
-		boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
-
-		FloatBuffer fverts = null;
-		DoubleBuffer dverts = null;
-		FloatBuffer fclrs = null;
-		ByteBuffer bclrs = null;
-		FloatBuffer[] texCoordBufs = null;
-		FloatBuffer norms = null;
-		FloatBuffer[] vertexAttrBufs = null;
-
-		// Get vertex attribute arrays
-		if (vattrDefined)
-		{
-			vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrData);
-		}
-
-		// get texture arrays
-		if (textureDefined)
-		{
-			texCoordBufs = getTexCoordSetBuffer(texCoords);
-		}
-
-		// get coordinate array
-		if (floatCoordDefined)
-		{
-			fverts = getVertexArrayBuffer(vfcoords);
-		}
-		else if (doubleCoordDefined)
-		{
-			dverts = getVertexArrayBuffer(vdcoords);
-		}
-
-		// get color array
-		if (floatColorsDefined)
-		{
-			fclrs = getColorArrayBuffer(cfdata);
-		}
-		else if (byteColorsDefined)
-		{
-			bclrs = getColorArrayBuffer(cbdata);
-		}
-
-		// get normal array
-		if (normalsDefined)
-		{
-			norms = getNormalArrayBuffer(ndata);
-		}
-
-		int[] sarray = null;
-		int[] start_array = null;
-		int strip_len = 0;
-		if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-		{
-			sarray = ((GeometryStripArrayRetained) geo).stripVertexCounts;
-			strip_len = sarray.length;
-			start_array = ((GeometryStripArrayRetained) geo).stripStartOffsetIndices;
-		}
-
-		executeGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, vcount, vformat, vdefined, initialCoordIndex,
-				fverts, dverts, initialColorIndex, fclrs, bclrs, initialNormalIndex, norms, vertexAttrCount, vertexAttrSizes,
-				vertexAttrIndices, vertexAttrBufs, texCoordMapLength, texcoordoffset, numActiveTexUnitState, texIndex, texstride,
-				texCoordBufs, cdirty, sarray, strip_len, start_array);
+		throw new UnsupportedOperationException();
 	}
 
 	// used by GeometryArray by Reference with NIO buffer
-	// USED BY MORROWIND
+	// IN USE BY MORROWIND
 	@Override
 	void executeVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors,
 			int vcount, int vformat, int vdefined, int initialCoordIndex, Buffer vcoords, int initialColorIndex, Buffer cdataBuffer,
@@ -303,6 +233,7 @@ class JoglPipeline extends Pipeline
 	// used by GeometryArray by Reference in interleaved format with NIO buffer
 	// NOT USED BY MORROWIND
 	@Override
+	@Deprecated
 	void executeInterleavedBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
 			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
@@ -348,8 +279,9 @@ class JoglPipeline extends Pipeline
 	}
 
 	// used for GeometryArrays
-	// IN USE BY MORROWIND ---HOLD ON!!! possibly not now
+	// NOT IN USE BY MORROWIND  
 	@Override
+	@Deprecated
 	void buildGA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha, float alpha,
 			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
 			int texCoordSetMapLen, int[] texCoordSetMapOffset, int vertexAttrCount, int[] vertexAttrSizes, double[] xform, double[] nxform,
@@ -361,6 +293,7 @@ class JoglPipeline extends Pipeline
 	// used to Build Dlist GeometryArray by Reference with java arrays
 	// NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void buildGAForByRef(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha, float alpha,
 			boolean ignoreVertexColors, int vcount, int vformat, int vdefined, int initialCoordIndex, float[] vfcoords, double[] vdcoords,
 			int initialColorIndex, float[] cfdata, byte[] cbdata, int initialNormalIndex, float[] ndata, int vertexAttrCount,
@@ -373,7 +306,8 @@ class JoglPipeline extends Pipeline
 	//----------------------------------------------------------------------
 	// Private helper methods for GeometryArrayRetained
 	//
-	//NOT IN USE BY MORROWIND - might remove significant parts above
+	//NOT IN USE BY MORROWIND - as interleaved support dropped
+	@Deprecated
 	private void testForInterleavedArrays(int vformat, boolean[] useInterleavedArrays, int[] iaFormat)
 	{
 		throw new UnsupportedOperationException();
@@ -409,7 +343,8 @@ class JoglPipeline extends Pipeline
 		}
 	}
 
-	//NOT IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND - odd name looks like it should be used?
+	@Deprecated
 	private void executeTexture(int texCoordSetMapLen, int texSize, int bstride, int texCoordoff, int[] texCoordSetMapOffset,
 			int numActiveTexUnit, FloatBuffer verts, GL2 gl)
 	{
@@ -431,6 +366,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	//NOT IN USE BY MORROWIND
+	@Deprecated
 	private void executeGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
 			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
 			int texCoordSetMapLen, int[] texCoordSetMapOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
@@ -441,7 +377,7 @@ class JoglPipeline extends Pipeline
 
 	// glLockArrays() is invoked only for indexed geometry, and the
 	// vertexCount is guarenteed to be >= 0.
-	//IN USE BY MORROWIND
+	//IN USE BY MORROWIND - but acient code so likely to be changed
 	private void lockArray(GL2 gl, int vertexCount)
 	{
 		if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
@@ -642,12 +578,14 @@ class JoglPipeline extends Pipeline
 	}
 
 	//NOT IN USE BY MORROWIND
+	@Deprecated
 	private String getVertexDescription(int vformat)
 	{
 		throw new UnsupportedOperationException();
 	}
 
 	//NOT IN USE BY MORROWIND
+	@Deprecated
 	private String getGeometryDescription(int geo_type)
 	{
 		throw new UnsupportedOperationException();
@@ -670,24 +608,21 @@ class JoglPipeline extends Pipeline
 	//
 
 	// by-copy or interleaved, by reference, Java arrays
-	//IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void executeIndexedGeometry(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
 			boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat, int vertexAttrCount,
 			int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset,
 			int numActiveTexUnitState, float[] varray, float[] carray, int cdirty, int[] indexCoord)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.executeIndexedGeometry()");
-
-		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, initialIndexIndex, indexCount,
-				vertexCount, vformat, vertexAttrCount, vertexAttrSizes, texCoordSetCount, texCoordSetMap, texCoordSetMapLen,
-				texCoordSetOffset, numActiveTexUnitState, varray, null, carray, cdirty, indexCoord);
+		throw new UnsupportedOperationException();
 	}
 
 	// interleaved, by reference, nio buffer
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void executeIndexedGeometryBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
 			boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat, int texCoordSetCount,
 			int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset, int numActiveTexUnitState, FloatBuffer vdata,
@@ -872,682 +807,30 @@ class JoglPipeline extends Pipeline
 	}
 
 	// by-copy geometry
-	//IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void buildIndexedGeometry(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha,
 			float alpha, boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat,
 			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
 			int[] texCoordSetMapOffset, double[] xform, double[] nxform, float[] varray, int[] indexCoord)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.buildIndexedGeometry()");
-
-		JoglContext ctx = (JoglContext) absCtx;
-		GL2 gl = context(ctx).getGL().getGL2();
-
-		boolean useInterleavedArrays;
-		int iaFormat = 0;
-		int primType = 0;
-		int stride = 0, coordoff = 0, normoff = 0, coloroff = 0, texCoordoff = 0;
-		int texSize = 0, texStride = 0;
-		int vAttrOff = 0;
-		int vAttrStride = 0;
-		int bstride = 0, cbstride = 0;
-		FloatBuffer verts = null;
-		FloatBuffer clrs = null;
-		int[] sarray = null;
-		int strip_len = 0;
-		boolean useAlpha = false;
-
-		if ((vformat & GeometryArray.COORDINATES) != 0)
-		{
-			gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
-			stride += 3;
-		}
-		else
-		{
-			gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
-		}
-
-		if ((vformat & GeometryArray.NORMALS) != 0)
-		{
-			gl.glEnableClientState(GL2.GL_NORMAL_ARRAY);
-			stride += 3;
-			coordoff += 3;
-		}
-		else
-		{
-			gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
-		}
-
-		if ((vformat & GeometryArray.COLOR) != 0)
-		{
-			gl.glEnableClientState(GL2.GL_COLOR_ARRAY);
-			stride += 4;
-			normoff += 4;
-			coordoff += 4;
-		}
-		else
-		{
-			gl.glDisableClientState(GL2.GL_COLOR_ARRAY);
-		}
-
-		if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-		{
-			if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
-			{
-				texSize = 2;
-				texStride = 2 * texCoordSetCount;
-			}
-			else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
-			{
-				texSize = 3;
-				texStride = 3 * texCoordSetCount;
-			}
-			else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
-			{
-				texSize = 4;
-				texStride = 4 * texCoordSetCount;
-			}
-			stride += texStride;
-			normoff += texStride;
-			coloroff += texStride;
-			coordoff += texStride;
-		}
-
-		if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-		{
-			for (int i = 0; i < vertexAttrCount; i++)
-			{
-				vAttrStride += vertexAttrSizes[i];
-			}
-			stride += vAttrStride;
-			normoff += vAttrStride;
-			coloroff += vAttrStride;
-			coordoff += vAttrStride;
-			texCoordoff += vAttrStride;
-		}
-
-		bstride = stride * Buffers.SIZEOF_FLOAT;
-
-		// process alpha for geometryArray without alpha
-		if (updateAlpha && !ignoreVertexColors)
-		{
-			useAlpha = true;
-		}
-
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			sarray = ((IndexedGeometryStripArrayRetained) geo).stripIndexCounts;
-			strip_len = sarray.length;
-		}
-
-		// Copy data into NIO array
-		verts = getVertexArrayBuffer(varray);
-
-		// Apply normal transform if necessary
-		if ((vformat & GeometryArray.NORMALS) != 0 && nxform != null)
-		{
-			int off = normoff;
-			for (int i = 0; i < vertexCount * 3; i += 3)
-			{
-				verts.put(off, (float) (nxform[0] * varray[off] + nxform[1] * varray[off + 1] + nxform[2] * varray[off + 2]));
-				verts.put(off + 1, (float) (nxform[4] * varray[off] + nxform[5] * varray[off + 1] + nxform[6] * varray[off + 2]));
-				verts.put(off + 2, (float) (nxform[8] * varray[off] + nxform[9] * varray[off + 1] + nxform[10] * varray[off + 2]));
-				off += stride;
-			}
-		}
-
-		// Apply coordinate transform if necessary
-		if ((vformat & GeometryArray.COORDINATES) != 0 && xform != null)
-		{
-			int off = coordoff;
-			for (int i = 0; i < vertexCount * 3; i += 3)
-			{
-				verts.put(off, (float) (xform[0] * varray[off] + xform[1] * varray[off + 1] + xform[2] * varray[off + 2]));
-				verts.put(off + 1, (float) (xform[4] * varray[off] + xform[5] * varray[off + 1] + xform[6] * varray[off + 2]));
-				verts.put(off + 2, (float) (xform[8] * varray[off] + xform[9] * varray[off + 1] + xform[10] * varray[off + 2]));
-				off += stride;
-			}
-		}
-
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			// Note we can use interleaved arrays even if we have a
-			// non-null xform since we use the same data layout unlike the
-			// C code
-			if (ignoreVertexColors
-					|| (((vformat & GeometryArray.TEXTURE_COORDINATE) != 0) && ((texCoordSetMapLen > 1) || (texCoordSetCount > 1))))
-			{
-				useInterleavedArrays = false;
-			}
-			else
-			{
-				boolean[] tmp = new boolean[1];
-				int[] tmp2 = new int[1];
-				testForInterleavedArrays(vformat, tmp, tmp2);
-				useInterleavedArrays = tmp[0];
-				iaFormat = tmp2[0];
-			}
-
-			if (useInterleavedArrays)
-			{
-				verts.position(0);
-				gl.glInterleavedArrays(iaFormat, bstride, verts);
-			}
-			else
-			{
-				if ((vformat & GeometryArray.NORMALS) != 0)
-				{
-					verts.position(normoff);
-					gl.glNormalPointer(GL.GL_FLOAT, bstride, verts);
-				}
-				if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
-				{
-					verts.position(coloroff);
-					if (((vformat & GeometryArray.WITH_ALPHA) != 0) || useAlpha)
-					{
-						gl.glColorPointer(4, GL.GL_FLOAT, bstride, verts);
-					}
-					else
-					{
-						gl.glColorPointer(3, GL.GL_FLOAT, bstride, verts);
-					}
-				}
-				if ((vformat & GeometryArray.COORDINATES) != 0)
-				{
-					verts.position(coordoff);
-					gl.glVertexPointer(3, GL.GL_FLOAT, bstride, verts);
-				}
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-				{
-					executeTexture(texCoordSetMapLen, texSize, bstride, texCoordoff, texCoordSetMapOffset, texCoordSetMapLen, verts, gl);
-				}
-				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-				{
-					int vAttrOffset = vAttrOff;
-					for (int i = 0; i < vertexAttrCount; i++)
-					{
-						ctx.enableVertexAttrArray(gl, i);
-						verts.position(vAttrOffset);
-						ctx.vertexAttrPointer(gl, i, vertexAttrSizes[i], GL.GL_FLOAT, bstride, verts);
-						vAttrOffset += vertexAttrSizes[i];
-					}
-				}
-			}
-
-			switch (geo_type)
-			{
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
-				primType = GL.GL_TRIANGLE_STRIP;
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
-				primType = GL.GL_TRIANGLE_FAN;
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-				primType = GL.GL_LINE_STRIP;
-				break;
-			}
-
-			lockArray(gl, vertexCount);
-
-			// Note: using MultiDrawElements is probably more expensive than
-			// not in this case due to the need to allocate more temporary
-			// direct buffers and slice up the incoming indices array
-			int offset = initialIndexIndex;
-			IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
-			for (int i = 0; i < strip_len; i++)
-			{
-				indicesBuffer.position(offset);
-				int count = sarray[i];
-				gl.glDrawElements(primType, count, GL.GL_UNSIGNED_INT, indicesBuffer);
-				offset += count;
-			}
-		}
-		else if ((geo_type == GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET) || (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_SET)
-				|| (geo_type == GeometryRetained.GEO_TYPE_INDEXED_POINT_SET) || (geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_SET))
-		{
-			// Note we can use interleaved arrays even if we have a
-			// non-null xform since we use the same data layout unlike the
-			// C code
-			if (ignoreVertexColors
-					|| (((vformat & GeometryArray.TEXTURE_COORDINATE) != 0) && ((texCoordSetMapLen > 1) || (texCoordSetCount > 1))))
-			{
-				useInterleavedArrays = false;
-			}
-			else
-			{
-				boolean[] tmp = new boolean[1];
-				int[] tmp2 = new int[1];
-				testForInterleavedArrays(vformat, tmp, tmp2);
-				useInterleavedArrays = tmp[0];
-				iaFormat = tmp2[0];
-			}
-
-			if (useInterleavedArrays)
-			{
-				verts.position(0);
-				gl.glInterleavedArrays(iaFormat, bstride, verts);
-			}
-			else
-			{
-				if ((vformat & GeometryArray.NORMALS) != 0)
-				{
-					verts.position(normoff);
-					gl.glNormalPointer(GL.GL_FLOAT, bstride, verts);
-				}
-
-				if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
-				{
-					verts.position(coloroff);
-					if (((vformat & GeometryArray.WITH_ALPHA) != 0) || useAlpha)
-					{
-						gl.glColorPointer(4, GL.GL_FLOAT, bstride, verts);
-					}
-					else
-					{
-						gl.glColorPointer(3, GL.GL_FLOAT, bstride, verts);
-					}
-				}
-				if ((vformat & GeometryArray.COORDINATES) != 0)
-				{
-					verts.position(coordoff);
-					gl.glVertexPointer(3, GL.GL_FLOAT, bstride, verts);
-				}
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-				{
-					executeTexture(texCoordSetMapLen, texSize, bstride, texCoordoff, texCoordSetMapOffset, texCoordSetMapLen, verts, gl);
-				}
-				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-				{
-					int vAttrOffset = vAttrOff;
-					for (int i = 0; i < vertexAttrCount; i++)
-					{
-						ctx.enableVertexAttrArray(gl, i);
-						verts.position(vAttrOffset);
-						ctx.vertexAttrPointer(gl, i, vertexAttrSizes[i], GL.GL_FLOAT, bstride, verts);
-						vAttrOffset += vertexAttrSizes[i];
-					}
-				}
-
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					primType = GL2.GL_QUADS;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					primType = GL.GL_TRIANGLES;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					primType = GL.GL_POINTS;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					primType = GL.GL_LINES;
-					break;
-				}
-
-				lockArray(gl, vertexCount);
-
-				IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
-				indicesBuffer.position(initialIndexIndex);
-				gl.glDrawElements(primType, validIndexCount, GL.GL_UNSIGNED_INT, indicesBuffer);
-			}
-		}
-
-		unlockArray(gl);
-
-		if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-		{
-			resetVertexAttrs(gl, ctx, vertexAttrCount);
-		}
-
-		if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-		{
-			resetTexture(gl, ctx);
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	//----------------------------------------------------------------------
 	//
 	// Helper routines for IndexedGeometryArrayRetained
 	//
-	//IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND
+	@Deprecated
 	private void executeIndexedGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat,
 			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
 			int[] texCoordSetOffset, int numActiveTexUnitState, float[] varray, FloatBuffer vdata, float[] carray, int cDirty,
 			int[] indexCoord)
 	{
-		JoglContext ctx = (JoglContext) absCtx;
-		GL2 gl = context(ctx).getGL().getGL2();
-
-		boolean useInterleavedArrays;
-		int iaFormat = 0;
-		int primType = 0;
-		int stride = 0, coordoff = 0, normoff = 0, coloroff = 0, texCoordoff = 0;
-		int texSize = 0, texStride = 0;
-		int vAttrOff = 0;
-		int vAttrStride = 0;
-		int bstride = 0, cbstride = 0;
-		FloatBuffer verts = null;
-		FloatBuffer clrs = null;
-		int[] sarray = null;
-		int strip_len = 0;
-
-		if ((vformat & GeometryArray.COORDINATES) != 0)
-		{
-			stride += 3;
-		}
-		if ((vformat & GeometryArray.NORMALS) != 0)
-		{
-			stride += 3;
-			coordoff += 3;
-		}
-
-		if ((vformat & GeometryArray.COLOR) != 0)
-		{
-			if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-			{
-				stride += 4;
-				normoff += 4;
-				coordoff += 4;
-			}
-			else
-			{ // Handle the case of executeInterleaved 3f
-				stride += 3;
-				normoff += 3;
-				coordoff += 3;
-			}
-		}
-
-		if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-		{
-			if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
-			{
-				texSize = 2;
-				texStride = 2 * texCoordSetCount;
-			}
-			else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
-			{
-				texSize = 3;
-				texStride = 3 * texCoordSetCount;
-			}
-			else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
-			{
-				texSize = 4;
-				texStride = 4 * texCoordSetCount;
-			}
-			stride += texStride;
-			normoff += texStride;
-			coloroff += texStride;
-			coordoff += texStride;
-		}
-
-		if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-		{
-			for (int i = 0; i < vertexAttrCount; i++)
-			{
-				vAttrStride += vertexAttrSizes[i];
-			}
-			stride += vAttrStride;
-			normoff += vAttrStride;
-			coloroff += vAttrStride;
-			coordoff += vAttrStride;
-			texCoordoff += vAttrStride;
-		}
-
-		bstride = stride * Buffers.SIZEOF_FLOAT;
-
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			sarray = ((IndexedGeometryStripArrayRetained) geo).stripIndexCounts;
-			strip_len = sarray.length;
-		}
-
-		// We have to copy if the data isn't specified using NIO
-		if (varray != null)
-		{
-			verts = getVertexArrayBuffer(varray);
-		}
-		else if (vdata != null)
-		{
-			verts = vdata;
-		}
-		else
-		{
-			// This should never happen
-			throw new AssertionError("Unable to get vertex pointer");
-		}
-
-		// using byRef interleaved array and has a separate pointer, then ..
-		int cstride = stride;
-		if (carray != null)
-		{
-			clrs = getColorArrayBuffer(carray);
-			cstride = 4;
-		}
-		else
-		{
-			// FIXME: need to "auto-slice" this buffer later
-			clrs = verts;
-		}
-
-		cbstride = cstride * Buffers.SIZEOF_FLOAT;
-
-		// Enable normalize for non-uniform scale (which rescale can't handle)
-		if (isNonUniformScale)
-		{
-			gl.glEnable(GL2.GL_NORMALIZE);
-		}
-
-		/*** Handle non-indexed strip GeometryArray first *******/
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			if (ignoreVertexColors || (carray != null)
-					|| ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0 && ((texCoordSetMapLen > 1) || (texCoordSetCount > 1))))
-			{
-				useInterleavedArrays = false;
-			}
-			else
-			{
-				boolean[] tmp = new boolean[1];
-				int[] tmp2 = new int[1];
-				testForInterleavedArrays(vformat, tmp, tmp2);
-				useInterleavedArrays = tmp[0];
-				iaFormat = tmp2[0];
-			}
-			if (useInterleavedArrays)
-			{
-				verts.position(0);
-				gl.glInterleavedArrays(iaFormat, bstride, verts);
-			}
-			else
-			{
-				if ((vformat & GeometryArray.NORMALS) != 0)
-				{
-					verts.position(normoff);
-					gl.glNormalPointer(GL.GL_FLOAT, bstride, verts);
-				}
-				if (!ignoreVertexColors && (vformat & GeometryArray.COLOR) != 0)
-				{
-					if (clrs == verts)
-					{
-						clrs.position(coloroff);
-					}
-					if ((vformat & GeometryArray.WITH_ALPHA) != 0 || useAlpha)
-					{
-						gl.glColorPointer(4, GL.GL_FLOAT, cbstride, clrs);
-					}
-					else
-					{
-						gl.glColorPointer(3, GL.GL_FLOAT, cbstride, clrs);
-					}
-				}
-				if ((vformat & GeometryArray.COORDINATES) != 0)
-				{
-					verts.position(coordoff);
-					gl.glVertexPointer(3, GL.GL_FLOAT, bstride, verts);
-				}
-
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-				{
-					/* XXXX: texCoordoff == 0 ???*/
-					executeTexture(texCoordSetMapLen, texSize, bstride, texCoordoff, texCoordSetOffset, numActiveTexUnitState, verts, gl);
-				}
-
-				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-				{
-					int vAttrOffset = vAttrOff;
-					for (int i = 0; i < vertexAttrCount; i++)
-					{
-						ctx.enableVertexAttrArray(gl, i);
-						verts.position(vAttrOffset);
-						ctx.vertexAttrPointer(gl, i, vertexAttrSizes[i], GL.GL_FLOAT, bstride, verts);
-						vAttrOffset += vertexAttrSizes[i];
-					}
-				}
-			}
-
-			switch (geo_type)
-			{
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
-				primType = GL.GL_TRIANGLE_STRIP;
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
-				primType = GL.GL_TRIANGLE_FAN;
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-				primType = GL.GL_LINE_STRIP;
-				break;
-			}
-
-			lockArray(gl, vertexCount);
-
-			// Note: using MultiDrawElements is probably more expensive than
-			// not in this case due to the need to allocate more temporary
-			// direct buffers and slice up the incoming indices array
-			int offset = initialIndexIndex;
-			IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
-			for (int i = 0; i < strip_len; i++)
-			{
-				indicesBuffer.position(offset);
-				int count = sarray[i];
-				gl.glDrawElements(primType, count, GL.GL_UNSIGNED_INT, indicesBuffer);
-				offset += count;
-			}
-		}
-		else if ((geo_type == GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET) || (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_SET)
-				|| (geo_type == GeometryRetained.GEO_TYPE_INDEXED_POINT_SET) || (geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_SET))
-		{
-			/******* Handle non-indexed non-striped GeometryArray now *****/
-			if (ignoreVertexColors || (carray != null)
-					|| ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0 && ((texCoordSetMapLen > 1) || (texCoordSetCount > 1))))
-			{
-				useInterleavedArrays = false;
-			}
-			else
-			{
-				boolean[] tmp = new boolean[1];
-				int[] tmp2 = new int[1];
-				testForInterleavedArrays(vformat, tmp, tmp2);
-				useInterleavedArrays = tmp[0];
-				iaFormat = tmp2[0];
-			}
-
-			if (useInterleavedArrays)
-			{
-				verts.position(0);
-				gl.glInterleavedArrays(iaFormat, bstride, verts);
-			}
-			else
-			{
-				if ((vformat & GeometryArray.NORMALS) != 0)
-				{
-					verts.position(normoff);
-					gl.glNormalPointer(GL.GL_FLOAT, bstride, verts);
-				}
-
-				if (!ignoreVertexColors && (vformat & GeometryArray.COLOR) != 0)
-				{
-					if (clrs == verts)
-					{
-						clrs.position(coloroff);
-					}
-					if ((vformat & GeometryArray.WITH_ALPHA) != 0 || useAlpha)
-					{
-						gl.glColorPointer(4, GL.GL_FLOAT, cbstride, clrs);
-					}
-					else
-					{
-						gl.glColorPointer(3, GL.GL_FLOAT, cbstride, clrs);
-					}
-				}
-				if ((vformat & GeometryArray.COORDINATES) != 0)
-				{
-					verts.position(coordoff);
-					gl.glVertexPointer(3, GL.GL_FLOAT, bstride, verts);
-				}
-
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-				{
-					/* XXXX: texCoordoff == 0 ???*/
-					executeTexture(texCoordSetMapLen, texSize, bstride, texCoordoff, texCoordSetOffset, numActiveTexUnitState, verts, gl);
-				}
-
-				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-				{
-					int vAttrOffset = vAttrOff;
-					for (int i = 0; i < vertexAttrCount; i++)
-					{
-						ctx.enableVertexAttrArray(gl, i);
-						verts.position(vAttrOffset);
-						ctx.vertexAttrPointer(gl, i, vertexAttrSizes[i], GL.GL_FLOAT, bstride, verts);
-						vAttrOffset += vertexAttrSizes[i];
-					}
-				}
-			}
-
-			lockArray(gl, vertexCount);
-			IntBuffer buf = IntBuffer.wrap(indexCoord);
-			buf.position(initialIndexIndex);
-			switch (geo_type)
-			{
-			case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-				gl.glDrawElements(GL2.GL_QUADS, indexCount, GL.GL_UNSIGNED_INT, buf);
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-				gl.glDrawElements(GL.GL_TRIANGLES, indexCount, GL.GL_UNSIGNED_INT, buf);
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-				gl.glDrawElements(GL.GL_POINTS, indexCount, GL.GL_UNSIGNED_INT, buf);
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-				gl.glDrawElements(GL.GL_LINES, indexCount, GL.GL_UNSIGNED_INT, buf);
-				break;
-			}
-		}
-
-		unlockArray(gl);
-
-		if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-		{
-			resetVertexAttrs(gl, ctx, vertexAttrCount);
-		}
-
-		if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-		{
-			resetTexture(gl, ctx);
-		}
-
-		// clean up if we turned on normalize
-		if (isNonUniformScale)
-		{
-			gl.glDisable(GL2.GL_NORMALIZE);
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	//IN USE BY MORROWIND
@@ -1729,6 +1012,7 @@ class JoglPipeline extends Pipeline
 	// Native method for readRaster
 	// REMOVE FOR SIMPLICITY, POSSIBLY ADD BACK LATER
 	@Override
+	@Deprecated
 	void readRaster(Context ctx, int type, int xSrcOffset, int ySrcOffset, int width, int height, int hCanvas, int imageDataType,
 			int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer)
 	{
@@ -2323,7 +1607,7 @@ class JoglPipeline extends Pipeline
 	//
 	// ColoringAttributesRetained methods
 	//
-	//IN USE BY MORROWIND
+	//IN USE BY MORROWIND - used by H physics
 	@Override
 	void updateColoringAttributes(Context ctx, float dRed, float dGreen, float dBlue, float red, float green, float blue, float alpha,
 			boolean lightEnable, int shadeModel)
@@ -2526,7 +1810,7 @@ class JoglPipeline extends Pipeline
 	//
 	// LineAttributesRetained methods
 	//
-	//IN USE BY MORROWIND
+	//IN USE BY MORROWIND -  used by H physics
 	@Override
 	void updateLineAttributes(Context ctx, float lineWidth, int linePattern, int linePatternMask, int linePatternScaleFactor,
 			boolean lineAntialiasing)
@@ -2657,7 +1941,7 @@ class JoglPipeline extends Pipeline
 	//
 	// ModelClipRetained methods
 	//
-	//NOT IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND - but might be handy one day
 	@Override
 	void updateModelClip(Context ctx, int planeNum, boolean enableFlag, double A, double B, double C, double D)
 	{
@@ -2690,25 +1974,12 @@ class JoglPipeline extends Pipeline
 	//
 	// PointAttributesRetained methods
 	//
-	//NOT IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND - 
 	@Override
+	@Deprecated
 	void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updatePointAttributes()");
-
-		GL2 gl = context(ctx).getGL().getGL2();
-		gl.glPointSize(pointSize);
-
-		// XXXX: Polygon Mode check, blend enable
-		if (pointAntialiasing)
-		{
-			gl.glEnable(GL2.GL_POINT_SMOOTH);
-		}
-		else
-		{
-			gl.glDisable(GL2.GL_POINT_SMOOTH);
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	// ---------------------------------------------------------------------
@@ -3013,6 +2284,7 @@ class JoglPipeline extends Pipeline
 	 */
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexCoordGeneration(Context ctx, boolean enable, int genMode, int format, float planeSx, float planeSy, float planeSz,
 			float planeSw, float planeTx, float planeTy, float planeTz, float planeTw, float planeRx, float planeRy, float planeRz,
 			float planeRw, float planeQx, float planeQy, float planeQz, float planeQw, double[] vworldToEc)
@@ -3186,75 +2458,19 @@ class JoglPipeline extends Pipeline
 	//
 	// TextureAttributesRetained methods
 	//
-	//IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTextureAttributes(Context ctx, double[] transform, boolean isIdentity, int textureMode, int perspCorrectionMode,
 			float textureBlendColorRed, float textureBlendColorGreen, float textureBlendColorBlue, float textureBlendColorAlpha,
 			int textureFormat)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTextureAttributes()");
-
-		GL2 gl = context(ctx).getGL().getGL2();
-		gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, (perspCorrectionMode == TextureAttributes.NICEST) ? GL.GL_NICEST : GL.GL_FASTEST);
-
-		// set OGL texture matrix
-		gl.glPushAttrib(GL2.GL_TRANSFORM_BIT);
-		gl.glMatrixMode(GL.GL_TEXTURE);
-
-		if (isIdentity)
-		{
-			gl.glLoadIdentity();
-		}
-		else if (isExtensionAvailableGL_VERSION_1_3(gl))
-		{
-			gl.glLoadTransposeMatrixd(transform, 0);
-		}
-		else
-		{
-			double[] mx = new double[16];
-			copyTranspose(transform, mx);
-			gl.glLoadMatrixd(mx, 0);
-		}
-
-		gl.glPopAttrib();
-
-		// set texture color
-		float[] color = new float[4];
-		color[0] = textureBlendColorRed;
-		color[1] = textureBlendColorGreen;
-		color[2] = textureBlendColorBlue;
-		color[3] = textureBlendColorAlpha;
-		gl.glTexEnvfv(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_COLOR, color, 0);
-
-		// set texture environment mode
-
-		switch (textureMode)
-		{
-		case TextureAttributes.MODULATE:
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
-			break;
-		case TextureAttributes.DECAL:
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_DECAL);
-			break;
-		case TextureAttributes.BLEND:
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL.GL_BLEND);
-			break;
-		case TextureAttributes.REPLACE:
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL.GL_REPLACE);
-			break;
-		case TextureAttributes.COMBINE:
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_COMBINE);
-			break;
-		}
-		// FIXME: GL_SGI_texture_color_table
-		//        if (gl.isExtensionAvailable("GL_SGI_texture_color_table")) {
-		//            gl.glDisable(GL.GL_TEXTURE_COLOR_TABLE_SGI);
-		//        }
+		throw new UnsupportedOperationException();
 	}
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateRegisterCombiners(Context absCtx, double[] transform, boolean isIdentity, int textureMode, int perspCorrectionMode,
 			float textureBlendColorRed, float textureBlendColorGreen, float textureBlendColorBlue, float textureBlendColorAlpha,
 			int textureFormat, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc, int[] combineRgbFcn,
@@ -3265,135 +2481,27 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTextureColorTable(Context ctx, int numComponents, int colorTableSize, int[] textureColorTable)
 	{
 		throw new UnsupportedOperationException();
 	}
 
-	//IN USE BY MORROWIND
+	//NOT IN USE BY MORROWIND 
 	@Override
+	@Deprecated
 	void updateCombiner(Context ctx, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc,
 			int[] combineRgbFcn, int[] combineAlphaFcn, int combineRgbScale, int combineAlphaScale)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateCombiner()");
-
-		GL2 gl = context(ctx).getGL().getGL2();
-		int[] GLrgbMode = new int[1];
-		int[] GLalphaMode = new int[1];
-		getGLCombineMode(gl, combineRgbMode, combineAlphaMode, GLrgbMode, GLalphaMode);
-		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_COMBINE_RGB, GLrgbMode[0]);
-		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_COMBINE_ALPHA, GLalphaMode[0]);
-
-		int nargs;
-		if (combineRgbMode == TextureAttributes.COMBINE_REPLACE)
-		{
-			nargs = 1;
-		}
-		else if (combineRgbMode == TextureAttributes.COMBINE_INTERPOLATE)
-		{
-			nargs = 3;
-		}
-		else
-		{
-			nargs = 2;
-		}
-
-		for (int i = 0; i < nargs; i++)
-		{
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, _gl_combineRgbSrcIndex[i], _gl_combineSrc[combineRgbSrc[i]]);
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, _gl_combineRgbOpIndex[i], _gl_combineFcn[combineRgbFcn[i]]);
-		}
-
-		if (combineAlphaMode == TextureAttributes.COMBINE_REPLACE)
-		{
-			nargs = 1;
-		}
-		else if (combineAlphaMode == TextureAttributes.COMBINE_INTERPOLATE)
-		{
-			nargs = 3;
-		}
-		else
-		{
-			nargs = 2;
-		}
-
-		for (int i = 0; i < nargs; i++)
-		{
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, _gl_combineAlphaSrcIndex[i], _gl_combineSrc[combineAlphaSrc[i]]);
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, _gl_combineAlphaOpIndex[i], _gl_combineFcn[combineAlphaFcn[i]]);
-		}
-
-		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_RGB_SCALE, combineRgbScale);
-		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_ALPHA_SCALE, combineAlphaScale);
+		throw new UnsupportedOperationException();
 	}
 
 	// Helper routines for above
-	//IN USE BY MORROWIND
+	//IN USE BY MORROWIND 
+	@Deprecated
 	private void getGLCombineMode(GL gl, int combineRgbMode, int combineAlphaMode, int[] GLrgbMode, int[] GLalphaMode)
 	{
-		switch (combineRgbMode)
-		{
-		case TextureAttributes.COMBINE_REPLACE:
-			GLrgbMode[0] = GL.GL_REPLACE;
-			break;
-		case TextureAttributes.COMBINE_MODULATE:
-			GLrgbMode[0] = GL2.GL_MODULATE;
-			break;
-		case TextureAttributes.COMBINE_ADD:
-			GLrgbMode[0] = GL2.GL_ADD;
-			break;
-		case TextureAttributes.COMBINE_ADD_SIGNED:
-			GLrgbMode[0] = GL2.GL_ADD_SIGNED;
-			break;
-		case TextureAttributes.COMBINE_SUBTRACT:
-			GLrgbMode[0] = GL2.GL_SUBTRACT;
-			break;
-		case TextureAttributes.COMBINE_INTERPOLATE:
-			GLrgbMode[0] = GL2.GL_INTERPOLATE;
-			break;
-		case TextureAttributes.COMBINE_DOT3:
-			GLrgbMode[0] = GL2.GL_DOT3_RGB;
-			break;
-		default:
-			break;
-		}
-
-		switch (combineAlphaMode)
-		{
-		case TextureAttributes.COMBINE_REPLACE:
-			GLalphaMode[0] = GL.GL_REPLACE;
-			break;
-		case TextureAttributes.COMBINE_MODULATE:
-			GLalphaMode[0] = GL2.GL_MODULATE;
-			break;
-		case TextureAttributes.COMBINE_ADD:
-			GLalphaMode[0] = GL2.GL_ADD;
-			break;
-		case TextureAttributes.COMBINE_ADD_SIGNED:
-			GLalphaMode[0] = GL2.GL_ADD_SIGNED;
-			break;
-		case TextureAttributes.COMBINE_SUBTRACT:
-			GLalphaMode[0] = GL2.GL_SUBTRACT;
-			break;
-		case TextureAttributes.COMBINE_INTERPOLATE:
-			GLalphaMode[0] = GL2.GL_INTERPOLATE;
-			break;
-		case TextureAttributes.COMBINE_DOT3:
-			// dot3 will only make sense for alpha if rgb is also
-			// doing dot3. So if rgb is not doing dot3, fallback to replace
-			if (combineRgbMode == TextureAttributes.COMBINE_DOT3)
-			{
-				GLrgbMode[0] = GL2.GL_DOT3_RGBA;
-			}
-			else
-			{
-				GLalphaMode[0] = GL.GL_REPLACE;
-			}
-			break;
-		default:
-			break;
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	// mapping from java enum to gl enum
@@ -3596,6 +2704,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	//NOT IN USE BY MORROWIND
+	@Deprecated
 	private void updateTextureLodOffset(Context ctx, int target, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
 		throw new UnsupportedOperationException();
@@ -3617,6 +2726,7 @@ class JoglPipeline extends Pipeline
 	//
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void bindTexture3D(Context ctx, int objectId, boolean enable)
 	{
 		throw new UnsupportedOperationException();
@@ -3624,26 +2734,26 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height, int depth,
 			int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
 	{
-
 		throw new UnsupportedOperationException();
 	}
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DSubImage(Context ctx, int level, int xoffset, int yoffset, int zoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int imgZOffset, int tilew, int tileh, int width, int height, int depth, int dataType,
 			Object data, boolean useAutoMipMap)
 	{
-
 		throw new UnsupportedOperationException();
-
 	}
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
 	{
 		throw new UnsupportedOperationException();
@@ -3651,6 +2761,7 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
 		throw new UnsupportedOperationException();
@@ -3658,6 +2769,7 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
 			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
 	{
@@ -3666,6 +2778,7 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DFilterModes(Context ctx, int minFilter, int magFilter)
 	{
 		throw new UnsupportedOperationException();
@@ -3673,6 +2786,7 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
 		throw new UnsupportedOperationException();
@@ -3680,6 +2794,7 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
 		throw new UnsupportedOperationException();
@@ -3687,6 +2802,7 @@ class JoglPipeline extends Pipeline
 
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void updateTexture3DAnisotropicFilter(Context ctx, float degree)
 	{
 		throw new UnsupportedOperationException();
@@ -4762,6 +3878,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	//NOT IN USE BY MORROWIND
 	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
 	{
@@ -4770,6 +3887,7 @@ class JoglPipeline extends Pipeline
 
 	// This is the native for creating an offscreen buffer
 	@Override
+	@Deprecated
 	//NOT IN USE BY MORROWIND
 	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
 	{
@@ -4778,6 +3896,7 @@ class JoglPipeline extends Pipeline
 
 	// 'destroyContext' is called first if context exists
 	@Override
+	@Deprecated
 	//NOT IN USE BY MORROWIND
 	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
 	{
@@ -4786,6 +3905,7 @@ class JoglPipeline extends Pipeline
 
 	// This is the native for reading the image from the offscreen buffer
 	@Override
+	@Deprecated
 	//NOT IN USE BY MORROWIND
 	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
 	{
@@ -4846,6 +3966,7 @@ class JoglPipeline extends Pipeline
 
 	// This is the native method for doing accumulation.
 	@Override
+	@Deprecated
 	void accum(Context ctx, float value)
 	{
 		throw new UnsupportedOperationException();
@@ -4853,6 +3974,7 @@ class JoglPipeline extends Pipeline
 
 	// This is the native method for doing accumulation return.
 	@Override
+	@Deprecated
 	void accumReturn(Context ctx)
 	{
 		throw new UnsupportedOperationException();
@@ -4860,6 +3982,7 @@ class JoglPipeline extends Pipeline
 
 	// This is the native method for clearing the accumulation buffer.
 	@Override
+	@Deprecated
 	void clearAccum(Context ctx)
 	{
 		throw new UnsupportedOperationException();
@@ -4883,6 +4006,7 @@ class JoglPipeline extends Pipeline
 	// Native method for decal 1st child setup
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	boolean decal1stChildSetup(Context ctx)
 	{
 		throw new UnsupportedOperationException();
@@ -4891,6 +4015,7 @@ class JoglPipeline extends Pipeline
 	// Native method for decal nth child setup
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void decalNthChildSetup(Context ctx)
 	{
 		throw new UnsupportedOperationException();
@@ -4899,6 +4024,7 @@ class JoglPipeline extends Pipeline
 	// Native method for decal reset
 	//NOT IN USE BY MORROWIND
 	@Override
+	@Deprecated
 	void decalReset(Context ctx, boolean depthBufferEnable)
 	{
 		throw new UnsupportedOperationException();
@@ -5386,6 +4512,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND
 	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
 			float mapMinY, float mapMaxY, boolean useBilinearFilter)
@@ -5395,6 +4522,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND
 	void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
 			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBilinearFilter)
@@ -5404,6 +4532,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND
 	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
 			int rasterHeight, int depthWidth, int depthHeight, int depthFormat, Object depthData)
@@ -5522,6 +4651,7 @@ class JoglPipeline extends Pipeline
 
 	// used for display Lists
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND  NIO buffers prevent use (possibly by ref also)
 	void newDisplayList(Context ctx, int displayListId)
 	{
@@ -5529,6 +4659,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND  NIO buffers prevent use
 	void endDisplayList(Context ctx)
 	{
@@ -5538,6 +4669,7 @@ class JoglPipeline extends Pipeline
 	int numInvalidLists = 0;
 
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND  NIO buffers prevent use
 	void callDisplayList(Context ctx, int id, boolean isNonUniformScale)
 	{
@@ -5545,6 +4677,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	// NOT IN USE BY MORROWIND  NIO buffers prevent use
 	void freeDisplayList(Context ctx, int id)
 	{
@@ -5590,6 +4723,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	//NOT IN USE BY MORROWIND and nothing seems to call this in Canvas3D either
 	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
 			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
@@ -5598,6 +4732,7 @@ class JoglPipeline extends Pipeline
 	}
 
 	@Override
+	@Deprecated
 	//NOT IN USE BY MORROWIND and nothing seems to call this in Canvas3D either
 	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
 	{
@@ -5734,8 +4869,6 @@ class JoglPipeline extends Pipeline
 		return new int[] { major, minor };
 	}
 
-	
-
 	//Used by createNewContext above
 	private void checkTextureExtensions(Canvas3D cv, JoglContext ctx, GL gl, boolean gl13)
 	{
@@ -5753,7 +4886,6 @@ class JoglPipeline extends Pipeline
 				cv.maxTexCoordSets = tmp[0];
 			}
 		}
-		
 
 		if (gl.isExtensionAvailable("GL_ARB_texture_env_combine"))
 		{
@@ -5765,8 +4897,6 @@ class JoglPipeline extends Pipeline
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_COMBINE;
 		}
 
-		
-
 		if (gl.isExtensionAvailable("GL_ARB_texture_env_dot3") || gl.isExtensionAvailable("GL_EXT_texture_env_dot3"))
 		{
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_COMBINE_DOT3;
@@ -5777,8 +4907,6 @@ class JoglPipeline extends Pipeline
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_CUBE_MAP;
 		}
 
-	
-
 		if (gl.isExtensionAvailable("GL_EXT_texture_filter_anisotropic"))
 		{
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_ANISOTROPIC_FILTER;
@@ -5786,8 +4914,6 @@ class JoglPipeline extends Pipeline
 			gl.glGetFloatv(GL.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, tmp, 0);
 			cv.anisotropicDegreeMax = tmp[0];
 		}
-
-		
 
 		if (!VirtualUniverse.mc.enforcePowerOfTwo && gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two"))
 		{
@@ -6019,7 +5145,7 @@ class JoglPipeline extends Pipeline
 
 	// NOT IN USE BY MORROWIND
 	//used by texturemapping which is dead code and textureFillBackground, which can be dropped
-
+	@Deprecated
 	private void disableAttribFor2D(GL gl)
 	{
 		throw new UnsupportedOperationException();
@@ -6027,9 +5153,9 @@ class JoglPipeline extends Pipeline
 
 	// NOT IN USE BY MORROWIND
 	//only called by textureFillRaster which will be dropped 
+	@Deprecated
 	private void disableAttribForRaster(GL gl)
 	{
-
 		throw new UnsupportedOperationException();
 	}
 
