@@ -2375,8 +2375,13 @@ final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(ArrayList userL
 	VirtualUniverse firstFndUniv = null;
 
 	synchronized(userList) {
-	    for (int i = userList.size()-1; i >=0; i--) {
-		ms = (Shape3DRetained) userList.get(i);
+	//  for (int i = userList.size()-1; i >=0; i--) {
+		//	ms = (Shape3DRetained) userList.get(i);
+			//PJPJPJPPJPJPJPJ -- as the incoming userList is in fact now a BalancedArrayList (no get)
+			//RAISE_BUG: seeNodeComponentRetained
+			for(Object o: userList )
+			{
+				ms = (Shape3DRetained)o;
 
 		if(moreThanOneUniv == false) {
 		    if(firstFndUniv == null) {

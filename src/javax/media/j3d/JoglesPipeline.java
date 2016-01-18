@@ -4657,7 +4657,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	
-
 	// IN USE BY MORROWIND
 	private void copyTranspose(double[] src, double[] dst)
 	{

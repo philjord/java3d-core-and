@@ -190,9 +190,20 @@ private Map<String, ShaderAttributeRetained> attrs = new HashMap<String, ShaderA
 	return attrs.size();
     }
 
-
+    ///PJPJPJPJPJPJPJ need to make this a dirty system for each attribute no need to set them until they change
+    // setShaderAttributes is very expensive and called a lot, but most attributes are one time set, only time 
+    //and mvpMatrix are likely to change on each frame
+    private boolean constantUpdate = false;
+    private boolean intialUpdateDone = false;
     void updateNative(Canvas3D cv, ShaderProgramRetained shaderProgram) {
-        shaderProgram.setShaderAttributes(cv, this);
+    	//For now we call update every frame if any attribute in the set can potentially be updated
+    	// This requires callers to separate out static and dynamic attributes into sets   
+    	//TODO: nope this is rubbish leaves black bits everywhere needs a decent system
+    	//if(constantUpdate || !intialUpdateDone)
+    	{
+    		shaderProgram.setShaderAttributes(cv, this);
+    		intialUpdateDone =true;
+    	}
     }
 
 Map<String, ShaderAttributeRetained> getAttrs() {
@@ -207,6 +218,8 @@ Map<String, ShaderAttributeRetained> getAttrs() {
 	sAttrsRetained = attrs.values().toArray(sAttrsRetained);
 	for(int i=0; i < sAttrsRetained.length; i++) {
 	    sAttrsRetained[i].setLive(backgroundGroup, refCount);
+	   //PJPJPJPJ see above
+	    constantUpdate |= sAttrsRetained[i].source.getCapability(ShaderAttributeObject.ALLOW_VALUE_WRITE);	    		
 	}
 
 	super.doSetLive(backgroundGroup, refCount);

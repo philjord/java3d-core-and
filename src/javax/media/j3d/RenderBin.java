@@ -263,7 +263,8 @@ ArrayList<ArrayList<OrderedBin>> toBeAddedBinList = new ArrayList<ArrayList<Orde
  * that the same snapshot of the geometry is rendered
  * across all canvases
  */
-ArrayList<GeometryRetained> lockGeometryList = new ArrayList<GeometryRetained>(5);
+//PJPJPJPJPJ altered for even add/remove performance
+ArrayList<GeometryRetained> lockGeometryList = new BalancedArrayList<GeometryRetained>(5);
 
 
     /**
@@ -296,7 +297,9 @@ ArrayList<OrderedBin> bgOrderedBins = new ArrayList<OrderedBin>(5);
 
     // List of node components that need special processing, due to
     // extensions
-    ArrayList nodeComponentList = new ArrayList(5);
+    //PJPJPJPJ altered for even add/remove performance
+    ArrayList<ImageComponentRetained> nodeComponentList = new BalancedArrayList<ImageComponentRetained>(5);
+
 
 
     // List of node components ***for this frame*** that need special
@@ -5664,36 +5667,45 @@ void reEvaluateEnv(ArrayList<LightRetained> mLts, ArrayList<FogRetained> fogs,
 	int size;
 
 
+	 
 	// Vertex array is locked for every time renderer is run
-	size =  lockGeometryList.size();
-	for (int i = 0; i < size; i++) {
-		GeometryRetained geo = lockGeometryList.get(i);
-		geo.geomLock.getLock();
-	}
+		size =  lockGeometryList.size();
+		//PJPJPJPJ
+		//for (int i = 0; i < size; i++) {
+		//	GeometryRetained geo = lockGeometryList.get(i);
+		for (GeometryRetained geo : lockGeometryList) {	
+			geo.geomLock.getLock();
+		}
+			
+				 
 
-	// dlist is locked only when they are rebuilt
-	size = dlistLockList.size();
-	for (int i = 0; i < size ; i++) {
-		GeometryRetained geo = (GeometryRetained) dlistLockList.get(i);
-	    geo.geomLock.getLock();
+		// dlist is locked only when they are rebuilt
+		size = dlistLockList.size();
+		for (int i = 0; i < size ; i++) {
+			GeometryRetained geo = (GeometryRetained) dlistLockList.get(i);
+		    geo.geomLock.getLock();
 
-	}
+		}
 
-	// Lock all the by reference image components
-	size = nodeComponentList.size();
-	for (int i = 0; i < size; i++) {
-	    ImageComponentRetained nc = (ImageComponentRetained)nodeComponentList.get(i);
-	    nc.geomLock.getLock();
-	}
-    }
+		// Lock all the by reference image components
+		//PJPJPJPJPJ
+		//size = nodeComponentList.size();
+		//for (int i = 0; i < size; i++) {
+		//    ImageComponentRetained nc = (ImageComponentRetained)nodeComponentList.get(i);
+		for(  ImageComponentRetained nc : nodeComponentList){
+		    nc.geomLock.getLock();
+		}
+	    }
 
     // Release all geometry after rendering to the last canvas
     void releaseGeometry() {
 	int size;
 
 	size = lockGeometryList.size();
-	for (int i = 0; i < size; i++) {
-		GeometryRetained geo = lockGeometryList.get(i);
+	//PJPJPJPJPJPJ
+	//for (int i = 0; i < size; i++) {
+	//	GeometryRetained geo = lockGeometryList.get(i);
+	for (GeometryRetained geo : lockGeometryList) {	
 		geo.geomLock.unLock();
 	}
 
@@ -5705,9 +5717,11 @@ void reEvaluateEnv(ArrayList<LightRetained> mLts, ArrayList<FogRetained> fogs,
 	// Clear the display list clear list
 	dlistLockList.clear();
 	// Lock all the by reference image components
-	size =  nodeComponentList.size();
-	for (int i = 0; i < size; i++) {
-	    ImageComponentRetained nc = (ImageComponentRetained)nodeComponentList.get(i);
+	//PJPJPJPJPJ
+	//size = nodeComponentList.size();
+	//for (int i = 0; i < size; i++) {
+	//    ImageComponentRetained nc = (ImageComponentRetained)nodeComponentList.get(i);
+	for(  ImageComponentRetained nc : nodeComponentList){
 	    nc.geomLock.unLock();
 	}
     }

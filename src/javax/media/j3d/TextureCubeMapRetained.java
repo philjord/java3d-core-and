@@ -53,8 +53,9 @@ class TextureCubeMapRetained extends TextureRetained {
      */
     void initImage(int level, int face, ImageComponent image) {
 
-        // Issue 172 : call checkImageSize even for non-live setImage calls
-        checkImageSize(level, image);
+    	// Issue 172 : call checkImageSize even for non-live setImage calls
+    	//RAISE_BUG: this check doesn't accept the correct mip map numbers
+		//PJPJDXT checkImageSize(level, image);
 
 	if (this.images == null) {
             throw new IllegalArgumentException(
