@@ -65,7 +65,7 @@ class SoundScheduler extends J3dStructure {
     /**
      * The GraphicContext3D that we are currently unning in.
      */
-    GraphicsContext3D graphicsCtx = null;
+  //<AND>GraphicsContext3D graphicsCtx = null;
 
     /**
      * Maintain what reference to the last AuralAttributes found active
@@ -666,7 +666,9 @@ class SoundScheduler extends J3dStructure {
     }
 
     void processImmediateNodes(Object[] args, long referenceTime) {
-	Object command = args[0];
+    	//<AND>
+    	/*
+    	 Object command = args[0];
 	Object newNode = args[1];
 	Object oldNode = args[2];
 	Sound oldSound = (Sound)oldNode;
@@ -675,6 +677,7 @@ class SoundScheduler extends J3dStructure {
 	if (debugFlag)
 	    debugPrint(".processImmediateNodes() - action = " +
 		       action);
+	
 	switch (action) {
 	case GraphicsContext3D.ADD_SOUND :
 	case GraphicsContext3D.INSERT_SOUND :
@@ -689,7 +692,7 @@ class SoundScheduler extends J3dStructure {
 	    deleteSound((SoundRetained)oldSound.retained);
 	    addSound((SoundRetained)newSound.retained);
 	    break;
-	}
+	}*/
     }
 
 
@@ -890,11 +893,14 @@ class SoundScheduler extends J3dStructure {
 	// QUESTION: what does that mean for sound -
 	//      being applied to only ONE graphics context?
 	// GET FIRST Canvas
+	//<AND> GraphicsContext dropped
+    /*
 	Canvas3D canvas = view.getFirstCanvas();
 	if (canvas != null) {
 	    graphicsCtx = canvas.getGraphicsContext3D();
 	}
-
+     */
+	
 	// now the render loop can be run successfully
 	audioDevice3DL2 = null;
 	audioDevice3D = null;
@@ -1048,6 +1054,8 @@ class SoundScheduler extends J3dStructure {
 		nRetainedSounds++;
 	    }
 	    // XXXX: sync canvases
+	    //<AND> GraphicsContext dropped
+	    /*
 		Enumeration<Canvas3D> canvases = view.getAllCanvas3Ds();
 	    while (canvases.hasMoreElements()) {
 			Canvas3D canvas = canvases.nextElement();
@@ -1066,7 +1074,7 @@ class SoundScheduler extends J3dStructure {
 		    addPrioritizedSound((SoundRetained)sound.retained);
 		    nImmedSounds++;
 		}
-	    }
+	    }*/
 	    if (debugFlag)
 		debugPrint(" prioritizeSound , num of processed retained sounds" +
 			   nRetainedSounds);
@@ -2098,6 +2106,8 @@ class SoundScheduler extends J3dStructure {
 		// must be done before list of sound processed so that Aural Attributes
 		// that affect Sound fields can be set in AudioDevice
 		// XXXX: this is not effient if auralAttribs always the same
+		//<AND>
+		/*
 		if (sound.getInImmCtx()) {
 		    if (graphicsCtx !=null && graphicsCtx.auralAttributes !=null) {
 			aaImmed = (AuralAttributesRetained)
@@ -2108,7 +2118,8 @@ class SoundScheduler extends J3dStructure {
 			attribs = null;
 		    }
 		}
-		else {
+		else*/
+		 {
 		    attribs = aaRetained;
 		}
 		updateAuralAttribs(attribs);

@@ -573,7 +573,7 @@ public class Canvas3D extends Canvas {
 
     // The 3D Graphics context used for immediate mode rendering
     // into this canvas.
-    GraphicsContext3D graphicsContext3D = null;
+   //<AND> GraphicsContext3D graphicsContext3D = null;
     boolean waiting = false;
     boolean swapDone = false;
 
@@ -1422,7 +1422,7 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
         freeCanvasId();
 
 	ra = null;
-	graphicsContext3D = null;
+	//<AND>graphicsContext3D = null;
 
 	ctx = null;
 	// must be after removeCtx() because
@@ -1553,15 +1553,16 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
      * @return a GraphicsContext3D object that can be used for immediate
      * mode rendering to this Canvas3D.
      */
-    public GraphicsContext3D getGraphicsContext3D() {
-
+    /*public GraphicsContext3D getGraphicsContext3D() {
+    	//<AND> immediate mode dropped 
 	synchronized(gfxCreationLock) {
 	    if (graphicsContext3D == null)
 		graphicsContext3D = new GraphicsContext3D(this);
 	}
 
 	return graphicsContext3D;
-    }
+    	
+    }*/
 
     /**
      * Get the 2D graphics object associated with
@@ -1598,6 +1599,8 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
      */
     public void preRender() {
 	// Do nothing; the user overrides this to cause some action
+    	if(JoglesPipeline.VERBOSE)
+    	System.err.println("Canvas3D.preRender()");
     }
 
     /**
@@ -1615,6 +1618,8 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
      */
     public void postRender() {
 	// Do nothing; the user overrides this to cause some action
+    	if(JoglesPipeline.VERBOSE)
+        	System.err.println("Canvas3D.postRender()");
     }
 
     /**
@@ -1635,6 +1640,8 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
      */
     public void postSwap() {
 	// Do nothing; the user overrides this to cause some action
+    	if(JoglesPipeline.VERBOSE)
+        	System.err.println("Canvas3D.postSwap()");
     }
 
     /**
@@ -1664,6 +1671,8 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
      */
     public void renderField(int fieldDesc) {
 	// Do nothing; the user overrides this to cause some action
+    	if(JoglesPipeline.VERBOSE)
+        	System.err.println("Canvas3D.renderField()");
     }
 
     /**
@@ -2334,7 +2343,8 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
 	if (!firstPaintCalled) {
 	    return;
 	}
-
+	//<AND>
+	/*
 	if (view != null && graphicsContext3D != null) {
 	    if ((view.universe != null) &&
 		(Thread.currentThread() == view.universe.behaviorScheduler)) {
@@ -2343,7 +2353,7 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
 		graphicsContext3D.sendRenderMessage(true, GraphicsContext3D.SWAP, null, null);
 	    }
 	    graphicsContext3D.runMonitor(J3dThread.WAIT);
-	}
+	}*/
     }
 
     void doSwap() {
@@ -2354,7 +2364,7 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
 		    synchronized (drawingSurfaceObject) {
 			if (validCtx) {
 			    if (!drawingSurfaceObject.renderLock()) {
-				graphicsContext3D.runMonitor(J3dThread.NOTIFY);
+			    	//<AND>graphicsContext3D.runMonitor(J3dThread.NOTIFY);
 				return;
 			    }
 			    this.syncRender(ctx, true);
@@ -2370,7 +2380,7 @@ ArrayList<TextureRetained> textureIDResourceTable = new ArrayList<TextureRetaine
 	// Increment the elapsedFrame for the behavior structure
 	// to trigger any interpolators
 	view.universe.behaviorStructure.incElapsedFrames();
-	graphicsContext3D.runMonitor(J3dThread.NOTIFY);
+	//<AND>graphicsContext3D.runMonitor(J3dThread.NOTIFY);
     }
 
     /**

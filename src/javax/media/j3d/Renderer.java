@@ -684,7 +684,8 @@ class Renderer extends J3dThread
 						VirtualUniverse.mc.sendRunMessage(canvas.view, J3dThread.RENDER_THREAD);
 						m[nmesg++].decRefcount();
 					}
-					else if (renderType == J3dMessage.RENDER_IMMEDIATE)
+					//<AND>
+					/*else if (renderType == J3dMessage.RENDER_IMMEDIATE)
 					{
 						int command = ((Integer) m[nmesg].args[1]).intValue();
 						//System.err.println("command= " + command);
@@ -809,7 +810,7 @@ class Renderer extends J3dThread
 						}
 
 						m[nmesg++].decRefcount();
-					}
+					}*/
 					else
 					{ // retained mode rendering
 						long startRenderTime = 0L;

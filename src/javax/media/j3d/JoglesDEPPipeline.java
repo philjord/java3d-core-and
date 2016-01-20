@@ -484,6 +484,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	}
 
 	// This is the native method for doing accumulation.
+	//I BELIEVE THIS IS ABOUT FULL SCREEN AA
 	@Override
 	@Deprecated
 	void accum(Context ctx, float value)
