@@ -331,6 +331,9 @@ public class Appearance extends NodeComponent {
      */
     @Override
     void createRetained() {
+    	
+    	new Throwable("Normal Appearance in use!!! ").printStackTrace();
+    	
 	this.retained = new AppearanceRetained();
 	this.retained.setSource(this);
     }

@@ -1091,6 +1091,7 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 
 		ShaderProgramId shaderProgramId = spData.getShaderProgramId();
 
+		
 		Iterator<ShaderAttributeRetained> attrs = attributeSet.getAttrs().values().iterator();
 		while (attrs.hasNext())
 		{
@@ -1299,5 +1300,4 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 		// type of shader attribute
 		private int type;
 	}
-
 }

@@ -206,6 +206,18 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// ---------------------------------------------------------------------
 
 	//
+	// ModelClipRetained methods
+	//
+	@Override
+	@Deprecated
+	void updateModelClip(Context ctx, int planeNum, boolean enableFlag, double A, double B, double C, double D)
+	{
+		throw new UnsupportedOperationException();
+	}
+
+	// ---------------------------------------------------------------------
+
+	//
 	// PointAttributesRetained methods
 	//
 	//NOT IN USE BY MORROWIND - 

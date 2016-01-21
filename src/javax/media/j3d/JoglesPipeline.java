@@ -24,7 +24,8 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.vecmath.Color3f;
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Matrix4d;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;
@@ -68,7 +69,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Currently prints for entry points not yet implemented
 	private static final boolean DEBUG = true;
 	// Currently prints for entry points already implemented
-	static final boolean VERBOSE = false;
+	static boolean VERBOSE = false;
+	// prints key moments in the render operations on a frame
+	private boolean RENDER_ORDER_OUTPUT = false;
 	// Debugging output for graphics configuration selection
 	private static final boolean DEBUG_CONFIG = false;
 	// Prints extra debugging information
@@ -103,7 +106,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//HERE!!!! is where we get a much better profile!
 		//profile = GLProfile.getMaxFixedFunc(true);
 		profile = GLProfile.get(GLProfile.GL2GL3);
-		// TODO: finish this with any other needed initialization
+		// TODO: finish this with any other needed initialization		 
 	}
 
 	// ---------------------------------------------------------------------
@@ -253,8 +256,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int strip_len, int[] start_array)
 	{
 		JoglContext ctx = (JoglContext) absCtx;
-		GLContext context = context(ctx);
-		GL2 gl = context.getGL().getGL2();
+		GL2 gl = context(ctx).getGL().getGL2();
+
+		setFFPAttributes(ctx, gl);
 
 		boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 		boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -408,6 +412,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 				break;
 			}
 		}
+
+		if (RENDER_ORDER_OUTPUT)
+			System.out.println("executeGeometryArrayVA glDrawArrays");
 
 		// clean up if we turned on normalize
 		if (isNonUniformScale)
@@ -622,6 +629,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglContext ctx = (JoglContext) absCtx;
 		GL2 gl = context(ctx).getGL().getGL2();
 
+		setFFPAttributes(ctx, gl);
+
 		boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 		boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
 		boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
@@ -763,6 +772,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
+		if (RENDER_ORDER_OUTPUT)
+			System.out.println("executeIndexedGeometryArrayVA glDrawElements");
+
 		unlockArray(gl);
 
 		// clean up if we turned on normalize
@@ -785,6 +797,95 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//----------------------------------------------------------------------
 	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
 	//
+	
+	
+	
+	//<AND> new for andy all the FFP uniforms handed across
+		// this demands that the sources of this data have been called before 
+		// the shader attributes updates, but I have not checked this yet
+		//Order of calls:
+		//Sync from previous, in other words start of frame
+		//Projection set
+		//If lights need updating 
+		//		View set and Model set to identity 
+		//		Update of light values set
+		//If sceneAmbient needs updating
+		//		call scene ambient update
+		//Shader program Id set (we are doing a geometry now) 
+		//If material != null Material set  
+		//View set and Model set (Model being for this geometry)
+		//Geometry itself set and glDraw or glDrawElements called
+	
+	
+	/**
+	 * Over time we have had things recorded and in FFP they are considered current state
+	 * in programmable we have to push them across manually each time
+	 * @param gl
+	 */
+	private void setFFPAttributes(JoglContext ctx, GL2 gl)
+	{
+		if (ctx.getShaderProgram() != null)
+		{
+			int shaderProgramId = ctx.getShaderProgram().getValue();
+		
+			if (RENDER_ORDER_OUTPUT)
+				System.out.println("setFFPAttributes for program " + shaderProgramId);
+
+			// if so give it the fixed gear
+			int uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
+			gl.glUniformMatrix4fvARB(uniformLocation, 1, false, toArray(currentProjMat), 0);
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
+			gl.glUniformMatrix4fvARB(uniformLocation, 1, false, toArray(currentModelViewMat), 0);
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
+			gl.glUniformMatrix3fvARB(uniformLocation, 1, false, toArray(currentNormalMat), 0);
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
+			gl.glUniform4fARB(uniformLocation, currentMaterial.diffuse[0], currentMaterial.diffuse[1], currentMaterial.diffuse[2],
+					currentMaterial.diffuse[3]);
+
+			/*dirLight
+			pointLight
+			spotLight*/
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
+			gl.glUniform4fARB(uniformLocation, ambientColor[0], ambientColor[1], ambientColor[2], ambientColor[3]);
+
+			//For now using first point light, but gonna need to put em all in
+			LightData l0 = null;
+			if (pointLight[0] != null)
+				l0 = pointLight[0];
+			else if (dirLight[0] != null)
+				l0 = dirLight[0];
+
+			if (l0 != null)
+			{
+				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
+				gl.glUniform3fARB(uniformLocation, l0.pos[0], l0.pos[1], l0.pos[2]);
+				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
+				gl.glUniform4fARB(uniformLocation, l0.diffuse[0], l0.diffuse[1], l0.diffuse[2], l0.diffuse[3]);
+			}
+
+			//also must check for uniforms not existing, by collecting them all in their own variable
+
+			//must do all the other parts see PhysAppearance for example			
+
+			//SkyBox, Cube, HudShape,  WaterApp and land and landfar shaders must be kept up to date
+
+			//water app shows multiple light calculations
+
+			//gl_TextureMatrix[0]  which is the transform scale offset pair
+
+			// clear out current shader ready for next set
+			//currentShaderProgramId = -1;
+		}
+		else
+		{
+			System.err.println("Execute called with no shader Program in use!");
+		}
+
+	}
 
 	//IN USE BY MORROWIND
 	private void resetVertexAttrs(GL gl, JoglContext ctx, int vertexAttrCount)
@@ -1334,11 +1435,32 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.useGLSLShaderProgram()");
-
+		
+		if(shaderProgramId == null )
+			System.err.println("Null shader passed for use");
+			
 		GL2 gl = context(ctx).getGL().getGL2();
 		gl.glUseProgramObjectARB(unbox(shaderProgramId));
 		((JoglContext) ctx).setShaderProgram((JoglShaderObject) shaderProgramId);
+
 		return null;
+	}
+
+	private static float[] toArray(Matrix4d m)
+	{
+
+		return new float[] { (float) m.m00, (float) m.m01, (float) m.m02, (float) m.m03, //
+				(float) m.m10, (float) m.m11, (float) m.m12, (float) m.m13, //
+				(float) m.m20, (float) m.m21, (float) m.m22, (float) m.m23, //
+				(float) m.m30, (float) m.m31, (float) m.m32, (float) m.m33, };
+	}
+
+	private static float[] toArray(Matrix3d m)
+	{
+
+		return new float[] { (float) m.m00, (float) m.m01, (float) m.m02, //
+				(float) m.m10, (float) m.m11, (float) m.m12, //
+				(float) m.m20, (float) m.m21, (float) m.m22, };
 	}
 
 	//----------------------------------------------------------------------
@@ -1485,6 +1607,27 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// ---------------------------------------------------------------------
 
+	//Light data recorded to be handed into shader as uniform on next update
+	//see https://www.opengl.org/sdk/docs/man2/ glLight
+	// for usage details
+	private class LightData
+	{
+		float[] ambient = new float[4];
+		float[] diffuse = new float[4];
+		float[] specular = new float[4];
+		float[] pos = new float[4];
+		float[] spotDir = new float[4];
+		float GL_CONSTANT_ATTENUATION;
+		float GL_LINEAR_ATTENUATION;
+		float GL_QUADRATIC_ATTENUATION;
+		float GL_SPOT_EXPONENT;
+		float GL_SPOT_CUTOFF;
+	}
+
+	private LightData[] dirLight = new LightData[8];
+	private LightData[] pointLight = new LightData[8];
+	private LightData[] spotLight = new LightData[8];
+
 	//
 	// DirectionalLightRetained methods
 	//
@@ -1494,7 +1637,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	@Override
 	void updateDirectionalLight(Context ctx, int lightSlot, float red, float green, float blue, float dirx, float diry, float dirz)
 	{
-		if (VERBOSE)
+		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.updateDirectionalLight()");
 
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -1516,11 +1659,34 @@ class JoglesPipeline extends JoglesDEPPipeline
 		values[3] = 0.0f;
 		gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
 		gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
-		gl.glLightf(lightNum, GL2.GL_CONSTANT_ATTENUATION, 1.0f);
+		gl.glLightf(lightNum, GL2.GL_POSITION, 1.0f);
 		gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, 0.0f);
 		gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, 0.0f);
 		gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, 0.0f);
 		gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, 180.0f);
+
+		if (dirLight[lightSlot] == null)
+			dirLight[lightSlot] = new LightData();
+
+		dirLight[lightSlot].diffuse[0] = red;
+		dirLight[lightSlot].diffuse[1] = green;
+		dirLight[lightSlot].diffuse[2] = blue;
+		dirLight[lightSlot].diffuse[3] = 1.0f;
+		dirLight[lightSlot].specular[0] = red;
+		dirLight[lightSlot].specular[1] = green;
+		dirLight[lightSlot].specular[2] = blue;
+		dirLight[lightSlot].specular[3] = 1.0f;
+		dirLight[lightSlot].pos[0] = -dirx;
+		dirLight[lightSlot].pos[1] = -diry;
+		dirLight[lightSlot].pos[2] = -dirz;
+		dirLight[lightSlot].pos[3] = 0.0f;//0 means directional light
+		dirLight[lightSlot].ambient = black;// odd		 
+		//dirLight[lightSlot].GL_POSITION = 1.0f; // what is this?
+		dirLight[lightSlot].GL_CONSTANT_ATTENUATION = 1.0f;
+		dirLight[lightSlot].GL_LINEAR_ATTENUATION = 0.0f;
+		dirLight[lightSlot].GL_QUADRATIC_ATTENUATION = 0.0f;
+		dirLight[lightSlot].GL_SPOT_EXPONENT = 0.0f;
+		dirLight[lightSlot].GL_SPOT_CUTOFF = 180.0f;
 	}
 
 	// ---------------------------------------------------------------------
@@ -1533,7 +1699,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	void updatePointLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
 			float posx, float posy, float posz)
 	{
-		if (VERBOSE)
+		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.updatePointLight()");
 
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -1559,6 +1725,28 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, attenz);
 		gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, 0.0f);
 		gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, 180.0f);
+
+		if (pointLight[lightSlot] == null)
+			pointLight[lightSlot] = new LightData();
+
+		pointLight[lightSlot].diffuse[0] = red;
+		pointLight[lightSlot].diffuse[1] = green;
+		pointLight[lightSlot].diffuse[2] = blue;
+		pointLight[lightSlot].diffuse[3] = 1.0f;
+		pointLight[lightSlot].specular[0] = red;
+		pointLight[lightSlot].specular[1] = green;
+		pointLight[lightSlot].specular[2] = blue;
+		pointLight[lightSlot].specular[3] = 1.0f;
+		pointLight[lightSlot].pos[0] = posx;
+		pointLight[lightSlot].pos[1] = posy;
+		pointLight[lightSlot].pos[2] = posz;
+		pointLight[lightSlot].pos[3] = 1.0f;// 1 mean pos not dir
+		pointLight[lightSlot].ambient = black;// odd				
+		pointLight[lightSlot].GL_CONSTANT_ATTENUATION = attenx;
+		pointLight[lightSlot].GL_LINEAR_ATTENUATION = atteny;
+		pointLight[lightSlot].GL_QUADRATIC_ATTENUATION = attenz;
+		pointLight[lightSlot].GL_SPOT_EXPONENT = 0.0f;
+		pointLight[lightSlot].GL_SPOT_CUTOFF = 180.0f;
 	}
 
 	// ---------------------------------------------------------------------
@@ -1571,7 +1759,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	void updateSpotLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
 			float posx, float posy, float posz, float spreadAngle, float concentration, float dirx, float diry, float dirz)
 	{
-		if (VERBOSE)
+		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.updateSpotLight()");
 
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -1601,6 +1789,33 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glLightfv(lightNum, GL2.GL_SPOT_DIRECTION, values, 0);
 		gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, concentration);
 		gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, (float) (spreadAngle * 180.0f / Math.PI));
+
+		if (pointLight[lightSlot] == null)
+			pointLight[lightSlot] = new LightData();
+
+		spotLight[lightSlot].diffuse[0] = red;
+		spotLight[lightSlot].diffuse[1] = green;
+		spotLight[lightSlot].diffuse[2] = blue;
+		spotLight[lightSlot].diffuse[3] = 1.0f;
+		spotLight[lightSlot].specular[0] = red;
+		spotLight[lightSlot].specular[1] = green;
+		spotLight[lightSlot].specular[2] = blue;
+		spotLight[lightSlot].specular[3] = 1.0f;
+		spotLight[lightSlot].pos[0] = posx;
+		spotLight[lightSlot].pos[1] = posy;
+		spotLight[lightSlot].pos[2] = posz;
+		spotLight[lightSlot].pos[3] = 1.0f;// 1 mean pos not dir
+		spotLight[lightSlot].ambient = black;// odd		 
+		spotLight[lightSlot].GL_CONSTANT_ATTENUATION = attenx;
+		spotLight[lightSlot].GL_LINEAR_ATTENUATION = atteny;
+		spotLight[lightSlot].GL_QUADRATIC_ATTENUATION = attenz;
+		spotLight[lightSlot].spotDir[0] = dirx;
+		spotLight[lightSlot].spotDir[1] = diry;
+		spotLight[lightSlot].spotDir[2] = dirx;
+		spotLight[lightSlot].spotDir[3] = 1.0f;
+		spotLight[lightSlot].GL_SPOT_EXPONENT = concentration;
+		spotLight[lightSlot].GL_SPOT_CUTOFF = (float) (spreadAngle * 180.0f / Math.PI);
+
 	}
 
 	// ---------------------------------------------------------------------
@@ -1712,6 +1927,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// ---------------------------------------------------------------------
 
+	private class MaterialData
+	{
+		private boolean lightEnabled = true;
+		private float[] emission = new float[3];
+		private float[] ambient = new float[3];
+		private float[] specular = new float[3];
+		private float[] diffuse = new float[4];
+	}
+
+	private MaterialData currentMaterial = new MaterialData();
+
 	//
 	// MaterialRetained methods
 	//
@@ -1731,14 +1957,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// all material gear removed
 
 		// so possibly I need to just forcibly add material attributes now and assume the shader has them??
-
-		// in my shaderAppearance code I only touch this from material
-		//mat.setAmbientColor(new Color3f(0.4f, 0.4f, 0.4f));
-		//mat.setDiffuseColor(new Color3f(0.8f, 0.8f, 0.8f));
-		//mat.setSpecularColor(new Color3f(1.0f, 1.0f, 1.0f));
-		//mat.setShininess(33f);//33 cos jonwd7 says it's a good default
-
-		// and these are used by zz_ffp shaders happily
 
 		gl.glMaterialf(GL.GL_FRONT_AND_BACK, GL2.GL_SHININESS, shininess);
 		switch (colorTarget)
@@ -1799,50 +2017,32 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			gl.glDisable(GL2.GL_LIGHTING);
 		}
+
+		currentMaterial.lightEnabled = lightEnable;
+		currentMaterial.emission[0] = eRed;
+		currentMaterial.emission[1] = eGreen;
+		currentMaterial.emission[2] = eBlue;
+		currentMaterial.ambient[0] = aRed;
+		currentMaterial.ambient[1] = aGreen;
+		currentMaterial.ambient[2] = aBlue;
+		currentMaterial.specular[0] = sRed;
+		currentMaterial.specular[1] = sGreen;
+		currentMaterial.specular[2] = sBlue;
+		currentMaterial.diffuse[0] = dRed;
+		currentMaterial.diffuse[1] = dGreen;
+		currentMaterial.diffuse[2] = dBlue;
+		currentMaterial.diffuse[3] = alpha;
+
 	}
 
-	// ---------------------------------------------------------------------
-
-	//
-	// ModelClipRetained methods
-	//
-	//NOT IN USE BY MORROWIND - but might be handy one day
-	@Override
-	void updateModelClip(Context ctx, int planeNum, boolean enableFlag, double A, double B, double C, double D)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.updateModelClip()");
-
-		GL2 gl = context(ctx).getGL().getGL2();
-
-		//gone
-		//http://stackoverflow.com/questions/7408855/clipping-planes-in-opengl-es-2-0
-
-		double[] equation = new double[4];
-		int pl = GL2.GL_CLIP_PLANE0 + planeNum;
-
-		// OpenGL clip planes are opposite to J3d clip planes
-		if (enableFlag)
-		{
-			equation[0] = -A;
-			equation[1] = -B;
-			equation[2] = -C;
-			equation[3] = -D;
-			gl.glClipPlane(pl, DoubleBuffer.wrap(equation));
-			gl.glEnable(pl);
-		}
-		else
-		{
-			gl.glDisable(pl);
-		}
-	}
+	
 
 	// ---------------------------------------------------------------------
 
 	//
 	// PointAttributesRetained methods
 	//
-	//NOT IN USE BY MORROWIND - 
+	//NOT IN USE BY MORROWIND - interesting as Points are how particles are done properly!!
 	@Override
 	@Deprecated
 	void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing)
@@ -3325,7 +3525,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Canvas3D methods - native wrappers
 	//
 
-	// Mac/JRE 7; called from Renderer when resizing is dedected
+	// Mac/JRE 7; called from Renderer when resizing is detected
 	// Implementation follows the approach in jogamp.opengl.GLDrawableHelper.resizeOffscreenDrawable(..)
 	@Override
 	//IN USE BY MORROWIND
@@ -3851,12 +4051,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
+	//<AND>
+	private float[] ambientColor = new float[4];
+
 	// native method for setting scene ambient
 	//IN USE BY MORROWIND
 	@Override
 	void setSceneAmbient(Context ctx, float red, float green, float blue)
 	{
-		if (VERBOSE)
+		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.setSceneAmbient()");
 
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -3869,6 +4072,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		color[2] = blue;
 		color[3] = 1.0f;
 		gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, color, 0);
+		ambientColor = color;
+
 	}
 
 	// native method for disabling fog
@@ -4146,6 +4351,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glFinish();
 		else
 			gl.glFlush();
+
+		if (RENDER_ORDER_OUTPUT)
+			System.out.println("____________SYNC_____________________");
+
 	}
 
 	// The native method that sets this ctx to be the current one
@@ -4212,6 +4421,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	}
 
+
+	// applied in the executeGeometry call
+	// note may be reused if not updated between execute calls
+	
+	//current ModelView Matrix for use in execute
+	private Matrix4d currentModelViewMat = new Matrix4d();
+	//current Normal Matrix for use in execute
+	private Matrix3d currentNormalMat = new Matrix3d();
+	
+	//TODO: possibly I should add ProjModelView like FFP has?	
+	
+	//deburners only
+	private Matrix4d v = new Matrix4d();
+	private Matrix4d m = new Matrix4d();
+
 	// The native method for setting the ModelView matrix.
 	@Override
 	// IN USE BY MORROWIND
@@ -4219,27 +4443,53 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setModelViewMatrix()");
-		GLContext context = context(ctx);
-		GL2 gl = context.getGL().getGL2();
+
 		// OK major update of mv part of the uniform matrixes for the shader
+		/*		GL2 gl = context(ctx).getGL().getGL2();
+				
+		
+				gl.glMatrixMode(GL2.GL_MODELVIEW);
+		
+				if (isExtensionAvailableGL_VERSION_1_3(gl))
+				{
+					gl.glLoadTransposeMatrixd(viewMatrix, 0);
+					gl.glMultTransposeMatrixd(modelMatrix, 0);
+				}
+				else
+				{
+					double[] v = new double[16];
+					double[] m = new double[16];
+					copyTranspose(viewMatrix, v);
+					copyTranspose(modelMatrix, m);
+					gl.glLoadMatrixd(v, 0);
+					gl.glMultMatrixd(m, 0);
+				}*/
 
-		gl.glMatrixMode(GL2.GL_MODELVIEW);
+		//for debug
+		//float[] mvfs = new float[16];
+		//gl.glGetFloatv(GL2.GL_MODELVIEW_MATRIX, mvfs, 0);
 
-		if (isExtensionAvailableGL_VERSION_1_3(gl))
-		{
-			gl.glLoadTransposeMatrixd(viewMatrix, 0);
-			gl.glMultTransposeMatrixd(modelMatrix, 0);
-		}
-		else
-		{
-			double[] v = new double[16];
-			double[] m = new double[16];
-			copyTranspose(viewMatrix, v);
-			copyTranspose(modelMatrix, m);
-			gl.glLoadMatrixd(v, 0);
-			gl.glMultMatrixd(m, 0);
-		}
+		if (RENDER_ORDER_OUTPUT)
+			System.out.println("recording ModelViewMatrix");
+
+		v.set(viewMatrix);
+		v.transpose();
+		m.set(modelMatrix);
+		m.transpose();
+		currentModelViewMat.mul(m, v);
+
+		//glNormalMatrix = transpose(inverse(vm));
+		// use only the upper left as t is a 3x3 rotation matrix
+		currentNormalMat.set(new double[] { currentModelViewMat.m00, currentModelViewMat.m01, currentModelViewMat.m02,
+				currentModelViewMat.m10, currentModelViewMat.m11, currentModelViewMat.m12, currentModelViewMat.m20, currentModelViewMat.m21,
+				currentModelViewMat.m22 });
+		currentNormalMat.invert();
+		currentNormalMat.transpose();
+
 	}
+
+	//current Projection Matrix for use in execute
+	private Matrix4d currentProjMat = new Matrix4d();
 
 	// The native method for setting the Projection matrix.
 	@Override
@@ -4248,8 +4498,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setProjectionMatrix()");
-		GLContext context = context(ctx);
-		GL2 gl = context.getGL().getGL2();
+		GL2 gl = context(ctx).getGL().getGL2();
 		// OK major update of p part of the uniform matrixes for the shader
 
 		gl.glMatrixMode(GL2.GL_PROJECTION);
@@ -4264,6 +4513,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			projMatrix[10] *= -1.0;
 			projMatrix[11] *= -1.0;
 			gl.glLoadTransposeMatrixd(projMatrix, 0);
+
+			//for shaders later
+			currentProjMat.set(projMatrix);
+			currentProjMat.transpose();
+
 			projMatrix[8] *= -1.0;
 			projMatrix[9] *= -1.0;
 			projMatrix[10] *= -1.0;
@@ -4271,16 +4525,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else
 		{
-			double[] p = new double[16];
-			copyTranspose(projMatrix, p);
+			double[] pm = new double[16];
+			copyTranspose(projMatrix, pm);
 			// Invert the Z value in clipping coordinates because OpenGL uses
 			// left-handed clipping coordinates, while Java3D defines right-handed
 			// coordinates everywhere.
-			p[2] *= -1.0;
-			p[6] *= -1.0;
-			p[10] *= -1.0;
-			p[14] *= -1.0;
-			gl.glLoadMatrixd(p, 0);
+			pm[2] *= -1.0;
+			pm[6] *= -1.0;
+			pm[10] *= -1.0;
+			pm[14] *= -1.0;
+			gl.glLoadMatrixd(pm, 0);
+
+			//for shaders later
+			currentProjMat.set(pm);
+
 		}
 	}
 
