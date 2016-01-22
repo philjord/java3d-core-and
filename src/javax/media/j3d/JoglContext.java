@@ -71,32 +71,32 @@ class JoglContext implements Context {
   void    setHasMultisample(boolean val){ hasMultisample = val;       }
 
 void vertexAttrPointer(GL gl, int index, int size, int type, int stride, Buffer pointer) {
-	gl.getGL2().glVertexAttribPointerARB(index + glslVertexAttrOffset, size,
+	gl.getGL2().glVertexAttribPointer(index + glslVertexAttrOffset, size,
 	                                     type, false, stride, pointer);
 }
 
 void enableVertexAttrArray(GL gl, int index) {
-	gl.getGL2().glEnableVertexAttribArrayARB(index + glslVertexAttrOffset);
+	gl.getGL2().glEnableVertexAttribArray(index + glslVertexAttrOffset);
 }
 
 void disableVertexAttrArray(GL gl, int index) {
-	gl.getGL2().glDisableVertexAttribArrayARB(index + glslVertexAttrOffset);
+	gl.getGL2().glDisableVertexAttribArray(index + glslVertexAttrOffset);
 }
 
 void vertexAttr1fv(GL gl, int index, FloatBuffer buf) {
-	gl.getGL2().glVertexAttrib1fvARB(index + glslVertexAttrOffset, buf);
+	gl.getGL2().glVertexAttrib1fv(index + glslVertexAttrOffset, buf);
 }
 
 void vertexAttr2fv(GL gl, int index, FloatBuffer buf) {
-	gl.getGL2().glVertexAttrib2fvARB(index + glslVertexAttrOffset, buf);
+	gl.getGL2().glVertexAttrib2fv(index + glslVertexAttrOffset, buf);
 }
 
 void vertexAttr3fv(GL gl, int index, FloatBuffer buf) {
-	gl.getGL2().glVertexAttrib3fvARB(index + glslVertexAttrOffset, buf);
+	gl.getGL2().glVertexAttrib3fv(index + glslVertexAttrOffset, buf);
 }
 
 void vertexAttr4fv(GL gl, int index, FloatBuffer buf) {
-	gl.getGL2().glVertexAttrib4fvARB(index + glslVertexAttrOffset, buf);
+	gl.getGL2().glVertexAttrib4fv(index + glslVertexAttrOffset, buf);
 }
 
   // Used in vertex attribute implementation
