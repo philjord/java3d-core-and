@@ -850,7 +850,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	 * in programmable we have to push them across manually each time
 	 * @param gl
 	 */
-	private void setFFPAttributes(JoglContext ctx, GL2 gl)
+	private void setFFPAttributes(JoglContext ctx, GL2ES2 gl)
 	{
 		if (ctx.getShaderProgram() != null)
 		{
@@ -861,24 +861,25 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			// if so give it the fixed gear
 			int uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
-			gl.glUniformMatrix4fvARB(uniformLocation, 1, false, toArray(currentProjMat), 0);
+			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(currentProjMat), 0);
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
-			gl.glUniformMatrix4fvARB(uniformLocation, 1, false, toArray(currentModelViewMat), 0);
+			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(currentModelViewMat), 0);
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
-			gl.glUniformMatrix3fvARB(uniformLocation, 1, false, toArray(currentNormalMat), 0);
+			gl.glUniformMatrix3fv(uniformLocation, 1, false, toArray(currentNormalMat), 0);
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
-			gl.glUniform4fARB(uniformLocation, currentMaterial.diffuse[0], currentMaterial.diffuse[1], currentMaterial.diffuse[2],
+			gl.glUniform4f(uniformLocation, currentMaterial.diffuse[0], currentMaterial.diffuse[1], currentMaterial.diffuse[2],
 					currentMaterial.diffuse[3]);
 
 			/*dirLight
 			pointLight
 			spotLight*/
+			//currentEnabledLights
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
-			gl.glUniform4fARB(uniformLocation, ambientColor[0], ambientColor[1], ambientColor[2], ambientColor[3]);
+			gl.glUniform4f(uniformLocation, currentAmbientColor[0], currentAmbientColor[1], currentAmbientColor[2], currentAmbientColor[3]);
 
 			//For now using first point light, but gonna need to put em all in
 			LightData l0 = null;
@@ -890,37 +891,38 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (l0 != null)
 			{
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
-				gl.glUniform3fARB(uniformLocation, l0.pos[0], l0.pos[1], l0.pos[2]);
+				gl.glUniform3f(uniformLocation, l0.pos[0], l0.pos[1], l0.pos[2]);
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
-				gl.glUniform4fARB(uniformLocation, l0.diffuse[0], l0.diffuse[1], l0.diffuse[2], l0.diffuse[3]);
+				gl.glUniform4f(uniformLocation, l0.diffuse[0], l0.diffuse[1], l0.diffuse[2], l0.diffuse[3]);
 			}
 
 			//currentColor is sent through from ColorAttributes, if alpha is 1 it is set
 			if (currentColor[3] > 0)
 			{
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "singleColor");
-				gl.glUniform4fARB(uniformLocation, currentColor[0], currentColor[1], currentColor[2], currentColor[3]);
+				gl.glUniform4f(uniformLocation, currentColor[0], currentColor[1], currentColor[2], currentColor[3]);
 			}
 
 			//TODO: particles and points etc
 			//currentPointSize needs to be handed into the particles shader
 
-			
 			//TODO: look at walkway grill in diamond city looks like I've got these wrong
 			// but playing doesn't help
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
-			gl.glUniform1iARB(uniformLocation, currentRenderingData.alphaTestEnabled ? 1 : 0);
+			gl.glUniform1i(uniformLocation, currentRenderingData.alphaTestEnabled ? 1 : 0);
 
 			if (currentRenderingData.alphaTestEnabled == true)
 			{
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
-				gl.glUniform1iARB(uniformLocation, getFunctionValue(currentRenderingData.alphaTestFunction));
+				gl.glUniform1i(uniformLocation, getFunctionValue(currentRenderingData.alphaTestFunction));
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
-				gl.glUniform1fARB(uniformLocation, currentRenderingData.alphaTestValue);
+				gl.glUniform1f(uniformLocation, currentRenderingData.alphaTestValue);
 			}
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
-			gl.glUniformMatrix4fvARB(uniformLocation, 1, false, toArray(currentTextureTransform), 0);
+			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(currentTextureTransform), 0);
+
+			//currentFogData
 
 			//TODO: needs to be handled (bushes look crap now) odd though cos I'm ignoring them
 			//currentRenderingData.ignoreVertexColors = false;
@@ -938,47 +940,48 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	}
 
-	//IN USE BY MORROWIND
-	private void resetVertexAttrs(GL gl, JoglContext ctx, int vertexAttrCount)
-	{
-		// Disable specified vertex attr arrays
-		for (int i = 0; i < vertexAttrCount; i++)
-		{
-			ctx.disableVertexAttrArray(gl, i);
-		}
-	}
+	//TEX COORDS CALLS--vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv--
 
 	//IN USE BY MORROWIND
+	// called by the 2 executes above
 	private void enableTexCoordPointer(GL2 gl, int texUnit, int texSize, int texDataType, int stride, Buffer pointer)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.enableTexCoordPointer()");
 		clientActiveTextureUnit(gl, texUnit);
+
+		//this is a tex coords call
 		gl.glEnableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
 		gl.glTexCoordPointer(texSize, texDataType, stride, pointer);
 	}
 
 	//IN USE BY MORROWIND
+	// called by 2 executes above and the reset below
 	private void disableTexCoordPointer(GL2 gl, int texUnit)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.disableTexCoordPointer()");
+
 		clientActiveTextureUnit(gl, texUnit);
 		gl.glDisableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
 	}
 
 	//IN USE BY MORROWIND
+	// called by all 5 methods including 2 executes 
 	private void clientActiveTextureUnit(GL2 gl, int texUnit)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.clientActiveTextureUnit()");
 		if (isExtensionAvailableGL_VERSION_1_3(gl))
 		{
+			// this determines what unit the tex coords are going to be set for
 			gl.glClientActiveTexture(texUnit + GL.GL_TEXTURE0);
 		}
 	}
 
 	//IN USE BY MORROWIND
+
+	// called by 2 executes above
 	private void resetTexture(GL2 gl, JoglContext ctx)
 	{
 		if (VERBOSE)
@@ -992,10 +995,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		clientActiveTextureUnit(gl, 0);
 	}
 
+	//TEX COORDS CALLS--^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^--
+
+	//IN USE BY MORROWIND
+	private static void resetVertexAttrs(GL gl, JoglContext ctx, int vertexAttrCount)
+	{
+		// Disable specified vertex attr arrays
+		for (int i = 0; i < vertexAttrCount; i++)
+		{
+			ctx.disableVertexAttrArray(gl, i);
+		}
+	}
+
 	// glLockArrays() is invoked only for indexed geometry, and the
 	// vertexCount is guaranteed to be >= 0.
 	//IN USE BY MORROWIND 
-	private void lockArray(GL2 gl, int vertexCount)
+	private static void lockArray(GL2 gl, int vertexCount)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
 		{
@@ -1008,7 +1023,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	//IN USE BY MORROWIND
-	private void unlockArray(GL2 gl)
+	private static void unlockArray(GL2 gl)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
 		{
@@ -1032,7 +1047,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform1i()");
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform1iARB(unbox(uniformLocation), value);
+		gl.glUniform1i(unbox(uniformLocation), value);
 		return null;
 	}
 
@@ -1044,7 +1059,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform1fARB(unbox(uniformLocation), value);
+		gl.glUniform1f(unbox(uniformLocation), value);
 		return null;
 	}
 
@@ -1056,7 +1071,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform2iARB(unbox(uniformLocation), value[0], value[1]);
+		gl.glUniform2i(unbox(uniformLocation), value[0], value[1]);
 		return null;
 	}
 
@@ -1068,7 +1083,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform2fARB(unbox(uniformLocation), value[0], value[1]);
+		gl.glUniform2f(unbox(uniformLocation), value[0], value[1]);
 		return null;
 	}
 
@@ -1080,7 +1095,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform3iARB(unbox(uniformLocation), value[0], value[1], value[2]);
+		gl.glUniform3i(unbox(uniformLocation), value[0], value[1], value[2]);
 		return null;
 	}
 
@@ -1092,7 +1107,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform3fARB(unbox(uniformLocation), value[0], value[1], value[2]);
+		gl.glUniform3f(unbox(uniformLocation), value[0], value[1], value[2]);
 		return null;
 	}
 
@@ -1104,7 +1119,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform4iARB(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
+		gl.glUniform4i(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
 		return null;
 	}
 
@@ -1116,7 +1131,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform4fARB(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
+		gl.glUniform4f(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
 		return null;
 	}
 
@@ -1130,7 +1145,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// transpose is true : each matrix is supplied in row major order
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniformMatrix3fvARB(unbox(uniformLocation), 1, true, value, 0);
+		gl.glUniformMatrix3fv(unbox(uniformLocation), 1, true, value, 0);
 		return null;
 	}
 
@@ -1144,7 +1159,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// transpose is true : each matrix is supplied in row major order
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniformMatrix4fvARB(unbox(uniformLocation), 1, true, value, 0);
+		gl.glUniformMatrix4fv(unbox(uniformLocation), 1, true, value, 0);
 		return null;
 	}
 
@@ -1159,7 +1174,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform1ivARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform1iv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1172,7 +1187,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform1fvARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform1fv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1185,7 +1200,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform2ivARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform2iv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1198,7 +1213,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform2fvARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform2fv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1211,7 +1226,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform3ivARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform3iv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1224,7 +1239,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform3fvARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform3fv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1237,7 +1252,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform4ivARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform4iv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1250,7 +1265,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniform4fvARB(unbox(uniformLocation), numElements, value, 0);
+		gl.glUniform4fv(unbox(uniformLocation), numElements, value, 0);
 		return null;
 	}
 
@@ -1265,7 +1280,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// transpose is true : each matrix is supplied in row major order
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniformMatrix3fvARB(unbox(uniformLocation), numElements, true, value, 0);
+		gl.glUniformMatrix3fv(unbox(uniformLocation), numElements, true, value, 0);
 		return null;
 	}
 
@@ -1279,8 +1294,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
 		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glUniformMatrix4fvARB(unbox(uniformLocation), numElements, true, value, 0);
+		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();		
+		gl.glUniformMatrix4fv(unbox(uniformLocation), numElements, true, value, 0);
 		return null;
 	}
 
@@ -1297,11 +1312,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		int shaderHandle = 0;
 		if (shaderType == Shader.SHADER_TYPE_VERTEX)
 		{
-			shaderHandle = (int) gl.glCreateShaderObjectARB(GL2.GL_VERTEX_SHADER);
+			shaderHandle = (int) gl.glCreateShader(GL2.GL_VERTEX_SHADER);
 		}
 		else if (shaderType == Shader.SHADER_TYPE_FRAGMENT)
 		{
-			shaderHandle = (int) gl.glCreateShaderObjectARB(GL2.GL_FRAGMENT_SHADER);
+			shaderHandle = (int) gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
 		}
 
 		if (shaderHandle == 0)
@@ -1321,7 +1336,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glDeleteObjectARB(unbox(shaderId));
+		gl.glDeleteShader(unbox(shaderId));
 		return null;
 	}
 
@@ -1344,10 +1359,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glShaderSourceARB(id, 1, new String[] { program }, null, 0);
-		gl.glCompileShaderARB(id);
+
+		gl.glShaderSource(id, 1, new String[] { program }, null, 0);
+		gl.glCompileShader(id);
 		int[] status = new int[1];
-		gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_COMPILE_STATUS_ARB, status, 0);
+		gl.glGetShaderiv(id, GL2.GL_COMPILE_STATUS, status, 0);
 		if (status[0] == 0)
 		{
 			String detailMsg = getInfoLog(gl, id);
@@ -1367,7 +1383,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
-		int shaderProgramHandle = (int) gl.glCreateProgramObjectARB();
+		int shaderProgramHandle = (int) gl.glCreateProgram();
 		if (shaderProgramHandle == 0)
 		{
 			return new ShaderError(ShaderError.LINK_ERROR, "Unable to create native shader program object");
@@ -1575,12 +1591,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private String getInfoLog(GL2 gl, int id)
 	{
 		int[] infoLogLength = new int[1];
-		gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_INFO_LOG_LENGTH_ARB, infoLogLength, 0);
+		//gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_INFO_LOG_LENGTH_ARB, infoLogLength, 0);
+		gl.glGetShaderiv(id, GL2.GL_INFO_LOG_LENGTH, infoLogLength, 0);
 		if (infoLogLength[0] > 0)
 		{
 			byte[] storage = new byte[infoLogLength[0]];
 			int[] len = new int[1];
-			gl.glGetInfoLogARB(id, infoLogLength[0], len, 0, storage, 0);
+			//gl.glGetInfoLogARB(id, infoLogLength[0], len, 0, storage, 0);
+			gl.glGetShaderInfoLog(id, infoLogLength[0], len, 0, storage, 0);
 			try
 			{
 				// TODO KCR : Shouldn't this use the default locale?
@@ -1889,20 +1907,26 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateExponentialFog()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		
+			// apparently also lost... I don't know...
+			//https://www.opengl.org/discussion_boards/showthread.php/178629-How-to-create-fog-using-Open-GL-ES-2-0-or-WebGL
+		
+			float[] color = new float[3];
+			color[0] = red;
+			color[1] = green;
+			color[2] = blue;
+			gl.glFogi(GL2.GL_FOG_MODE, GL2.GL_EXP);
+			gl.glFogfv(GL2.GL_FOG_COLOR, color, 0);
+			gl.glFogf(GL2.GL_FOG_DENSITY, density);
+			gl.glEnable(GL2.GL_FOG);*/
 
-		// apparently also lost... I don't know...
-		//https://www.opengl.org/discussion_boards/showthread.php/178629-How-to-create-fog-using-Open-GL-ES-2-0-or-WebGL
-
-		float[] color = new float[3];
-		color[0] = red;
-		color[1] = green;
-		color[2] = blue;
-		gl.glFogi(GL2.GL_FOG_MODE, GL2.GL_EXP);
-		gl.glFogfv(GL2.GL_FOG_COLOR, color, 0);
-		gl.glFogf(GL2.GL_FOG_DENSITY, density);
-		gl.glEnable(GL2.GL_FOG);
+		currentFogData.expColor[0] = red;
+		currentFogData.expColor[1] = green;
+		currentFogData.expColor[2] = blue;
+		currentFogData.expDensity = density;
+		currentFogData.enable = true;
 	}
 
 	// ---------------------------------------------------------------------
@@ -1917,21 +1941,62 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateLinearFog()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//gone
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			//gone
+		
+			float[] color = new float[3];
+			color[0] = red;
+			color[1] = green;
+			color[2] = blue;
+			gl.glFogi(GL2.GL_FOG_MODE, GL.GL_LINEAR);
+			gl.glFogfv(GL2.GL_FOG_COLOR, color, 0);
+			gl.glFogf(GL2.GL_FOG_START, (float) fdist);
+			gl.glFogf(GL2.GL_FOG_END, (float) bdist);
+			gl.glEnable(GL2.GL_FOG);*/
 
-		float[] color = new float[3];
-		color[0] = red;
-		color[1] = green;
-		color[2] = blue;
-		gl.glFogi(GL2.GL_FOG_MODE, GL.GL_LINEAR);
-		gl.glFogfv(GL2.GL_FOG_COLOR, color, 0);
-		gl.glFogf(GL2.GL_FOG_START, (float) fdist);
-		gl.glFogf(GL2.GL_FOG_END, (float) bdist);
-		gl.glEnable(GL2.GL_FOG);
+		currentFogData.linearColor[0] = red;
+		currentFogData.linearColor[1] = green;
+		currentFogData.linearColor[2] = blue;
+		currentFogData.linearStart = (float) fdist;
+		currentFogData.linearEnd = (float) bdist;
+		currentFogData.enable = true;
 	}
 
+	// native method for disabling fog
+	@Override
+	//IN USE BY MORROWIND
+	void disableFog(Context ctx)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.disableFog()");
+
+		//GL2 gl = context(ctx).getGL().getGL2();
+		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		// bound to be not supported as definitely shader work now
+
+		//gl.glDisable(GL2.GL_FOG);
+		currentFogData.enable = false;
+	}
+
+	// native method for setting fog enable flag
+	//IN USE BY MORROWIND
+	@Override
+	void setFogEnableFlag(Context ctx, boolean enable)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.setFogEnableFlag()");
+
+		/*GL2 gl = context(ctx).getGL().getGL2();
+		//fog gone from ES2, done by passng it in as values
+		
+		if (enable)
+			gl.glEnable(GL2.GL_FOG);
+		else
+			gl.glDisable(GL2.GL_FOG);*/
+
+		currentFogData.enable = enable;
+	}
 	// ---------------------------------------------------------------------
 
 	//
@@ -2296,6 +2361,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (cullFace == PolygonAttributes.CULL_NONE)
 		{
+			//TODO: this doesn't appear to me working?
 			gl.glDisable(GL.GL_CULL_FACE);
 		}
 		else
@@ -2344,24 +2410,26 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if ((polygonOffsetFactor != 0.0) || (polygonOffset != 0.0))
 		{
-			switch (polygonMode)
-			{
-			case PolygonAttributes.POLYGON_POINT:
-				//gl.glEnable(GL2.GL_POLYGON_OFFSET_POINT);
-				//gl.glDisable(GL2.GL_POLYGON_OFFSET_LINE);
-				gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
-				break;
-			case PolygonAttributes.POLYGON_LINE:
-				//gl.glEnable(GL2.GL_POLYGON_OFFSET_LINE);
-				//gl.glDisable(GL2.GL_POLYGON_OFFSET_POINT);
-				gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
-				break;
-			case PolygonAttributes.POLYGON_FILL:
-				gl.glEnable(GL.GL_POLYGON_OFFSET_FILL);
-				//	gl.glDisable(GL2.GL_POLYGON_OFFSET_POINT);
-				//	gl.glDisable(GL2.GL_POLYGON_OFFSET_LINE);
-				break;
-			}
+			gl.glEnable(GL.GL_POLYGON_OFFSET_FILL);
+			/*switch (polygonMode)
+				{
+				
+				case PolygonAttributes.POLYGON_POINT:
+					gl.glEnable(GL2.GL_POLYGON_OFFSET_POINT);
+					gl.glDisable(GL2.GL_POLYGON_OFFSET_LINE);
+					gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
+					break;
+				case PolygonAttributes.POLYGON_LINE:
+					gl.glEnable(GL2.GL_POLYGON_OFFSET_LINE);
+					gl.glDisable(GL2.GL_POLYGON_OFFSET_POINT);
+					gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
+					break;
+				case PolygonAttributes.POLYGON_FILL:
+					gl.glEnable(GL.GL_POLYGON_OFFSET_FILL);
+					gl.glDisable(GL2.GL_POLYGON_OFFSET_POINT);
+					gl.glDisable(GL2.GL_POLYGON_OFFSET_LINE);
+					break;
+				}*/
 		}
 		else
 		{
@@ -2610,7 +2678,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		//glEnable(GL_BLEND) is good and Func etc seems all as it was
 		//NOTE my use of screen door simply puts things in teh transparency phase, so they can have holes
-		
 
 		//glPolygonStipple gone and gl.glEnable(GL2.GL_POLYGON_STIPPLE);
 		// no reference to them at all on the web? 
@@ -3636,25 +3703,25 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		// applies to Texture3D only
-		if (boundaryModeR != -1)
-		{
-			switch (boundaryModeR)
-			{
-			case Texture.WRAP:
-				gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL.GL_REPEAT);
-				break;
-
-			case Texture.CLAMP:
-				gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL2.GL_CLAMP);
-				break;
-			case Texture.CLAMP_TO_EDGE:
-				gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
-				break;
-			case Texture.CLAMP_TO_BOUNDARY:
-				gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL2.GL_CLAMP_TO_BORDER);
-				break;
-			}
-		}
+		/*		if (boundaryModeR != -1)
+				{
+					switch (boundaryModeR)
+					{
+					case Texture.WRAP:
+						gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL.GL_REPEAT);
+						break;
+		
+					case Texture.CLAMP:
+						gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL2.GL_CLAMP);
+						break;
+					case Texture.CLAMP_TO_EDGE:
+						gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
+						break;
+					case Texture.CLAMP_TO_BOUNDARY:
+						gl.glTexParameteri(target, GL2.GL_TEXTURE_WRAP_R, GL2.GL_CLAMP_TO_BORDER);
+						break;
+					}
+				}*/
 
 		if (boundaryModeS == Texture.CLAMP || boundaryModeT == Texture.CLAMP || boundaryModeR == Texture.CLAMP)
 		{
@@ -4134,24 +4201,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glBlendFunc(blendFunctionTable[srcBlendFunction], blendFunctionTable[dstBlendFunction]);
 	}
 
-	// native method for setting fog enable flag
-	//IN USE BY MORROWIND
-	@Override
-	void setFogEnableFlag(Context ctx, boolean enable)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.setFogEnableFlag()");
-
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//fog gone from ES2
-
-		if (enable)
-			gl.glEnable(GL2.GL_FOG);
-		else
-			gl.glDisable(GL2.GL_FOG);
-	}
-
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
 	@Override
 	//IN USE BY MORROWIND
@@ -4161,21 +4210,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setFullSceneAntialiasing()");
 
-		JoglContext ctx = (JoglContext) absCtx;
-		GL2 gl = context(ctx).getGL().getGL2();
+		//	JoglContext ctx = (JoglContext) absCtx;
+		//	GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// not supported in ES2, possibly just part of context generally
+		//http://stackoverflow.com/questions/27035893/antialiasing-in-opengl-es-2-0
 
-		if (ctx.getHasMultisample() && !VirtualUniverse.mc.implicitAntialiasing)
+		//	if (ctx.getHasMultisample() && !VirtualUniverse.mc.implicitAntialiasing)
 		{
-			if (enable)
-			{
-				gl.glEnable(GL.GL_MULTISAMPLE);
-			}
-			else
-			{
-				gl.glDisable(GL.GL_MULTISAMPLE);
-			}
+			/*	if (enable)
+				{
+					gl.glEnable(GL.GL_MULTISAMPLE);
+				}
+				else
+				{
+					gl.glDisable(GL.GL_MULTISAMPLE);
+				}*/
 		}
 	}
 
@@ -4188,18 +4238,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateSeparateSpecularColorEnable()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// bound to be not supported as definately shader work now
-
-		if (enable)
-		{
-			gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SEPARATE_SPECULAR_COLOR);
-		}
-		else
-		{
-			gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SINGLE_COLOR);
-		}
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// bound to be not supported as definately shader work now
+		
+			if (enable)
+			{
+				gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SEPARATE_SPECULAR_COLOR);
+			}
+			else
+			{
+				gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SINGLE_COLOR);
+			}*/
 	}
 
 	// True under Solaris,
@@ -4224,6 +4274,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return (currentMode.getBitDepth() < 0 || currentMode.getBitDepth() > 8);
 	}
 
+	private boolean[] currentEnabledLights = new boolean[8];
+
 	// native method for setting light enables
 	@Override
 	//IN USE BY MORROWIND
@@ -4232,25 +4284,26 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setLightEnables()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
+		//GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// bound to be not supported as definately shader work now
 
 		for (int i = 0; i < maxLights; i++)
 		{
-			if ((enableMask & (1 << i)) != 0)
-			{
-				gl.glEnable(GL2.GL_LIGHT0 + i);
-			}
-			else
-			{
-				gl.glDisable(GL2.GL_LIGHT0 + i);
-			}
+			/*	if ((enableMask & (1 << i)) != 0)
+				{
+					gl.glEnable(GL2.GL_LIGHT0 + i);
+				}
+				else
+				{
+					gl.glDisable(GL2.GL_LIGHT0 + i);
+				}*/
+			currentEnabledLights[i] = ((enableMask & (1 << i)) != 0);
 		}
 	}
 
 	//<AND>
-	private float[] ambientColor = new float[4];
+	private float[] currentAmbientColor = new float[4];
 
 	// native method for setting scene ambient
 	//IN USE BY MORROWIND
@@ -4271,23 +4324,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		color[2] = blue;
 		color[3] = 1.0f;
 		gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, color, 0);
-		ambientColor = color;
+		currentAmbientColor = color;
 
-	}
-
-	// native method for disabling fog
-	@Override
-	//IN USE BY MORROWIND
-	void disableFog(Context ctx)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.disableFog()");
-
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// bound to be not supported as definitely shader work now
-
-		gl.glDisable(GL2.GL_FOG);
 	}
 
 	// native method for disabling modelClip
@@ -4298,16 +4336,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.disableModelClip()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
+		/*GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// not supported
-
+		
 		gl.glDisable(GL2.GL_CLIP_PLANE0);
 		gl.glDisable(GL2.GL_CLIP_PLANE1);
 		gl.glDisable(GL2.GL_CLIP_PLANE2);
 		gl.glDisable(GL2.GL_CLIP_PLANE3);
 		gl.glDisable(GL2.GL_CLIP_PLANE4);
-		gl.glDisable(GL2.GL_CLIP_PLANE5);
+		gl.glDisable(GL2.GL_CLIP_PLANE5);*/
 	}
 
 	// native method for activating a particular texture unit
@@ -4325,7 +4363,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (isExtensionAvailableGL_VERSION_1_3(gl))
 		{
 			gl.glActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
-			gl.glClientActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
+			//gl.glClientActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
 		}
 	}
 
