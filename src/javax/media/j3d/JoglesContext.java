@@ -72,6 +72,8 @@ public class JoglesContext extends JoglContext
 	public boolean[] enabledLights = new boolean[8];
 
 	public float[] currentAmbientColor = new float[4];
+	
+	public Matrix4d textureTransform = new Matrix4d();
 
 	//current ModelView Matrix for use in execute
 	public Matrix4d currentModelViewMat = new Matrix4d();

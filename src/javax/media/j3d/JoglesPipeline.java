@@ -68,9 +68,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 	public static boolean TOOLS3D_MARKER = true; //used to check jar load order
 
 	// Currently prints for entry points already implemented
-	static boolean VERBOSE = false;
+	static final boolean VERBOSE = false;
 	// prints key moments in the render operations on a frame
-	private boolean RENDER_ORDER_OUTPUT = false;
+	private static final boolean RENDER_ORDER_OUTPUT = false;
 	// Debugging output for graphics configuration selection
 	private static final boolean DEBUG_CONFIG = false;
 	// Prints extra debugging information
@@ -113,7 +113,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// GeometryArrayRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void setVertexFormat(Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha, boolean ignoreVertexColors)
 	{
@@ -152,7 +152,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// used by GeometryArray by Reference with NIO buffer
-	// IN USE BY MORROWIND
+	
 	@Override
 	void executeVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors,
 			int vcount, int vformat, int vdefined, int initialCoordIndex, Buffer vcoords, int initialColorIndex, Buffer cdataBuffer,
@@ -247,7 +247,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				texCoordBufs, cdirty, sarray, strip_len, start_array);
 	}
 
-	// IN USE BY MORROWIND
 	private void executeGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int vcount, int vformat, int vdefined, int initialCoordIndex, FloatBuffer fverts,
 			DoubleBuffer dverts, int initialColorIndex, FloatBuffer fclrs, ByteBuffer bclrs, int initialNormalIndex, FloatBuffer norms,
@@ -455,7 +454,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 
 	// non interleaved, by reference, Java arrays
-	//IN USE BY MORROWIND
+	
 	@Override
 	void executeIndexedGeometryVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
@@ -535,7 +534,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// non interleaved, by reference, nio buffer
-	//IN USE BY MORROWIND
+	
 	@Override
 	void executeIndexedGeometryVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
@@ -634,7 +633,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Helper routines for IndexedGeometryArrayRetained
 	//
 
-	//IN USE BY MORROWIND
+	
 	private void executeIndexedGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
 			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
@@ -925,7 +924,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
-			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(currentTextureTransform), 0);
+			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(joglesctx.textureTransform), 0);
 
 			//joglesctx.fogData
 
@@ -951,7 +950,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	//TEX COORDS CALLS--vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv--
 
-	//IN USE BY MORROWIND
+	
 	// called by the 2 executes above
 	private void enableTexCoordPointer(GL2 gl, int texUnit, int texSize, int texDataType, int stride, Buffer pointer)
 	{
@@ -964,7 +963,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glTexCoordPointer(texSize, texDataType, stride, pointer);
 	}
 
-	//IN USE BY MORROWIND
+	
 	// called by 2 executes above and the reset below
 	private void disableTexCoordPointer(GL2 gl, int texUnit)
 	{
@@ -975,7 +974,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glDisableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
 	}
 
-	//IN USE BY MORROWIND
+	
 	// called by all 5 methods including 2 executes 
 	private void clientActiveTextureUnit(GL2 gl, int texUnit)
 	{
@@ -988,7 +987,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 
 	// called by 2 executes above
 	private void resetTexture(GL2 gl, JoglContext ctx)
@@ -1006,7 +1005,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	//TEX COORDS CALLS--^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^--
 
-	//IN USE BY MORROWIND
+	
 	private static void resetVertexAttrs(GL gl, JoglContext ctx, int vertexAttrCount)
 	{
 		// Disable specified vertex attr arrays
@@ -1018,7 +1017,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// glLockArrays() is invoked only for indexed geometry, and the
 	// vertexCount is guaranteed to be >= 0.
-	//IN USE BY MORROWIND 
+	 
 	private static void lockArray(GL2 gl, int vertexCount)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
@@ -1031,7 +1030,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	private static void unlockArray(GL2 gl)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
@@ -1303,7 +1302,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
 		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();		
+		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		gl.glUniformMatrix4fv(unbox(uniformLocation), numElements, true, value, 0);
 		return null;
 	}
@@ -1408,7 +1407,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.destroyGLSLShaderProgram()");
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glDeleteObjectARB(unbox(shaderProgramId));
+		gl.glDeleteShader(unbox(shaderProgramId));
 		return null;
 	}
 
@@ -1423,11 +1422,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		int id = unbox(shaderProgramId);
 		for (int i = 0; i < shaderIds.length; i++)
 		{
-			gl.glAttachObjectARB(id, unbox(shaderIds[i]));
+			gl.glAttachShader(id, unbox(shaderIds[i]));
 		}
-		gl.glLinkProgramARB(id);
+		gl.glLinkProgram(id);
 		int[] status = new int[1];
-		gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_LINK_STATUS_ARB, status, 0);
+		gl.glGetProgramiv(id, GL2.GL_LINK_STATUS, status, 0);
 		if (status[0] == 0)
 		{
 			String detailMsg = getInfoLog(gl, id);
@@ -1480,15 +1479,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 		int[] tmp3 = new int[1];
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_ACTIVE_UNIFORMS_ARB, tmp, 0);
+		gl.glGetProgramiv(id, GL2.GL_ACTIVE_UNIFORMS, tmp, 0);
 		int numActiveUniforms = tmp[0];
-		gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB, tmp, 0);
+		gl.glGetProgramiv(id, GL2.GL_ACTIVE_UNIFORM_MAX_LENGTH, tmp, 0);
 		int maxStrLen = tmp[0];
 		byte[] nameBuf = new byte[maxStrLen];
 
 		for (int i = 0; i < numActiveUniforms; i++)
 		{
-			gl.glGetActiveUniformARB(id, i, maxStrLen, tmp3, 0, tmp, 0, tmp2, 0, nameBuf, 0);
+			gl.glGetActiveUniform(id, i, maxStrLen, tmp3, 0, tmp, 0, tmp2, 0, nameBuf, 0);
 			int size = tmp[0];
 			int type = tmp2[0];
 			String name = null;
@@ -1534,7 +1533,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		for (int i = 0; i < numAttrNames; i++)
 		{
 			// Get uniform attribute location
-			int loc = gl.glGetUniformLocationARB(id, attrNames[i]);
+			int loc = gl.glGetUniformLocation(id, attrNames[i]);
 			locArr[i] = new JoglShaderObject(loc);
 		}
 	}
@@ -1603,7 +1602,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return ((JoglShaderObject) id).getValue();
 	}
 
-	private static String getInfoLog(GL2 gl, int id)
+	private static String getInfoLog(GL2ES2 gl, int id)
 	{
 		int[] infoLogLength = new int[1];
 		//gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_INFO_LOG_LENGTH_ARB, infoLogLength, 0);
@@ -1687,7 +1686,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// DirectionalLightRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	private static final float[] black = new float[4];
 
 	@Override
@@ -1696,31 +1695,31 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.updateDirectionalLight()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// OK ES2 requires lights to be handed across manually
-		// so once again just force it in there and assume shader has it
-
-		int lightNum = GL2.GL_LIGHT0 + lightSlot;
-		float[] values = new float[4];
-
-		values[0] = red;
-		values[1] = green;
-		values[2] = blue;
-		values[3] = 1.0f;
-		gl.glLightfv(lightNum, GL2.GL_DIFFUSE, values, 0);
-		gl.glLightfv(lightNum, GL2.GL_SPECULAR, values, 0);
-		values[0] = -dirx;
-		values[1] = -diry;
-		values[2] = -dirz;
-		values[3] = 0.0f;
-		gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
-		gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
-		gl.glLightf(lightNum, GL2.GL_POSITION, 1.0f);
-		gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, 0.0f);
-		gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, 0.0f);
-		gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, 0.0f);
-		gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, 180.0f);
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// OK ES2 requires lights to be handed across manually
+			// so once again just force it in there and assume shader has it
+		
+			int lightNum = GL2.GL_LIGHT0 + lightSlot;
+			float[] values = new float[4];
+		
+			values[0] = red;
+			values[1] = green;
+			values[2] = blue;
+			values[3] = 1.0f;
+			gl.glLightfv(lightNum, GL2.GL_DIFFUSE, values, 0);
+			gl.glLightfv(lightNum, GL2.GL_SPECULAR, values, 0);
+			values[0] = -dirx;
+			values[1] = -diry;
+			values[2] = -dirz;
+			values[3] = 0.0f;
+			gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
+			gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
+			gl.glLightf(lightNum, GL2.GL_POSITION, 1.0f);
+			gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, 0.0f);
+			gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, 0.0f);
+			gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, 0.0f);
+			gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, 180.0f);*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (joglesctx.dirLight[lightSlot] == null)
@@ -1752,7 +1751,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// PointLightRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updatePointLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
 			float posx, float posy, float posz)
@@ -1760,30 +1759,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.updatePointLight()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// OK ES2 requires lights to be handed across manually		
-		// so once again just force it in there and assume shader has it
-
-		int lightNum = GL2.GL_LIGHT0 + lightSlot;
-		float[] values = new float[4];
-
-		values[0] = red;
-		values[1] = green;
-		values[2] = blue;
-		values[3] = 1.0f;
-		gl.glLightfv(lightNum, GL2.GL_DIFFUSE, values, 0);
-		gl.glLightfv(lightNum, GL2.GL_SPECULAR, values, 0);
-		gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
-		values[0] = posx;
-		values[1] = posy;
-		values[2] = posz;
-		gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
-		gl.glLightf(lightNum, GL2.GL_CONSTANT_ATTENUATION, attenx);
-		gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, atteny);
-		gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, attenz);
-		gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, 0.0f);
-		gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, 180.0f);
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// OK ES2 requires lights to be handed across manually		
+			// so once again just force it in there and assume shader has it
+		
+			int lightNum = GL2.GL_LIGHT0 + lightSlot;
+			float[] values = new float[4];
+		
+			values[0] = red;
+			values[1] = green;
+			values[2] = blue;
+			values[3] = 1.0f;
+			gl.glLightfv(lightNum, GL2.GL_DIFFUSE, values, 0);
+			gl.glLightfv(lightNum, GL2.GL_SPECULAR, values, 0);
+			gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
+			values[0] = posx;
+			values[1] = posy;
+			values[2] = posz;
+			gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
+			gl.glLightf(lightNum, GL2.GL_CONSTANT_ATTENUATION, attenx);
+			gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, atteny);
+			gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, attenz);
+			gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, 0.0f);
+			gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, 180.0f);*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (joglesctx.pointLight[lightSlot] == null)
@@ -1814,7 +1813,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// SpotLightRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateSpotLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
 			float posx, float posy, float posz, float spreadAngle, float concentration, float dirx, float diry, float dirz)
@@ -1822,34 +1821,34 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE || RENDER_ORDER_OUTPUT)
 			System.err.println("JoglPipeline.updateSpotLight()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// OK ES2 requires lights to be handed across manually		
-		// so once again just force it in there and assume shader has it
-
-		int lightNum = GL2.GL_LIGHT0 + lightSlot;
-		float[] values = new float[4];
-
-		values[0] = red;
-		values[1] = green;
-		values[2] = blue;
-		values[3] = 1.0f;
-		gl.glLightfv(lightNum, GL2.GL_DIFFUSE, values, 0);
-		gl.glLightfv(lightNum, GL2.GL_SPECULAR, values, 0);
-		gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
-		values[0] = posx;
-		values[1] = posy;
-		values[2] = posz;
-		gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
-		gl.glLightf(lightNum, GL2.GL_CONSTANT_ATTENUATION, attenx);
-		gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, atteny);
-		gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, attenz);
-		values[0] = dirx;
-		values[1] = diry;
-		values[2] = dirz;
-		gl.glLightfv(lightNum, GL2.GL_SPOT_DIRECTION, values, 0);
-		gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, concentration);
-		gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, (float) (spreadAngle * 180.0f / Math.PI));
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// OK ES2 requires lights to be handed across manually		
+			// so once again just force it in there and assume shader has it
+		
+			int lightNum = GL2.GL_LIGHT0 + lightSlot;
+			float[] values = new float[4];
+		
+			values[0] = red;
+			values[1] = green;
+			values[2] = blue;
+			values[3] = 1.0f;
+			gl.glLightfv(lightNum, GL2.GL_DIFFUSE, values, 0);
+			gl.glLightfv(lightNum, GL2.GL_SPECULAR, values, 0);
+			gl.glLightfv(lightNum, GL2.GL_AMBIENT, black, 0);
+			values[0] = posx;
+			values[1] = posy;
+			values[2] = posz;
+			gl.glLightfv(lightNum, GL2.GL_POSITION, values, 0);
+			gl.glLightf(lightNum, GL2.GL_CONSTANT_ATTENUATION, attenx);
+			gl.glLightf(lightNum, GL2.GL_LINEAR_ATTENUATION, atteny);
+			gl.glLightf(lightNum, GL2.GL_QUADRATIC_ATTENUATION, attenz);
+			values[0] = dirx;
+			values[1] = diry;
+			values[2] = dirz;
+			gl.glLightfv(lightNum, GL2.GL_SPOT_DIRECTION, values, 0);
+			gl.glLightf(lightNum, GL2.GL_SPOT_EXPONENT, concentration);
+			gl.glLightf(lightNum, GL2.GL_SPOT_CUTOFF, (float) (spreadAngle * 180.0f / Math.PI));*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (joglesctx.spotLight[lightSlot] == null)
@@ -1885,7 +1884,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// ExponentialFogRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateExponentialFog(Context ctx, float red, float green, float blue, float density)
 	{
@@ -1920,7 +1919,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// LinearFogRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateLinearFog(Context ctx, float red, float green, float blue, double fdist, double bdist)
 	{
@@ -1952,23 +1951,23 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for disabling fog
 	@Override
-	//IN USE BY MORROWIND
+	
 	void disableFog(Context ctx)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.disableFog()");
 
-		//GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// bound to be not supported as definitely shader work now
-
-		//gl.glDisable(GL2.GL_FOG);
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// bound to be not supported as definitely shader work now
+		
+			//gl.glDisable(GL2.GL_FOG);*/
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.fogData.enable = false;
 	}
 
 	// native method for setting fog enable flag
-	//IN USE BY MORROWIND
+	
 	@Override
 	void setFogEnableFlag(Context ctx, boolean enable)
 	{
@@ -1991,7 +1990,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// LineAttributesRetained methods
 	//
-	//IN USE BY MORROWIND -  used by H physics
+	//  used by H physics
 	@Override
 	void updateLineAttributes(Context ctx, float lineWidth, int linePattern, int linePatternMask, int linePatternScaleFactor,
 			boolean lineAntialiasing)
@@ -2045,7 +2044,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default LineAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetLineAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -2067,7 +2066,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// MaterialRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateMaterial(Context ctx, float red, float green, float blue, float alpha, float aRed, float aGreen, float aBlue, float eRed,
 			float eGreen, float eBlue, float dRed, float dGreen, float dBlue, float sRed, float sGreen, float sBlue, float shininess,
@@ -2076,14 +2075,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateMaterial()");
 
+		//I want to remove this but gl_Color is still being used by teh shader for now
+
 		float[] color = new float[4];
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		//http://stackoverflow.com/questions/24152928/glmaterialfv-is-deprecated-in-opengl-es2
 		// all material gear removed
-
-		// so possibly I need to just forcibly add material attributes now and assume the shader has them??
 
 		gl.glMaterialf(GL.GL_FRONT_AND_BACK, GL2.GL_SHININESS, shininess);
 		switch (colorTarget)
@@ -2165,7 +2164,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting Material when no material is present
 	@Override
-	//IN USE BY MORROWIND
+	
 	void updateMaterialColor(Context ctx, float r, float g, float b, float a)
 	{
 		if (VERBOSE)
@@ -2189,8 +2188,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	//
 	// ColoringAttributesRetained methods
-	//
-	//IN USE BY MORROWIND - used by H physics
+	//used by H physics
 	@Override
 	void updateColoringAttributes(Context ctx, float dRed, float dGreen, float dBlue, float red, float green, float blue, float alpha,
 			boolean lightEnable, int shadeModel)
@@ -2198,67 +2196,79 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateColoringAttributes()");
 
+		/*	GL2 gl = context(ctx).getGL().getGL2(); 
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		
+			float cr, cg, cb;
+		
+			if (lightEnable)
+			{
+				cr = dRed;
+				cg = dGreen;
+				cb = dBlue;
+			}
+			else
+			{
+				cr = red;
+				cg = green;
+				cb = blue;
+			}
+			
+			gl.glColor4f(cr, cg, cb, alpha);
+			if (shadeModel == ColoringAttributes.SHADE_FLAT)
+			{
+					gl.glShadeModel(GL2.GL_FLAT);
+			}
+			else
+			{
+					gl.glShadeModel(GL2.GL_SMOOTH);
+			}*/
+
 		JoglesContext joglesctx = ((JoglesContext) ctx);
-		//GL2 gl = context(ctx).getGL().getGL2(); 
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-
-		//float cr, cg, cb;
-
 		if (lightEnable)
 		{
-			//cr = dRed;
-			//cg = dGreen;
-			//cb = dBlue;
-
 			joglesctx.currentColor[0] = dRed;
 			joglesctx.currentColor[1] = dGreen;
 			joglesctx.currentColor[2] = dBlue;
 		}
 		else
 		{
-			//cr = red;
-			//cg = green;
-			//cb = blue;
 			joglesctx.currentColor[0] = red;
 			joglesctx.currentColor[1] = green;
 			joglesctx.currentColor[2] = blue;
 		}
 		joglesctx.currentColor[3] = alpha;
-		/*gl.glColor4f(cr, cg, cb, alpha);
-		if (shadeModel == ColoringAttributes.SHADE_FLAT)
-		{
-				gl.glShadeModel(GL2.GL_FLAT);
-		}
-		else
-		{
-				gl.glShadeModel(GL2.GL_SMOOTH);
-		}*/
 
 	}
 
 	// native method for setting default ColoringAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetColoringAttributes(Context ctx, float r, float g, float b, float a, boolean enableLight)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetColoringAttributes()");
 
-		JoglesContext joglesctx = ((JoglesContext) ctx);
-		//GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//drop all
+		/*		GL2 gl = context(ctx).getGL().getGL2();
+				//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+				//drop all
+		
+				if (!enableLight)
+				{
+					gl.glColor4f(r, g, b, a);
+				}
+				
+		
+				gl.glShadeModel(GL2.GL_SMOOTH);*/
 
+		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (!enableLight)
 		{
-			//gl.glColor4f(r, g, b, a);
+			joglesctx.currentColor[0] = r;
+			joglesctx.currentColor[1] = g;
+			joglesctx.currentColor[2] = b;
+			joglesctx.currentColor[3] = a;
 		}
-		joglesctx.currentColor[0] = r;
-		joglesctx.currentColor[1] = g;
-		joglesctx.currentColor[2] = b;
-		joglesctx.currentColor[3] = a;
-
-		//gl.glShadeModel(GL2.GL_SMOOTH);
 	}
 
 	// ---------------------------------------------------------------------
@@ -2297,30 +2307,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default PointAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetPointAttributes(Context ctx)
 	{
-
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetPointAttributes()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//drop smooth
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			//drop smooth
+		
+			gl.glPointSize(1.0f);
+		
+			// XXXX: Polygon Mode check, blend enable
+			gl.glDisable(GL2.GL_POINT_SMOOTH); */
 
-		//gl.glPointSize(1.0f);
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.pointSize = 1.0f;
-
-		// XXXX: Polygon Mode check, blend enable
-		//		gl.glDisable(GL2.GL_POINT_SMOOTH);
 	}
 	// ---------------------------------------------------------------------
 
 	//
 	// PolygonAttributesRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updatePolygonAttributes(Context ctx, int polygonMode, int cullFace, boolean backFaceNormalFlip, float polygonOffset,
 			float polygonOffsetFactor)
@@ -2424,7 +2434,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default PolygonAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetPolygonAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -2455,7 +2465,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// RenderingAttributesRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride,
 			boolean depthBufferEnable, boolean depthBufferWriteEnable, int depthTestFunction, float alphaTestValue, int alphaTestFunction,
@@ -2612,7 +2622,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default RenderingAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride)
 	{
 		if (VERBOSE)
@@ -2636,6 +2646,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glDepthFunc(GL.GL_LEQUAL);
 		gl.glEnable(GL2.GL_COLOR_MATERIAL);
 		//gl.glDisable(GL.GL_COLOR_LOGIC_OP);
+
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.renderingData.alphaTestEnabled = true;
 		joglesctx.renderingData.alphaTestFunction = RenderingAttributes.ALWAYS;
@@ -2644,7 +2655,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	//IN USE BY MORROWIND
+	
 	void updateTransparencyAttributes(Context ctx, float alpha, int geometryType, int polygonMode, boolean lineAA, boolean pointAA,
 			int transparencyMode, int srcBlendFunction, int dstBlendFunction)
 	{
@@ -2685,7 +2696,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TransparencyAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetTransparency(Context ctx, int geometryType, int polygonMode, boolean lineAA, boolean pointAA)
 	{
 		if (VERBOSE)
@@ -2693,7 +2704,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//just drop gl.glDisable(GL2.GL_POLYGON_STIPPLE);
+		//GL2.GL_POLYGON_STIPPLE no longer supported
 
 		if (((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
 				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
@@ -2708,13 +2719,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//gl.glDisable(GL2.GL_POLYGON_STIPPLE);
 	}
 
-	private Matrix4d currentTextureTransform = new Matrix4d();
-
 	//
 	// TextureAttributesRetained methods
 	//
-	//IN USE BY MORROWIND something is still calling setTextureAttributes other than J3dNiTextureTransformController
-	//in skyrim
 	@Override
 	void updateTextureAttributes(Context ctx, double[] transform, boolean isIdentity, int textureMode, int perspCorrectionMode,
 			float textureBlendColorRed, float textureBlendColorGreen, float textureBlendColorBlue, float textureBlendColorAlpha,
@@ -2753,7 +2760,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		double[] mx = new double[16];
 		copyTranspose(transform, mx);
-		currentTextureTransform.set(mx);
+
+		JoglesContext joglesctx = (JoglesContext) ctx;
+		joglesctx.textureTransform.set(mx);
 
 		// set texture color
 		/*	float[] color = new float[4];
@@ -2791,7 +2800,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TextureAttributes
 	@Override
-	//IN USE BY MORROWIND
+	
 	// part of TUS updateNative
 	void resetTextureAttributes(Context ctx)
 	{
@@ -2812,7 +2821,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST);*/
 
 		// set Identity
-		currentTextureTransform.setIdentity();
+		JoglesContext joglesctx = (JoglesContext) ctx;
+		joglesctx.textureTransform.setIdentity();
 
 		// FIXME: GL_NV_register_combiners
 		//        if (gl.isExtensionAvailable("GL_NV_register_combiners")) {
@@ -2829,7 +2839,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TexCoordGeneration
 	@Override
-	//IN USE BY MORROWIND
+	
 	// part of TUS updateNative
 	void resetTexCoordGeneration(Context ctx)
 	{
@@ -2850,7 +2860,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// TextureUnitStateRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureUnitState(Context ctx, int index, boolean enable)
 	{
@@ -2894,7 +2904,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// TextureRetained methods
 	// Texture2DRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void bindTexture2D(Context ctx, int objectId, boolean enable)
 	{
@@ -2921,7 +2931,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTexture2DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height,
 			int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
@@ -2933,7 +2943,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				data, useAutoMipMap);
 	}
 
-	//IN USE BY MORROWIND
+	
 	//oddly in use when I press escape twice???
 	@Override
 	void updateTexture2DSubImage(Context ctx, int level, int xoffset, int yoffset, int textureFormat, int imageFormat, int imgXOffset,
@@ -2949,7 +2959,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				width, height, dataType, data);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTexture2DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
@@ -2959,7 +2969,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureLodRange(ctx, GL.GL_TEXTURE_2D, baseLevel, maximumLevel, minimumLOD, maximumLOD);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTexture2DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed, float boundaryGreen,
 			float boundaryBlue, float boundaryAlpha)
@@ -2971,7 +2981,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				boundaryAlpha);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTexture2DFilterModes(Context ctx, int minFilter, int magFilter)
 	{
@@ -2981,7 +2991,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureFilterModes(ctx, GL.GL_TEXTURE_2D, minFilter, magFilter);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTexture2DAnisotropicFilter(Context ctx, float degree)
 	{
@@ -2991,7 +3001,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureAnisotropicFilter(ctx, GL.GL_TEXTURE_2D, degree);
 	}
 
-	//IN USE BY MORROWIND
+	
 	private void updateTextureLodRange(Context ctx, int target, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -3015,7 +3025,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glTexParameterf(target, GL2.GL_TEXTURE_MAX_LOD, maximumLOD);
 	}
 
-	//IN USE BY MORROWIND
+	
 	private void updateTextureAnisotropicFilter(Context ctx, int target, float degree)
 	{
 		GL gl = context(ctx).getGL().getGL2();
@@ -3035,7 +3045,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// TextureCubeMapRetained methods
 	//
-	//IN USE BY MORROWIND
+	
 	@Override
 	void bindTextureCubeMap(Context ctx, int objectId, boolean enable)
 	{
@@ -3059,7 +3069,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureCubeMapImage(Context ctx, int face, int numLevels, int level, int textureFormat, int imageFormat, int width,
 			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
@@ -3071,7 +3081,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				dataType, data, useAutoMipMap);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureCubeMapSubImage(Context ctx, int face, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data, boolean useAutoMipMap)
@@ -3079,7 +3089,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureCubeMapLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
 	{
@@ -3089,7 +3099,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureLodRange(ctx, GL.GL_TEXTURE_CUBE_MAP, baseLevel, maximumLevel, minimumLod, maximumLod);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureCubeMapBoundary(Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed, float boundaryGreen,
 			float boundaryBlue, float boundaryAlpha)
@@ -3101,7 +3111,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				boundaryAlpha);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureCubeMapFilterModes(Context ctx, int minFilter, int magFilter)
 	{
@@ -3111,7 +3121,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureFilterModes(ctx, GL.GL_TEXTURE_CUBE_MAP, minFilter, magFilter);
 	}
 
-	//IN USE BY MORROWIND
+	
 	@Override
 	void updateTextureCubeMapAnisotropicFilter(Context ctx, float degree)
 	{
@@ -3125,7 +3135,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// Helper routines for above texture methods
 	//
-	//IN USE BY MORROWIND
+	
 	private void updateTexture2DImage(Context ctx, int target, int numLevels, int level, int textureFormat, int imageFormat, int width,
 			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
 	{
@@ -3327,8 +3337,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			/* Force Alpha to 1.0 if needed */
 			if (forceAlphaToOne)
 			{
-				gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
-				gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
+				new Throwable("forceAlphaToOne").printStackTrace();
+				//gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
+				//gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
 			}
 
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
@@ -3343,8 +3354,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			/* Restore Alpha scale and bias */
 			if (forceAlphaToOne)
 			{
-				gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
-				gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
+				new Throwable("forceAlphaToOne").printStackTrace();
+				//gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
+				//gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
 			}
 		}
 		else
@@ -3353,7 +3365,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	// only used when I press escape twice
 	private void updateTexture2DSubImage(Context ctx, int target, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data)
@@ -3506,8 +3518,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			/* Force Alpha to 1.0 if needed */
 			if (forceAlphaToOne)
 			{
-				gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
-				gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
+				new Throwable("forceAlphaToOne").printStackTrace();
+				//gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
+				//gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
 			}
 
 			IntBuffer buf = null;
@@ -3527,8 +3540,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			/* Restore Alpha scale and bias */
 			if (forceAlphaToOne)
 			{
-				gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
-				gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
+				new Throwable("forceAlphaToOne").printStackTrace();
+				//gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
+				//gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
 			}
 		}
 		else
@@ -3544,7 +3558,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	}
 
-	//IN USE BY MORROWIND
+	
 	void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
 	{
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -3635,7 +3649,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	void updateTextureBoundary(Context ctx, int target, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
 			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
 	{
@@ -3712,7 +3726,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	private static final String getFilterName(int filter)
 	{
 		switch (filter)
@@ -3748,7 +3762,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	//IN USE BY MORROWIND
+	
 	// mapping from java enum to gl enum
 	private static final int[] _gl_textureCubeMapFace = { GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
 			GL.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
@@ -3759,7 +3773,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// MasterControl methods
 	//
-	//IN USE BY MORROWIND
+	
 	// Maximum lights supported by the native API
 	@Override
 	int getMaximumLights()
@@ -3781,7 +3795,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Mac/JRE 7; called from Renderer when resizing is detected
 	// Implementation follows the approach in jogamp.opengl.GLDrawableHelper.resizeOffscreenDrawable(..)
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resizeOffscreenLayer(Canvas3D cv, int cvWidth, int cvHeight)
 	{
 		if (!isOffscreenLayerSurfaceEnabled(cv))
@@ -3820,6 +3834,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}*/
 
 			GL2 gl = glContext.getGL().getGL2();
+			//GL2ES2 gl = glContext.getGL().getGL2ES2();
 
 			// FBO : should be the default case on Mac OS X
 			if (glDrawble instanceof GLFBODrawable)
@@ -3894,7 +3909,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// This is the native method for creating the underlying graphics context.
 	@Override
-	//IN USE BY MORROWIND
 	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
 	{
 		if (VERBOSE)
@@ -3967,6 +3981,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		GL2 gl = glContext.getGL().getGL2();
+		//GL2ES2 gl = glContext.getGL().getGL2ES2();
 
 		JoglesContext ctx = new JoglesContext(glContext);
 		//PJPJPJPJPJ/////////////////////////////////////////////////////////////
@@ -4065,7 +4080,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// The native method for swapBuffers - onscreen only
 	@Override
-	//IN USE BY MORROWIND
 	void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable)
 	{
 		if (VERBOSE)
@@ -4076,7 +4090,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	//IN USE BY MORROWIND
 	void destroyContext(Drawable drawable, Context ctx)
 	{
 		if (VERBOSE)
@@ -4106,7 +4119,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// This is the native method for getting the number of lights the underlying
 	// native library can support.
 	@Override
-	//IN USE BY MORROWIND
 	int getNumCtxLights(Context ctx)
 	{
 		if (VERBOSE)
@@ -4120,31 +4132,31 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// Native method for eye lighting
-	//IN USE BY MORROWIND
 	@Override
 	void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.ctxUpdateEyeLightingEnable()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		//lighting is entirely in shaders now so this should affect nothing?
 
-		if (localEyeLightingEnable)
-		{
-			gl.glLightModeli(GL2.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_TRUE);
-		}
-		else
-		{
-			gl.glLightModeli(GL2.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_FALSE);
-		}
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		
+			if (localEyeLightingEnable)
+			{
+				gl.glLightModeli(GL2.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_TRUE);
+			}
+			else
+			{
+				gl.glLightModeli(GL2.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_FALSE);
+			}*/
 	}
 
 	// The following three methods are used in multi-pass case
 
 	// native method for setting blend color
 	@Override
-	//IN USE BY MORROWIND
 	// part of TUS updateNative, though not in fact used
 	void setBlendColor(Context ctx, float red, float green, float blue, float alpha)
 	{
@@ -4163,7 +4175,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting blend func
 	@Override
-	//IN USE BY MORROWIND
 	// part of TUS updateNative
 	void setBlendFunc(Context ctx, int srcBlendFunction, int dstBlendFunction)
 	{
@@ -4180,7 +4191,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
 	@Override
-	//IN USE BY MORROWIND
 	// looks like one time call in renderer.doWork
 	void setFullSceneAntialiasing(Context absCtx, boolean enable)
 	{
@@ -4207,7 +4217,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// Native method to update separate specular color control
-	//IN USE BY MORROWIND
 	// looks like a one time call at the start of renderer.doWork
 	@Override
 	void updateSeparateSpecularColorEnable(Context ctx, boolean enable)
@@ -4232,7 +4241,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// True under Solaris,
 	// False under windows when display mode <= 8 bit
 	@Override
-	// IN USE BY MORROWIND - but probably pointless?
+	//  probably pointless?
 	boolean validGraphicsMode()
 	{
 		if (VERBOSE)
@@ -4253,7 +4262,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting light enables
 	@Override
-	//IN USE BY MORROWIND
 	void setLightEnables(Context ctx, long enableMask, int maxLights)
 	{
 		if (VERBOSE)
@@ -4279,7 +4287,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// native method for setting scene ambient
-	//IN USE BY MORROWIND
 	@Override
 	void setSceneAmbient(Context ctx, float red, float green, float blue)
 	{
@@ -4304,7 +4311,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for disabling modelClip
 	@Override
-	//NOT IN USE BY MORROWIND -is this called ever? if not deprecate it
+	//this is called as a reset
 	void disableModelClip(Context ctx)
 	{
 		if (VERBOSE)
@@ -4324,7 +4331,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for activating a particular texture unit
 	@Override
-	//IN USE BY MORROWIND
 	void activeTextureUnit(Context ctx, int texUnitIndex)
 	{
 		if (VERBOSE)
@@ -4332,7 +4338,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//gl.glActiveTexture(texUnitIndex + GL.GL_TEXTURE0); good
 
 		if (isExtensionAvailable.GL_VERSION_1_3(gl))
 		{
@@ -4343,7 +4348,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default texture
 	@Override
-	//IN USE BY MORROWIND
+	
 	void resetTextureNative(Context ctx, int texUnitIndex)
 	{
 		if (VERBOSE)
@@ -4371,7 +4376,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	 *  gets done now.
 	 */
 	@Override
-	//IN USE BY MORROWIND - render is it's own thread so finish stops nothing
+	// render is it's own thread so finish stops nothing
 	void syncRender(Context ctx, boolean wait)
 	{
 		if (VERBOSE)
@@ -4392,7 +4397,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// The native method that sets this ctx to be the current one
-	// IN USE BY MORROWIND
 	@Override
 	boolean useCtx(Context ctx, Drawable drawable)
 	{
@@ -4405,7 +4409,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Optionally release the context. Returns true if the context was released.
 	@Override
-	// IN USE BY MORROWIND
 	boolean releaseCtx(Context ctx)
 	{
 		if (VERBOSE)
@@ -4416,7 +4419,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	// IN USE BY MORROWIND
 	void clear(Context ctx, float r, float g, float b, boolean clearStencil)
 	{
 		if (VERBOSE)
@@ -4461,7 +4463,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// The native method for setting the ModelView matrix.
 	@Override
-	// IN USE BY MORROWIND
 	void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix)
 	{
 		if (VERBOSE)
@@ -4516,7 +4517,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// The native method for setting the Projection matrix.
 	@Override
-	// IN USE BY MORROWIND - just at start
+	// just at start
 	void setProjectionMatrix(Context ctx, double[] projMatrix)
 	{
 		if (VERBOSE)
@@ -4564,7 +4565,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	// IN USE BY MORROWIND
 	static boolean isOffscreenLayerSurfaceEnabled(Canvas3D cv)
 	{
 		if (cv.drawable == null || cv.offScreen)
@@ -4578,7 +4578,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return jawtwindow.isOffscreenLayerSurfaceEnabled();
 	}
 
-	//NOT IN USE BY MORROWIND
 	static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
 	{
 		if (!(jdraw.getGLDrawable() instanceof GLFBODrawable))
@@ -4593,7 +4592,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// The native method for setting the Viewport.
 	@Override
-	// IN USE BY MORROWIND
 	void setViewport(Context ctx, int x, int y, int width, int height)
 	{
 		if (VERBOSE)
@@ -4607,7 +4605,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	// IN USE BY MORROWIND
+	
 	void freeTexture(Context ctx, int id)
 	{
 		if (VERBOSE)
@@ -4630,7 +4628,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	// IN USE BY MORROWIND
+	
 	int generateTexID(Context ctx)
 	{
 		if (VERBOSE)
@@ -4651,7 +4649,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Set glDepthMask.
 	@Override
-	//IN USE BY MORROWIND 
+	 
 	void setDepthBufferWriteEnable(Context ctx, boolean mode)
 	{
 		if (VERBOSE)
@@ -4677,7 +4675,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// FIELD_RIGHT.  The boolean doubleBuffer is TRUE for double buffered mode, FALSE
 	// for single buffering.
 	@Override
-	//IN USE BY MORROWIND 
+	 
 	void setRenderMode(Context ctx, int mode, boolean doubleBuffer)
 	{
 		if (VERBOSE)
@@ -4725,7 +4723,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glDrawBuffer(drawBuf);*/
 	}
 
-	//IN USE BY MORROWIND
+	
 	private static int getFunctionValue(int func)
 	{
 		switch (func)
@@ -4759,7 +4757,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return func;
 	}
 
-	//IN USE BY MORROWIND
+	
 	private static int getStencilOpValue(int op)
 	{
 		switch (op)
@@ -5242,7 +5240,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	// IN USE BY MORROWIND
 	private void copyTranspose(double[] src, double[] dst)
 	{
 		dst[0] = src[0];
@@ -5276,7 +5273,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// This method must return a valid GraphicsConfig, or else it must throw
 	// an exception if one cannot be returned.
 	@Override
-	// IN USE BY MORROWIND during Canvas3D init
+	// during Canvas3D init
 	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
 	{
 		if (VERBOSE)
@@ -5295,7 +5292,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Get best graphics config from pipeline
 	@Override
-	// IN USE BY MORROWIND during Canvas3D2D init
+	// during Canvas3D2D init
 	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc)
 	{
 		if (VERBOSE)
@@ -5779,6 +5776,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// than just a GLCapabilitiesChooser
 
 	//ONLY used by createQuerycontext above, hence unused
+	//What possibly invoked via some sort of crazy reflact, do not delete
 	private final class ContextQuerier extends DefaultGLCapabilitiesChooser implements ExtendedCapabilitiesChooser
 	{
 		private Canvas3D canvas;
@@ -5800,6 +5798,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// This is basically a temporary, NOTE not JoglesContext either
 			JoglContext jctx = new JoglContext(context);
 			GL2 gl = context.getGL().getGL2();
+			//GL2ES2 gl = context.getGL().getGL2ES2();
 			// Set up various properties
 			if (getPropertiesFromCurrentContext(jctx, gl))
 			{
