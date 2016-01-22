@@ -215,18 +215,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	// ---------------------------------------------------------------------
-
-	//
-	// PointAttributesRetained methods
-	//
-	//NOT IN USE BY MORROWIND - 
-	@Override
-	@Deprecated
-	void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing)
-	{
-		throw new UnsupportedOperationException();
-	}
+	
 
 	// ---------------------------------------------------------------------
 
