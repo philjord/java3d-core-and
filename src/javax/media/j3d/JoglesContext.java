@@ -69,6 +69,7 @@ public class JoglesContext extends JoglContext
 
 	public RenderingData renderingData = new RenderingData();
 
+	// should use getMaximumLights() in pipeline
 	public boolean[] enabledLights = new boolean[8];
 
 	public float[] currentAmbientColor = new float[4];

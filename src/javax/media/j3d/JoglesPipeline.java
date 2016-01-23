@@ -69,8 +69,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
-	// prints key moments in the render operations on a frame
-	private static final boolean RENDER_ORDER_OUTPUT = false;
 	// Debugging output for graphics configuration selection
 	private static final boolean DEBUG_CONFIG = false;
 	// Prints extra debugging information
@@ -113,7 +111,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// GeometryArrayRetained methods
 	//
-	
+
 	@Override
 	void setVertexFormat(Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha, boolean ignoreVertexColors)
 	{
@@ -152,7 +150,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// used by GeometryArray by Reference with NIO buffer
-	
+
 	@Override
 	void executeVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors,
 			int vcount, int vformat, int vdefined, int initialCoordIndex, Buffer vcoords, int initialColorIndex, Buffer cdataBuffer,
@@ -427,9 +425,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		if (RENDER_ORDER_OUTPUT)
-			System.out.println("executeGeometryArrayVA glDrawArrays");
-
 		// clean up if we turned on normalize
 		if (isNonUniformScale)
 		{
@@ -454,7 +449,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 
 	// non interleaved, by reference, Java arrays
-	
+
 	@Override
 	void executeIndexedGeometryVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
@@ -534,7 +529,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// non interleaved, by reference, nio buffer
-	
+
 	@Override
 	void executeIndexedGeometryVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
@@ -633,7 +628,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Helper routines for IndexedGeometryArrayRetained
 	//
 
-	
 	private void executeIndexedGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
 			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
@@ -804,9 +798,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		if (RENDER_ORDER_OUTPUT)
-			System.out.println("executeIndexedGeometryArrayVA glDrawElements");
-
 		unlockArray(gl);
 
 		// clean up if we turned on normalize
@@ -831,8 +822,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 
 	//<AND> new for andy all the FFP uniforms handed across
-	// this demands that the sources of this data have been called before 
-	// the shader attributes updates, but I have not checked this yet
 	//Order of calls:
 	//Sync from previous, in other words start of frame
 	//Projection set
@@ -845,10 +834,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//If material != null Material set  
 	//View set and Model set (Model being for this geometry)
 	//Geometry itself set and glDraw or glDrawElements called
+	// then some changes
+	// another glDraw call
+	// until glFinish
 
 	/**
 	 * Over time we have had things recorded and in FFP they are considered current state
-	 * in programmable we have to push them across manually each time
+	 * in programmable we have to push them across manually each time recorded in JoglesContext
 	 * @param gl
 	 */
 	private void setFFPAttributes(JoglContext ctx, GL2ES2 gl)
@@ -858,10 +850,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			int shaderProgramId = ctx.getShaderProgram().getValue();
 
-			if (RENDER_ORDER_OUTPUT)
-				System.out.println("setFFPAttributes for program " + shaderProgramId);
-
-			// if so give it the fixed gear
 			int uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
 			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(joglesctx.currentProjMat), 0);
 
@@ -950,7 +938,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	//TEX COORDS CALLS--vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv--
 
-	
 	// called by the 2 executes above
 	private void enableTexCoordPointer(GL2 gl, int texUnit, int texSize, int texDataType, int stride, Buffer pointer)
 	{
@@ -963,7 +950,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glTexCoordPointer(texSize, texDataType, stride, pointer);
 	}
 
-	
 	// called by 2 executes above and the reset below
 	private void disableTexCoordPointer(GL2 gl, int texUnit)
 	{
@@ -974,12 +960,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glDisableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
 	}
 
-	
 	// called by all 5 methods including 2 executes 
 	private void clientActiveTextureUnit(GL2 gl, int texUnit)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.clientActiveTextureUnit()");
+
 		if (isExtensionAvailable.GL_VERSION_1_3(gl))
 		{
 			// this determines what unit the tex coords are going to be set for
@@ -987,25 +973,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
-
 	// called by 2 executes above
 	private void resetTexture(GL2 gl, JoglContext ctx)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetTexture()");
-		/* Disable texture coordinate arrays for all texture units */
+		// Disable texture coordinate arrays for all texture units 
 		for (int i = 0; i < ctx.getMaxTexCoordSets(); i++)
 		{
 			disableTexCoordPointer(gl, i);
 		}
-		/* Reset client active texture unit to 0 */
+		// Reset client active texture unit to 0 
 		clientActiveTextureUnit(gl, 0);
 	}
 
 	//TEX COORDS CALLS--^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^--
 
-	
 	private static void resetVertexAttrs(GL gl, JoglContext ctx, int vertexAttrCount)
 	{
 		// Disable specified vertex attr arrays
@@ -1017,7 +1000,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// glLockArrays() is invoked only for indexed geometry, and the
 	// vertexCount is guaranteed to be >= 0.
-	 
+
 	private static void lockArray(GL2 gl, int vertexCount)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
@@ -1030,7 +1013,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
 	private static void unlockArray(GL2 gl)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
@@ -1493,7 +1475,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			String name = null;
 			try
 			{
-				// TODO KCR : Shouldn't this use the default locale?
 				name = new String(nameBuf, 0, tmp3[0], "US-ASCII");
 			}
 			catch (UnsupportedEncodingException e)
@@ -1543,7 +1524,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	@Override
 	ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId)
 	{
-		if (VERBOSE || RENDER_ORDER_OUTPUT)
+		if (VERBOSE)
 			System.err.println("JoglPipeline.useGLSLShaderProgram() " + unbox(shaderProgramId));
 
 		if (shaderProgramId == null)
@@ -1563,7 +1544,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static float[] toArray(Matrix4d m)
 	{
-
 		return new float[] { (float) m.m00, (float) m.m01, (float) m.m02, (float) m.m03, //
 				(float) m.m10, (float) m.m11, (float) m.m12, (float) m.m13, //
 				(float) m.m20, (float) m.m21, (float) m.m22, (float) m.m23, //
@@ -1572,7 +1552,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static float[] toArray(Matrix3d m)
 	{
-
 		return new float[] { (float) m.m00, (float) m.m01, (float) m.m02, //
 				(float) m.m10, (float) m.m11, (float) m.m12, //
 				(float) m.m20, (float) m.m21, (float) m.m22, };
@@ -1605,17 +1584,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static String getInfoLog(GL2ES2 gl, int id)
 	{
 		int[] infoLogLength = new int[1];
-		//gl.glGetObjectParameterivARB(id, GL2.GL_OBJECT_INFO_LOG_LENGTH_ARB, infoLogLength, 0);
 		gl.glGetShaderiv(id, GL2.GL_INFO_LOG_LENGTH, infoLogLength, 0);
 		if (infoLogLength[0] > 0)
 		{
 			byte[] storage = new byte[infoLogLength[0]];
 			int[] len = new int[1];
-			//gl.glGetInfoLogARB(id, infoLogLength[0], len, 0, storage, 0);
 			gl.glGetShaderInfoLog(id, infoLogLength[0], len, 0, storage, 0);
 			try
 			{
-				// TODO KCR : Shouldn't this use the default locale?
 				return new String(storage, 0, len[0], "US-ASCII");
 			}
 			catch (UnsupportedEncodingException e)
@@ -1686,13 +1662,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// DirectionalLightRetained methods
 	//
-	
+
 	private static final float[] black = new float[4];
 
 	@Override
 	void updateDirectionalLight(Context ctx, int lightSlot, float red, float green, float blue, float dirx, float diry, float dirz)
 	{
-		if (VERBOSE || RENDER_ORDER_OUTPUT)
+		if (VERBOSE)
 			System.err.println("JoglPipeline.updateDirectionalLight()");
 
 		/*	GL2 gl = context(ctx).getGL().getGL2();
@@ -1751,12 +1727,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// PointLightRetained methods
 	//
-	
+
 	@Override
 	void updatePointLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
 			float posx, float posy, float posz)
 	{
-		if (VERBOSE || RENDER_ORDER_OUTPUT)
+		if (VERBOSE)
 			System.err.println("JoglPipeline.updatePointLight()");
 
 		/*	GL2 gl = context(ctx).getGL().getGL2();
@@ -1813,12 +1789,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// SpotLightRetained methods
 	//
-	
+
 	@Override
 	void updateSpotLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
 			float posx, float posy, float posz, float spreadAngle, float concentration, float dirx, float diry, float dirz)
 	{
-		if (VERBOSE || RENDER_ORDER_OUTPUT)
+		if (VERBOSE)
 			System.err.println("JoglPipeline.updateSpotLight()");
 
 		/*	GL2 gl = context(ctx).getGL().getGL2();
@@ -1884,7 +1860,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// ExponentialFogRetained methods
 	//
-	
+
 	@Override
 	void updateExponentialFog(Context ctx, float red, float green, float blue, float density)
 	{
@@ -1919,7 +1895,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// LinearFogRetained methods
 	//
-	
+
 	@Override
 	void updateLinearFog(Context ctx, float red, float green, float blue, double fdist, double bdist)
 	{
@@ -1951,7 +1927,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for disabling fog
 	@Override
-	
+
 	void disableFog(Context ctx)
 	{
 		if (VERBOSE)
@@ -1967,7 +1943,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// native method for setting fog enable flag
-	
+
 	@Override
 	void setFogEnableFlag(Context ctx, boolean enable)
 	{
@@ -2044,7 +2020,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default LineAttributes
 	@Override
-	
+
 	void resetLineAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -2066,7 +2042,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// MaterialRetained methods
 	//
-	
+
 	@Override
 	void updateMaterial(Context ctx, float red, float green, float blue, float alpha, float aRed, float aGreen, float aBlue, float eRed,
 			float eGreen, float eBlue, float dRed, float dGreen, float dBlue, float sRed, float sGreen, float sBlue, float shininess,
@@ -2075,7 +2051,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateMaterial()");
 
-		//I want to remove this but gl_Color is still being used by teh shader for now
+		//FIXME: I want to remove this but gl_Color is still being used by teh shader for now
 
 		float[] color = new float[4];
 
@@ -2164,7 +2140,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting Material when no material is present
 	@Override
-	
+
 	void updateMaterialColor(Context ctx, float r, float g, float b, float a)
 	{
 		if (VERBOSE)
@@ -2243,7 +2219,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default ColoringAttributes
 	@Override
-	
+
 	void resetColoringAttributes(Context ctx, float r, float g, float b, float a, boolean enableLight)
 	{
 		if (VERBOSE)
@@ -2307,7 +2283,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default PointAttributes
 	@Override
-	
+
 	void resetPointAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -2330,7 +2306,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// PolygonAttributesRetained methods
 	//
-	
+
 	@Override
 	void updatePolygonAttributes(Context ctx, int polygonMode, int cullFace, boolean backFaceNormalFlip, float polygonOffset,
 			float polygonOffsetFactor)
@@ -2434,7 +2410,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default PolygonAttributes
 	@Override
-	
+
 	void resetPolygonAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -2465,7 +2441,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// RenderingAttributesRetained methods
 	//
-	
+
 	@Override
 	void updateRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride,
 			boolean depthBufferEnable, boolean depthBufferWriteEnable, int depthTestFunction, float alphaTestValue, int alphaTestFunction,
@@ -2519,7 +2495,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else
 		{
-			//TODO: these are still enabled! oblivion trees need them how do 
+			//FIXME: these are still enabled! oblivion trees need them how do 
 			//I get rid of them? my alpha testing is obviously not working right
 			gl.glEnable(GL2.GL_ALPHA_TEST);
 			gl.glAlphaFunc(getFunctionValue(alphaTestFunction), alphaTestValue);
@@ -2622,7 +2598,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default RenderingAttributes
 	@Override
-	
+
 	void resetRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride)
 	{
 		if (VERBOSE)
@@ -2655,7 +2631,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	
+
 	void updateTransparencyAttributes(Context ctx, float alpha, int geometryType, int polygonMode, boolean lineAA, boolean pointAA,
 			int transparencyMode, int srcBlendFunction, int dstBlendFunction)
 	{
@@ -2696,7 +2672,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TransparencyAttributes
 	@Override
-	
+
 	void resetTransparency(Context ctx, int geometryType, int polygonMode, boolean lineAA, boolean pointAA)
 	{
 		if (VERBOSE)
@@ -2800,7 +2776,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TextureAttributes
 	@Override
-	
+
 	// part of TUS updateNative
 	void resetTextureAttributes(Context ctx)
 	{
@@ -2839,7 +2815,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TexCoordGeneration
 	@Override
-	
+
 	// part of TUS updateNative
 	void resetTexCoordGeneration(Context ctx)
 	{
@@ -2860,13 +2836,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// TextureUnitStateRetained methods
 	//
-	
+
 	@Override
 	void updateTextureUnitState(Context ctx, int index, boolean enable)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureUnitState()");
 
+		//FIXME: texture mapping calls
 		GL2 gl = context(ctx).getGL().getGL2();
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// glClientActiveTexture does not exist, but I think that's ok
@@ -2904,7 +2881,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// TextureRetained methods
 	// Texture2DRetained methods
 	//
-	
+
 	@Override
 	void bindTexture2D(Context ctx, int objectId, boolean enable)
 	{
@@ -2931,7 +2908,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
 	@Override
 	void updateTexture2DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height,
 			int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
@@ -2943,7 +2919,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				data, useAutoMipMap);
 	}
 
-	
 	//oddly in use when I press escape twice???
 	@Override
 	void updateTexture2DSubImage(Context ctx, int level, int xoffset, int yoffset, int textureFormat, int imageFormat, int imgXOffset,
@@ -2959,7 +2934,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				width, height, dataType, data);
 	}
 
-	
 	@Override
 	void updateTexture2DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
@@ -2969,7 +2943,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureLodRange(ctx, GL.GL_TEXTURE_2D, baseLevel, maximumLevel, minimumLOD, maximumLOD);
 	}
 
-	
 	@Override
 	void updateTexture2DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed, float boundaryGreen,
 			float boundaryBlue, float boundaryAlpha)
@@ -2981,7 +2954,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				boundaryAlpha);
 	}
 
-	
 	@Override
 	void updateTexture2DFilterModes(Context ctx, int minFilter, int magFilter)
 	{
@@ -2991,7 +2963,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureFilterModes(ctx, GL.GL_TEXTURE_2D, minFilter, magFilter);
 	}
 
-	
 	@Override
 	void updateTexture2DAnisotropicFilter(Context ctx, float degree)
 	{
@@ -3001,7 +2972,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureAnisotropicFilter(ctx, GL.GL_TEXTURE_2D, degree);
 	}
 
-	
 	private void updateTextureLodRange(Context ctx, int target, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -3025,7 +2995,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glTexParameterf(target, GL2.GL_TEXTURE_MAX_LOD, maximumLOD);
 	}
 
-	
 	private void updateTextureAnisotropicFilter(Context ctx, int target, float degree)
 	{
 		GL gl = context(ctx).getGL().getGL2();
@@ -3045,7 +3014,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// TextureCubeMapRetained methods
 	//
-	
+
 	@Override
 	void bindTextureCubeMap(Context ctx, int objectId, boolean enable)
 	{
@@ -3069,7 +3038,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
 	@Override
 	void updateTextureCubeMapImage(Context ctx, int face, int numLevels, int level, int textureFormat, int imageFormat, int width,
 			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
@@ -3081,7 +3049,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				dataType, data, useAutoMipMap);
 	}
 
-	
 	@Override
 	void updateTextureCubeMapSubImage(Context ctx, int face, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data, boolean useAutoMipMap)
@@ -3089,7 +3056,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		throw new UnsupportedOperationException();
 	}
 
-	
 	@Override
 	void updateTextureCubeMapLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
 	{
@@ -3099,7 +3065,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureLodRange(ctx, GL.GL_TEXTURE_CUBE_MAP, baseLevel, maximumLevel, minimumLod, maximumLod);
 	}
 
-	
 	@Override
 	void updateTextureCubeMapBoundary(Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed, float boundaryGreen,
 			float boundaryBlue, float boundaryAlpha)
@@ -3111,7 +3076,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				boundaryAlpha);
 	}
 
-	
 	@Override
 	void updateTextureCubeMapFilterModes(Context ctx, int minFilter, int magFilter)
 	{
@@ -3121,7 +3085,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		updateTextureFilterModes(ctx, GL.GL_TEXTURE_CUBE_MAP, minFilter, magFilter);
 	}
 
-	
 	@Override
 	void updateTextureCubeMapAnisotropicFilter(Context ctx, float degree)
 	{
@@ -3135,7 +3098,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// Helper routines for above texture methods
 	//
-	
+
 	private void updateTexture2DImage(Context ctx, int target, int numLevels, int level, int textureFormat, int imageFormat, int width,
 			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
 	{
@@ -3365,7 +3328,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
 	// only used when I press escape twice
 	private void updateTexture2DSubImage(Context ctx, int target, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data)
@@ -3558,7 +3520,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	}
 
-	
 	void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
 	{
 		GL2 gl = context(ctx).getGL().getGL2();
@@ -3649,7 +3610,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
 	void updateTextureBoundary(Context ctx, int target, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
 			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
 	{
@@ -3714,7 +3674,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 				}*/
 
-		if (boundaryModeS == Texture.CLAMP || boundaryModeT == Texture.CLAMP || boundaryModeR == Texture.CLAMP)
+		//http://stackoverflow.com/questions/913801/glteximage2d
+		// texture border no longer supported on ES2
+
+		/*if (boundaryModeS == Texture.CLAMP || boundaryModeT == Texture.CLAMP || boundaryModeR == Texture.CLAMP)
 		{
 			// set texture border color
 			float[] color = new float[4];
@@ -3723,10 +3686,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			color[2] = boundaryBlue;
 			color[3] = boundaryAlpha;
 			gl.glTexParameterfv(target, GL2.GL_TEXTURE_BORDER_COLOR, color, 0);
-		}
+		}*/
 	}
 
-	
 	private static final String getFilterName(int filter)
 	{
 		switch (filter)
@@ -3762,7 +3724,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	
 	// mapping from java enum to gl enum
 	private static final int[] _gl_textureCubeMapFace = { GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
 			GL.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
@@ -3773,7 +3734,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// MasterControl methods
 	//
-	
+
 	// Maximum lights supported by the native API
 	@Override
 	int getMaximumLights()
@@ -3795,7 +3756,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Mac/JRE 7; called from Renderer when resizing is detected
 	// Implementation follows the approach in jogamp.opengl.GLDrawableHelper.resizeOffscreenDrawable(..)
 	@Override
-	
+
 	void resizeOffscreenLayer(Canvas3D cv, int cvWidth, int cvHeight)
 	{
 		if (!isOffscreenLayerSurfaceEnabled(cv))
@@ -4009,7 +3970,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// Enable rescale normal
 			gl.glEnable(GL2.GL_RESCALE_NORMAL);
 
-			gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE);
+			//The initial value is GL_AMBIENT_AND_DIFFUSE.            
+			//gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE);
 			gl.glDepthFunc(GL.GL_LEQUAL);
 			gl.glEnable(GL2.GL_COLOR_MATERIAL);
 
@@ -4026,8 +3988,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// J3D images are aligned to 1 byte
 			gl.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);
 
+			//http://filmicgames.com/archives/233 wow amazing stuff, but lighting is me so hopefully gone
 			// Workaround for issue 400: Enable separate specular by default
-			gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SEPARATE_SPECULAR_COLOR);
+			//gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SEPARATE_SPECULAR_COLOR);
 
 			// Mac OS X / JRE 7 : onscreen rendering = offscreen rendering
 			// bind FBO
@@ -4043,31 +4006,33 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (offScreen)
 			{
 
+				System.err.println("OFFSCREEN!!! this is disabled now!");
 				// Final caps
-				GLCapabilitiesImmutable chosenCaps = glDrawable.getChosenGLCapabilities();
-
-				// FBO
-				if (glDrawable instanceof GLFBODrawable)
-				{
-					GLFBODrawable fboDrawable = (GLFBODrawable) glDrawable;
-					// bind GLFBODrawable's drawing FBObject
-					// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
-					fboDrawable.getFBObject(GL.GL_BACK).bind(gl);
-				}
-				// pbuffer
-				else
-				{
-					// Double buffering: read from back buffer, as we don't swap
-					// Even this setting is identical to the initially mode it is set explicitly
-					if (chosenCaps.getDoubleBuffered())
+				/*	GLCapabilitiesImmutable chosenCaps = glDrawable.getChosenGLCapabilities();
+				
+					// FBO
+					if (glDrawable instanceof GLFBODrawable)
 					{
-						gl.glReadBuffer(GL.GL_BACK);
+						GLFBODrawable fboDrawable = (GLFBODrawable) glDrawable;
+						// bind GLFBODrawable's drawing FBObject
+						// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
+						fboDrawable.getFBObject(GL.GL_BACK).bind(gl);
 					}
+					// pbuffer
 					else
 					{
-						gl.glReadBuffer(GL.GL_FRONT);
-					}
-				}
+						// Double buffering: read from back buffer, as we don't swap
+						// Even this setting is identical to the initially mode it is set explicitly
+						
+						if (chosenCaps.getDoubleBuffered())
+						{
+							gl.glReadBuffer(GL.GL_BACK);
+						}
+						else
+						{
+							gl.glReadBuffer(GL.GL_FRONT);
+						}
+					}*/
 			}
 		}
 		finally
@@ -4197,23 +4162,23 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setFullSceneAntialiasing()");
 
-		//	JoglContext ctx = (JoglContext) absCtx;
-		//	GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// not supported in ES2, possibly just part of context generally
-		//http://stackoverflow.com/questions/27035893/antialiasing-in-opengl-es-2-0
-
-		//	if (ctx.getHasMultisample() && !VirtualUniverse.mc.implicitAntialiasing)
-		{
-			/*	if (enable)
-				{
-					gl.glEnable(GL.GL_MULTISAMPLE);
-				}
-				else
-				{
-					gl.glDisable(GL.GL_MULTISAMPLE);
-				}*/
-		}
+		/*	JoglContext ctx = (JoglContext) absCtx;
+			GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// not supported in ES2, possibly just part of context generally
+			//http://stackoverflow.com/questions/27035893/antialiasing-in-opengl-es-2-0
+		
+			if (ctx.getHasMultisample() && !VirtualUniverse.mc.implicitAntialiasing)
+			{
+					if (enable)
+					{
+						gl.glEnable(GL.GL_MULTISAMPLE);
+					}
+					else
+					{
+						gl.glDisable(GL.GL_MULTISAMPLE);
+					}
+			}*/
 	}
 
 	// Native method to update separate specular color control
@@ -4267,21 +4232,25 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setLightEnables()");
 
-		//GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		// bound to be not supported as definately shader work now
-		JoglesContext joglesctx = (JoglesContext) ctx;
+		/*	GL2 gl = context(ctx).getGL().getGL2();
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			// bound to be not supported as definately shader work now		
+		
+			for (int i = 0; i < maxLights; i++)
+			{
+					if ((enableMask & (1 << i)) != 0)
+					{
+						gl.glEnable(GL2.GL_LIGHT0 + i);
+					}
+					else
+					{
+						gl.glDisable(GL2.GL_LIGHT0 + i);
+					}
+			}*/
 
+		JoglesContext joglesctx = (JoglesContext) ctx;
 		for (int i = 0; i < maxLights; i++)
 		{
-			/*	if ((enableMask & (1 << i)) != 0)
-				{
-					gl.glEnable(GL2.GL_LIGHT0 + i);
-				}
-				else
-				{
-					gl.glDisable(GL2.GL_LIGHT0 + i);
-				}*/
 			joglesctx.enabledLights[i] = ((enableMask & (1 << i)) != 0);
 		}
 	}
@@ -4290,11 +4259,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 	@Override
 	void setSceneAmbient(Context ctx, float red, float green, float blue)
 	{
-		if (VERBOSE || RENDER_ORDER_OUTPUT)
+		if (VERBOSE)
 			System.err.println("JoglPipeline.setSceneAmbient()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		//	GL2 gl = context(ctx).getGL().getGL2();
+		//	//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// bound to be not supported as definitely shader work now
 		// need to hand this through somehow 
 
@@ -4303,7 +4272,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		color[1] = green;
 		color[2] = blue;
 		color[3] = 1.0f;
-		gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, color, 0);
+		//gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, color, 0);
+
 		JoglesContext joglesctx = (JoglesContext) ctx;
 		joglesctx.currentAmbientColor = color;
 
@@ -4348,7 +4318,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default texture
 	@Override
-	
+
 	void resetTextureNative(Context ctx, int texUnitIndex)
 	{
 		if (VERBOSE)
@@ -4390,9 +4360,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glFinish();
 		else
 			gl.glFlush();
-
-		if (RENDER_ORDER_OUTPUT)
-			System.out.println("____________SYNC_____________________");
 
 	}
 
@@ -4493,9 +4460,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//float[] mvfs = new float[16];
 		//gl.glGetFloatv(GL2.GL_MODELVIEW_MATRIX, mvfs, 0);
 
-		if (RENDER_ORDER_OUTPUT)
-			System.out.println("recording ModelViewMatrix");
-
+	
 		JoglesContext joglesctx = (JoglesContext) ctx;
 
 		deburnV.set(viewMatrix);
@@ -4605,7 +4570,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	
+
 	void freeTexture(Context ctx, int id)
 	{
 		if (VERBOSE)
@@ -4628,7 +4593,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-	
+
 	int generateTexID(Context ctx)
 	{
 		if (VERBOSE)
@@ -4649,7 +4614,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Set glDepthMask.
 	@Override
-	 
+
 	void setDepthBufferWriteEnable(Context ctx, boolean mode)
 	{
 		if (VERBOSE)
@@ -4675,7 +4640,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// FIELD_RIGHT.  The boolean doubleBuffer is TRUE for double buffered mode, FALSE
 	// for single buffering.
 	@Override
-	 
+
 	void setRenderMode(Context ctx, int mode, boolean doubleBuffer)
 	{
 		if (VERBOSE)
@@ -4723,7 +4688,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glDrawBuffer(drawBuf);*/
 	}
 
-	
 	private static int getFunctionValue(int func)
 	{
 		switch (func)
@@ -4757,7 +4721,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return func;
 	}
 
-	
 	private static int getStencilOpValue(int op)
 	{
 		switch (op)
@@ -5240,7 +5203,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	private void copyTranspose(double[] src, double[] dst)
+	private static void copyTranspose(double[] src, double[] dst)
 	{
 		dst[0] = src[0];
 		dst[1] = src[4];
