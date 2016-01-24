@@ -50,6 +50,11 @@ import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector4d;
 
+import com.jogamp.nativewindow.WindowClosingProtocol.WindowClosingMode;
+import com.jogamp.newt.event.WindowAdapter;
+import com.jogamp.newt.event.WindowEvent;
+import com.jogamp.newt.event.WindowListener;
+import com.jogamp.newt.event.WindowUpdateEvent;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
@@ -961,7 +966,7 @@ public class Canvas3D extends Canvas
 		return Pipeline.getPipeline().getGraphicsConfig(gconfig);
 	}
 
-	private final GLWindow window;
+	
 
 	/**
 	 * Constructs and initializes a new Canvas3D object that Java 3D
@@ -1031,7 +1036,9 @@ public class Canvas3D extends Canvas
 	{
 		this(dummyObj1, graphicsConfiguration, getGraphicsConfig(graphicsConfiguration), offScreen);
 	}
-
+	
+	//private final GLWindow glwindow;
+	
 	// Private constructor only called by the previous private constructor.
 	// The graphicsConfiguration parameter is used by Canvas3D to lookup the
 	// graphics device and graphics template. The graphicsConfiguration2
@@ -1046,41 +1053,15 @@ public class Canvas3D extends Canvas
 		//<AND>
 		System.out.println("Using J3d-Andy");
 
-		final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
+		/*final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
 		final GLCapabilities cap = new GLCapabilities(pro);
 
-		this.window = GLWindow.create(cap);
-		this.window.setSize(640, 480);
-		this.window.setTitle("Test GLWindow");
-		GLEventListener gle = new GLEventListener() {
-			@Override
-			public void init(GLAutoDrawable drawable)
-			{
-
-			}
-
-			@Override
-			public void dispose(GLAutoDrawable drawable)
-			{
-
-			}
-
-			@Override
-			public void display(GLAutoDrawable drawable)
-			{
-
-			}
-
-			@Override
-			public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
-			{
-
-			}
-
-		};
-		this.window.addGLEventListener(gle);
-		this.window.setVisible(true);
-		this.window.getContext();
+		this.glwindow = GLWindow.create(cap);
+		this.glwindow.setSize(10, 10);
+		this.glwindow.setTitle("Test GLWindow");		
+		//FIXME:this.glwindow.setVisible(true);
+		this.glwindow.getContext();*/
+		
 
 		//this.offScreen = offScreen;
 		this.graphicsConfiguration = graphicsConfiguration;
@@ -1133,8 +1114,6 @@ public class Canvas3D extends Canvas
 		// Assert that offScreen is *not* stereo
 		//  assert (offScreen && useStereo) == false;
 	}
-
-	 
 
 	/**
 	 * Method to return whether or not the Canvas3D is recursively visible;
@@ -1210,8 +1189,9 @@ public class Canvas3D extends Canvas
 			{
 				newSize = getSize();
 				newPosition = getLocationOnScreen();
-				
-				this.window.setSize(newSize.width,newSize.height);
+
+				//this.glwindow.setSize(newSize.width, newSize.height);
+
 			}
 			catch (IllegalComponentStateException e)
 			{
@@ -2114,10 +2094,10 @@ public class Canvas3D extends Canvas
 	 */
 	Context createNewContext(Context shareCtx, boolean isSharedCtx)
 	{
-		//Context retVal = createNewContext(this.drawable, shareCtx, isSharedCtx, this.offScreen);
+		Context retVal = createNewContext(this.drawable, shareCtx, isSharedCtx, this.offScreen);
 
-		Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.window.getDelegatedDrawable(),
-				this.window.getContext(), shareCtx, isSharedCtx);
+		//FIXME: Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow.getDelegatedDrawable(),
+	//			this.glwindow.getContext(), shareCtx, isSharedCtx);
 
 		// compute the max available texture units
 		maxAvailableTextureUnits = Math.max(maxTextureUnits, maxTextureImageUnits);

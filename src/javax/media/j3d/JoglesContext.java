@@ -1,5 +1,7 @@
 package javax.media.j3d;
 
+import java.util.HashMap;
+
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 
@@ -7,6 +9,14 @@ import com.jogamp.opengl.GLContext;
 
 public class JoglesContext extends JoglContext
 {
+	
+	//Dirty dirty buffer gen holder thing
+	public HashMap<GeometryArrayRetained, Integer> geoToBuf = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
+	
+	
+	
 	// note anything may be reused if not updated between execute calls
 
 	//Light data recorded to be handed into shader as uniform on next update
