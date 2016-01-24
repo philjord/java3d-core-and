@@ -2,13 +2,11 @@ package javax.media.j3d;
 
 import java.awt.BorderLayout;
 import java.awt.Canvas;
-import java.awt.DisplayMode;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.nio.Buffer;
@@ -33,17 +31,13 @@ import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.AbstractGraphicsScreen;
 import com.jogamp.nativewindow.CapabilitiesChooser;
 import com.jogamp.nativewindow.GraphicsConfigurationFactory;
-import com.jogamp.nativewindow.NativeSurface;
 import com.jogamp.nativewindow.NativeWindowFactory;
-import com.jogamp.nativewindow.ProxySurface;
-import com.jogamp.nativewindow.UpstreamSurfaceHook;
 import com.jogamp.nativewindow.VisualIDHolder;
 import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
 import com.jogamp.nativewindow.awt.AWTGraphicsDevice;
 import com.jogamp.nativewindow.awt.AWTGraphicsScreen;
 import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.DefaultGLCapabilitiesChooser;
-import com.jogamp.opengl.FBObject;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
@@ -266,10 +260,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
 		// Enable normalize for non-uniform scale (which rescale can't handle)
-		if (isNonUniformScale)
-		{
-			gl.glEnable(GL2.GL_NORMALIZE);
-		}
+		// not used when a shader is active
+		/*if (isNonUniformScale)
+		{			
+			//gl.glEnable(GL2.GL_NORMALIZE);
+		}*/
 
 		int coordoff = 3 * initialCoordIndex;
 		// Define the data pointers
@@ -425,10 +420,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		// clean up if we turned on normalize
-		if (isNonUniformScale)
+		// not used when a shader is active
+		/*if (isNonUniformScale)
 		{
 			gl.glDisable(GL2.GL_NORMALIZE);
-		}
+		}*/
 
 		if (vattrDefined)
 		{
@@ -650,10 +646,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
 		// Enable normalize for non-uniform scale (which rescale can't handle)
-		if (isNonUniformScale)
+		// not used when a shader is active
+		/*if (isNonUniformScale)
 		{
 			gl.glEnable(GL2.GL_NORMALIZE);
-		}
+		}*/
 
 		// Define the data pointers
 		if (floatCoordDefined)
@@ -802,10 +799,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 		unlockArray(gl);
 
 		// clean up if we turned on normalize
-		if (isNonUniformScale)
+		/*if (isNonUniformScale)
 		{
 			gl.glDisable(GL2.GL_NORMALIZE);
-		}
+		}*/
 
 		if (vattrDefined)
 		{
@@ -3857,6 +3854,144 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}*/
 	}
 
+	
+	Context createNewContext(Canvas3D cv, GLDrawable glDrawable, GLContext glContext, Context shareCtx, boolean isSharedCtx)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.createNewContext()");
+
+		/*GLDrawable glDrawable = null;
+		GLContext glContext = null;
+
+		 
+			// determined in 'getBestConfiguration'
+			GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(cv.graphicsConfiguration);
+			AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
+
+			// JAWTWindow
+			JAWTWindow nativeWindow = (JAWTWindow) NativeWindowFactory.getNativeWindow(cv, awtConfig);
+			nativeWindow.lockSurface();
+			try
+			{
+				glDrawable = GLDrawableFactory.getFactory(profile).createGLDrawable(nativeWindow);
+				glContext = glDrawable.createContext(context(shareCtx));
+			}
+			finally
+			{
+				nativeWindow.unlockSurface();
+			}
+
+			cv.drawable = new JoglDrawable(glDrawable, nativeWindow);
+			*/
+		cv.drawable = new JoglDrawable(glDrawable, null);
+
+		// assuming that this only gets called after addNotify has been called
+		glDrawable.setRealized(true);
+
+		// Apparently we are supposed to make the context current at this point
+		// and set up a bunch of properties
+
+		// Work around for some low end graphics driver bug, such as Intel Chipset.
+		// Issue 324 : Lockup J3D program and throw exception using JOGL renderer
+		boolean failed = false;
+		int failCount = 0;
+		int MAX_FAIL_COUNT = 5;
+		do
+		{
+			failed = false;
+			int res = glContext.makeCurrent();
+			if (res == GLContext.CONTEXT_NOT_CURRENT)
+			{
+				// System.err.println("makeCurrent fail : " + failCount);
+				failed = true;
+				++failCount;
+				try
+				{
+					Thread.sleep(100);
+				}
+				catch (InterruptedException e)
+				{
+				}
+			}
+		}
+		while (failed && (failCount < MAX_FAIL_COUNT));
+
+		if (failCount == MAX_FAIL_COUNT)
+		{
+			throw new IllegalRenderingStateException("Unable to make new context current after " + failCount + "tries");
+		}
+
+		GL2ES2 gl = glContext.getGL().getGL2ES2();
+
+		//New context that stores information about current render pass		
+		JoglesContext ctx = new JoglesContext(glContext);
+
+		//I can't find a route to hand this back so I'm just printing it out here
+		IntBuffer buff = IntBuffer.allocate(1);
+		gl.glGetIntegerv(GL2.GL_DEPTH_BITS, buff);
+		if (buff.get(0) < Canvas3D.graphicsConfigTable.get(cv.graphicsConfiguration).getGraphicsConfigTemplate3D().getDepthSize())
+			System.err.println("Warning depth buffer smaller than requested: " + buff.get(0));
+
+		try
+		{
+			if (!getPropertiesFromCurrentContext(ctx, gl))
+			{
+				throw new IllegalRenderingStateException("Unable to fetch properties from current OpenGL context");
+			}
+
+			if (!isSharedCtx)
+			{
+				// Set up fields in Canvas3D
+				setupCanvasProperties(cv, ctx, gl);
+			}
+
+			// Enable rescale normal
+			//If enabled and no vertex shader is active...
+			//gl.glEnable(GL2.GL_RESCALE_NORMAL);  
+
+			//The initial value is GL_AMBIENT_AND_DIFFUSE.            
+			//gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE);
+			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
+			gl.glEnable(GL2.GL_COLOR_MATERIAL);//FIXME: once materials and gl_Color working
+
+			/*
+			OpenGL specs:
+			   glReadBuffer specifies a color buffer as the source for subsequent glReadPixels.
+			   This source mode is initially GL_FRONT in single-buffered and GL_BACK in double-buffered configurations.
+			
+			We leave this mode unchanged in on-screen rendering and adjust it in off-screen rendering. See below.
+			*/
+			//          gl.glReadBuffer(GL_FRONT); 		// off window, default for single-buffered non-stereo window
+
+			// Issue 417: JOGL: Mip-mapped NPOT textures rendered incorrectly
+			// J3D images are aligned to 1 byte
+			gl.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);
+
+			//http://filmicgames.com/archives/233 wow amazing stuff, but lighting is me so hopefully gone
+			// Workaround for issue 400: Enable separate specular by default
+			//gl.glLightModeli(GL2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2.GL_SEPARATE_SPECULAR_COLOR);
+
+			// Mac OS X / JRE 7 : onscreen rendering = offscreen rendering
+			// bind FBO
+			if ( glDrawable instanceof GLFBODrawable)
+			{
+				GLFBODrawable fboDrawable = (GLFBODrawable) glDrawable;
+				// bind GLFBODrawable's drawing FBObject
+				// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
+				fboDrawable.getFBObject(GL.GL_BACK).bind(gl);
+			}
+
+			
+		}
+		finally
+		{
+			glContext.release();
+		}
+
+		return ctx;
+	}
+	
+	
 	// This is the native method for creating the underlying graphics context.
 	@Override
 	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
@@ -3956,7 +4091,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 
 			// Enable rescale normal
-			//gl.glEnable(GL2.GL_RESCALE_NORMAL); Not in ES2
+			//If enabled and no vertex shader is active...
+			//gl.glEnable(GL2.GL_RESCALE_NORMAL);  
 
 			//The initial value is GL_AMBIENT_AND_DIFFUSE.            
 			//gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE);
@@ -4382,7 +4518,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.clear()");
 
 		JoglContext jctx = (JoglContext) ctx;
-		//GL2 gl = context(ctx).getGL().getGL2();
 		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// apparently push/pop is just shader uniforms now
 		//http://stackoverflow.com/questions/7637830/glpushattrib-glpopattrib-stack-implementation-in-gles
@@ -4756,7 +4891,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// FIXME: this is a heavily abridged set of the stuff in Canvas3D.c;
 		// probably need to pull much more in
 		int[] tmp = new int[1];
-		gl.glGetIntegerv(GL2.GL_MAX_TEXTURE_UNITS, tmp, 0);
+		gl.glGetIntegerv(GL2.GL_MAX_TEXTURE_IMAGE_UNITS, tmp, 0);
 		ctx.setMaxTexCoordSets(tmp[0]);
 		if (VirtualUniverse.mc.transparentOffScreen)
 		{
@@ -4766,11 +4901,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			ctx.setAlphaClearValue(1.0f);
 		}
-		if (gl.isExtensionAvailable("GL_ARB_vertex_shader"))
+		/*if (gl.isExtensionAvailable("GL_ARB_vertex_shader"))
 		{
 			gl.glGetIntegerv(GL2.GL_MAX_TEXTURE_COORDS_ARB, tmp, 0);
 			ctx.setMaxTexCoordSets(tmp[0]);
-		}
+		}*/
 		return true;
 	}
 
@@ -4885,15 +5020,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// JoglContext for dispatch of various routines such as those
 			// related to vertex attributes
 			int[] tmp = new int[1];
-			gl.glGetIntegerv(GL2.GL_MAX_TEXTURE_IMAGE_UNITS_ARB, tmp, 0);
+			gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_IMAGE_UNITS, tmp, 0);
 			cv.maxTextureImageUnits = tmp[0];
-			gl.glGetIntegerv(GL2.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, tmp, 0);
+			gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, tmp, 0);
 			cv.maxVertexTextureImageUnits = tmp[0];
-			gl.glGetIntegerv(GL2.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, tmp, 0);
+			gl.glGetIntegerv(GL2ES2.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, tmp, 0);
 			cv.maxCombinedTextureImageUnits = tmp[0];
 			int vertexAttrOffset = VirtualUniverse.mc.glslVertexAttrOffset;
 			ctx.setGLSLVertexAttrOffset(vertexAttrOffset);
-			gl.glGetIntegerv(GL2.GL_MAX_VERTEX_ATTRIBS_ARB, tmp, 0);
+			gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_ATTRIBS, tmp, 0);
 			cv.maxVertexAttrs = tmp[0];
 			// decr count to allow for reserved vertex attrs
 			cv.maxVertexAttrs -= vertexAttrOffset;
@@ -5061,6 +5196,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if ((cv.extensionsSupported & Canvas3D.MULTISAMPLE) != 0 && !VirtualUniverse.mc.implicitAntialiasing)
 		{
+			//with a bit of luck ES2 will ignore this call and leave sampling on
 			gl.glDisable(GL.GL_MULTISAMPLE);
 		}
 
@@ -5108,585 +5244,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// ---------------------------------------------------------------------
 
 	//
-	// Canvas3D / GraphicsConfigTemplate3D methods - logic dealing with
-	// native graphics configuration or drawing surface
-	//
-
-	// Return a graphics config based on the one passed in. Note that we can
-	// assert that the input config is non-null and was created from a
-	// GraphicsConfigTemplate3D.
-	// This method must return a valid GraphicsConfig, or else it must throw
-	// an exception if one cannot be returned.
-	@Override
-	// during Canvas3D init
-	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.getGraphicsConfig()");
-
-		GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(gconfig);
-		AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
-
-		return awtConfig.getAWTGraphicsConfiguration();
-	}
-
-	private enum DisabledCaps
-	{
-		STEREO, AA, DOUBLE_BUFFER,
-	}
-
-	// Get best graphics config from pipeline
-	@Override
-	// during Canvas3D2D init
-	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.getBestConfiguration()");
-
-		// Create a GLCapabilities based on the GraphicsConfigTemplate3D
-		final GLCapabilities caps = new GLCapabilities(profile);
-
-		caps.setDoubleBuffered(gct.getDoubleBuffer() != GraphicsConfigTemplate.UNNECESSARY);
-
-		caps.setStereo(gct.getStereo() != GraphicsConfigTemplate.UNNECESSARY);
-
-		// Scene antialiasing only if double buffering
-		if (gct.getSceneAntialiasing() != GraphicsConfigTemplate.UNNECESSARY && gct.getDoubleBuffer() != GraphicsConfigTemplate.UNNECESSARY)
-		{
-			caps.setSampleBuffers(true);
-			caps.setNumSamples(2);
-		}
-		else
-		{
-			caps.setSampleBuffers(false);
-			caps.setNumSamples(0);
-		}
-
-		caps.setDepthBits(gct.getDepthSize());
-		caps.setStencilBits(gct.getStencilSize());
-
-		caps.setRedBits(Math.max(5, gct.getRedSize()));
-		caps.setGreenBits(Math.max(5, gct.getGreenSize()));
-		caps.setBlueBits(Math.max(5, gct.getBlueSize()));
-
-		// Issue 399: Request alpha buffer if transparentOffScreen is set
-		if (VirtualUniverse.mc.transparentOffScreen)
-		{
-			caps.setAlphaBits(1);
-		}
-
-		// Add PREFERRED capabilities in order of least to highest priority and we will try disabling them
-		ArrayList<DisabledCaps> capsToDisable = new ArrayList<DisabledCaps>();
-
-		if (gct.getStereo() == GraphicsConfigTemplate.PREFERRED)
-		{
-			capsToDisable.add(DisabledCaps.STEREO);
-		}
-
-		if (gct.getSceneAntialiasing() == GraphicsConfigTemplate.PREFERRED)
-		{
-			capsToDisable.add(DisabledCaps.AA);
-		}
-
-		// if AA is required, so is double buffering.
-		if (gct.getSceneAntialiasing() != GraphicsConfigTemplate.REQUIRED && gct.getDoubleBuffer() == GraphicsConfigTemplate.PREFERRED)
-		{
-			capsToDisable.add(DisabledCaps.DOUBLE_BUFFER);
-		}
-
-		// Pick an arbitrary graphics device.
-		GraphicsDevice device = gc[0].getDevice();
-		AbstractGraphicsScreen screen = (device != null) ? AWTGraphicsScreen.createScreenDevice(device, AbstractGraphicsDevice.DEFAULT_UNIT)
-				: AWTGraphicsScreen.createDefault();
-
-		// Create a Frame and dummy GLCanvas to perform eager pixel format selection
-
-		// Note that we loop in similar fashion to the NativePipeline's
-		// native code in the situation where we need to disable certain
-		// capabilities which aren't required
-		boolean tryAgain = true;
-		CapabilitiesCapturer capturer = null;
-		AWTGraphicsConfiguration awtConfig = null;
-		while (tryAgain)
-		{
-			Frame f = new Frame(device.getDefaultConfiguration());
-			f.setUndecorated(true);
-			f.setLayout(new BorderLayout());
-			capturer = new CapabilitiesCapturer();
-			try
-			{
-				awtConfig = createAwtGraphicsConfiguration(caps, capturer, screen);
-				QueryCanvas canvas = new QueryCanvas(awtConfig, capturer);
-				f.add(canvas, BorderLayout.CENTER);
-				f.setSize(MIN_FRAME_SIZE, MIN_FRAME_SIZE);
-				f.setVisible(true);
-				canvas.doQuery();
-				if (DEBUG_CONFIG)
-				{
-					System.err.println("Waiting for CapabilitiesCapturer");
-				}
-				// Try to wait for result without blocking EDT
-				if (!EventQueue.isDispatchThread())
-				{
-					synchronized (capturer)
-					{
-						if (!capturer.done())
-						{
-							try
-							{
-								capturer.wait(WAIT_TIME);
-							}
-							catch (InterruptedException e)
-							{
-							}
-						}
-					}
-				}
-				disposeOnEDT(f);
-				tryAgain = false;
-			}
-			catch (GLException e)
-			{
-				// Failure to select a pixel format; try switching off one
-				// of the only-preferred capabilities
-				if (capsToDisable.size() == 0)
-				{
-					tryAgain = false;
-				}
-				else
-				{
-					switch (capsToDisable.remove(0))
-					{
-					case STEREO:
-						caps.setStereo(false);
-						break;
-					case AA:
-						caps.setSampleBuffers(false);
-						break;
-					case DOUBLE_BUFFER:
-						caps.setDoubleBuffered(false);
-						break;
-					}
-					awtConfig = null;
-				}
-			}
-		}
-		int chosenIndex = capturer.getChosenIndex();
-		GLCapabilities chosenCaps = null;
-		if (chosenIndex < 0)
-		{
-			if (DEBUG_CONFIG)
-			{
-				System.err.println("CapabilitiesCapturer returned invalid index");
-			}
-			// It's possible some platforms or implementations might not
-			// support the GLCapabilitiesChooser mechanism; feed in the
-			// same GLCapabilities later which we gave to the selector
-			chosenCaps = caps;
-		}
-		else
-		{
-			if (DEBUG_CONFIG)
-			{
-				System.err.println("CapabilitiesCapturer returned index=" + chosenIndex);
-			}
-			chosenCaps = capturer.getCapabilities();
-		}
-
-		// FIXME chosenIndex isn't used anymore, used -1 instead of finding it.
-		JoglGraphicsConfiguration config = new JoglGraphicsConfiguration(chosenCaps, chosenIndex, device);
-
-		//PJPJPJPJPJ//////////////////////////////////////////
-		// graphics configs never return setero capability so say yes if asked for 
-		// note if we say required the graph config disables AA for some reason
-		//PJPJPJ FIXME the disable system above needs to work with this now
-		// I am just banging out 2 monos! so until "real" stereos starts up again just ignore
-		// wait for teh oculus driver to say it supports it
-		// chosenCaps.setStereo((gct.getStereo() == GraphicsConfigTemplate.PREFERRED));
-
-		// FIXME: because of the fact that JoglGraphicsConfiguration
-		// doesn't override hashCode() or equals(), we will basically be
-		// creating a new one each time getBestConfiguration() is
-		// called; in theory, we should probably map the same
-		// GLCapabilities on the same GraphicsDevice to the same
-		// JoglGraphicsConfiguration object
-
-		// Cache the GraphicsTemplate3D
-		GraphicsConfigInfo gcInf0 = new GraphicsConfigInfo(gct);
-		gcInf0.setPrivateData(awtConfig);
-
-		synchronized (Canvas3D.graphicsConfigTable)
-		{
-			Canvas3D.graphicsConfigTable.put(config, gcInf0);
-		}
-
-		return config;
-	}
-
-	// Determine whether specified graphics config is supported by pipeline
-	@Override
-	boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct, GraphicsConfiguration gc)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.isGraphicsConfigSupported()");
-
-		// FIXME: it looks like this method is implemented incorrectly
-		// in the existing NativePipeline in both the Windows and X11
-		// ports. According to the semantics of the javadoc, it looks
-		// like this method is supposed to figure out the OpenGL
-		// capabilities which would be requested by the passed
-		// GraphicsConfiguration object were it to be used, and see
-		// whether it is possible to create a context with them.
-		// Instead, on both platforms, the implementations basically set
-		// up a query based on the contents of the
-		// GraphicsConfigTemplate3D object, using the
-		// GraphicsConfiguration object only to figure out on which
-		// GraphicsDevice and screen we're making the request, and see
-		// whether it's possible to choose an OpenGL pixel format based
-		// on that information. This makes this method less useful and
-		// we can probably just safely return true here uniformly
-		// without breaking anything.
-		return true;
-	}
-
-	// Methods to get actual capabilities from Canvas3D
-	@Override
-	boolean hasDoubleBuffer(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasDoubleBuffer()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getDoubleBuffered());
-		return caps(cv).getDoubleBuffered();
-	}
-
-	@Override
-	boolean hasStereo(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasStereo()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getStereo());
-		return caps(cv).getStereo();
-	}
-
-	@Override
-	int getStencilSize(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.getStencilSize()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getStencilBits());
-		return caps(cv).getStencilBits();
-	}
-
-	@Override
-	boolean hasSceneAntialiasingMultisample(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasSceneAntialiasingMultisample()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getSampleBuffers());
-
-		return caps(cv).getSampleBuffers();
-	}
-
-	@Override
-	boolean hasSceneAntialiasingAccum(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasSceneAntialiasingAccum()");
-		GLCapabilities caps = caps(cv);
-		if (VERBOSE)
-			System.err
-					.println("  Returning " + (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0));
-		return (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0);
-	}
-
-	private boolean checkedForGetScreenMethod = false;
-	private Method getScreenMethod = null;
-
-	@Override
-	//Screen3d calls it which is inited in the init of Canvas3D
-	int getScreen(final GraphicsDevice graphicsDevice)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.getScreen()");
-
-		if (!checkedForGetScreenMethod)
-		{
-			// All of the Sun GraphicsDevice implementations have a method
-			//   int getScreen();
-			// which we want to call reflectively if it's available.
-			AccessController.doPrivileged(new PrivilegedAction<Object>() {
-				@Override
-				public Object run()
-				{
-					try
-					{
-						getScreenMethod = graphicsDevice.getClass().getDeclaredMethod("getScreen", new Class[] {});
-						getScreenMethod.setAccessible(true);
-					}
-					catch (Exception e)
-					{
-					}
-					checkedForGetScreenMethod = true;
-					return null;
-				}
-			});
-		}
-
-		if (getScreenMethod != null)
-		{
-			try
-			{
-				return ((Integer) getScreenMethod.invoke(graphicsDevice, (Object[]) null)).intValue();
-			}
-			catch (Exception e)
-			{
-				throw new RuntimeException(e);
-			}
-		}
-
-		return 0;
-	}
-
-	//----------------------------------------------------------------------
-	// Helper classes and methods to support query context functionality
-	// and pixel format selection
-
-	interface ExtendedCapabilitiesChooser extends GLCapabilitiesChooser
-	{
-		public void init(GLContext context);
-	}
-
-	// Canvas subclass to help with various query operations such as the
-	// "query context" mechanism and pixel format selection.
-	// Must defeat and simplify the single-threading behavior of JOGL's
-	// GLCanvas in order to be able to set up a temporary pixel format
-	// and OpenGL context. Apparently simply turning off the
-	// single-threaded mode isn't enough to do this.
-
-	//USED BY GET BEST CONFIGURATION
-	private final class QueryCanvas extends Canvas
-	{
-
-		private GLDrawable glDrawable;
-		private ExtendedCapabilitiesChooser chooser;
-		private boolean alreadyRan;
-
-		private AWTGraphicsConfiguration awtConfig = null;
-		private JAWTWindow nativeWindow = null;
-
-		private QueryCanvas(AWTGraphicsConfiguration awtConfig, ExtendedCapabilitiesChooser chooser)
-		{
-			// The platform-specific GLDrawableFactory will only provide a
-			// non-null GraphicsConfiguration on platforms where this is
-			// necessary (currently only X11, as Windows allows the pixel
-			// format of the window to be set later and Mac OS X seems to
-			// handle this very differently than all other platforms). On
-			// other platforms this method returns null; it is the case (at
-			// least in the Sun AWT implementation) that this will result in
-			// equivalent behavior to calling the no-arg super() constructor
-			// for Canvas.
-			super(awtConfig.getAWTGraphicsConfiguration());
-
-			this.awtConfig = awtConfig;
-			this.chooser = chooser;
-		}
-
-		@Override
-		public void addNotify()
-		{
-			super.addNotify();
-
-			nativeWindow = (JAWTWindow) NativeWindowFactory.getNativeWindow(this, awtConfig);
-			nativeWindow.lockSurface();
-			try
-			{
-				glDrawable = GLDrawableFactory.getFactory(profile).createGLDrawable(nativeWindow);
-			}
-			finally
-			{
-				nativeWindow.unlockSurface();
-			}
-
-			glDrawable.setRealized(true);
-		}
-
-		// It seems that at least on Mac OS X we need to do the OpenGL
-		// context-related work outside of the addNotify call because the
-		// Canvas hasn't been resized to a non-zero size by that point
-		private void doQuery()
-		{
-			if (alreadyRan)
-				return;
-			GLContext context = glDrawable.createContext(null);
-			int res = context.makeCurrent();
-			if (res != GLContext.CONTEXT_NOT_CURRENT)
-			{
-				try
-				{
-					chooser.init(context);
-				}
-				finally
-				{
-					context.release();
-				}
-			}
-			context.destroy();
-			alreadyRan = true;
-
-			glDrawable.setRealized(false);
-			nativeWindow.destroy();
-		}
-	}
-
-	// Used by get best configuration
-	private static AWTGraphicsConfiguration createAwtGraphicsConfiguration(GLCapabilities capabilities, CapabilitiesChooser chooser,
-			AbstractGraphicsScreen screen)
-	{
-		GraphicsConfigurationFactory factory = GraphicsConfigurationFactory.getFactory(AWTGraphicsDevice.class, GLCapabilities.class);
-		AWTGraphicsConfiguration awtGraphicsConfiguration = (AWTGraphicsConfiguration) factory.chooseGraphicsConfiguration(capabilities,
-				capabilities, chooser, screen, VisualIDHolder.VID_UNDEFINED);
-		return awtGraphicsConfiguration;
-	}
-
-	// Used in conjunction with IndexCapabilitiesChooser in pixel format
-	// selection -- see getBestConfiguration
-
-	//Used by getBestConfiguration
-	static class CapabilitiesCapturer extends DefaultGLCapabilitiesChooser implements ExtendedCapabilitiesChooser
-	{
-		private boolean done;
-		private GLCapabilities capabilities;
-		private int chosenIndex = -1;
-
-		public boolean done()
-		{
-			return done;
-		}
-
-		public GLCapabilities getCapabilities()
-		{
-			return capabilities;
-		}
-
-		public int getChosenIndex()
-		{
-			return chosenIndex;
-		}
-
-		public int chooseCapabilities(GLCapabilities desired, GLCapabilities[] available, int windowSystemRecommendedChoice)
-		{
-			int res = super.chooseCapabilities(desired, Arrays.asList(available), windowSystemRecommendedChoice);
-			capabilities = available[res];
-			chosenIndex = res;
-			markDone();
-			return res;
-		}
-
-		@Override
-		public void init(GLContext context)
-		{
-			// Avoid hanging things up for several seconds
-			kick();
-		}
-
-		private void markDone()
-		{
-			synchronized (this)
-			{
-				done = true;
-				notifyAll();
-			}
-		}
-
-		private void kick()
-		{
-			synchronized (this)
-			{
-				notifyAll();
-			}
-		}
-	}
-
-	// Used to support the query context mechanism -- needs to be more
-	// than just a GLCapabilitiesChooser
-
-	//ONLY used by createQuerycontext above, hence unused
-	//What possibly invoked via some sort of crazy reflect, do not delete
-	// can't seem to get it invoked now?
-	/*private final class ContextQuerier extends DefaultGLCapabilitiesChooser implements ExtendedCapabilitiesChooser
-	{
-		private Canvas3D canvas;
-		private boolean done;
-	
-		public ContextQuerier(Canvas3D canvas)
-		{
-			this.canvas = canvas;
-		}
-	
-		public boolean done()
-		{
-			return done;
-		}
-	
-		@Override
-		public void init(GLContext context)
-		{
-			// This is basically a temporary, NOTE not JoglesContext either
-			JoglContext jctx = new JoglContext(context);
-			GL2 gl = context.getGL().getGL2();
-			//GL2ES2 gl = context.getGL().getGL2ES2();
-			// Set up various properties
-			if (getPropertiesFromCurrentContext(jctx, gl))
-			{
-				setupCanvasProperties(canvas, jctx, gl);
-			}
-			markDone();
-		}
-	
-		private void markDone()
-		{
-			synchronized (this)
-			{
-				done = true;
-				notifyAll();
-			}
-		}
-	}*/
-
-	//used by createQueryContext and getBestConfiguration above
-	private static void disposeOnEDT(final Frame f)
-	{
-		Runnable r = new Runnable() {
-			@Override
-			public void run()
-			{
-				f.setVisible(false);
-				f.dispose();
-			}
-		};
-		if (!EventQueue.isDispatchThread())
-		{
-			EventQueue.invokeLater(r);
-		}
-		else
-		{
-			r.run();
-		}
-	}
-
-	// ---------------------------------------------------------------------
-
-	//
 	// DrawingSurfaceObject methods
 	//
 
 	// Method to construct a new DrawingSurfaceObject
 	@Override
-	//USED in Canvas3D init
 	DrawingSurfaceObject createDrawingSurfaceObject(Canvas3D cv)
 	{
 		if (VERBOSE)
@@ -5720,7 +5282,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Helper used everywhere
 	//USED heaps
-	GLContext context(Context ctx)
+	private static GLContext context(Context ctx)
 	{
 		if (ctx == null)
 			return null;
@@ -5729,7 +5291,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Helper used everywhere
 	//USED a small amount
-	GLDrawable drawable(Drawable drawable)
+	private static GLDrawable drawable(Drawable drawable)
 	{
 		if (drawable == null)
 			return null;
@@ -5737,7 +5299,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	//Used to get caps for the canvas3d
-	GLCapabilities caps(Canvas3D ctx)
+	private static GLCapabilities caps(Canvas3D ctx)
 	{
 		if (ctx.drawable != null)
 		{
@@ -6017,6 +5579,577 @@ class JoglesPipeline extends JoglesDEPPipeline
 				GL_ARB_imaging = gl.isExtensionAvailable("GL_ARB_imaging") ? 1 : -1;
 
 			return GL_ARB_imaging == 1;
+		}
+	}
+
+	// AWT AWT AWT AWT AWT AWT AWT AWT AWT
+	// ---------------------------------------------------------------------
+
+	//
+	// Canvas3D / GraphicsConfigTemplate3D methods - logic dealing with
+	// native graphics configuration or drawing surface
+	//
+
+	// Return a graphics config based on the one passed in. Note that we can
+	// assert that the input config is non-null and was created from a
+	// GraphicsConfigTemplate3D.
+	// This method must return a valid GraphicsConfig, or else it must throw
+	// an exception if one cannot be returned.
+	@Override
+	// during Canvas3D init
+	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.getGraphicsConfig()");
+
+		GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(gconfig);
+		AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
+
+		return awtConfig.getAWTGraphicsConfiguration();
+	}
+
+	private enum DisabledCaps
+	{
+		STEREO, AA, DOUBLE_BUFFER,
+	}
+
+	// Get best graphics config from pipeline
+	@Override
+	// during Canvas3D2D init
+	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.getBestConfiguration()");
+
+		// Create a GLCapabilities based on the GraphicsConfigTemplate3D
+		final GLCapabilities caps = new GLCapabilities(profile);
+
+		caps.setDoubleBuffered(gct.getDoubleBuffer() != GraphicsConfigTemplate.UNNECESSARY);
+
+		caps.setStereo(gct.getStereo() != GraphicsConfigTemplate.UNNECESSARY);
+
+		// Scene antialiasing only if double buffering
+		if (gct.getSceneAntialiasing() != GraphicsConfigTemplate.UNNECESSARY && gct.getDoubleBuffer() != GraphicsConfigTemplate.UNNECESSARY)
+		{
+			caps.setSampleBuffers(true);
+			caps.setNumSamples(2);
+		}
+		else
+		{
+			caps.setSampleBuffers(false);
+			caps.setNumSamples(0);
+		}
+
+		caps.setDepthBits(gct.getDepthSize());
+		caps.setStencilBits(gct.getStencilSize());
+
+		caps.setRedBits(Math.max(5, gct.getRedSize()));
+		caps.setGreenBits(Math.max(5, gct.getGreenSize()));
+		caps.setBlueBits(Math.max(5, gct.getBlueSize()));
+
+		// Issue 399: Request alpha buffer if transparentOffScreen is set
+		if (VirtualUniverse.mc.transparentOffScreen)
+		{
+			caps.setAlphaBits(1);
+		}
+
+		// Add PREFERRED capabilities in order of least to highest priority and we will try disabling them
+		ArrayList<DisabledCaps> capsToDisable = new ArrayList<DisabledCaps>();
+
+		if (gct.getStereo() == GraphicsConfigTemplate.PREFERRED)
+		{
+			capsToDisable.add(DisabledCaps.STEREO);
+		}
+
+		if (gct.getSceneAntialiasing() == GraphicsConfigTemplate.PREFERRED)
+		{
+			capsToDisable.add(DisabledCaps.AA);
+		}
+
+		// if AA is required, so is double buffering.
+		if (gct.getSceneAntialiasing() != GraphicsConfigTemplate.REQUIRED && gct.getDoubleBuffer() == GraphicsConfigTemplate.PREFERRED)
+		{
+			capsToDisable.add(DisabledCaps.DOUBLE_BUFFER);
+		}
+
+		// Pick an arbitrary graphics device.
+		GraphicsDevice device = gc[0].getDevice();
+		AbstractGraphicsScreen screen = (device != null) ? AWTGraphicsScreen.createScreenDevice(device, AbstractGraphicsDevice.DEFAULT_UNIT)
+				: AWTGraphicsScreen.createDefault();
+
+		// Create a Frame and dummy GLCanvas to perform eager pixel format selection
+
+		// Note that we loop in similar fashion to the NativePipeline's
+		// native code in the situation where we need to disable certain
+		// capabilities which aren't required
+		boolean tryAgain = true;
+		CapabilitiesCapturer capturer = null;
+		AWTGraphicsConfiguration awtConfig = null;
+		while (tryAgain)
+		{
+			Frame f = new Frame(device.getDefaultConfiguration());
+			f.setUndecorated(true);
+			f.setLayout(new BorderLayout());
+			capturer = new CapabilitiesCapturer();
+			try
+			{
+				awtConfig = createAwtGraphicsConfiguration(caps, capturer, screen);
+				QueryCanvas canvas = new QueryCanvas(awtConfig, capturer);
+				f.add(canvas, BorderLayout.CENTER);
+				f.setSize(MIN_FRAME_SIZE, MIN_FRAME_SIZE);
+				f.setVisible(true);
+				canvas.doQuery();
+				if (DEBUG_CONFIG)
+				{
+					System.err.println("Waiting for CapabilitiesCapturer");
+				}
+				// Try to wait for result without blocking EDT
+				if (!EventQueue.isDispatchThread())
+				{
+					synchronized (capturer)
+					{
+						if (!capturer.done())
+						{
+							try
+							{
+								capturer.wait(WAIT_TIME);
+							}
+							catch (InterruptedException e)
+							{
+							}
+						}
+					}
+				}
+				disposeOnEDT(f);
+				tryAgain = false;
+			}
+			catch (GLException e)
+			{
+				// Failure to select a pixel format; try switching off one
+				// of the only-preferred capabilities
+				if (capsToDisable.size() == 0)
+				{
+					tryAgain = false;
+				}
+				else
+				{
+					switch (capsToDisable.remove(0))
+					{
+					case STEREO:
+						caps.setStereo(false);
+						break;
+					case AA:
+						caps.setSampleBuffers(false);
+						break;
+					case DOUBLE_BUFFER:
+						caps.setDoubleBuffered(false);
+						break;
+					}
+					awtConfig = null;
+				}
+			}
+		}
+		int chosenIndex = capturer.getChosenIndex();
+		GLCapabilities chosenCaps = null;
+		if (chosenIndex < 0)
+		{
+			if (DEBUG_CONFIG)
+			{
+				System.err.println("CapabilitiesCapturer returned invalid index");
+			}
+			// It's possible some platforms or implementations might not
+			// support the GLCapabilitiesChooser mechanism; feed in the
+			// same GLCapabilities later which we gave to the selector
+			chosenCaps = caps;
+		}
+		else
+		{
+			if (DEBUG_CONFIG)
+			{
+				System.err.println("CapabilitiesCapturer returned index=" + chosenIndex);
+			}
+			chosenCaps = capturer.getCapabilities();
+		}
+
+		// FIXME chosenIndex isn't used anymore, used -1 instead of finding it.
+		JoglGraphicsConfiguration config = new JoglGraphicsConfiguration(chosenCaps, chosenIndex, device);
+
+
+		// FIXME: because of the fact that JoglGraphicsConfiguration
+		// doesn't override hashCode() or equals(), we will basically be
+		// creating a new one each time getBestConfiguration() is
+		// called; in theory, we should probably map the same
+		// GLCapabilities on the same GraphicsDevice to the same
+		// JoglGraphicsConfiguration object
+
+		// Cache the GraphicsTemplate3D
+		GraphicsConfigInfo gcInf0 = new GraphicsConfigInfo(gct);
+		gcInf0.setPrivateData(awtConfig);
+
+		synchronized (Canvas3D.graphicsConfigTable)
+		{
+			Canvas3D.graphicsConfigTable.put(config, gcInf0);
+		}
+
+		return config;
+	}
+
+	// Determine whether specified graphics config is supported by pipeline
+	@Override
+	boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct, GraphicsConfiguration gc)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.isGraphicsConfigSupported()");
+
+		// FIXME: it looks like this method is implemented incorrectly
+		// in the existing NativePipeline in both the Windows and X11
+		// ports. According to the semantics of the javadoc, it looks
+		// like this method is supposed to figure out the OpenGL
+		// capabilities which would be requested by the passed
+		// GraphicsConfiguration object were it to be used, and see
+		// whether it is possible to create a context with them.
+		// Instead, on both platforms, the implementations basically set
+		// up a query based on the contents of the
+		// GraphicsConfigTemplate3D object, using the
+		// GraphicsConfiguration object only to figure out on which
+		// GraphicsDevice and screen we're making the request, and see
+		// whether it's possible to choose an OpenGL pixel format based
+		// on that information. This makes this method less useful and
+		// we can probably just safely return true here uniformly
+		// without breaking anything.
+		return true;
+	}
+
+	// Methods to get actual capabilities from Canvas3D
+	@Override
+	boolean hasDoubleBuffer(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasDoubleBuffer()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getDoubleBuffered());
+		return caps(cv).getDoubleBuffered();
+	}
+
+	@Override
+	boolean hasStereo(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasStereo()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getStereo());
+		return caps(cv).getStereo();
+	}
+
+	@Override
+	int getStencilSize(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.getStencilSize()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getStencilBits());
+		return caps(cv).getStencilBits();
+	}
+
+	@Override
+	boolean hasSceneAntialiasingMultisample(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasSceneAntialiasingMultisample()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getSampleBuffers());
+
+		return caps(cv).getSampleBuffers();
+	}
+
+	@Override
+	boolean hasSceneAntialiasingAccum(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasSceneAntialiasingAccum()");
+		//Accum style antialiasing is gone
+		return false;
+		/*GLCapabilities caps = caps(cv);
+		if (VERBOSE)
+			System.err
+					.println("  Returning " + (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0));
+		return (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0);
+		*/
+
+	}
+
+	private boolean checkedForGetScreenMethod = false;
+	private Method getScreenMethod = null;
+
+	@Override
+	//Screen3d calls it which is inited in the init of Canvas3D
+	int getScreen(final GraphicsDevice graphicsDevice)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.getScreen()");
+
+		if (!checkedForGetScreenMethod)
+		{
+			// All of the Sun GraphicsDevice implementations have a method
+			//   int getScreen();
+			// which we want to call reflectively if it's available.
+			AccessController.doPrivileged(new PrivilegedAction<Object>() {
+				@Override
+				public Object run()
+				{
+					try
+					{
+						getScreenMethod = graphicsDevice.getClass().getDeclaredMethod("getScreen", new Class[] {});
+						getScreenMethod.setAccessible(true);
+					}
+					catch (Exception e)
+					{
+					}
+					checkedForGetScreenMethod = true;
+					return null;
+				}
+			});
+		}
+
+		if (getScreenMethod != null)
+		{
+			try
+			{
+				return ((Integer) getScreenMethod.invoke(graphicsDevice, (Object[]) null)).intValue();
+			}
+			catch (Exception e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+
+		return 0;
+	}
+
+	//----------------------------------------------------------------------
+	// Helper classes and methods to support query context functionality
+	// and pixel format selection
+
+	private interface ExtendedCapabilitiesChooser extends GLCapabilitiesChooser
+	{
+		public void init(GLContext context);
+	}
+
+	// Canvas subclass to help with various query operations such as the
+	// "query context" mechanism and pixel format selection.
+	// Must defeat and simplify the single-threading behavior of JOGL's
+	// GLCanvas in order to be able to set up a temporary pixel format
+	// and OpenGL context. Apparently simply turning off the
+	// single-threaded mode isn't enough to do this.
+
+	//USED BY GET BEST CONFIGURATION
+	private final class QueryCanvas extends Canvas
+	{
+
+		private GLDrawable glDrawable;
+		private ExtendedCapabilitiesChooser chooser;
+		private boolean alreadyRan;
+
+		private AWTGraphicsConfiguration awtConfig = null;
+		private JAWTWindow nativeWindow = null;
+
+		private QueryCanvas(AWTGraphicsConfiguration awtConfig, ExtendedCapabilitiesChooser chooser)
+		{
+			// The platform-specific GLDrawableFactory will only provide a
+			// non-null GraphicsConfiguration on platforms where this is
+			// necessary (currently only X11, as Windows allows the pixel
+			// format of the window to be set later and Mac OS X seems to
+			// handle this very differently than all other platforms). On
+			// other platforms this method returns null; it is the case (at
+			// least in the Sun AWT implementation) that this will result in
+			// equivalent behavior to calling the no-arg super() constructor
+			// for Canvas.
+			super(awtConfig.getAWTGraphicsConfiguration());
+
+			this.awtConfig = awtConfig;
+			this.chooser = chooser;
+		}
+
+		@Override
+		public void addNotify()
+		{
+			super.addNotify();
+
+			nativeWindow = (JAWTWindow) NativeWindowFactory.getNativeWindow(this, awtConfig);
+			nativeWindow.lockSurface();
+			try
+			{
+				glDrawable = GLDrawableFactory.getFactory(profile).createGLDrawable(nativeWindow);
+			}
+			finally
+			{
+				nativeWindow.unlockSurface();
+			}
+
+			glDrawable.setRealized(true);
+		}
+
+		// It seems that at least on Mac OS X we need to do the OpenGL
+		// context-related work outside of the addNotify call because the
+		// Canvas hasn't been resized to a non-zero size by that point
+		private void doQuery()
+		{
+			if (alreadyRan)
+				return;
+			GLContext context = glDrawable.createContext(null);
+			int res = context.makeCurrent();
+			if (res != GLContext.CONTEXT_NOT_CURRENT)
+			{
+				try
+				{
+					chooser.init(context);
+				}
+				finally
+				{
+					context.release();
+				}
+			}
+			context.destroy();
+			alreadyRan = true;
+
+			glDrawable.setRealized(false);
+			nativeWindow.destroy();
+		}
+	}
+
+	// Used by get best configuration
+	private static AWTGraphicsConfiguration createAwtGraphicsConfiguration(GLCapabilities capabilities, CapabilitiesChooser chooser,
+			AbstractGraphicsScreen screen)
+	{
+		GraphicsConfigurationFactory factory = GraphicsConfigurationFactory.getFactory(AWTGraphicsDevice.class, GLCapabilities.class);
+		AWTGraphicsConfiguration awtGraphicsConfiguration = (AWTGraphicsConfiguration) factory.chooseGraphicsConfiguration(capabilities,
+				capabilities, chooser, screen, VisualIDHolder.VID_UNDEFINED);
+		return awtGraphicsConfiguration;
+	}
+
+	// Used in conjunction with IndexCapabilitiesChooser in pixel format
+	// selection -- see getBestConfiguration
+
+	//Used by getBestConfiguration
+	private static class CapabilitiesCapturer extends DefaultGLCapabilitiesChooser implements ExtendedCapabilitiesChooser
+	{
+		private boolean done;
+		private GLCapabilities capabilities;
+		private int chosenIndex = -1;
+
+		public boolean done()
+		{
+			return done;
+		}
+
+		public GLCapabilities getCapabilities()
+		{
+			return capabilities;
+		}
+
+		public int getChosenIndex()
+		{
+			return chosenIndex;
+		}
+
+		public int chooseCapabilities(GLCapabilities desired, GLCapabilities[] available, int windowSystemRecommendedChoice)
+		{
+			int res = super.chooseCapabilities(desired, Arrays.asList(available), windowSystemRecommendedChoice);
+			capabilities = available[res];
+			chosenIndex = res;
+			markDone();
+			return res;
+		}
+
+		@Override
+		public void init(GLContext context)
+		{
+			// Avoid hanging things up for several seconds
+			kick();
+		}
+
+		private void markDone()
+		{
+			synchronized (this)
+			{
+				done = true;
+				notifyAll();
+			}
+		}
+
+		private void kick()
+		{
+			synchronized (this)
+			{
+				notifyAll();
+			}
+		}
+	}
+
+	// Used to support the query context mechanism -- needs to be more
+	// than just a GLCapabilitiesChooser
+
+	//ONLY used by createQuerycontext above, hence unused
+	//What possibly invoked via some sort of crazy reflect, do not delete
+	// can't seem to get it invoked now?
+	/*private final class ContextQuerier extends DefaultGLCapabilitiesChooser implements ExtendedCapabilitiesChooser
+	{
+		private Canvas3D canvas;
+		private boolean done;
+	
+		public ContextQuerier(Canvas3D canvas)
+		{
+			this.canvas = canvas;
+		}
+	
+		public boolean done()
+		{
+			return done;
+		}
+	
+		@Override
+		public void init(GLContext context)
+		{
+			// This is basically a temporary, NOTE not JoglesContext either
+			JoglContext jctx = new JoglContext(context);
+			GL2 gl = context.getGL().getGL2();
+			//GL2ES2 gl = context.getGL().getGL2ES2();
+			// Set up various properties
+			if (getPropertiesFromCurrentContext(jctx, gl))
+			{
+				setupCanvasProperties(canvas, jctx, gl);
+			}
+			markDone();
+		}
+	
+		private void markDone()
+		{
+			synchronized (this)
+			{
+				done = true;
+				notifyAll();
+			}
+		}
+	}*/
+
+	//used by createQueryContext and getBestConfiguration above
+	private static void disposeOnEDT(final Frame f)
+	{
+		Runnable r = new Runnable() {
+			@Override
+			public void run()
+			{
+				f.setVisible(false);
+				f.dispose();
+			}
+		};
+		if (!EventQueue.isDispatchThread())
+		{
+			EventQueue.invokeLater(r);
+		}
+		else
+		{
+			r.run();
 		}
 	}
 

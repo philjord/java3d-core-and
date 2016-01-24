@@ -604,48 +604,11 @@ class Renderer extends J3dThread
 
 					if (renderType == J3dMessage.CREATE_OFFSCREENBUFFER)
 					{
-						// Fix for issue 18.
-						// Fix for issue 20.
-
-						canvas.drawable = null;
-						try
-						{
-							// Issue 396. Pass in a null ctx for 2 reasons :
-							//   1) We should not use ctx field directly without buffering in a msg.
-							//   2) canvas.ctx should be null.
-							canvas.drawable = canvas.createOffScreenBuffer(null, canvas.offScreenCanvasSize.width,
-									canvas.offScreenCanvasSize.height);
-						}
-						catch (RuntimeException ex)
-						{
-							ex.printStackTrace();
-						}
-
-						if (canvas.drawable == null)
-						{
-							// Issue 260 : indicate fatal error and notify error listeners
-							canvas.setFatalError();
-							RenderingError err = new RenderingError(RenderingError.OFF_SCREEN_BUFFER_ERROR, J3dI18N.getString("Renderer5"));
-							err.setCanvas3D(canvas);
-							err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
-							notifyErrorListeners(err);
-						}
-
-						canvas.offScreenBufferPending = false;
-						m[nmesg++].decRefcount();
-						continue;
+						throw new UnsupportedOperationException();
 					}
 					else if (renderType == J3dMessage.DESTROY_CTX_AND_OFFSCREENBUFFER)
 					{
-						Object[] obj = m[nmesg].args;
-
-						// Fix for issue 175: destroy ctx & off-screen buffer
-						// Fix for issue 340: get display, drawable & ctx from msg
-						removeCtx(canvas, (Drawable) obj[2], (Context) obj[3], false, !canvas.offScreen, true);
-
-						canvas.offScreenBufferPending = false;
-						m[nmesg++].decRefcount();
-						continue;
+						throw new UnsupportedOperationException();
 					}
 					else if (renderType == J3dMessage.ALLOCATE_CANVASID)
 					{
@@ -661,7 +624,7 @@ class Renderer extends J3dThread
 						// This happen when the canvas just remove from the View
 						if (renderType == J3dMessage.RENDER_OFFSCREEN)
 						{
-							canvas.offScreenRendering = false;
+							throw new UnsupportedOperationException();
 						}
 						m[nmesg++].decRefcount();
 						continue;
@@ -684,9 +647,12 @@ class Renderer extends J3dThread
 						VirtualUniverse.mc.sendRunMessage(canvas.view, J3dThread.RENDER_THREAD);
 						m[nmesg++].decRefcount();
 					}
-					//<AND>
-					/*else if (renderType == J3dMessage.RENDER_IMMEDIATE)
+					else if (renderType == J3dMessage.RENDER_IMMEDIATE)
 					{
+						throw new UnsupportedOperationException();
+						//<AND>
+					
+						/*
 						int command = ((Integer) m[nmesg].args[1]).intValue();
 						//System.err.println("command= " + command);
 						if (canvas.isFatalError())
@@ -809,8 +775,8 @@ class Renderer extends J3dThread
 							notifyErrorListeners(err);
 						}
 
-						m[nmesg++].decRefcount();
-					}*/
+						m[nmesg++].decRefcount();*/
+					}
 					else
 					{ // retained mode rendering
 						long startRenderTime = 0L;
@@ -827,32 +793,11 @@ class Renderer extends J3dThread
 							continue;
 						}
 
-						ImageComponent2DRetained offBufRetained = null;
+						
 
 						if (renderType == J3dMessage.RENDER_OFFSCREEN)
 						{
-							// Issue 131: set offScreenRendering flag here, since it
-							// otherwise won't be set for auto-off-screen rendering
-							// (which doesn't use renderOffScreenBuffer)
-							canvas.offScreenRendering = true;
-							if (canvas.drawable == null || !canvas.active)
-							{
-								canvas.offScreenRendering = false;
-								continue;
-							}
-							else
-							{
-								offBufRetained = (ImageComponent2DRetained) canvas.offScreenBuffer.retained;
-
-								if (offBufRetained.isByReference())
-								{
-									offBufRetained.geomLock.getLock();
-								}
-
-								offBufRetained.evaluateExtensions(canvas);
-
-							}
-
+							throw new UnsupportedOperationException();
 						}
 						else if (!canvas.active)
 						{
@@ -884,12 +829,7 @@ class Renderer extends J3dThread
 
 								// Always lock for context create
 								if (!canvas.drawingSurfaceObject.renderLock())
-								{
-									if ((offBufRetained != null) && offBufRetained.isByReference())
-									{
-										offBufRetained.geomLock.unLock();
-									}
-									canvas.offScreenRendering = false;
+								{											
 									break doneRender;
 								}
 
@@ -908,11 +848,7 @@ class Renderer extends J3dThread
 									if (sharedCtx == null)
 									{
 										canvas.drawingSurfaceObject.unLock();
-										if ((offBufRetained != null) && offBufRetained.isByReference())
-										{
-											offBufRetained.geomLock.unLock();
-										}
-										canvas.offScreenRendering = false;
+										
 
 										// Issue 260 : indicate fatal error and notify error listeners
 										canvas.setFatalError();
@@ -938,12 +874,7 @@ class Renderer extends J3dThread
 
 							// Always lock for context create
 							if (!canvas.drawingSurfaceObject.renderLock())
-							{
-								if ((offBufRetained != null) && offBufRetained.isByReference())
-								{
-									offBufRetained.geomLock.unLock();
-								}
-								canvas.offScreenRendering = false;
+							{								
 								break doneRender;
 							}
 
@@ -962,12 +893,7 @@ class Renderer extends J3dThread
 								if (canvas.ctx == null)
 								{
 									canvas.drawingSurfaceObject.unLock();
-									if ((offBufRetained != null) && offBufRetained.isByReference())
-									{
-										offBufRetained.geomLock.unLock();
-									}
-									canvas.offScreenRendering = false;
-
+									
 									// Issue 260 : indicate fatal error and notify error listeners
 									canvas.setFatalError();
 									RenderingError err = new RenderingError(RenderingError.CONTEXT_CREATION_ERROR,
@@ -1035,11 +961,6 @@ class Renderer extends J3dThread
 						{
 							if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
 							{
-								if ((offBufRetained != null) && offBufRetained.isByReference())
-								{
-									offBufRetained.geomLock.unLock();
-								}
-								canvas.offScreenRendering = false;
 								break doneRender;
 							}
 
@@ -1067,12 +988,7 @@ class Renderer extends J3dThread
 							canvas.updateViewCache(false, null, null, renderBin.geometryBackground != null);
 
 							if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
-							{
-								if ((offBufRetained != null) && offBufRetained.isByReference())
-								{
-									offBufRetained.geomLock.unLock();
-								}
-								canvas.offScreenRendering = false;
+							{								
 								break doneRender;
 							}
 
@@ -1259,12 +1175,7 @@ class Renderer extends J3dThread
 							canvas.view.inCanvasCallback = false;
 
 							if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
-							{
-								if ((offBufRetained != null) && offBufRetained.isByReference())
-								{
-									offBufRetained.geomLock.unLock();
-								}
-								canvas.offScreenRendering = false;
+							{								
 								break doneRender;
 							}
 
@@ -1438,12 +1349,7 @@ class Renderer extends J3dThread
 									}
 									canvas.view.inCanvasCallback = false;
 									if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
-									{
-										if ((offBufRetained != null) && offBufRetained.isByReference())
-										{
-											offBufRetained.geomLock.unLock();
-										}
-										canvas.offScreenRendering = false;
+									{										
 										break doneRender;
 									}
 
@@ -1493,45 +1399,7 @@ class Renderer extends J3dThread
 							canvas.view.inCanvasCallback = false;
 
 							// end offscreen rendering
-							if (canvas.offScreenRendering)
-							{
-
-								canvas.syncRender(canvas.ctx, true);
-								canvas.endOffScreenRendering();
-								canvas.offScreenRendering = false;
-
-								// Issue 489 - don't call postSwap here for auto-offscreen,
-								// since it will be called later by the SWAP operation
-								if (canvas.manualRendering)
-								{
-									// do the postSwap for offscreen here
-									canvas.view.inCanvasCallback = true;
-									try
-									{
-										canvas.postSwap();
-									}
-									catch (RuntimeException e)
-									{
-										System.err.println("Exception occurred during Canvas 3D callback:");
-										e.printStackTrace();
-									}
-									catch (Error e)
-									{
-										// Issue 264 - catch Error so Renderer doesn't die
-										System.err.println("Error occurred during Canvas3D callback:");
-										e.printStackTrace();
-									}
-
-									if (offBufRetained.isByReference())
-									{
-										offBufRetained.geomLock.unLock();
-									}
-
-									canvas.view.inCanvasCallback = false;
-
-									canvas.releaseCtx();
-								}
-							}
+							//Unsupported Operation Exception();
 
 							if (MasterControl.isStatsLoggable(Level.INFO))
 							{
@@ -1543,10 +1411,7 @@ class Renderer extends J3dThread
 						}
 						else
 						{ // if (renderBin != null)
-							if ((offBufRetained != null) && offBufRetained.isByReference())
-							{
-								offBufRetained.geomLock.unLock();
-							}
+							
 						}
 					}
 				}
@@ -1712,11 +1577,11 @@ class Renderer extends J3dThread
 			// Fix for issue 18.
 			// Since we are now the renderer thread,
 			// we can safely execute destroyOffScreenBuffer.
-			if (destroyOffScreenBuffer)
+			/*if (destroyOffScreenBuffer)
 			{
 				cv.destroyOffScreenBuffer(ctx, drawable);
 				cv.offScreenBufferPending = false;
-			}
+			}*/
 		}
 	}
 

@@ -163,8 +163,8 @@ public class Screen3D extends Object {
     // The renderer for this screen
     Renderer renderer = null;
 
-// Hashtable that maps a GraphicsDevice to its associated renderer
-static Hashtable<GraphicsDevice, Renderer> deviceRendererMap = new Hashtable<GraphicsDevice, Renderer>();
+	// Hashtable that maps a GraphicsDevice to its associated renderer
+	static Hashtable<GraphicsDevice, Renderer> deviceRendererMap = new Hashtable<GraphicsDevice, Renderer>();
 
     // A count of the number of canvases associated with this screen
     int canvasCount = 0;
@@ -172,23 +172,23 @@ static Hashtable<GraphicsDevice, Renderer> deviceRendererMap = new Hashtable<Gra
 	// A list of Canvas3D Objects that refer to this
 	private final ArrayList<Canvas3D> users = new ArrayList<Canvas3D>();
 
-// Add a user to the list of users
-synchronized void removeUser(Canvas3D c) {
-	users.remove(c);
-}
-
-// Add a user to the list of users
-synchronized void addUser(Canvas3D c) {
-	if (!users.contains(c))
-		users.add(c);
-}
-
-// Add a user to the list of users
-synchronized void notifyUsers() {
-	for (int i = 0; i < users.size(); i++) {
-		users.get(i).redraw();
+	// Add a user to the list of users
+	synchronized void removeUser(Canvas3D c) {
+		users.remove(c);
 	}
-}
+	
+	// Add a user to the list of users
+	synchronized void addUser(Canvas3D c) {
+		if (!users.contains(c))
+			users.add(c);
+	}
+	
+	// Add a user to the list of users
+	synchronized void notifyUsers() {
+		for (int i = 0; i < users.size(); i++) {
+			users.get(i).redraw();
+		}
+	}
 
     /**
      * Retrieves the width and height (in pixels) of this Screen3D.

@@ -1420,6 +1420,9 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
     private void validateTexCoordPointerType() {
         boolean allNonNull = true;
         boolean allNull = true;
+        
+        //FIXME: how do I get a null here, createGeometryArrayData above has not created it?
+        if(refTexCoords != null)
         for (int i = 0; i < texCoordSetCount; i++) {
             if (refTexCoords[i] == null) {
                 allNonNull = false;
