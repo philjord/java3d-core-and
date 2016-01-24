@@ -273,47 +273,51 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{			
 			//gl.glEnable(GL2.GL_NORMALIZE);
 		}*/
-		int shaderProgramId = ctx.getShaderProgram().getValue();
+
 		int coordoff = 3 * initialCoordIndex;
 		// Define the data pointers
 		if (floatCoordDefined)
 		{
 			fverts.position(coordoff);
-			gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
+			//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
 
-			//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-			boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
-
-			Integer prevBuf = ctx.geoToBuf.get(geo);
-			if (prevBuf == null)
+			int shaderProgramId = ctx.getShaderProgram().getValue();
+			int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
+			if (glVertexLocation != -1)
 			{
-				int[] tmp = new int[1];
+				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
 
-				gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-				int bufId = tmp[0];
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId);
-				int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
-				gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
+				Integer bufId = ctx.geoToBuf.get(geo);
+				if (bufId == null)
+				{
+					int[] tmp = new int[1];
+					gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+					bufId = new Integer(tmp[0]);
 
-				ctx.geoToBuf.put(geo, bufId);
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
+					gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
+
+					ctx.geoToBuf.put(geo, bufId.intValue());
+				}
+				else
+				{
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+					if (morphable)
+						gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+				}
+
+				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+				gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
+				gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);//must be called after Pointer above
+				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
 			}
 			else
 			{
-				int bufId = prevBuf.intValue();
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId);
-				//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
-				if (morphable)
-					gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+				//				System.err.println("glVertexLocation == -1!");			
 			}
-			//Note bind above is still relevant to pointer call below
-
-			int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-			//if (glVertexLocation == -1)
-			//	System.err.println("glVertexLocation == -1!");
-			gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
-			gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);
-
-			gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
 
 		}
 		else if (doubleCoordDefined)
@@ -322,6 +326,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			throw new UnsupportedOperationException();
 			//dverts.position(coordoff);
 			//gl.glVertexPointer(3, GL2.GL_DOUBLE, 0, dverts);
+		}
+		else
+		{
+			throw new UnsupportedOperationException("No coords!");
 		}
 
 		if (floatColorsDefined)
@@ -707,47 +715,60 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (floatCoordDefined)
 		{
 			fverts.position(0);
-			gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
+			//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
+			//FIXME: looks like this can only be turned off for real ES2
+			// or maybe the gl_Vertex usage?
+
+			// In fact #version 120 is vital!
+
 			//http://forum.jogamp.org/need-help-understanding-glVertexAttribPointer-and-GL-INVALID-OPERATION-td4027730.html
-
-			//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-			boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
-
-			Integer prevBuf = ctx.geoToBuf.get(geo);
-			if (prevBuf == null)
-			{
-				int[] tmp = new int[1];
-
-				gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-				int bufId = tmp[0];
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId);
-				int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
-				gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
-				ctx.geoToBuf.put(geo, bufId);
-			}
-			else
-			{
-				int bufId = prevBuf.intValue();
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId);
-
-				if (morphable)
-					gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
-			}
-			//Note bind above is still relevant to pointer call below
 
 			// then must ensure glDeleteBuffers is called at the right time, so all of this needs to 
 			// live in GeometryArrayRetained geo! so just as texture are released geometry needs releasing
-			
+
 			//Also all buiding of buffers etc and index buffers should really take place not on the j3d thread if possible
 
+			//my glVertex != gl_Vertex check is showing some glVertexPointer fverts are updating but the 
+			//glBufferSubData fverts below is not (removing morphabel check deos not fix
+			
+			
 			int shaderProgramId = ctx.getShaderProgram().getValue();
 			int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-			//if (glVertexLocation == -1)
-			//	System.err.println("glVertexLocation == -1!");
-			gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);
-			gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
+			if (glVertexLocation != -1)
+			{
+				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
 
-			gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);
+				Integer bufId = ctx.geoToBuf.get(geo);
+				if (bufId == null)
+				{
+					int[] tmp = new int[1];
+					gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+					bufId = new Integer(tmp[0]);
+
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
+					gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
+
+					ctx.geoToBuf.put(geo, bufId.intValue());
+				}
+				else
+				{
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+					if (morphable)
+						gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+				}
+
+				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+				gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
+				gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);//must be called after Pointer above
+				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
+			}
+			else
+			{
+				//				System.err.println("glVertexLocation == -1!");			
+			}
 
 		}
 		else if (doubleCoordDefined)
@@ -757,6 +778,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//dverts.position(0);
 			//gl.glVertexPointer(3, GL2.GL_DOUBLE, 0, dverts);
 		}
+		else
+		{
+			throw new UnsupportedOperationException("No coords!");
+		}
+
 		if (floatColorsDefined)
 		{
 			fclrs.position(0);
@@ -865,7 +891,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
 					gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL.GL_STATIC_DRAW);
-
+					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
 					offset += count;
 				}
 
@@ -876,11 +902,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				int count = sarray[i];
 				int indBufId = stripInd[i];
-				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-
 				//type Specifies the type of the values in indices. Must be
 				// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.      not a problem until GLES2, but FIXME!
 
+				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
 				gl.getGL2ES2().glDrawElements(primType, count, GL.GL_UNSIGNED_INT, 0);
 				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
@@ -890,26 +915,23 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			// bind my indexes ready for the draw call
 			Integer indexBufId = ctx.geoToIndBuf.get(geo);
-			//create and bind index buffer
+			
 			if (indexBufId == null)
 			{
-				int[] tmp = new int[1];
-
+				//create and fill index buffer
 				IntBuffer indBuf = IntBuffer.wrap(indexCoord);
 				indBuf.position(initialIndexIndex);
+				
+				int[] tmp = new int[1];
 				gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-				int indBufId = tmp[0];
-				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-				gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL.GL_STATIC_DRAW);
-				ctx.geoToIndBuf.put(geo, indBufId);
-
-				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-			}
-			else
-			{
-				//just bind
+				indexBufId = new Integer( tmp[0]);
 				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
+				gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL.GL_STATIC_DRAW);
+				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
+				ctx.geoToIndBuf.put(geo, indexBufId);				
 			}
+			
+			gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
 
 			//TODO: I'm getting extra lines drawn here I don't want or get with the old polygonmode
 			//It's to do with edge vertexes only, which requires some crazy code
