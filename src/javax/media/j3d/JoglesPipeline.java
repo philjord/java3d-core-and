@@ -119,11 +119,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// Enable and disable the appropriate pointers
 		if ((vformat & GeometryArray.NORMALS) != 0)
 		{
-			gl.glEnableClientState(GL2.GL_NORMAL_ARRAY);
+			//gl.glEnableClientState(GL2.GL_NORMAL_ARRAY);
 		}
 		else
 		{
-			gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
+			//gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
 		}
 		if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
 		{
@@ -144,6 +144,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		gl.glDisableClientState(GL2.GL_COLOR_ARRAY);
 		gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
+		gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
 	}
 
 	// used by GeometryArray by Reference with NIO buffer
@@ -421,7 +422,38 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				int normoff = 3 * initialNormalIndex;
 				norms.position(normoff);
-				gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
+				//gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
+				
+				
+				int glNormalLocation = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+				if (glNormalLocation != -1)
+				{
+					Integer bufId = ctx.geoToNormalBuf.get(geo);
+					if (bufId == null)
+					{
+						int[] tmp = new int[1];
+						gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+						bufId = new Integer(tmp[0]);
+
+						gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+						gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL.GL_STATIC_DRAW);
+
+						ctx.geoToNormalBuf.put(geo, bufId.intValue());
+					}
+
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					gl.getGL2ES2().glVertexAttribPointer(glNormalLocation, 3, GL.GL_FLOAT, false, 0, 0);
+					gl.getGL2ES2().glEnableVertexAttribArray(glNormalLocation);//must be called after Pointer above
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind 
+				}
+			}
+			else
+			{
+				int glNormalLocation = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+				if (glNormalLocation != -1)
+				{
+					gl.getGL2ES2().glDisableVertexAttribArray(glNormalLocation);
+				}
 			}
 
 			if (vattrDefined)
@@ -464,6 +496,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 				int primType = 0;
 
 				//<AND> need to override if polygonAttributes says so
+				//FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
+				// each pair, what I want is a line between each set of 3 (that are not jumpers)
+				// so H-Physics and Outlines look a bit rubbish
 				JoglesContext joglesctx = ((JoglesContext) ctx);
 				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
@@ -477,7 +512,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					primType = GL.GL_TRIANGLE_FAN;
 					break;
 				case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
-					primType = GL.GL_LINE_STRIP;
+					primType = GL.GL_LINE_LOOP;
 					break;
 				}
 
@@ -920,7 +955,38 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (normalsDefined)
 			{
 				norms.position(0);
-				gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
+				//gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
+				
+				
+				int glNormalLocation = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+				if (glNormalLocation != -1)
+				{
+					Integer bufId = ctx.geoToNormalBuf.get(geo);
+					if (bufId == null)
+					{
+						int[] tmp = new int[1];
+						gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+						bufId = new Integer(tmp[0]);
+
+						gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+						gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL.GL_STATIC_DRAW);
+
+						ctx.geoToNormalBuf.put(geo, bufId.intValue());
+					}
+
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					gl.getGL2ES2().glVertexAttribPointer(glNormalLocation, 3, GL.GL_FLOAT, false, 0, 0);
+					gl.getGL2ES2().glEnableVertexAttribArray(glNormalLocation);//must be called after Pointer above
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind 
+				}
+			}
+			else
+			{
+				int glNormalLocation = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+				if (glNormalLocation != -1)
+				{
+					gl.getGL2ES2().glDisableVertexAttribArray(glNormalLocation);
+				}
 			}
 
 			if (vattrDefined)
@@ -976,7 +1042,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					primType = GL.GL_TRIANGLE_FAN;
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-					primType = GL.GL_LINE_STRIP;
+					primType = GL.GL_LINES;
 					break;
 				}
 
@@ -2379,8 +2445,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			gl.glDisable(GL2.GL_LIGHTING);
 		}*/
-
+		
+		
 		JoglesContext joglesctx = ((JoglesContext) ctx);
+		joglesctx.objectColor[0] = red;
+		joglesctx.objectColor[1] = green;
+		joglesctx.objectColor[2] = blue;
+		joglesctx.objectColor[3] = alpha;
 		joglesctx.materialData.lightEnabled = lightEnable;
 		joglesctx.materialData.shininess = shininess;
 		joglesctx.materialData.emission[0] = eRed;

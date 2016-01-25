@@ -12,12 +12,14 @@ public class JoglesContext extends JoglContext
 
 	//Dirty dirty buffer gen holder thing
 
+
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
 
 	public HashMap<GeometryArrayRetained, Integer> geoToCoordBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
-
+	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf  = new HashMap<GeometryArrayRetained, Integer>();
+	
 	// note anything may be reused if not updated between execute calls
 
 	//Light data recorded to be handed into shader as uniform on next update
