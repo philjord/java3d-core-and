@@ -11,9 +11,13 @@ public class JoglesContext extends JoglContext
 {
 	
 	//Dirty dirty buffer gen holder thing
-	public HashMap<GeometryArrayRetained, Integer> geoToBuf = new HashMap<GeometryArrayRetained, Integer>();
+	
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
+	
+	public HashMap<GeometryArrayRetained, Integer> geoToCoordBuf = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
+	
 	
 	
 	
@@ -88,14 +92,14 @@ public class JoglesContext extends JoglContext
 
 	//current ModelView Matrix for use in execute
 	public Matrix4d currentModelViewMat = new Matrix4d();
+	public Matrix4d currentModelViewProjMat = new Matrix4d();
 	//current Normal Matrix for use in execute
-	public Matrix3d currentNormalMat = new Matrix3d();
-
-	//TODO: possibly I should add ProjModelView like FFP has?
+	public Matrix3d currentNormalMat = new Matrix3d(); 
 
 	//current Projection Matrix for use in execute
 	public Matrix4d currentProjMat = new Matrix4d();
-
+	public Matrix4d currentProjMatInverse = new Matrix4d();
+	
 	JoglesContext(GLContext context)
 	{
 		super(context);

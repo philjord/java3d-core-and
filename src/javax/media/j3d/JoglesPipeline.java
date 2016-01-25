@@ -274,203 +274,234 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//gl.glEnable(GL2.GL_NORMALIZE);
 		}*/
 
-		int coordoff = 3 * initialCoordIndex;
-		// Define the data pointers
-		if (floatCoordDefined)
+		if (ctx.getShaderProgram() != null)
 		{
-			fverts.position(coordoff);
-			//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
-
 			int shaderProgramId = ctx.getShaderProgram().getValue();
-			int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-			if (glVertexLocation != -1)
-			{
-				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
 
-				Integer bufId = ctx.geoToBuf.get(geo);
-				if (bufId == null)
+			int coordoff = 3 * initialCoordIndex;
+			// Define the data pointers
+			if (floatCoordDefined)
+			{
+				fverts.position(coordoff);
+				//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
+
+				int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
+				if (glVertexLocation != -1)
 				{
-					int[] tmp = new int[1];
-					gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-					bufId = new Integer(tmp[0]);
+					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
+
+					Integer bufId = ctx.geoToCoordBuf.get(geo);
+					if (bufId == null)
+					{
+						int[] tmp = new int[1];
+						gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+						bufId = new Integer(tmp[0]);
+
+						gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+						int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
+						gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
+
+						ctx.geoToCoordBuf.put(geo, bufId.intValue());
+					}
+					else
+					{
+						gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+						//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+						if (morphable)
+							gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+					}
 
 					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
-					int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
-					gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
-
-					ctx.geoToBuf.put(geo, bufId.intValue());
+					gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
+					gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);//must be called after Pointer above
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
 				}
 				else
 				{
-					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
-					//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
-					if (morphable)
-						gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+					//				System.err.println("glVertexLocation == -1!");			
 				}
 
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
-				gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
-				gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);//must be called after Pointer above
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
+			}
+			else if (doubleCoordDefined)
+			{
+				//FIXME: doubles not supported for now
+				throw new UnsupportedOperationException();
+				//dverts.position(coordoff);
+				//gl.glVertexPointer(3, GL2.GL_DOUBLE, 0, dverts);
 			}
 			else
 			{
-				//				System.err.println("glVertexLocation == -1!");			
+				throw new UnsupportedOperationException("No coords!");
 			}
 
-		}
-		else if (doubleCoordDefined)
-		{
-			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
-			//dverts.position(coordoff);
-			//gl.glVertexPointer(3, GL2.GL_DOUBLE, 0, dverts);
-		}
-		else
-		{
-			throw new UnsupportedOperationException("No coords!");
-		}
-
-		if (floatColorsDefined)
-		{
-			int coloroff;
-			int sz;
-			if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+			if (floatColorsDefined)
 			{
-				coloroff = 4 * initialColorIndex;
-				sz = 4;
-			}
-			else
-			{
-				coloroff = 3 * initialColorIndex;
-				sz = 3;
-			}
-			fclrs.position(coloroff);
-			gl.glColorPointer(sz, GL.GL_FLOAT, 0, fclrs);
-		}
-		else if (byteColorsDefined)
-		{
-			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
-			/*int coloroff;
-			int sz;
-			if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-			{
-				coloroff = 4 * initialColorIndex;
-				sz = 4;
-			}
-			else
-			{
-				coloroff = 3 * initialColorIndex;
-				sz = 3;
-			}
-			bclrs.position(coloroff);
-			gl.glColorPointer(sz, GL.GL_UNSIGNED_BYTE, 0, bclrs);*/
-		}
-		if (normalsDefined)
-		{
-			int normoff = 3 * initialNormalIndex;
-			norms.position(normoff);
-			gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
-		}
-
-		if (vattrDefined)
-		{
-			for (int i = 0; i < vertexAttrCount; i++)
-			{
-				FloatBuffer vertexAttrs = vertexAttrData[i];
-				int sz = vertexAttrSizes[i];
-				int initIdx = vertexAttrIndices[i];
-				ctx.enableVertexAttrArray(gl, i);
-				vertexAttrs.position(initIdx * sz);
-				ctx.vertexAttrPointer(gl, i, sz, GL.GL_FLOAT, 0, vertexAttrs);
-			}
-		}
-
-		if (textureDefined)
-		{
-			int texSet = 0;
-			for (int i = 0; i < numActiveTexUnit; i++)
-			{
-				if ((i < texCoordMapLength) && ((texSet = texCoordSetMap[i]) != -1))
+				int coloroff;
+				int sz;
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
 				{
-					FloatBuffer buf = texCoords[texSet];
-					buf.position(texStride * texindices[texSet]);
-					enableTexCoordPointer(gl, i, texStride, GL.GL_FLOAT, 0, buf);
+					coloroff = 4 * initialColorIndex;
+					sz = 4;
 				}
 				else
 				{
-					disableTexCoordPointer(gl, i);
+					coloroff = 3 * initialColorIndex;
+					sz = 3;
 				}
+				fclrs.position(coloroff);
+				gl.glColorPointer(sz, GL.GL_FLOAT, 0, fclrs);
+
+				/*		int glColorLocation = gl.glGetAttribLocation(shaderProgramId, "glColor");
+						if (glColorLocation != -1)
+						{
+							Integer bufId = ctx.geoToColorBuf.get(geo);
+							if (bufId == null)
+							{
+								int[] tmp = new int[1];
+								gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+								bufId = new Integer(tmp[0]);
+				
+								gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+								gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL.GL_STATIC_DRAW);
+				
+								ctx.geoToColorBuf.put(geo, bufId.intValue());
+							}
+				
+							gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.getGL2ES2().glVertexAttribPointer(glColorLocation, 4, GL.GL_FLOAT, false, 0, 0);
+							gl.getGL2ES2().glEnableVertexAttribArray(glColorLocation);//must be called after Pointer above
+							gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
+						}*/
 			}
-
-			// Reset client active texture unit to 0
-			clientActiveTextureUnit(gl, 0);
-		}
-
-		if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-		{
-			int primType = 0;
-
-			//<AND> need to override if polygonAttributes says so
-			JoglesContext joglesctx = ((JoglesContext) ctx);
-			if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
-				geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
-
-			switch (geo_type)
+			else if (byteColorsDefined)
 			{
-			case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
-				primType = GL.GL_TRIANGLE_STRIP;
-				break;
-			case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
-				primType = GL.GL_TRIANGLE_FAN;
-				break;
-			case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
-				primType = GL.GL_LINE_STRIP;
-				break;
-			}
-
-			//glMultiDrawArrays dropped
-			/*	if (isExtensionAvailable.GL_EXT_multi_draw_arrays(gl) || isExtensionAvailable.GL_VERSION_1_4(gl))
+				//FIXME: byteColors not supported for now
+				throw new UnsupportedOperationException();
+				/*int coloroff;
+				int sz;
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
 				{
-					gl.glMultiDrawArrays(primType, start_array, 0, sarray, 0, strip_len);
+					coloroff = 4 * initialColorIndex;
+					sz = 4;
 				}
-				else*/
+				else
+				{
+					coloroff = 3 * initialColorIndex;
+					sz = 3;
+				}
+				bclrs.position(coloroff);
+				gl.glColorPointer(sz, GL.GL_UNSIGNED_BYTE, 0, bclrs);*/
+			}
+			if (normalsDefined)
 			{
+				int normoff = 3 * initialNormalIndex;
+				norms.position(normoff);
+				gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
+			}
 
-				for (int i = 0; i < strip_len; i++)
+			if (vattrDefined)
+			{
+				for (int i = 0; i < vertexAttrCount; i++)
 				{
-					if (sarray[i] > 0)
-						gl.getGL2ES2().glDrawArrays(primType, start_array[i], sarray[i]);
+					FloatBuffer vertexAttrs = vertexAttrData[i];
+					int sz = vertexAttrSizes[i];
+					int initIdx = vertexAttrIndices[i];
+					ctx.enableVertexAttrArray(gl, i);
+					vertexAttrs.position(initIdx * sz);
+					ctx.vertexAttrPointer(gl, i, sz, GL.GL_FLOAT, 0, vertexAttrs);
 				}
 			}
+
+			if (textureDefined)
+			{
+				int texSet = 0;
+				for (int i = 0; i < numActiveTexUnit; i++)
+				{
+					if ((i < texCoordMapLength) && ((texSet = texCoordSetMap[i]) != -1))
+					{
+						FloatBuffer buf = texCoords[texSet];
+						buf.position(texStride * texindices[texSet]);
+						enableTexCoordPointer(gl, i, texStride, GL.GL_FLOAT, 0, buf);
+					}
+					else
+					{
+						disableTexCoordPointer(gl, i);
+					}
+				}
+
+				// Reset client active texture unit to 0
+				clientActiveTextureUnit(gl, 0);
+			}
+
+			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
+					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
+			{
+				int primType = 0;
+
+				//<AND> need to override if polygonAttributes says so
+				JoglesContext joglesctx = ((JoglesContext) ctx);
+				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
+					primType = GL.GL_TRIANGLE_STRIP;
+					break;
+				case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
+					primType = GL.GL_TRIANGLE_FAN;
+					break;
+				case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
+					primType = GL.GL_LINE_STRIP;
+					break;
+				}
+
+				//glMultiDrawArrays dropped
+				/*	if (isExtensionAvailable.GL_EXT_multi_draw_arrays(gl) || isExtensionAvailable.GL_VERSION_1_4(gl))
+					{
+						gl.glMultiDrawArrays(primType, start_array, 0, sarray, 0, strip_len);
+					}
+					else*/
+				{
+
+					for (int i = 0; i < strip_len; i++)
+					{
+						if (sarray[i] > 0)
+							gl.getGL2ES2().glDrawArrays(primType, start_array[i], sarray[i]);
+					}
+				}
+			}
+			else
+			{
+				//<AND> need to override if polygonAttributes says so
+				JoglesContext joglesctx = ((JoglesContext) ctx);
+				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_LINE_SET;
+				else if (joglesctx.polygonMode == PolygonAttributes.POLYGON_POINT)
+					geo_type = GeometryRetained.GEO_TYPE_POINT_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_QUAD_SET:
+					gl.getGL2ES2().glDrawArrays(GL2.GL_QUADS, 0, vcount);
+					break;
+				case GeometryRetained.GEO_TYPE_TRI_SET:
+					gl.getGL2ES2().glDrawArrays(GL.GL_TRIANGLES, 0, vcount);
+					break;
+				case GeometryRetained.GEO_TYPE_POINT_SET:
+					gl.getGL2ES2().glDrawArrays(GL.GL_POINTS, 0, vcount);
+					break;
+				case GeometryRetained.GEO_TYPE_LINE_SET:
+					gl.getGL2ES2().glDrawArrays(GL.GL_LINES, 0, vcount);
+					break;
+				}
+			}
+
 		}
 		else
 		{
-			//<AND> need to override if polygonAttributes says so
-			JoglesContext joglesctx = ((JoglesContext) ctx);
-			if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
-				geo_type = GeometryRetained.GEO_TYPE_LINE_SET;
-			else if (joglesctx.polygonMode == PolygonAttributes.POLYGON_POINT)
-				geo_type = GeometryRetained.GEO_TYPE_POINT_SET;
-
-			switch (geo_type)
-			{
-			case GeometryRetained.GEO_TYPE_QUAD_SET:
-				gl.getGL2ES2().glDrawArrays(GL2.GL_QUADS, 0, vcount);
-				break;
-			case GeometryRetained.GEO_TYPE_TRI_SET:
-				gl.getGL2ES2().glDrawArrays(GL.GL_TRIANGLES, 0, vcount);
-				break;
-			case GeometryRetained.GEO_TYPE_POINT_SET:
-				gl.getGL2ES2().glDrawArrays(GL.GL_POINTS, 0, vcount);
-				break;
-			case GeometryRetained.GEO_TYPE_LINE_SET:
-				gl.getGL2ES2().glDrawArrays(GL.GL_LINES, 0, vcount);
-				break;
-			}
+			// do nothing warning already given by FFP
 		}
 
 		// clean up if we turned on normalize
@@ -711,257 +742,290 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glEnable(GL2.GL_NORMALIZE);
 		}*/
 
-		// Define the data pointers
-		if (floatCoordDefined)
+		if (ctx.getShaderProgram() != null)
 		{
-			fverts.position(0);
-			//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
-			//FIXME: looks like this can only be turned off for real ES2
-			// or maybe the gl_Vertex usage?
-
-			// In fact #version 120 is vital!
-
-			//http://forum.jogamp.org/need-help-understanding-glVertexAttribPointer-and-GL-INVALID-OPERATION-td4027730.html
-
-			// then must ensure glDeleteBuffers is called at the right time, so all of this needs to 
-			// live in GeometryArrayRetained geo! so just as texture are released geometry needs releasing
-
-			//Also all buiding of buffers etc and index buffers should really take place not on the j3d thread if possible
-
-			//my glVertex != gl_Vertex check is showing some glVertexPointer fverts are updating but the 
-			//glBufferSubData fverts below is not (removing morphabel check deos not fix
-			
-			
 			int shaderProgramId = ctx.getShaderProgram().getValue();
-			int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-			if (glVertexLocation != -1)
-			{
-				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
 
-				Integer bufId = ctx.geoToBuf.get(geo);
-				if (bufId == null)
+			// Define the data pointers
+			if (floatCoordDefined)
+			{
+				fverts.position(0);
+				//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
+				//FIXME: looks like this can only be turned off for real ES2
+				// or maybe the gl_Vertex usage?
+
+				// In fact #version 120 is vital!
+
+				//http://forum.jogamp.org/need-help-understanding-glVertexAttribPointer-and-GL-INVALID-OPERATION-td4027730.html
+
+				// then must ensure glDeleteBuffers is called at the right time, so all of this needs to 
+				// live in GeometryArrayRetained geo! so just as texture are released geometry needs releasing
+
+				//Also all buiding of buffers etc and index buffers should really take place not on the j3d thread if possible
+
+				//my glVertex != gl_Vertex check is showing some glVertexPointer fverts are updating but the 
+				//glBufferSubData fverts below is not (removing morphabel check deos not fix
+
+				int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
+				if (glVertexLocation != -1)
 				{
-					int[] tmp = new int[1];
-					gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-					bufId = new Integer(tmp[0]);
+					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
+
+					Integer bufId = ctx.geoToCoordBuf.get(geo);
+					if (bufId == null)
+					{
+						int[] tmp = new int[1];
+						gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+						bufId = new Integer(tmp[0]);
+
+						gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+						int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
+						gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
+
+						ctx.geoToCoordBuf.put(geo, bufId.intValue());
+					}
+					else
+					{
+						gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+						//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+						if (morphable)
+							gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+					}
 
 					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
-					int usage = morphable ? GL.GL_DYNAMIC_DRAW : GL.GL_STATIC_DRAW;
-					gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
-
-					ctx.geoToBuf.put(geo, bufId.intValue());
+					gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
+					gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);//must be called after Pointer above
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
 				}
 				else
 				{
-					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
-					//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
-					if (morphable)
-						gl.getGL2ES2().glBufferSubData(GL.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+					//				System.err.println("glVertexLocation == -1!");			
 				}
-
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
-				gl.getGL2ES2().glVertexAttribPointer(glVertexLocation, 3, GL.GL_FLOAT, false, 0, 0);
-				gl.getGL2ES2().glEnableVertexAttribArray(glVertexLocation);//must be called after Pointer above
-				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
+			}
+			else if (doubleCoordDefined)
+			{
+				//FIXME: doubles not supported for now
+				throw new UnsupportedOperationException();
+				//dverts.position(0);
+				//gl.glVertexPointer(3, GL2.GL_DOUBLE, 0, dverts);
 			}
 			else
 			{
-				//				System.err.println("glVertexLocation == -1!");			
+				throw new UnsupportedOperationException("No coords!");
 			}
 
-		}
-		else if (doubleCoordDefined)
-		{
-			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
-			//dverts.position(0);
-			//gl.glVertexPointer(3, GL2.GL_DOUBLE, 0, dverts);
-		}
-		else
-		{
-			throw new UnsupportedOperationException("No coords!");
-		}
-
-		if (floatColorsDefined)
-		{
-			fclrs.position(0);
-			if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+			if (floatColorsDefined)
 			{
-				gl.glColorPointer(4, GL.GL_FLOAT, 0, fclrs);
-			}
-			else
-			{
-				gl.glColorPointer(3, GL.GL_FLOAT, 0, fclrs);
-			}
-		}
-		else if (byteColorsDefined)
-		{
-			bclrs.position(0);
-			if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-			{
-				gl.glColorPointer(4, GL.GL_UNSIGNED_BYTE, 0, bclrs);
-			}
-			else
-			{
-				gl.glColorPointer(3, GL.GL_UNSIGNED_BYTE, 0, bclrs);
-			}
-		}
-		if (normalsDefined)
-		{
-			norms.position(0);
-			gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
-		}
-
-		if (vattrDefined)
-		{
-			for (int i = 0; i < vertexAttrCount; i++)
-			{
-				FloatBuffer vertexAttrs = vertexAttrBufs[i];
-				int sz = vertexAttrSizes[i];
-				ctx.enableVertexAttrArray(gl, i);
-				vertexAttrs.position(0);
-				ctx.vertexAttrPointer(gl, i, sz, GL.GL_FLOAT, 0, vertexAttrs);
-			}
-		}
-
-		if (textureDefined)
-		{
-			int texSet = 0;
-			for (int i = 0; i < numActiveTexUnitState; i++)
-			{
-				if ((i < texCoordSetCount) && ((texSet = texCoordSetMap[i]) != -1))
+				fclrs.position(0);
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
 				{
-					FloatBuffer buf = texCoords[texSet];
-					buf.position(0);
-					enableTexCoordPointer(gl, i, texStride, GL.GL_FLOAT, 0, buf);
+					gl.glColorPointer(4, GL.GL_FLOAT, 0, fclrs);
 				}
 				else
 				{
-					disableTexCoordPointer(gl, i);
+					gl.glColorPointer(3, GL.GL_FLOAT, 0, fclrs);
+				}
+
+				/*		int glColorLocation = gl.glGetAttribLocation(shaderProgramId, "glColor");
+						if (glColorLocation != -1)
+						{
+							Integer bufId = ctx.geoToColorBuf.get(geo);
+							if (bufId == null)
+							{
+								int[] tmp = new int[1];
+								gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+								bufId = new Integer(tmp[0]);
+				
+								gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+								gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL.GL_STATIC_DRAW);
+				
+								ctx.geoToColorBuf.put(geo, bufId.intValue());
+							}
+				
+							gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.getGL2ES2().glVertexAttribPointer(glColorLocation, 4, GL.GL_FLOAT, false, 0, 0);
+							gl.getGL2ES2().glEnableVertexAttribArray(glColorLocation);//must be called after Pointer above
+							gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind or the later calls to glColorPointer moan
+						}*/
+			}
+			else if (byteColorsDefined)
+			{
+				//FIXME: byteColors not supported for now
+				throw new UnsupportedOperationException();
+
+				/*bclrs.position(0);
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+				{
+					gl.glColorPointer(4, GL.GL_UNSIGNED_BYTE, 0, bclrs);
+				}
+				else
+				{
+					gl.glColorPointer(3, GL.GL_UNSIGNED_BYTE, 0, bclrs);
+				}*/
+			}
+			if (normalsDefined)
+			{
+				norms.position(0);
+				gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
+			}
+
+			if (vattrDefined)
+			{
+				for (int i = 0; i < vertexAttrCount; i++)
+				{
+					FloatBuffer vertexAttrs = vertexAttrBufs[i];
+					int sz = vertexAttrSizes[i];
+					ctx.enableVertexAttrArray(gl, i);
+					vertexAttrs.position(0);
+					ctx.vertexAttrPointer(gl, i, sz, GL.GL_FLOAT, 0, vertexAttrs);
 				}
 			}
 
-			// Reset client active texture unit to 0
-			clientActiveTextureUnit(gl, 0);
-		}
-
-		lockArray(gl, vertexCount);
-		JoglesContext joglesctx = ((JoglesContext) ctx);
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			int primType = 0;
-
-			//<AND> need to override if polygonAttributes says so
-			if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
-				geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET;
-
-			switch (geo_type)
+			if (textureDefined)
 			{
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
-				primType = GL.GL_TRIANGLE_STRIP;
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
-				primType = GL.GL_TRIANGLE_FAN;
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-				primType = GL.GL_LINE_STRIP;
-				break;
+				int texSet = 0;
+				for (int i = 0; i < numActiveTexUnitState; i++)
+				{
+					if ((i < texCoordSetCount) && ((texSet = texCoordSetMap[i]) != -1))
+					{
+						FloatBuffer buf = texCoords[texSet];
+						buf.position(0);
+						enableTexCoordPointer(gl, i, texStride, GL.GL_FLOAT, 0, buf);
+					}
+					else
+					{
+						disableTexCoordPointer(gl, i);
+					}
+				}
+
+				// Reset client active texture unit to 0
+				clientActiveTextureUnit(gl, 0);
 			}
 
-			// Note: using MultiDrawElements is probably more expensive than
-			// not in this case due to the need to allocate more temporary
-			// direct buffers and slice up the incoming indices array
-
-			int[] stripInd = ctx.geoToIndStripBuf.get(geo);
-			// if no index buffers build build them now
-			if (stripInd == null)
+			lockArray(gl, vertexCount);
+			JoglesContext joglesctx = ((JoglesContext) ctx);
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
 			{
-				stripInd = new int[strip_len];
-				gl.getGL2ES2().glGenBuffers(strip_len, stripInd, 0);
+				int primType = 0;
 
-				int offset = initialIndexIndex;
-				IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
+				//<AND> need to override if polygonAttributes says so
+				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
+					primType = GL.GL_TRIANGLE_STRIP;
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
+					primType = GL.GL_TRIANGLE_FAN;
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
+					primType = GL.GL_LINE_STRIP;
+					break;
+				}
+
+				// Note: using MultiDrawElements is probably more expensive than
+				// not in this case due to the need to allocate more temporary
+				// direct buffers and slice up the incoming indices array
+
+				int[] stripInd = ctx.geoToIndStripBuf.get(geo);
+				// if no index buffers build build them now
+				if (stripInd == null)
+				{
+					stripInd = new int[strip_len];
+					gl.getGL2ES2().glGenBuffers(strip_len, stripInd, 0);
+
+					int offset = initialIndexIndex;
+					IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
+					for (int i = 0; i < strip_len; i++)
+					{
+						indicesBuffer.position(offset);
+						int count = sarray[i];
+						int indBufId = stripInd[i];
+
+						gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
+						gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL.GL_STATIC_DRAW);
+						gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
+						offset += count;
+					}
+
+					ctx.geoToIndStripBuf.put(geo, stripInd);
+				}
+
 				for (int i = 0; i < strip_len; i++)
 				{
-					indicesBuffer.position(offset);
 					int count = sarray[i];
 					int indBufId = stripInd[i];
+					//type Specifies the type of the values in indices. Must be
+					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.      not a problem until GLES2, but FIXME!
 
 					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-					gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL.GL_STATIC_DRAW);
+					gl.getGL2ES2().glDrawElements(primType, count, GL.GL_UNSIGNED_INT, 0);
 					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
-					offset += count;
 				}
 
-				ctx.geoToIndStripBuf.put(geo, stripInd);
 			}
-
-			for (int i = 0; i < strip_len; i++)
+			else
 			{
-				int count = sarray[i];
-				int indBufId = stripInd[i];
-				//type Specifies the type of the values in indices. Must be
-				// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.      not a problem until GLES2, but FIXME!
+				// bind my indexes ready for the draw call
+				Integer indexBufId = ctx.geoToIndBuf.get(geo);
 
-				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-				gl.getGL2ES2().glDrawElements(primType, count, GL.GL_UNSIGNED_INT, 0);
+				if (indexBufId == null)
+				{
+					//create and fill index buffer
+					IntBuffer indBuf = IntBuffer.wrap(indexCoord);
+					indBuf.position(initialIndexIndex);
+
+					int[] tmp = new int[1];
+					gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+					indexBufId = new Integer(tmp[0]);
+					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
+					gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf,
+							GL.GL_STATIC_DRAW);
+					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
+					ctx.geoToIndBuf.put(geo, indexBufId);
+				}
+
+				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
+
+				//TODO: I'm getting extra lines drawn here I don't want or get with the old polygonmode
+				//It's to do with edge vertexes only, which requires some crazy code
+				//http://stackoverflow.com/questions/18035719/drawing-a-border-on-a-2d-polygon-with-a-fragment-shader
+				//<AND> need to override if polygonAttributes says so
+				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_SET;
+				else if (joglesctx.polygonMode == PolygonAttributes.POLYGON_POINT)
+					geo_type = GeometryRetained.GEO_TYPE_INDEXED_POINT_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
+					gl.getGL2ES2().glDrawElements(GL2.GL_QUADS, validIndexCount, GL.GL_UNSIGNED_INT, 0);
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
+					gl.getGL2ES2().glDrawElements(GL.GL_TRIANGLES, validIndexCount, GL.GL_UNSIGNED_INT, 0);
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
+					gl.getGL2ES2().glDrawElements(GL.GL_POINTS, validIndexCount, GL.GL_UNSIGNED_INT, 0);
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
+					gl.getGL2ES2().glDrawElements(GL.GL_LINES, validIndexCount, GL.GL_UNSIGNED_INT, 0);
+					break;
+				}
+
 				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
+
+			unlockArray(gl);
 
 		}
 		else
 		{
-			// bind my indexes ready for the draw call
-			Integer indexBufId = ctx.geoToIndBuf.get(geo);
-			
-			if (indexBufId == null)
-			{
-				//create and fill index buffer
-				IntBuffer indBuf = IntBuffer.wrap(indexCoord);
-				indBuf.position(initialIndexIndex);
-				
-				int[] tmp = new int[1];
-				gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-				indexBufId = new Integer( tmp[0]);
-				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
-				gl.getGL2ES2().glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL.GL_STATIC_DRAW);
-				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
-				ctx.geoToIndBuf.put(geo, indexBufId);				
-			}
-			
-			gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
-
-			//TODO: I'm getting extra lines drawn here I don't want or get with the old polygonmode
-			//It's to do with edge vertexes only, which requires some crazy code
-			//http://stackoverflow.com/questions/18035719/drawing-a-border-on-a-2d-polygon-with-a-fragment-shader
-			//<AND> need to override if polygonAttributes says so
-			if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
-				geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_SET;
-			else if (joglesctx.polygonMode == PolygonAttributes.POLYGON_POINT)
-				geo_type = GeometryRetained.GEO_TYPE_INDEXED_POINT_SET;
-
-			switch (geo_type)
-			{
-			case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-				gl.getGL2ES2().glDrawElements(GL2.GL_QUADS, validIndexCount, GL.GL_UNSIGNED_INT, 0);
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-				gl.getGL2ES2().glDrawElements(GL.GL_TRIANGLES, validIndexCount, GL.GL_UNSIGNED_INT, 0);
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-				gl.getGL2ES2().glDrawElements(GL.GL_POINTS, validIndexCount, GL.GL_UNSIGNED_INT, 0);
-				break;
-			case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-				gl.getGL2ES2().glDrawElements(GL.GL_LINES, validIndexCount, GL.GL_UNSIGNED_INT, 0);
-				break;
-			}
-
-			gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
+			// do nothing warning already given by FFP
 		}
-
-		unlockArray(gl);
 
 		// clean up if we turned on normalize
 		/*if (isNonUniformScale)
@@ -1016,8 +1080,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
 			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(joglesctx.currentProjMat), 0);
 
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
+			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(joglesctx.currentProjMatInverse), 0);
+
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
 			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(joglesctx.currentModelViewMat), 0);
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
+			gl.glUniformMatrix4fv(uniformLocation, 1, false, toArray(joglesctx.currentModelViewProjMat), 0);
 
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
 			gl.glUniformMatrix3fv(uniformLocation, 1, false, toArray(joglesctx.currentNormalMat), 0);
@@ -1070,6 +1140,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
 				gl.glUniform1i(uniformLocation, getFunctionValue(joglesctx.renderingData.alphaTestFunction));
+				//System.out.println("alphaTestFunction " +joglesctx.renderingData.alphaTestFunction + " " +uniformLocation);
+				
 				uniformLocation = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
 				gl.glUniform1f(uniformLocation, joglesctx.renderingData.alphaTestValue);
 			}
@@ -2627,18 +2699,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (alphaTestFunction == RenderingAttributes.ALWAYS)
 		{
-			gl.glDisable(GL2.GL_ALPHA_TEST);
+			//gl.glDisable(GL2.GL_ALPHA_TEST);
 			joglesctx.renderingData.alphaTestEnabled = false;
 		}
 		else
 		{
 			//FIXME: these are still enabled! oblivion trees need them how do 
 			//I get rid of them? my alpha testing is obviously not working right
-			gl.glEnable(GL2.GL_ALPHA_TEST);
-			gl.glAlphaFunc(getFunctionValue(alphaTestFunction), alphaTestValue);
+			//gl.glEnable(GL2.GL_ALPHA_TEST);
+			//gl.glAlphaFunc(getFunctionValue(alphaTestFunction), alphaTestValue);
 			//TODO: simple test use alpha blending instead of testing
 			joglesctx.renderingData.alphaTestEnabled = true;
-			joglesctx.renderingData.alphaTestFunction = alphaTestFunction;
+			joglesctx.renderingData.alphaTestFunction = getFunctionValue(alphaTestFunction);
 			joglesctx.renderingData.alphaTestValue = alphaTestValue;
 		}
 
@@ -3669,7 +3741,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	}
 
-	private void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
+	private static void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
 	{
 		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
@@ -4757,6 +4829,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		deburnM.transpose();
 		joglesctx.currentModelViewMat.mul(deburnM, deburnV);
 
+		joglesctx.currentModelViewProjMat.mul(joglesctx.currentProjMat, joglesctx.currentModelViewMat);
+
 		//glNormalMatrix = transpose(inverse(vm));
 		// use only the upper left as t is a 3x3 rotation matrix
 		joglesctx.currentNormalMat
@@ -4792,6 +4866,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			joglesctx.currentProjMat.set(projMatrix);
 			joglesctx.currentProjMat.transpose();
 
+			joglesctx.currentProjMatInverse.set(joglesctx.currentProjMat);
+			joglesctx.currentProjMatInverse.invert();
+
 			projMatrix[8] *= -1.0;
 			projMatrix[9] *= -1.0;
 			projMatrix[10] *= -1.0;
@@ -4811,6 +4888,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//gl.glLoadMatrixd(pm, 0);
 
 			joglesctx.currentProjMat.set(pm);
+
+			joglesctx.currentProjMatInverse.set(joglesctx.currentProjMat);
+			joglesctx.currentProjMatInverse.invert();
 
 		}
 	}
