@@ -4618,8 +4618,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.swapBuffers()");
 		GLDrawable draw = drawable(drawable);
 		draw.swapBuffers();
-		//TODO: if using a NEWT front end swapBuffers is called automatically for you
-		// but as J3d controls threads I think we want a non automatic NEWT Surface
 	}
 
 	@Override
