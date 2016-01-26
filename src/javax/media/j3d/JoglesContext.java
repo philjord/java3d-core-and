@@ -9,16 +9,17 @@ import com.jogamp.opengl.GLContext;
 
 public class JoglesContext extends JoglContext
 {
-
 	//Dirty dirty buffer gen holder thing
-
 
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
 
 	public HashMap<GeometryArrayRetained, Integer> geoToCoordBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
-	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf  = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf = new HashMap<GeometryArrayRetained, Integer>();
+
+	public HashMap<GeometryArrayRetained, HashMap<Integer,Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, HashMap<Integer,Integer>>();
+	
 	
 	// note anything may be reused if not updated between execute calls
 
@@ -66,10 +67,10 @@ public class JoglesContext extends JoglContext
 	}
 
 	public MaterialData materialData = new MaterialData();
-	
+
 	//See here http://download.java.net/media/java3d/javadoc/1.3.2/javax/media/j3d/RenderingAttributes.html
 	// For coloring implementation details
-	
+
 	//only for no lighting, materialDiffuse or vertex colors otherwise
 	public float[] objectColor = new float[4];
 
@@ -109,4 +110,5 @@ public class JoglesContext extends JoglContext
 		super(context);
 	}
 
+	
 }

@@ -18,6 +18,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +47,6 @@ import com.jogamp.opengl.GLCapabilitiesChooser;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.GLDrawableFactory;
-import com.jogamp.opengl.GLES2;
 import com.jogamp.opengl.GLException;
 import com.jogamp.opengl.GLFBODrawable;
 import com.jogamp.opengl.GLProfile;
@@ -95,9 +95,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// Java3D maintains strict control over which threads perform OpenGL work
 		Threading.disableSingleThreading();
 
-		//FIXME: swap it over!
-		profile = GLProfile.get(GLProfile.GL2GL3);
-		//profile = GLProfile.get(GLProfile.GL2ES2);	
+		 
+		//profile = GLProfile.get(GLProfile.GL2GL3);
+		profile = GLProfile.get(GLProfile.GL2ES2);
 	}
 
 	// ---------------------------------------------------------------------
@@ -106,45 +106,38 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// GeometryArrayRetained methods
 	//
 
-	//Possibly once vert atribs only this call can become a noop
-	@Override
-	void setVertexFormat(Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha, boolean ignoreVertexColors)
+	//FIXME: big ugly hack for buffers
+	public void clearBuffers(Context ctx, GeometryArrayRetained geo)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.setVertexFormat()");
+		JoglesContext joglesctx = (JoglesContext) ctx;
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		Integer bufId = joglesctx.geoToIndBuf.remove(geo);
+		if (bufId != null)
+			gl.glDeleteBuffers(1, new int[] { bufId.intValue() }, 0);
+		bufId = joglesctx.geoToCoordBuf.remove(geo);
+		if (bufId != null)
+			gl.glDeleteBuffers(1, new int[] { bufId.intValue() }, 0);
+		bufId = joglesctx.geoToColorBuf.remove(geo);
+		if (bufId != null)
+			gl.glDeleteBuffers(1, new int[] { bufId.intValue() }, 0);
+		bufId = joglesctx.geoToNormalBuf.remove(geo);
+		if (bufId != null)
+			gl.glDeleteBuffers(1, new int[] { bufId.intValue() }, 0);
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		int[] bufIds = joglesctx.geoToIndStripBuf.remove(geo);
+		if (bufIds != null)
+			gl.glDeleteBuffers(bufIds.length, bufIds, 0);
 
-		// Enable and disable the appropriate pointers
-		if ((vformat & GeometryArray.NORMALS) != 0)
+		HashMap<Integer, Integer> tcBufIds = joglesctx.geoToTexCoordsBuf.get(geo);
+		if (tcBufIds != null)
 		{
-			//gl.glEnableClientState(GL2.GL_NORMAL_ARRAY);
-		}
-		else
-		{
-			//gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
-		}
-		if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
-		{
-			//gl.glEnableClientState(GL2.GL_COLOR_ARRAY);
-		}
-		else
-		{
-			//gl.glDisableClientState(GL2.GL_COLOR_ARRAY);
+			for (Integer tcBufId : tcBufIds.values())
+			{
+				if (tcBufId != null)
+					gl.glDeleteBuffers(1, new int[] { tcBufId.intValue() }, 0);
+			}
 		}
 
-		if ((vformat & GeometryArray.COORDINATES) != 0)
-		{
-			//gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
-		}
-		else
-		{
-			//gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
-		}
-		gl.glDisableClientState(GL2.GL_COLOR_ARRAY);
-		gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
-		gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
 	}
 
 	// used by GeometryArray by Reference with NIO buffer
@@ -257,8 +250,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int strip_len, int[] start_array)
 	{
 		JoglesContext ctx = (JoglesContext) absCtx;
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
 		setFFPAttributes(ctx, gl);
 
@@ -306,6 +298,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
 
 						ctx.geoToCoordBuf.put(geo, bufId.intValue());
+
+						if (ctx.geoToCoordBuf.size() % 500 == 0)
+						{
+							System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size());
+						}
 					}
 					else
 					{
@@ -423,8 +420,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				int normoff = 3 * initialNormalIndex;
 				norms.position(normoff);
 				//gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
-				
-				
+
 				int glNormalLocation = gl.glGetAttribLocation(shaderProgramId, "glNormal");
 				if (glNormalLocation != -1)
 				{
@@ -478,11 +474,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						FloatBuffer buf = texCoords[texSet];
 						buf.position(texStride * texindices[texSet]);
-						enableTexCoordPointer(gl, i, texStride, GL.GL_FLOAT, 0, buf);
+						enableTexCoordPointer(gl, ctx, geo, i, texStride, GL.GL_FLOAT, 0, buf);
 					}
 					else
 					{
-						disableTexCoordPointer(gl, i);
+						disableTexCoordPointer(gl, ctx, geo, i);
 					}
 				}
 
@@ -542,8 +538,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				switch (geo_type)
 				{
-				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					gl.getGL2ES2().glDrawArrays(GL2.GL_QUADS, 0, vcount);
+				case GeometryRetained.GEO_TYPE_QUAD_SET:					
+					//gl.getGL2ES2().glDrawArrays(GL2.GL_QUADS, 0, vcount);
 					break;
 				case GeometryRetained.GEO_TYPE_TRI_SET:
 					gl.getGL2ES2().glDrawArrays(GL.GL_TRIANGLES, 0, vcount);
@@ -577,7 +573,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (textureDefined)
 		{
-			resetTexture(gl, ctx);
+			resetTexture(gl, ctx, geo);
 		}
 	}
 
@@ -785,8 +781,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int texStride, FloatBuffer[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
 	{
 		JoglesContext ctx = (JoglesContext) absCtx;
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
 		setFFPAttributes(ctx, gl);
 
@@ -814,20 +809,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				fverts.position(0);
 				//gl.glVertexPointer(3, GL.GL_FLOAT, 0, fverts);
-				//FIXME: looks like this can only be turned off for real ES2
-				// or maybe the gl_Vertex usage?
 
-				// In fact #version 120 is vital!
-
-				//http://forum.jogamp.org/need-help-understanding-glVertexAttribPointer-and-GL-INVALID-OPERATION-td4027730.html
-
-				// then must ensure glDeleteBuffers is called at the right time, so all of this needs to 
-				// live in GeometryArrayRetained geo! so just as texture are released geometry needs releasing
-
-				//Also all buiding of buffers etc and index buffers should really take place not on the j3d thread if possible
-
-				//my glVertex != gl_Vertex check is showing some glVertexPointer fverts are updating but the 
-				//glBufferSubData fverts below is not (removing morphabel check deos not fix
+				//Building of buffers etc and index buffers should really take place not on the j3d thread if possible
 
 				int glVertexLocation = gl.glGetAttribLocation(shaderProgramId, "glVertex");
 				if (glVertexLocation != -1)
@@ -847,6 +830,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
 
 						ctx.geoToCoordBuf.put(geo, bufId.intValue());
+
+						if (ctx.geoToCoordBuf.size() % 500 == 0)
+						{
+							System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size());
+						}
 					}
 					else
 					{
@@ -934,13 +922,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 				//must set ignoreVertexcolors now as the glColors is unbound
 				int uniformLocation = gl.getGL2ES2().glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
 				gl.getGL2ES2().glUniform1i(uniformLocation, 1);
-				
+
 				int glColorLocation = gl.glGetAttribLocation(shaderProgramId, "glColor");
 				if (glColorLocation != -1)
 				{
 					gl.getGL2ES2().glDisableVertexAttribArray(glColorLocation);
 				}
-				
+
 				/*if (ctx.materialData.diffuse[0] + ctx.materialData.diffuse[1] + ctx.materialData.diffuse[2]
 						+ ctx.materialData.diffuse[3] != 4)
 				{
@@ -956,8 +944,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				norms.position(0);
 				//gl.glNormalPointer(GL.GL_FLOAT, 0, norms);
-				
-				
+
 				int glNormalLocation = gl.glGetAttribLocation(shaderProgramId, "glNormal");
 				if (glNormalLocation != -1)
 				{
@@ -1010,11 +997,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						FloatBuffer buf = texCoords[texSet];
 						buf.position(0);
-						enableTexCoordPointer(gl, i, texStride, GL.GL_FLOAT, 0, buf);
+						enableTexCoordPointer(gl, ctx, geo, i, texStride, GL.GL_FLOAT, 0, buf);
 					}
 					else
 					{
-						disableTexCoordPointer(gl, i);
+						disableTexCoordPointer(gl, ctx, geo, i);
 					}
 				}
 
@@ -1106,14 +1093,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 							GL.GL_STATIC_DRAW);
 					gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0);
 					ctx.geoToIndBuf.put(geo, indexBufId);
+
 				}
 
 				gl.getGL2ES2().glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
 
-				//TODO: I'm getting extra lines drawn here I don't want or get with the old polygonmode
-				//It's to do with edge vertexes only, which requires some crazy code
-				//http://stackoverflow.com/questions/18035719/drawing-a-border-on-a-2d-polygon-with-a-fragment-shader
-				//<AND> need to override if polygonAttributes says so
+				// Need to override if polygonAttributes says we should be drawing lines
+				// Note these are not poly line just contiguos lines between each pair of points
+				// So it looks really rubbish
 				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_SET;
 				else if (joglesctx.polygonMode == PolygonAttributes.POLYGON_POINT)
@@ -1122,7 +1109,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					gl.getGL2ES2().glDrawElements(GL2.GL_QUADS, validIndexCount, GL.GL_UNSIGNED_INT, 0);
+					//gl.getGL2ES2().glDrawElements(GL2.GL_QUADS, validIndexCount, GL.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
 					gl.getGL2ES2().glDrawElements(GL.GL_TRIANGLES, validIndexCount, GL.GL_UNSIGNED_INT, 0);
@@ -1159,7 +1146,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (textureDefined)
 		{
-			resetTexture(gl, ctx);
+			resetTexture(gl, ctx, geo);
 		}
 	}
 
@@ -1215,11 +1202,28 @@ class JoglesPipeline extends JoglesDEPPipeline
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
 			gl.glUniform1i(uniformLocation, joglesctx.renderingData.ignoreVertexColors ? 1 : 0);
 
+			//send material data through
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
 			gl.glUniform4f(uniformLocation, joglesctx.materialData.diffuse[0], joglesctx.materialData.diffuse[1],
 					joglesctx.materialData.diffuse[2], joglesctx.materialData.diffuse[3]);
 
-			// always bind object color the shader can decide to use it if it's no lighting and no vertex colors
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
+			gl.glUniform3f(uniformLocation, joglesctx.materialData.emission[0], joglesctx.materialData.emission[1],
+					joglesctx.materialData.emission[2]);
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
+			gl.glUniform3f(uniformLocation, joglesctx.materialData.specular[0], joglesctx.materialData.specular[1],
+					joglesctx.materialData.specular[2]);
+
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialshininess");
+			gl.glUniform1f(uniformLocation, joglesctx.materialData.shininess);
+
+			//ambient does not come from material notice
+			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
+			gl.glUniform4f(uniformLocation, joglesctx.currentAmbientColor[0], joglesctx.currentAmbientColor[1],
+					joglesctx.currentAmbientColor[2], joglesctx.currentAmbientColor[3]);
+
+			// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
 			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "objectColor");
 			gl.glUniform4f(uniformLocation, joglesctx.objectColor[0], joglesctx.objectColor[1], joglesctx.objectColor[2],
 					joglesctx.objectColor[3]);
@@ -1228,10 +1232,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			pointLight
 			spotLight*/
 			//currentEnabledLights
-
-			uniformLocation = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
-			gl.glUniform4f(uniformLocation, joglesctx.currentAmbientColor[0], joglesctx.currentAmbientColor[1],
-					joglesctx.currentAmbientColor[2], joglesctx.currentAmbientColor[3]);
 
 			//For now using first point light, but gonna need to put em all in
 			LightData l0 = null;
@@ -1289,52 +1289,141 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
 
+	//Possibly once vert atribs only this call can become a noop
+	@Override
+	void setVertexFormat(Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha, boolean ignoreVertexColors)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.setVertexFormat()");
+
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+
+		// Enable and disable the appropriate pointers
+		if ((vformat & GeometryArray.NORMALS) != 0)
+		{
+			//gl.glEnableClientState(GL2.GL_NORMAL_ARRAY);
+		}
+		else
+		{
+			//gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
+		}
+		if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
+		{
+			//gl.glEnableClientState(GL2.GL_COLOR_ARRAY);
+		}
+		else
+		{
+			//gl.glDisableClientState(GL2.GL_COLOR_ARRAY);
+		}
+
+		if ((vformat & GeometryArray.COORDINATES) != 0)
+		{
+			//gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
+		}
+		else
+		{
+			//gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
+		}
+		//gl.glDisableClientState(GL2.GL_COLOR_ARRAY);
+		//gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
+		//gl.glDisableClientState(GL2.GL_NORMAL_ARRAY);
+	}
+
 	//TEX COORDS CALLS--vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv--
 
 	// called by the 2 executes above
-	private void enableTexCoordPointer(GL2 gl, int texUnit, int texSize, int texDataType, int stride, Buffer pointer)
+	private static void enableTexCoordPointer(GL2ES2 gl, JoglesContext ctx, GeometryArrayRetained geo, int texUnit, int texSize,
+			int texDataType, int stride, Buffer pointer)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.enableTexCoordPointer()");
 		clientActiveTextureUnit(gl, texUnit);
 
 		//this is a tex coords call
-		gl.glEnableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
-		gl.glTexCoordPointer(texSize, texDataType, stride, pointer);
+		//gl.glEnableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
+		//gl.glTexCoordPointer(texSize, texDataType, stride, pointer);
+
+		// for later later
+		//gl.getGL2ES2().glActiveTexture(texUnit);
+
+		int shaderProgramId = ctx.getShaderProgram().getValue();
+		if (shaderProgramId != -1)
+		{
+			// notice attribute is made of a string concat
+			int glMultiTexCoordLocation = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + texUnit);
+			if (glMultiTexCoordLocation != -1)
+			{
+				HashMap<Integer, Integer> bufIds = ctx.geoToTexCoordsBuf.get(geo);
+				if (bufIds == null)
+				{
+					bufIds = new HashMap<Integer, Integer>();
+					ctx.geoToTexCoordsBuf.put(geo, bufIds);
+				}
+
+				Integer bufId = bufIds.get(texUnit);
+				if (bufId == null)
+				{
+					int[] tmp = new int[1];
+					gl.getGL2ES2().glGenBuffers(1, tmp, 0);
+					bufId = new Integer(tmp[0]);
+
+					gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+					gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, pointer.remaining() * Float.SIZE / 8, pointer, GL.GL_STATIC_DRAW);
+
+					bufIds.put(texUnit, bufId);
+				}
+
+				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+				gl.getGL2ES2().glVertexAttribPointer(glMultiTexCoordLocation, texSize, GL.GL_FLOAT, true, stride, 0);
+				gl.getGL2ES2().glEnableVertexAttribArray(glMultiTexCoordLocation);//must be called after Pointer above
+				gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);//  I must unbind 
+			}
+		}
+
 	}
 
 	// called by 2 executes above and the reset below
-	private void disableTexCoordPointer(GL2 gl, int texUnit)
+	private static void disableTexCoordPointer(GL2ES2 gl, JoglesContext ctx, GeometryArrayRetained geo, int texUnit)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.disableTexCoordPointer()");
 
-		clientActiveTextureUnit(gl, texUnit);
-		gl.glDisableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
+		//clientActiveTextureUnit(gl, texUnit);
+		//gl.glDisableClientState(GL2.GL_TEXTURE_COORD_ARRAY);
+
+		if (ctx.getShaderProgram() != null)
+		{
+			int shaderProgramId = ctx.getShaderProgram().getValue();
+			int glMultiTexCoord0Location = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + texUnit);
+			if (glMultiTexCoord0Location != -1)
+			{
+				gl.getGL2ES2().glDisableVertexAttribArray(glMultiTexCoord0Location);
+			}
+		}
 	}
 
 	// called by all 5 methods including 2 executes 
-	private void clientActiveTextureUnit(GL2 gl, int texUnit)
+	private static void clientActiveTextureUnit(GL2ES2 gl, int texUnit)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.clientActiveTextureUnit()");
 
-		if (isExtensionAvailable.GL_VERSION_1_3(gl))
-		{
-			// this determines what unit the tex coords are going to be set for
-			gl.glClientActiveTexture(texUnit + GL.GL_TEXTURE0);
-		}
+		/*	if (isExtensionAvailable.GL_VERSION_1_3(gl))
+			{
+				// this determines what unit the tex coords are going to be set for
+				gl.glClientActiveTexture(texUnit + GL.GL_TEXTURE0);
+			}*/
 	}
 
 	// called by 2 executes above
-	private void resetTexture(GL2 gl, JoglContext ctx)
+	private static void resetTexture(GL2ES2 gl, JoglesContext ctx, GeometryArrayRetained geo)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetTexture()");
 		// Disable texture coordinate arrays for all texture units 
 		for (int i = 0; i < ctx.getMaxTexCoordSets(); i++)
 		{
-			disableTexCoordPointer(gl, i);
+			disableTexCoordPointer(gl, ctx, geo, i);
 		}
 		// Reset client active texture unit to 0 
 		clientActiveTextureUnit(gl, 0);
@@ -1354,7 +1443,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// glLockArrays() is invoked only for indexed geometry, and the
 	// vertexCount is guaranteed to be >= 0.
 
-	private static void lockArray(GL2 gl, int vertexCount)
+	private static void lockArray(GL2ES2 gl, int vertexCount)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
 		{
@@ -1366,7 +1455,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	private static void unlockArray(GL2 gl)
+	private static void unlockArray(GL2ES2 gl)
 	{
 		//if (isExtensionAvailableGL_EXT_compiled_vertex_array(gl))
 		{
@@ -2244,6 +2333,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glFogf(GL2.GL_FOG_END, (float) bdist);
 			gl.glEnable(GL2.GL_FOG);*/
 
+		//see
+		//https://www.opengl.org/discussion_boards/showthread.php/151415-Fog-with-pixel-shader-%28arb_fragment_program%29
+
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.fogData.linearColor[0] = red;
 		joglesctx.fogData.linearColor[1] = green;
@@ -2377,76 +2469,78 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateMaterial()");
 
-		//FIXME: I want to remove this but gl_Color is still being used by teh shader for now
-
-		//float[] color = new float[4];
-
-		GL2 gl = context(ctx).getGL().getGL2();
-		//http://stackoverflow.com/questions/24152928/glmaterialfv-is-deprecated-in-opengl-es2
-		// all material gear removed
-
 		//FIXME: Oddly I have to call this otherwise my shaders go black?
-		gl.glMaterialf(GL.GL_FRONT_AND_BACK, GL2.GL_SHININESS, shininess);
-/*		switch (colorTarget)
-		{
-		case Material.DIFFUSE:
-			gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE);
-			break;
-		case Material.AMBIENT:
-			gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_AMBIENT);
-			break;
-		case Material.EMISSIVE:
-			gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_EMISSION);
-			break;
-		case Material.SPECULAR:
-			gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_SPECULAR);
-			break;
-		case Material.AMBIENT_AND_DIFFUSE:
-			gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE);
-			break;
-		}
+		//GL2 gl = context(ctx).getGL().getGL2();
+		//gl.glMaterialf(GL.GL_FRONT_AND_BACK, GL2.GL_SHININESS, shininess);
 
-		color[0] = eRed;
-		color[1] = eGreen;
-		color[2] = eBlue;
-		gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_EMISSION, color, 0);
-
-		color[0] = aRed;
-		color[1] = aGreen;
-		color[2] = aBlue;
-		gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_AMBIENT, color, 0);
-
-		color[0] = sRed;
-		color[1] = sGreen;
-		color[2] = sBlue;
-		gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_SPECULAR, color, 0);
-
-		if (lightEnable)
-		{
-			color[0] = dRed;
-			color[1] = dGreen;
-			color[2] = dBlue;
-		}
-		else
-		{
-			color[0] = red;
-			color[1] = green;
-			color[2] = blue;
-		}
-		color[3] = alpha;
-		gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE, color, 0);
-		gl.glColor4f(color[0], color[1], color[2], color[3]);
-		//glEnable no longer accepts GL_LIGHTING
-		if (lightEnable)
-		{
-			gl.glEnable(GL2.GL_LIGHTING);
-		}
-		else
-		{
-			gl.glDisable(GL2.GL_LIGHTING);
-		}*/
+		/*		float[] color = new float[4];
 		
+				
+				//http://stackoverflow.com/questions/24152928/glmaterialfv-is-deprecated-in-opengl-es2
+				// all material gear removed
 		
+				
+				
+					gl.glMaterialf(GL.GL_FRONT_AND_BACK, GL2.GL_SHININESS, shininess);	
+				 switch (colorTarget)
+						{
+						case Material.DIFFUSE:
+							gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE);
+							break;
+						case Material.AMBIENT:
+							gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_AMBIENT);
+							break;
+						case Material.EMISSIVE:
+							gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_EMISSION);
+							break;
+						case Material.SPECULAR:
+							gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_SPECULAR);
+							break;
+						case Material.AMBIENT_AND_DIFFUSE:
+							gl.glColorMaterial(GL.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE);
+							break;
+						}
+				
+						color[0] = eRed;
+						color[1] = eGreen;
+						color[2] = eBlue;
+						gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_EMISSION, color, 0);
+				
+						color[0] = aRed;
+						color[1] = aGreen;
+						color[2] = aBlue;
+						gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_AMBIENT, color, 0);
+				
+						color[0] = sRed;
+						color[1] = sGreen;
+						color[2] = sBlue;
+						gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_SPECULAR, color, 0);
+				
+						if (lightEnable)
+						{
+							color[0] = dRed;
+							color[1] = dGreen;
+							color[2] = dBlue;
+						}
+						else
+						{
+							color[0] = red;
+							color[1] = green;
+							color[2] = blue;
+						}
+						color[3] = alpha;
+						gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GL2.GL_DIFFUSE, color, 0);
+						gl.glColor4f(color[0], color[1], color[2], color[3]);
+						//glEnable no longer accepts GL_LIGHTING
+						if (lightEnable)
+						{
+							gl.glEnable(GL2.GL_LIGHTING);
+						}
+						else
+						{
+							gl.glDisable(GL2.GL_LIGHTING);
+						}*/
+
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.objectColor[0] = red;
 		joglesctx.objectColor[1] = green;
@@ -2814,7 +2908,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else
 		{
-			
+
 			//gl.glEnable(GL2.GL_ALPHA_TEST);
 			//gl.glAlphaFunc(getFunctionValue(alphaTestFunction), alphaTestValue);
 			//TODO: simple test use alpha blending instead of testing
@@ -3160,9 +3254,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureUnitState()");
 
-		//FIXME: texture coords calls
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// glClientActiveTexture does not exist, but I think that's ok
 		// glDisable does not take any texture caps
 		// I presume after this call some other calls happen like binding the texture and attributes?
@@ -3170,7 +3262,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (index >= 0 && isExtensionAvailable.GL_VERSION_1_3(gl))
 		{
 			gl.glActiveTexture(index + GL.GL_TEXTURE0);
-			gl.glClientActiveTexture(GL.GL_TEXTURE0 + index);
+			//			gl.glClientActiveTexture(GL.GL_TEXTURE0 + index);
 			// FIXME: GL_NV_register_combiners
 			//            if (gl.isExtensionAvailable("GL_NV_register_combiners")) {
 			//                jctx.setCurrentTextureUnit(index + GL.GL_TEXTURE0);
@@ -3183,9 +3275,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			// if not enabled, then don't enable any tex mapping
 			//gl.glDisable(GL2.GL_TEXTURE_1D);
-			gl.glDisable(GL.GL_TEXTURE_2D);
+			//gl.glDisable(GL.GL_TEXTURE_2D);
 			//gl.glDisable(GL2.GL_TEXTURE_3D);
-			gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
+			//gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
 		}
 
 		// if it is enabled, the enable flag will be taken care of
@@ -3205,23 +3297,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.bindTexture2D(objectId=" + objectId + ",enable=" + enable + ")");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		//glDisable/glEnable do not take texture caps at all
 		//glBindTexure is fine, I presume a updateTextureUnitState has been called just prior
 		// and I guess prior to that some other shader bind has been called
 
-		gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
+		//gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
 		//gl.glDisable(GL2.GL_TEXTURE_3D);
 
 		if (!enable)
 		{
-			gl.glDisable(GL.GL_TEXTURE_2D);
+			//gl.glDisable(GL.GL_TEXTURE_2D);
 		}
 		else
 		{
 			gl.glBindTexture(GL.GL_TEXTURE_2D, objectId);
-			gl.glEnable(GL.GL_TEXTURE_2D);
+			//gl.glEnable(GL.GL_TEXTURE_2D);
 		}
 	}
 
@@ -3348,12 +3439,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// there is no need to disable 3D Texture here.
 		if (!enable)
 		{
-			gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
+			//gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
 		}
 		else
 		{
 			gl.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, objectId);
-			gl.glEnable(GL.GL_TEXTURE_CUBE_MAP);
+			//gl.glEnable(GL.GL_TEXTURE_CUBE_MAP);
 		}
 	}
 
@@ -4200,6 +4291,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}*/
 	}
 
+	/**
+	 * New method for preparing the pipeline with a context you prepared earlier
+	 * @param cv
+	 * @param glDrawable
+	 * @param glContext
+	 * @param shareCtx
+	 * @param isSharedCtx
+	 * @return
+	 */
 	Context createNewContext(Canvas3D cv, GLDrawable glDrawable, GLContext glContext, Context shareCtx, boolean isSharedCtx)
 	{
 		if (VERBOSE)
@@ -4776,13 +4876,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.activeTextureUnit()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
 		if (isExtensionAvailable.GL_VERSION_1_3(gl))
 		{
 			gl.glActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
-			gl.glClientActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
+			//			gl.glClientActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
 		}
 	}
 
@@ -4794,21 +4893,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetTextureNative()");
 
-		GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		//gl.glActiveTexture(texUnitIndex + GL.GL_TEXTURE0); good
 		// other 5 drop
 
 		if (texUnitIndex >= 0 && isExtensionAvailable.GL_VERSION_1_3(gl))
 		{
 			gl.glActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
-			gl.glClientActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
+			//			gl.glClientActiveTexture(texUnitIndex + GL.GL_TEXTURE0);
 		}
 
 		//gl.glDisable(GL2.GL_TEXTURE_1D);
-		gl.glDisable(GL.GL_TEXTURE_2D);
+		//gl.glDisable(GL.GL_TEXTURE_2D);
 		//gl.glDisable(GL2.GL_TEXTURE_3D);
-		gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
+		//gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
 	}
 
 	/**
@@ -4938,7 +5036,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		deburnM.transpose();
 		joglesctx.currentModelViewMat.mul(deburnM, deburnV);
 
-		joglesctx.currentModelViewProjMat.mul(joglesctx.currentProjMat, joglesctx.currentModelViewMat);
+		joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
 
 		//glNormalMatrix = transpose(inverse(vm));
 		// use only the upper left as t is a 3x3 rotation matrix

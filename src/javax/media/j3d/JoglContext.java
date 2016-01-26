@@ -37,7 +37,7 @@ import com.jogamp.opengl.GLContext;
  */
 class JoglContext implements Context
 {
-	private GLContext context;
+	protected GLContext context;
 
 	// Properties we need to keep track of for efficiency
 	private int maxTexCoordSets;
