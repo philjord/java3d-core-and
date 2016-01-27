@@ -28,8 +28,10 @@ package javax.media.j3d;
 
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
+import java.util.HashMap;
 
 import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLContext;
 
 /**
@@ -112,50 +114,79 @@ class JoglContext implements Context
 		hasMultisample = val;
 	}
 
-	void vertexAttrPointer(GL gl, int index, int size, int type, int stride, Buffer pointer)
+	void vertexAttrPointer(GL2ES2 gl, int index, int size, int type, int stride, Buffer pointer, GeometryArrayRetained geo)
 	{
-		//TODO: horribly slow memory leak madness?
-		int[] tmp = new int[1];
-		gl.getGL2ES2().glGenBuffers(1, tmp, 0);
-		int bufId = tmp[0];
+		if (this instanceof JoglesContext)
+		{
+			JoglesContext joglesContext = (JoglesContext) this;
+			HashMap<Integer, Integer> bufIds = joglesContext.geoToVertAttribBuf.get(geo);
+			if (bufIds == null)
+			{
+				bufIds = new HashMap<Integer, Integer>();
+				joglesContext.geoToVertAttribBuf.put(geo, bufIds);
+			}
 
-		gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, bufId);
-		gl.getGL2ES2().glBufferData(GL.GL_ARRAY_BUFFER, size, pointer, GL.GL_STATIC_DRAW);
+			Integer bufId = bufIds.get(index);
+			if (bufId == null)
+			{
+				int[] tmp = new int[1];
+				gl.glGenBuffers(1, tmp, 0);
+				bufId = new Integer(tmp[0]);
+				bufIds.put(index, bufId);
+				
+				//TODO: I just made vertex attributes static is that ok??
+				gl.glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+				gl.glBufferData(GL.GL_ARRAY_BUFFER, size, pointer, GL.GL_STATIC_DRAW);			
+			}
+			
+			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, bufId.intValue());
+			gl.glVertexAttribPointer(index + glslVertexAttrOffset, size, type, false, stride, 0);
+			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, 0);
+		}
+		else
+		{
+			// this is madness, not sparta!
+			int[] tmp = new int[1];
+			gl.glGenBuffers(1, tmp, 0);
+			int bufId = tmp[0];
+
+			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, bufId);
+			gl.glBufferData(GL.GL_ARRAY_BUFFER, size, pointer, GL.GL_STATIC_DRAW);
+			
+			gl.glVertexAttribPointer(index + glslVertexAttrOffset, size, type, false, stride, 0);
+			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, 0);
+		}
 		
-		gl.getGL2ES2().glVertexAttribPointer(index + glslVertexAttrOffset, size, type, false, stride, 0);
-		gl.getGL2ES2().glBindBuffer(GL.GL_ARRAY_BUFFER, 0);
-		
-		//gl.getGL2ES2().glVertexAttribPointer(index + glslVertexAttrOffset, size, type, false, stride, pointer);
 	}
 
-	void enableVertexAttrArray(GL gl, int index)
+	void enableVertexAttrArray(GL2ES2 gl, int index)
 	{
-		gl.getGL2ES2().glEnableVertexAttribArray(index + glslVertexAttrOffset);
+		gl.glEnableVertexAttribArray(index + glslVertexAttrOffset);
 	}
 
-	void disableVertexAttrArray(GL gl, int index)
+	void disableVertexAttrArray(GL2ES2 gl, int index)
 	{
-		gl.getGL2ES2().glDisableVertexAttribArray(index + glslVertexAttrOffset);
+		gl.glDisableVertexAttribArray(index + glslVertexAttrOffset);
 	}
 
-	void vertexAttr1fv(GL gl, int index, FloatBuffer buf)
+	void vertexAttr1fv(GL2ES2 gl, int index, FloatBuffer buf)
 	{
-		gl.getGL2ES2().glVertexAttrib1fv(index + glslVertexAttrOffset, buf);
+		gl.glVertexAttrib1fv(index + glslVertexAttrOffset, buf);
 	}
 
-	void vertexAttr2fv(GL gl, int index, FloatBuffer buf)
+	void vertexAttr2fv(GL2ES2 gl, int index, FloatBuffer buf)
 	{
-		gl.getGL2ES2().glVertexAttrib2fv(index + glslVertexAttrOffset, buf);
+		gl.glVertexAttrib2fv(index + glslVertexAttrOffset, buf);
 	}
 
-	void vertexAttr3fv(GL gl, int index, FloatBuffer buf)
+	void vertexAttr3fv(GL2ES2 gl, int index, FloatBuffer buf)
 	{
-		gl.getGL2ES2().glVertexAttrib3fv(index + glslVertexAttrOffset, buf);
+		gl.glVertexAttrib3fv(index + glslVertexAttrOffset, buf);
 	}
 
-	void vertexAttr4fv(GL gl, int index, FloatBuffer buf)
+	void vertexAttr4fv(GL2ES2 gl, int index, FloatBuffer buf)
 	{
-		gl.getGL2ES2().glVertexAttrib4fv(index + glslVertexAttrOffset, buf);
+		gl.glVertexAttrib4fv(index + glslVertexAttrOffset, buf);
 	}
 
 	// Used in vertex attribute implementation

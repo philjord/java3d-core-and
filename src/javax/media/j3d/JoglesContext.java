@@ -18,9 +18,12 @@ public class JoglesContext extends JoglContext
 	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf = new HashMap<GeometryArrayRetained, Integer>();
 
-	public HashMap<GeometryArrayRetained, HashMap<Integer,Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, HashMap<Integer,Integer>>();
-	
-	
+	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
+
+	public HashMap<GeometryArrayRetained, LocationData> geoToLocationData = new HashMap<GeometryArrayRetained, LocationData>();
+
+	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
+
 	// note anything may be reused if not updated between execute calls
 
 	//Light data recorded to be handed into shader as uniform on next update
@@ -110,5 +113,32 @@ public class JoglesContext extends JoglContext
 		super(context);
 	}
 
-	
+	public static class LocationData
+	{
+
+		public int glProjectionMatrix = -1;
+		public int glProjectionMatrixInverse = -1;
+		public int glModelViewMatrix = -1;
+		public int glModelViewProjectionMatrix = -1;
+		public int glNormalMatrix = -1;
+		public int ignoreVertexColors = -1;
+		public int glFrontMaterialdiffuse = -1;
+		public int glFrontMaterialemission = -1;
+		public int glFrontMaterialspecular = -1;
+		public int glFrontMaterialshininess = -1;
+		public int glLightModelambient = -1;
+		public int objectColor = -1;
+		public int glLightSource0position = -1;
+		public int glLightSource0diffuse = -1;
+		public int alphaTestEnabled = -1;
+		public int alphaTestFunction = -1;
+		public int alphaTestValue = -1;
+		public int textureTransform = -1;
+		public int glVertex = -1;
+		public int glColor = -1;
+		public int glNormal = -1;
+		
+		public int[] glMultiTexCoord ;
+	}
+
 }
