@@ -966,8 +966,6 @@ public class Canvas3D extends Canvas
 		return Pipeline.getPipeline().getGraphicsConfig(gconfig);
 	}
 
-	
-
 	/**
 	 * Constructs and initializes a new Canvas3D object that Java 3D
 	 * can render into. The following Canvas3D attributes are initialized
@@ -1036,9 +1034,10 @@ public class Canvas3D extends Canvas
 	{
 		this(dummyObj1, graphicsConfiguration, getGraphicsConfig(graphicsConfiguration), offScreen);
 	}
-	
-	//private final GLWindow glwindow;
-	
+
+	private static final boolean USE_NEWT = false;
+	private GLWindow glwindow = null;
+
 	// Private constructor only called by the previous private constructor.
 	// The graphicsConfiguration parameter is used by Canvas3D to lookup the
 	// graphics device and graphics template. The graphicsConfiguration2
@@ -1050,18 +1049,17 @@ public class Canvas3D extends Canvas
 
 		super(graphicsConfiguration2);
 
-		//<AND>
-		System.out.println("Using J3d-Andy");
+		if (USE_NEWT)
+		{
+			final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
+			final GLCapabilities cap = new GLCapabilities(pro);
 
-		/*final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
-		final GLCapabilities cap = new GLCapabilities(pro);
-
-		this.glwindow = GLWindow.create(cap);
-		this.glwindow.setSize(10, 10);
-		this.glwindow.setTitle("Test GLWindow");		
-		//FIXME:this.glwindow.setVisible(true);
-		this.glwindow.getContext();*/
-		
+			this.glwindow = GLWindow.create(cap);
+			this.glwindow.setSize(10, 10);
+			this.glwindow.setTitle("Test GLWindow");
+			this.glwindow.setVisible(true);
+			this.glwindow.getContext();
+		}
 
 		//this.offScreen = offScreen;
 		this.graphicsConfiguration = graphicsConfiguration;
@@ -1190,7 +1188,8 @@ public class Canvas3D extends Canvas
 				newSize = getSize();
 				newPosition = getLocationOnScreen();
 
-				//this.glwindow.setSize(newSize.width, newSize.height);
+				if (USE_NEWT)
+					this.glwindow.setSize(newSize.width, newSize.height);
 
 			}
 			catch (IllegalComponentStateException e)
@@ -2094,11 +2093,18 @@ public class Canvas3D extends Canvas
 	 */
 	Context createNewContext(Context shareCtx, boolean isSharedCtx)
 	{
-		Context retVal = createNewContext(this.drawable, shareCtx, isSharedCtx, this.offScreen);
+		Context retVal;
 
-		//FIXME: Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow.getDelegatedDrawable(),
-	//			this.glwindow.getContext(), shareCtx, isSharedCtx);
-
+		if (USE_NEWT)
+		{
+			retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow.getDelegatedDrawable(),
+					this.glwindow.getContext(), shareCtx, isSharedCtx);
+		}
+		else
+		{
+			retVal = createNewContext(this.drawable, shareCtx, isSharedCtx, this.offScreen);
+		}
+		
 		// compute the max available texture units
 		maxAvailableTextureUnits = Math.max(maxTextureUnits, maxTextureImageUnits);
 		// reset 'antialiasingSet' if new context is created for an already existing Canvas3D,

@@ -6,10 +6,31 @@ import java.util.HashMap;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 
+import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLContext;
 
 public class JoglesContext extends JoglContext
 {
+	public GL2ES2 gl2es2;
+
+	public JoglesContext(GLContext context)
+	{
+		super(context);
+		gl2es2 = context.getGL().getGL2ES2();
+	}
+
+	/**
+	 * This is for speed attempts, the getGL2ES2() checks intanceof so it's expensive
+	 * @return
+	 */
+	public GL2ES2 gl2es2()
+	{
+		// Morrowind crashes on window size change but it's not this
+		//if (context.getGL() == gl2es2)
+		return gl2es2;
+		//else
+		//	return context.getGL().getGL2ES2();
+	}
 
 	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
 	//Dirty dirty buffer gen holder thing
@@ -23,7 +44,7 @@ public class JoglesContext extends JoglContext
 
 	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
 
-	public HashMap<GeometryArrayRetained, LocationData> geoToLocationData = new HashMap<GeometryArrayRetained, LocationData>();
+	public HashMap<Object, LocationData> geoToLocationData = new HashMap<Object, LocationData>();
 
 	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
 
@@ -113,11 +134,6 @@ public class JoglesContext extends JoglContext
 	public Matrix4d currentProjMat = new Matrix4d();
 	public Matrix4d currentProjMatInverse = new Matrix4d();
 
-	JoglesContext(GLContext context)
-	{
-		super(context);
-	}
-
 	public static class LocationData
 	{
 
@@ -150,5 +166,172 @@ public class JoglesContext extends JoglContext
 		public HashMap<Integer, Integer> genAttIndexToLoc = new HashMap<Integer, Integer>();
 
 	}
+
+	//Performance issue
+	//getGL2ES2  just made full screening morrowind crash (maybe tiny method which double checks
+	// unbox,  getGL2ES2, context and get GL2ES2 are expensive! (a tiny bit)
+	// possibly I can stop calling bind 0?
+	// maybe no call to glFinish?
+	// up to full screen and back improves render performance!!! what
+
+	///For frame stats
+
+	public static class PerFrameStats
+	{
+		//public HashSet<ShaderProgramId> usedPrograms = new HashSet<ShaderProgramId>();
+		public ArrayList<ShaderProgramId> usedPrograms = new ArrayList<ShaderProgramId>();
+		//public HashSet<String> usedProgramNames = new HashSet<String>();
+		//TODO: how do I get these?
+		//public HashMap<ShaderProgramId, String> usedProgramNames = new HashMap<ShaderProgramId, String>();
+
+		public int geoToClearBuffers;
+		public int glDrawArrays;
+		public int glDrawElements;
+		public int setFFPAttributes;
+		public int geoToLocationData;
+		public int enableTexCoordPointer;
+		public int createGLSLShader;
+		public int createGLSLShaderProgram;
+		public int compileGLSLShader;
+		public int destroyGLSLShader;
+		public int destroyGLSLShaderProgram;
+		public int linkGLSLShaderProgram;
+		public int useGLSLShaderProgram;
+		public int bindGLSLVertexAttrName;
+		public int lookupGLSLShaderAttrNames;
+		public int updateDirectionalLight;
+		public int updatePointLight;
+		public int updateSpotLight;
+		public int updateExponentialFog;
+		public int updateLinearFog;
+		public int disableFog;
+		public int setFogEnableFlag;
+		public int updateLineAttributes;
+		public int resetLineAttributes;
+		public int updateMaterial;
+		public int updateMaterialColor;
+		public int updateColoringAttributes;
+		public int resetColoringAttributes;
+		public int updatePointAttributes;
+		public int resetPointAttributes;
+		public int updatePolygonAttributes;
+		public int resetPolygonAttributes;
+		public int updateRenderingAttributes;
+		public int resetRenderingAttributes;
+		public int updateTransparencyAttributes;
+		public int resetTransparency;
+		public int updateTextureAttributes;
+		public int resetTextureAttributes;
+		public int resetTexCoordGeneration;
+		public int updateTextureUnitState;
+		public int bindTexture2D;
+		public int bindTextureCubeMap;
+		public int setBlendColor;
+		public int setBlendFunc;
+		public int setFullSceneAntialiasing;
+		public int setLightEnables;
+		public int setSceneAmbient;
+		public int activeTextureUnit;
+		public int resetTextureNative;
+		public int useCtx;
+		public int releaseCtx;
+		public int clear;
+		public int setModelViewMatrix;
+		public int setProjectionMatrix;
+		public int setViewport;
+		public int freeTexture;
+		public int generateTexID;
+		public int setDepthBufferWriteEnable;
+		public int redundantUseProgram;
+
+		public void outputPerFrameData()
+		{
+
+			System.out.println("geoToClearBuffers " + geoToClearBuffers);
+			System.out.println("glDrawArrays " + glDrawArrays);
+			System.out.println("glDrawElements " + glDrawElements);
+			System.out.println("setFFPAttributes " + setFFPAttributes);
+			System.out.println("geoToLocationData " + geoToLocationData);
+			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
+			System.out.println("createGLSLShader " + createGLSLShader);
+			System.out.println("createGLSLShaderProgram " + createGLSLShaderProgram);
+			System.out.println("compileGLSLShader " + compileGLSLShader);
+			System.out.println("destroyGLSLShader " + destroyGLSLShader);
+			System.out.println("destroyGLSLShaderProgram " + destroyGLSLShaderProgram);
+			System.out.println("linkGLSLShaderProgram " + linkGLSLShaderProgram);
+			System.out.println("bindGLSLVertexAttrName " + bindGLSLVertexAttrName);
+			System.out.println("lookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
+			System.out.println("updateDirectionalLight " + updateDirectionalLight);
+			System.out.println("updatePointLight " + updatePointLight);
+			System.out.println("updateSpotLight " + updateSpotLight);
+			System.out.println("updateExponentialFog " + updateExponentialFog);
+			System.out.println("updateLinearFog " + updateLinearFog);
+			System.out.println("disableFog " + disableFog);
+			System.out.println("setFogEnableFlag " + setFogEnableFlag);
+			System.out.println("updateLineAttributes " + updateLineAttributes);
+			System.out.println("resetLineAttributes " + resetLineAttributes);
+			System.out.println("updateMaterial " + updateMaterial);
+			System.out.println("updateMaterialColor " + updateMaterialColor);
+			System.out.println("updateColoringAttributes " + updateColoringAttributes);
+			System.out.println("resetColoringAttributes " + resetColoringAttributes);
+			System.out.println("updatePointAttributes " + updatePointAttributes);
+			System.out.println("resetPointAttributes " + resetPointAttributes);
+			System.out.println("updatePolygonAttributes " + updatePolygonAttributes);
+			System.out.println("resetPolygonAttributes " + resetPolygonAttributes);
+			System.out.println("updateRenderingAttributes " + updateRenderingAttributes);
+			System.out.println("resetRenderingAttributes " + resetRenderingAttributes);
+			System.out.println("updateTransparencyAttributes " + updateTransparencyAttributes);
+			System.out.println("resetTransparency " + resetTransparency);
+			System.out.println("updateTextureAttributes " + updateTextureAttributes);
+			System.out.println("resetTextureAttributes " + resetTextureAttributes);
+			System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
+			System.out.println("updateTextureUnitState " + updateTextureUnitState);
+			System.out.println("bindTexture2D " + bindTexture2D);
+			System.out.println("bindTextureCubeMap " + bindTextureCubeMap);
+			System.out.println("setBlendColor " + setBlendColor);
+			System.out.println("setBlendFunc " + setBlendFunc);
+			System.out.println("setFullSceneAntialiasing " + setFullSceneAntialiasing);
+			System.out.println("setLightEnables " + setLightEnables);
+			System.out.println("setSceneAmbient " + setSceneAmbient);
+			System.out.println("activeTextureUnit " + activeTextureUnit);
+			System.out.println("resetTextureNative " + resetTextureNative);
+			System.out.println("useCtx " + useCtx);
+			System.out.println("releaseCtx " + releaseCtx);
+			System.out.println("clear " + clear);
+			System.out.println("setModelViewMatrix " + setModelViewMatrix);
+			System.out.println("setProjectionMatrix " + setProjectionMatrix);
+			System.out.println("setViewport " + setViewport);
+			System.out.println("freeTexture " + freeTexture);
+			System.out.println("generateTexID " + generateTexID);
+			System.out.println("setDepthBufferWriteEnable " + setDepthBufferWriteEnable);
+			System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram);
+			System.out.println("redundantUseProgram " + redundantUseProgram);
+
+			for (ShaderProgramId id : usedPrograms)
+				System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue() );
+
+		}
+	}
+
+	public PerFrameStats perFrameStats = new PerFrameStats();
+
+	private int statsFrame = 0;
+	private int STATS_OUTPUT_FRAME_FREQ = 50;
+
+	public void outputPerFrameData()
+	{
+		statsFrame++;
+		if (statsFrame % STATS_OUTPUT_FRAME_FREQ == 0)
+		{
+			statsFrame = 0;
+			System.out.println("======================================================");
+			perFrameStats.outputPerFrameData();
+		}
+		// clear for next frame
+		perFrameStats = new PerFrameStats();
+	}
+
+	// dirty check on what useProgram does
+	public int prevProgramId;
 
 }
