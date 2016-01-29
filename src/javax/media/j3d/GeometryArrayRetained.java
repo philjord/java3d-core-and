@@ -416,7 +416,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 		//FIXME: big ugly hack for buffers
 		//This looks like a good indicator of being disposed
 		for(Context ctx: ctxExecutedOn)
-			((JoglesPipeline)Pipeline.getPipeline()).clearBuffers(ctx, this);
+			((JoglesPipeline)Pipeline.getPipeline()).registerClearBuffers(ctx, this);
 		
 		ctxExecutedOn.clear();
     }

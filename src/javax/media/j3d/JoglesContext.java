@@ -1,5 +1,6 @@
 package javax.media.j3d;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.vecmath.Matrix3d;
@@ -9,6 +10,8 @@ import com.jogamp.opengl.GLContext;
 
 public class JoglesContext extends JoglContext
 {
+
+	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
 	//Dirty dirty buffer gen holder thing
 
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
@@ -23,6 +26,8 @@ public class JoglesContext extends JoglContext
 	public HashMap<GeometryArrayRetained, LocationData> geoToLocationData = new HashMap<GeometryArrayRetained, LocationData>();
 
 	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
+
+	public HashMap<Integer, HashMap<String, Integer>> progToGenVertAttNameToGenVertAttIndex = new HashMap<Integer, HashMap<String, Integer>>();
 
 	// note anything may be reused if not updated between execute calls
 
@@ -98,13 +103,13 @@ public class JoglesContext extends JoglContext
 
 	public Matrix4d textureTransform = new Matrix4d();
 
-	//current ModelView Matrix for use in execute
+	//various ffp matrixes
+	public Matrix4d currentModelMat = new Matrix4d();
+	public Matrix4d currentViewMat = new Matrix4d();
 	public Matrix4d currentModelViewMat = new Matrix4d();
+	public Matrix4d currentModelViewMatInverse = new Matrix4d();
 	public Matrix4d currentModelViewProjMat = new Matrix4d();
-	//current Normal Matrix for use in execute
 	public Matrix3d currentNormalMat = new Matrix3d();
-
-	//current Projection Matrix for use in execute
 	public Matrix4d currentProjMat = new Matrix4d();
 	public Matrix4d currentProjMatInverse = new Matrix4d();
 
@@ -118,7 +123,10 @@ public class JoglesContext extends JoglContext
 
 		public int glProjectionMatrix = -1;
 		public int glProjectionMatrixInverse = -1;
+		public int modelMatrix = -1;
+		public int viewMatrix = -1;
 		public int glModelViewMatrix = -1;
+		public int glModelViewMatrixInverse = -1;
 		public int glModelViewProjectionMatrix = -1;
 		public int glNormalMatrix = -1;
 		public int ignoreVertexColors = -1;
@@ -137,8 +145,10 @@ public class JoglesContext extends JoglContext
 		public int glVertex = -1;
 		public int glColor = -1;
 		public int glNormal = -1;
-		
-		public int[] glMultiTexCoord ;
+
+		public int[] glMultiTexCoord;
+		public HashMap<Integer, Integer> genAttIndexToLoc = new HashMap<Integer, Integer>();
+
 	}
 
 }

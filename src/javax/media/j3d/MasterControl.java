@@ -338,7 +338,7 @@ class MasterControl {
     boolean disableSeparateSpecularColor = false;
 
     // Flag that indicates whether DisplayList is used or not
-    boolean isDisplayList = true;
+    boolean isDisplayList = false;//DIsplay lists deprecated now
 
     // If this flag is set, then by-ref geometry will not be
     // put in display list
@@ -522,8 +522,9 @@ class MasterControl {
 	    System.err.println("Java 3D: separate specular color disabled if possible");
 	}
 
-	isDisplayList = getBooleanProperty("j3d.displaylist", isDisplayList,
-					   "display list");
+	//Diaplay Lists deprecated now
+	//isDisplayList = getBooleanProperty("j3d.displaylist", isDisplayList,
+					//   "display list");
 
 	implicitAntialiasing =
 	    getBooleanProperty("j3d.implicitAntialiasing",
