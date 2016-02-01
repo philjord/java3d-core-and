@@ -1231,7 +1231,7 @@ void render(Canvas3D cv, TransparentRenderingInfo rlist) {
     /**
      * render list of RenderMolecule
      */
-    void renderList(Canvas3D cv, int pass, RenderMolecule rlist) {
+	void renderList(Canvas3D cv, int pass, RenderMolecule rlist) {
         assert pass < 0;
 
         // bit mask of all attr fields that are equivalent across

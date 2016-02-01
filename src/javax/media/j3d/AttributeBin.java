@@ -324,7 +324,7 @@ ArrayList<ShaderBin> addShaderBins = new ArrayList<ShaderBin>();
     }
 
 
-    void updateAttributes(Canvas3D cv) {
+	void updateAttributes(Canvas3D cv) {
 
 	if ((cv.canvasDirty & Canvas3D.ATTRIBUTEBIN_DIRTY) != 0) {
 	    // Update Attribute Bundles

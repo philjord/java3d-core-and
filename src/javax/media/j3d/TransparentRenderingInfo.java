@@ -44,7 +44,7 @@ class TransparentRenderingInfo extends Object implements TransparencySortGeom {
     /**
      * update state before rendering transparent objects
      */
-    boolean updateState(Canvas3D cv) {
+	boolean updateState(Canvas3D cv) {
 
 	TextureBin textureBin = rm.textureBin;
 	AttributeBin attributeBin = textureBin.attributeBin;
