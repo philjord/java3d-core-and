@@ -56,8 +56,10 @@ class ShaderBin implements ObjectUpdate
 	// until the currentPassShaderProgram is left at null after the pass.
 	// then it will be complete
 
-	// Nope possible because transparency jump to texturebin and just assume path to root is correct, which 
-	// I'm trying for it not to be!
+	// Nope possible because transparency jumps down to texturebin in geometry sorted order
+	// and just assume path to root is correct, so shader program needs to not only go to the very 
+	// top of tree but geometry sorting need to be by shader.
+	// perhaps I could use the sorted system everywhere and sort by program
 
 	/**
 	 * Node component dirty mask.

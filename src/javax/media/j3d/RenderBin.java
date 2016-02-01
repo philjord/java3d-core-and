@@ -5670,7 +5670,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	 * This renders the transparent objects
 	 */
 	void renderTransparent(Canvas3D cv)
-	{
+	{		
 		boolean savedDepthBufferWriteEnable = true;
 
 		//System.err.println("====> renderTransparent");

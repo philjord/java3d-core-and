@@ -12,6 +12,7 @@ import com.jogamp.opengl.GLContext;
 
 public class JoglesContext extends JoglContext
 {
+	//TODO: heaps of lights appears to kill performance, why?
 	public GL2ES2 gl2es2;
 
 	public JoglesContext(GLContext context)
@@ -174,8 +175,7 @@ public class JoglesContext extends JoglContext
 	// up to full screen and back improves render performance!!! what
 
 	///For frame stats
-	
-	
+
 	//1  Renderer.doWork ->
 	//1  RenderBin.render -> (can be the 3 background calls or the 3 normal calls (opaque/ordered/transparent)
 	//4  LightBin.render ->
@@ -190,12 +190,11 @@ public class JoglesContext extends JoglContext
 	//ShaderBin.updateAttributes ->
 	//GLSLShaderProgramRetained.updateNative -> .enableShaderProgram -> .enableShaderProgram
 	//109+592 JoglesPipeline.useGLSLShaderProgram
-	
-	
-	
 
 	public static class PerFrameStats
 	{
+		public long frameStartTime;
+
 		//public HashSet<ShaderProgramId> usedPrograms = new HashSet<ShaderProgramId>();
 		public ArrayList<ShaderProgramId> usedPrograms = new ArrayList<ShaderProgramId>();
 		//public HashSet<String> usedProgramNames = new HashSet<String>();
@@ -271,14 +270,14 @@ public class JoglesContext extends JoglContext
 			System.out.println("setFFPAttributes " + setFFPAttributes);
 			System.out.println("geoToLocationData " + geoToLocationData);
 			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
-			System.out.println("createGLSLShader " + createGLSLShader);
-			System.out.println("createGLSLShaderProgram " + createGLSLShaderProgram);
-			System.out.println("compileGLSLShader " + compileGLSLShader);
-			System.out.println("destroyGLSLShader " + destroyGLSLShader);
-			System.out.println("destroyGLSLShaderProgram " + destroyGLSLShaderProgram);
-			System.out.println("linkGLSLShaderProgram " + linkGLSLShaderProgram);
-			System.out.println("bindGLSLVertexAttrName " + bindGLSLVertexAttrName);
-			System.out.println("lookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
+			System.out.print("createGLSLShader " + createGLSLShader);
+			System.out.print("\tcreateGLSLShaderProgram " + createGLSLShaderProgram);
+			System.out.print("\tcompileGLSLShader " + compileGLSLShader);
+			System.out.print("\tdestroyGLSLShader " + destroyGLSLShader);
+			System.out.print("\tdestroyGLSLShaderProgram " + destroyGLSLShaderProgram);
+			System.out.print("\tlinkGLSLShaderProgram " + linkGLSLShaderProgram);
+			System.out.print("\tbindGLSLVertexAttrName " + bindGLSLVertexAttrName);
+			System.out.print("\tlookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
 			System.out.println("updateDirectionalLight " + updateDirectionalLight);
 			System.out.println("updatePointLight " + updatePointLight);
 			System.out.println("updateSpotLight " + updateSpotLight);
@@ -290,18 +289,18 @@ public class JoglesContext extends JoglContext
 			System.out.println("resetLineAttributes " + resetLineAttributes);
 			System.out.println("updateMaterial " + updateMaterial);
 			System.out.println("updateMaterialColor " + updateMaterialColor);
-			System.out.println("updateColoringAttributes " + updateColoringAttributes);
-			System.out.println("resetColoringAttributes " + resetColoringAttributes);
-			System.out.println("updatePointAttributes " + updatePointAttributes);
-			System.out.println("resetPointAttributes " + resetPointAttributes);
-			System.out.println("updatePolygonAttributes " + updatePolygonAttributes);
-			System.out.println("resetPolygonAttributes " + resetPolygonAttributes);
-			System.out.println("updateRenderingAttributes " + updateRenderingAttributes);
-			System.out.println("resetRenderingAttributes " + resetRenderingAttributes);
-			System.out.println("updateTransparencyAttributes " + updateTransparencyAttributes);
-			System.out.println("resetTransparency " + resetTransparency);
-			System.out.println("updateTextureAttributes " + updateTextureAttributes);
-			System.out.println("resetTextureAttributes " + resetTextureAttributes);
+			System.out.print("updateColoringAttributes " + updateColoringAttributes);
+			System.out.println("\tresetColoringAttributes " + resetColoringAttributes);
+			System.out.print("updatePointAttributes " + updatePointAttributes);
+			System.out.println("\tresetPointAttributes " + resetPointAttributes);
+			System.out.print("updatePolygonAttributes " + updatePolygonAttributes);
+			System.out.println("\tresetPolygonAttributes " + resetPolygonAttributes);
+			System.out.print("updateRenderingAttributes " + updateRenderingAttributes);
+			System.out.println("\tresetRenderingAttributes " + resetRenderingAttributes);
+			System.out.print("updateTransparencyAttributes " + updateTransparencyAttributes);
+			System.out.println("\tresetTransparency " + resetTransparency);
+			System.out.print("updateTextureAttributes " + updateTextureAttributes);
+			System.out.println("\tresetTextureAttributes " + resetTextureAttributes);
 			System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
 			System.out.println("updateTextureUnitState " + updateTextureUnitState);
 			System.out.println("bindTexture2D " + bindTexture2D);
@@ -326,8 +325,10 @@ public class JoglesContext extends JoglContext
 			System.out.println("redundantUseProgram " + redundantUseProgram);
 
 			for (ShaderProgramId id : usedPrograms)
-				System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue() );
+				System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());
 
+			System.out.println("frameTime ns " + (System.nanoTime() - frameStartTime) + " = fps: "
+					+ (1000 / ((System.nanoTime() - frameStartTime) / 1000000L)));
 		}
 	}
 
@@ -347,6 +348,7 @@ public class JoglesContext extends JoglContext
 		}
 		// clear for next frame
 		perFrameStats = new PerFrameStats();
+		perFrameStats.frameStartTime = System.nanoTime();
 	}
 
 	// dirty check on what useProgram does

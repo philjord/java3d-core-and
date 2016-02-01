@@ -44,6 +44,12 @@ import java.util.logging.Level;
 class Renderer extends J3dThread
 {
 
+	// performance/debug setters, very useful
+	private static final boolean RENDER_BACKGROUND = true;
+	private static final boolean RENDER_OPAQUE = true;
+	private static final boolean RENDER_ORDERED = true;
+	private static final boolean RENDER_TRANSPARENT = true;
+	
 	// This action causes this thread to wait
 	static final int WAIT = 0;
 
@@ -72,6 +78,8 @@ class Renderer extends J3dThread
 	static final int SWAP = 1;
 	static final int REQUESTRENDER = 2;
 	static final int REQUESTCLEANUP = 3;
+
+
 
 	// Renderer Structure used for the messaging to the renderer
 	RendererStructure rendererStructure = new RendererStructure();
@@ -1272,6 +1280,7 @@ class Renderer extends J3dThread
 										canvas.vworldToEc.mul(canvas.vpcToEc, cvCache.getInfVworldToVpc());
 
 										// render background geometry
+										if(RENDER_BACKGROUND)
 										renderBin.renderBackground(canvas);
 									}
 
@@ -1321,9 +1330,11 @@ class Renderer extends J3dThread
 									}
 
 									// render opaque geometry
+									if(RENDER_OPAQUE)
 									renderBin.renderOpaque(canvas);
 
 									// render ordered geometry
+									if(RENDER_ORDERED)
 									renderBin.renderOrdered(canvas);
 
 									// handle renderField callback
@@ -1354,6 +1365,7 @@ class Renderer extends J3dThread
 									}
 
 									// render transparent geometry
+									if(RENDER_TRANSPARENT)
 									renderBin.renderTransparent(canvas);
 
 									if (doAccum)

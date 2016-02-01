@@ -521,9 +521,6 @@ class EnvironmentSet extends Object implements ObjectUpdate
 		ShaderBin sb = shaderBinList;
 		while (sb != null)
 		{
-			//Wildly assumes ordered program order
-			//if(sb.prev==null || !sb.prev.shaderProgram.equals(sb.shaderProgram))
-
 			sb.render(cv);
 			sb = sb.next;
 		}
