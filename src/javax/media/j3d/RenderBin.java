@@ -574,7 +574,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 				if (((tb.tbFlag & TextureBin.RESORT) != 0) && (tb.shaderBin != null))
 				{
 
-					tb.shaderBin.reInsertTextureBin(tb);
+					tb.attributeBin.reInsertTextureBin(tb);
 					tb.tbFlag &= ~TextureBin.RESORT;
 				}
 			}
@@ -1047,13 +1047,13 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 		}
 
 		clearAllUpdateObjectState();
-		/*
-		if (opaqueBin != null) {
+		
+	/*	if (opaqueBin != null) {
 		System.err.println(this + "***** Begin Dumping OpaqueBin *****");
 		dumpBin(opaqueBin);
 		System.err.println("***** End Dumping OpaqueBin *****");
-		}
-		*/
+		}*/
+		
 
 	}
 
@@ -2193,7 +2193,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 
 		RenderAtom ra = null;
 		TextureBin tb;
-		ShaderBin sb;
+		AttributeBin ab;
 		boolean reInsertNeeded = false;
 
 		if (nc.mirror.changedFrequent == 0)
@@ -2256,9 +2256,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			}
 			else
 			{
-				sb = ra.renderMolecule.textureBin.shaderBin;
+				ab = ra.renderMolecule.textureBin.attributeBin;
 				ra.renderMolecule.removeRenderAtom(ra);
-				reInsertTextureBin(sb, ra);
+				reInsertTextureBin(ab, ra);
 			}
 		}
 	}
@@ -2268,7 +2268,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 
 		RenderAtom ra = null;
 		TextureBin tb;
-		ShaderBin sb;
+		AttributeBin ab;
 		boolean reInsertNeeded = false;
 
 		if (nc.mirror.changedFrequent == 0)
@@ -2331,9 +2331,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			}
 			else
 			{
-				sb = ra.renderMolecule.textureBin.shaderBin;
+				ab = ra.renderMolecule.textureBin.attributeBin;
 				ra.renderMolecule.removeRenderAtom(ra);
-				reInsertTextureBin(sb, ra);
+				reInsertTextureBin(ab, ra);
 			}
 		}
 	}
@@ -2448,7 +2448,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	{
 		RenderAtom ra = null;
 		TextureBin tb;
-		ShaderBin sb;
+		AttributeBin ab;
 		boolean mirrorSet = false;
 		boolean firstTextureBin = true;
 
@@ -2495,9 +2495,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			}
 			else
 			{
-				sb = ra.renderMolecule.textureBin.shaderBin;
+				ab = ra.renderMolecule.textureBin.attributeBin;
 				ra.renderMolecule.removeRenderAtom(ra);
-				reInsertTextureBin(sb, ra);
+				reInsertTextureBin(ab, ra);
 			}
 		}
 	}
@@ -2550,7 +2550,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 					{
 						EnvironmentSet e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 						/*
 						// If changed Frequent the first time,
 						// then  the cached value
@@ -2674,9 +2674,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						if (ra == null || !ra.inRenderBin())
 							continue;
 
-						AttributeBin attrBin = ra.renderMolecule.textureBin.attributeBin;
+						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertShaderBin(attrBin, ra);
+						reInsertAttributeBin(sb, ra);
 					}
 				}
 			}
@@ -2721,9 +2721,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						if (ra == null || !ra.inRenderBin())
 							continue;
 
-						AttributeBin attrBin = ra.renderMolecule.textureBin.attributeBin;
+						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertShaderBin(attrBin, ra);
+						reInsertAttributeBin(sb, ra);
 					}
 				}
 			}
@@ -2847,9 +2847,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra = gaArr[i].getRenderAtom(view);
 						if (ra == null || !ra.inRenderBin())
 							continue;
-						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
+						AttributeBin ab = ra.renderMolecule.textureBin.attributeBin;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertTextureBin(sb, ra);
+						reInsertTextureBin(ab, ra);
 					}
 				}
 			}
@@ -2899,7 +2899,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 								continue;
 							EnvironmentSet e = ra.renderMolecule.textureBin.environmentSet;
 							ra.renderMolecule.removeRenderAtom(ra);
-							reInsertAttributeBin(e, ra);
+							reInsertShaderBin(e, ra);
 						}
 					}
 				}
@@ -3089,7 +3089,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 				}
 				else
@@ -3107,7 +3107,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 				}
 			}
@@ -3170,7 +3170,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 				ra.app = app;
 				e = ra.renderMolecule.textureBin.environmentSet;
 				ra.renderMolecule.removeRenderAtom(ra);
-				reInsertAttributeBin(e, ra);
+				reInsertShaderBin(e, ra);
 			}
 		}
 
@@ -3237,7 +3237,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 				}
 				else
@@ -3254,7 +3254,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 				}
 			}
@@ -3314,7 +3314,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 				ra.app = app;
 				e = ra.renderMolecule.textureBin.environmentSet;
 				ra.renderMolecule.removeRenderAtom(ra);
-				reInsertAttributeBin(e, ra);
+				reInsertShaderBin(e, ra);
 			}
 		}
 
@@ -4427,7 +4427,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			ra.app = app;
 			e = ra.envSet;
 			ra.renderMolecule.removeRenderAtom(ra);
-			reInsertAttributeBin(e, ra);
+			reInsertShaderBin(e, ra);
 		}
 
 	}
@@ -4716,32 +4716,30 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 		ra.lights = lights;
 		ra.modelClip = modelClip;
 		ra.app = app;
-		reInsertAttributeBin(eNew, ra);
+		reInsertShaderBin(eNew, ra);
 
 	}
-
-	private void reInsertAttributeBin(EnvironmentSet e, RenderAtom ra)
-	{
-		AttributeBin ab;
-		// Just go up to the environment and re-insert
-		ab = findAttributeBin(e, ra);
-		reInsertShaderBin(ab, ra);
-	}
-
-	private void reInsertShaderBin(AttributeBin ab, RenderAtom ra)
+	 
+	private void reInsertShaderBin(EnvironmentSet e, RenderAtom ra)
 	{
 		ShaderBin sb;
 
 		// System.err.println("RenderBin.reInsertShaderBin() ra= " + ra);
-		sb = findShaderBin(ab, ra);
-		reInsertTextureBin(sb, ra);
+		sb = findShaderBin(e, ra);
+		reInsertAttributeBin(sb, ra);
 	}
-
-	private void reInsertTextureBin(ShaderBin sb, RenderAtom ra)
+	private void reInsertAttributeBin(ShaderBin sb, RenderAtom ra)
+	{
+		AttributeBin ab;
+		// Just go up to the environment and re-insert
+		ab = findAttributeBin(sb, ra);
+		reInsertTextureBin(ab, ra);		
+	}
+	private void reInsertTextureBin(AttributeBin ab, RenderAtom ra)
 	{
 		TextureBin tb;
 
-		tb = findTextureBin(sb, ra);
+		tb = findTextureBin(ab, ra);
 		reInsertRenderAtom(tb, ra);
 	}
 
@@ -4860,12 +4858,10 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 		// Call environment set, only after the appearance has been
 		// determined
 		environmentSet = findEnvironmentSet(ra);
-		attributeBin = findAttributeBin(environmentSet, ra);
-
 		// System.err.println("RenderBin : findShaderBin()");
-		shaderBin = findShaderBin(attributeBin, ra);
-
-		textureBin = findTextureBin(shaderBin, ra);
+		shaderBin = findShaderBin(environmentSet, ra);
+		attributeBin = findAttributeBin(shaderBin, ra);
+		textureBin = findTextureBin(attributeBin, ra);
 		renderMolecule = findRenderMolecule(textureBin, ra);
 		ra.setRenderBin(true);
 		renderAtoms.add(ra);
@@ -5131,9 +5127,49 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	}
 
 	/**
+	 * This finds or creates an ShaderBin for a given RenderAtom.
+	 */
+	private ShaderBin findShaderBin(EnvironmentSet envSet, RenderAtom ra)
+	{
+		int i, size;
+		ShaderBin currentBin;
+		ShaderAppearanceRetained sApp;
+
+		if ((ra != null) && (ra.app instanceof ShaderAppearanceRetained))
+			sApp = (ShaderAppearanceRetained) ra.app;
+		else
+			sApp = null;
+
+		currentBin = envSet.shaderBinList;
+		while (currentBin != null)
+		{
+			if (currentBin.equals(sApp))
+			{
+				return currentBin;
+			}
+			currentBin = currentBin.next;
+		}
+
+		// Check the "to-be-added" list of shaderBins for a match
+		size = envSet.addShaderBins.size();
+		for (i = 0; i < size; i++)
+		{
+			currentBin = envSet.addShaderBins.get(i);
+			if (currentBin.equals(sApp))
+			{
+				return currentBin;
+			}
+		}
+
+		currentBin = getShaderBin(sApp);
+		envSet.addShaderBin(currentBin, this, sApp);
+		return currentBin;
+	}
+
+	/**
 	 * This finds or creates an AttributeBin for a given RenderAtom.
 	 */
-	private AttributeBin findAttributeBin(EnvironmentSet envSet, RenderAtom ra)
+	private AttributeBin findAttributeBin(ShaderBin shaderBin, RenderAtom ra)
 	{
 		int i;
 		AttributeBin currentBin;
@@ -5147,7 +5183,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			renderingAttributes = ra.app.renderingAttributes;
 		}
 
-		currentBin = envSet.attributeBinList;
+		currentBin = shaderBin.attributeBinList;
 		while (currentBin != null)
 		{
 			if (currentBin.equals(renderingAttributes, ra))
@@ -5157,63 +5193,23 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			currentBin = currentBin.next;
 		}
 		// Check the "to-be-added" list of attributeBins for a match
-		for (i = 0; i < envSet.addAttributeBins.size(); i++)
+		for (i = 0; i < shaderBin.addAttributeBins.size(); i++)
 		{
-			currentBin = envSet.addAttributeBins.get(i);
+			currentBin = shaderBin.addAttributeBins.get(i);
 			if (currentBin.equals(renderingAttributes, ra))
 			{
 				return (currentBin);
 			}
 		}
 		currentBin = getAttributeBin(ra.app, renderingAttributes);
-		envSet.addAttributeBin(currentBin, this);
+		shaderBin.addAttributeBin(currentBin, this);
 		return (currentBin);
-	}
-
-	/**
-	 * This finds or creates an ShaderBin for a given RenderAtom.
-	 */
-	private ShaderBin findShaderBin(AttributeBin attributeBin, RenderAtom ra)
-	{
-		int i, size;
-		ShaderBin currentBin;
-		ShaderAppearanceRetained sApp;
-
-		if ((ra != null) && (ra.app instanceof ShaderAppearanceRetained))
-			sApp = (ShaderAppearanceRetained) ra.app;
-		else
-			sApp = null;
-
-		currentBin = attributeBin.shaderBinList;
-		while (currentBin != null)
-		{
-			if (currentBin.equals(sApp))
-			{
-				return currentBin;
-			}
-			currentBin = currentBin.next;
-		}
-
-		// Check the "to-be-added" list of shaderBins for a match
-		size = attributeBin.addShaderBins.size();
-		for (i = 0; i < size; i++)
-		{
-			currentBin = attributeBin.addShaderBins.get(i);
-			if (currentBin.equals(sApp))
-			{
-				return currentBin;
-			}
-		}
-
-		currentBin = getShaderBin(sApp);
-		attributeBin.addShaderBin(currentBin, this, sApp);
-		return currentBin;
 	}
 
 	/**
 	 * This finds or creates a TextureBin for a given RenderAtom.
 	 */
-	private TextureBin findTextureBin(ShaderBin shaderBin, RenderAtom ra)
+	private TextureBin findTextureBin(AttributeBin attributeBin, RenderAtom ra)
 	{
 		int i, size;
 		TextureBin currentBin;
@@ -5228,7 +5224,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			texUnitState = ra.app.texUnitState;
 		}
 
-		currentBin = shaderBin.textureBinList;
+		currentBin = attributeBin.textureBinList;
 		while (currentBin != null)
 		{
 			if (currentBin.equals(texUnitState, ra))
@@ -5239,10 +5235,10 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			currentBin = currentBin.next;
 		}
 		// Check the "to-be-added" list of TextureBins for a match
-		size = shaderBin.addTextureBins.size();
+		size = attributeBin.addTextureBins.size();
 		for (i = 0; i < size; i++)
 		{
-			currentBin = shaderBin.addTextureBins.get(i);
+			currentBin = attributeBin.addTextureBins.get(i);
 			if (currentBin.equals(texUnitState, ra))
 			{
 				//System.err.println("2: Equal");
@@ -5251,7 +5247,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 		}
 		// get a new texture bin for this texture unit state
 		currentBin = getTextureBin(texUnitState, ra.app);
-		shaderBin.addTextureBin(currentBin, this, ra);
+		attributeBin.addTextureBin(currentBin, this, ra);
 		return (currentBin);
 	}
 
@@ -5668,7 +5664,6 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			currentBin.render(cv);
 			currentBin = currentBin.next;
 		}
-
 	}
 
 	/**
@@ -5938,7 +5933,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = app;
 						e = ra.envSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 					else
 					{
@@ -6055,7 +6050,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = app;
 						e = ra.envSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 					else
 					{
@@ -6182,7 +6177,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 						ra.app = app;
 						e = ra.envSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(e, ra);
+						reInsertShaderBin(e, ra);
 					}
 					else
 					{
@@ -6613,15 +6608,15 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 			while (envSet != null)
 			{
 				System.err.println("   EnvSet = " + envSet);
-				AttributeBin abin = envSet.attributeBinList;
-				while (abin != null)
+				ShaderBin sbin = envSet.shaderBinList;
+				while (sbin != null)
 				{
-					System.err.println("      ABin = " + abin);
-					ShaderBin sbin = abin.shaderBinList;
-					while (sbin != null)
+					System.err.println("     SBin = " + sbin);
+					AttributeBin abin = sbin.attributeBinList;
+					while (abin != null)
 					{
-						System.err.println("         SBin = " + sbin);
-						TextureBin tbin = sbin.textureBinList;
+						System.err.println("          ABin = " + abin);
+						TextureBin tbin = abin.textureBinList;
 						while (tbin != null)
 						{
 							System.err.println("             Tbin = " + tbin);
@@ -6635,9 +6630,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 							System.err.println("===> End Dumping transparentBin");
 							tbin = tbin.next;
 						}
-						sbin = sbin.next;
+						abin = abin.next;
 					}
-					abin = abin.next;
+					sbin = sbin.next;
 				}
 				envSet = envSet.next;
 			}

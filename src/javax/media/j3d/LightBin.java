@@ -404,17 +404,18 @@ class LightBin extends Object implements ObjectUpdate
 	 */
 	void render(Canvas3D cv)
 	{
-		EnvironmentSet e;
-
+		//System.out.println("LightBin.render " + this);
+	
 		// include this LightBin to the to-be-updated list in Canvas
 		cv.setStateToUpdate(Canvas3D.LIGHTBIN_BIT, this);
 
-		e = environmentSetList;
+		EnvironmentSet e = environmentSetList;
 		while (e != null)
 		{
 			e.render(cv);
 			e = e.next;
 		}
+		
 	}
 
 	void updateAttributes(Canvas3D cv)

@@ -27,6 +27,7 @@
 package javax.media.j3d;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
 // XXXX : We should have a common Bin object that all other Bins extend from.
@@ -34,6 +35,29 @@ import java.util.Map;
 //class ShaderBin extends Object implements ObjectUpdate, NodeComponentUpdate {
 class ShaderBin implements ObjectUpdate
 {
+
+	//PJPJPJPJPJPJPJPJPJPJ
+	//For performance on modern cards we MUST rendering is shader program order
+	// shader program switching is very expensive
+	// Obviously we must still respect the background/opaque/order/transparent passes
+	// Lights and EnvironmentSet are at the top of the render tree, they are spatially
+	// configured, so they don't easily interchange with the simple attributes of shader/attribute/texture
+	// below them.
+	// So in order to force program order at the top of each render call for the 4 passes
+	// the render call at the top will clear shaderRun, then when a ShaderBin is called to render
+	// and currentPassShaderProgram is null the bin will check to see if it's ShaderProgram 
+	// was run in a previous pass (is it in shadersRun?) if it has run then the ShaderBin exits early
+	// if it has not run it will set currentPassShaderProgram to it's Program and add it's ShaderProgram to 
+	// shadersRun and then render normally
+	// If currentPassShaderProgram is not null, then a ShaderBin will simply exit if it's shader is not the
+	// currentPassShaderProgram.
+	// Finally the outermost loop (up at RenderBin) will start by clearing shadersRun then
+	// repeatedly call the tree (setting currentPassShaderProgram to null before each pass)
+	// until the currentPassShaderProgram is left at null after the pass.
+	// then it will be complete
+
+	// Nope possible because transparency jump to texturebin and just assume path to root is correct, which 
+	// I'm trying for it not to be!
 
 	/**
 	 * Node component dirty mask.
@@ -46,10 +70,12 @@ class ShaderBin implements ObjectUpdate
 	 */
 	RenderBin renderBin = null;
 
+	//  is this truely needed now?  AttributeBin attributeBin = null;
+
 	/**
-	 * The AttributeBin that this ShaderBin resides
+	 * The EnvirionmentSet that this AttributeBin resides
 	 */
-	AttributeBin attributeBin = null;
+	EnvironmentSet environmentSet = null;
 
 	/**
 	 * The references to the next and previous ShaderBins in the
@@ -59,18 +85,15 @@ class ShaderBin implements ObjectUpdate
 	ShaderBin prev = null;
 
 	/**
-	 * The list of TextureBins in this ShaderBin
+	 * The list of AttributeBins in this EnvironmentSet
 	 */
-	TextureBin textureBinList = null;
-
+	AttributeBin attributeBinList = null;
 	/**
-	 * The list of TextureBins to be added for the next frame
+	 * List of attrributeBins to be added next Frame
 	 */
-	ArrayList<TextureBin> addTextureBins = new ArrayList<TextureBin>();
+	ArrayList<AttributeBin> addAttributeBins = new ArrayList<AttributeBin>();
 
 	boolean onUpdateList = false;
-
-	int numEditingTextureBins = 0;
 
 	int componentDirty = 0;
 	ShaderAppearanceRetained shaderAppearance = null;
@@ -87,11 +110,11 @@ class ShaderBin implements ObjectUpdate
 		prev = null;
 		next = null;
 		renderBin = rBin;
-		attributeBin = null;
-		textureBinList = null;
+		//attributeBin = null;
+		attributeBinList = null;
+
 		onUpdateList = false;
-		numEditingTextureBins = 0;
-		addTextureBins.clear();
+
 		if (sApp != null)
 		{
 			shaderProgram = sApp.shaderProgram;
@@ -142,185 +165,95 @@ class ShaderBin implements ObjectUpdate
 	@Override
 	public void updateObject()
 	{
-		TextureBin t;
 		int i;
+		AttributeBin a;
 
-		if (addTextureBins.size() > 0)
+		if (addAttributeBins.size() > 0)
 		{
-			t = addTextureBins.get(0);
-			if (textureBinList == null)
+			a = addAttributeBins.get(0);
+			if (attributeBinList == null)
 			{
-				textureBinList = t;
+				attributeBinList = a;
 
 			}
 			else
 			{
-				// Look for a TextureBin that has the same texture
-				insertTextureBin(t);
+				a.next = attributeBinList;
+				attributeBinList.prev = a;
+				attributeBinList = a;
 			}
-			for (i = 1; i < addTextureBins.size(); i++)
+			for (i = 1; i < addAttributeBins.size(); i++)
 			{
-				t = addTextureBins.get(i);
-				// Look for a TextureBin that has the same texture
-				insertTextureBin(t);
-
+				a = addAttributeBins.get(i);
+				a.next = attributeBinList;
+				attributeBinList.prev = a;
+				attributeBinList = a;
 			}
 		}
-		addTextureBins.clear();
+
+		addAttributeBins.clear();
+
 		onUpdateList = false;
-
-	}
-
-	void insertTextureBin(TextureBin t)
-	{
-		TextureBin tb;
-		TextureRetained texture = null;
-
-		if (t.texUnitState != null && t.texUnitState.length > 0)
-		{
-			if (t.texUnitState[0] != null)
-			{
-				texture = t.texUnitState[0].texture;
-			}
-		}
-
-		// use the texture in the first texture unit as the sorting criteria
-		if (texture != null)
-		{
-			tb = textureBinList;
-			while (tb != null)
-			{
-				if (tb.texUnitState == null || tb.texUnitState[0] == null || tb.texUnitState[0].texture != texture)
-				{
-					tb = tb.next;
-				}
-				else
-				{
-					// put it here
-					t.next = tb;
-					t.prev = tb.prev;
-					if (tb.prev == null)
-					{
-						textureBinList = t;
-					}
-					else
-					{
-						tb.prev.next = t;
-					}
-					tb.prev = t;
-					return;
-				}
-			}
-		}
-		// Just put it up front
-		t.prev = null;
-		t.next = textureBinList;
-		textureBinList.prev = t;
-		textureBinList = t;
-
-		t.tbFlag &= ~TextureBin.RESORT;
 	}
 
 	/**
-	 * reInsert textureBin if the first texture is different from
-	 * the previous bin and different from the next bin
+	 * Adds the given AttributeBin to this EnvironmentSet.
 	 */
-	void reInsertTextureBin(TextureBin tb)
+	void addAttributeBin(AttributeBin a, RenderBin rb)
 	{
-
-		TextureRetained texture = null, prevTexture = null, nextTexture = null;
-
-		if (tb.texUnitState != null && tb.texUnitState[0] != null)
-		{
-			texture = tb.texUnitState[0].texture;
-		}
-
-		if (tb.prev != null && tb.prev.texUnitState != null)
-		{
-			prevTexture = tb.prev.texUnitState[0].texture;
-		}
-
-		if (texture != prevTexture)
-		{
-			if (tb.next != null && tb.next.texUnitState != null)
-			{
-				nextTexture = tb.next.texUnitState[0].texture;
-			}
-			if (texture != nextTexture)
-			{
-				if (tb.prev != null && tb.next != null)
-				{
-					tb.prev.next = tb.next;
-					tb.next.prev = tb.prev;
-					insertTextureBin(tb);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Adds the given TextureBin to this AttributeBin.
-	 */
-	void addTextureBin(TextureBin t, RenderBin rb, RenderAtom ra)
-	{
-
-		t.environmentSet = this.attributeBin.environmentSet;
-		t.attributeBin = this.attributeBin;
-		t.shaderBin = this;
-
-		attributeBin.updateFromShaderBin(ra);
-		addTextureBins.add(t);
-
+		a.shaderBin = this;
+		addAttributeBins.add(a);
 		if (!onUpdateList)
 		{
 			rb.objUpdateList.add(this);
 			onUpdateList = true;
 		}
+
 	}
 
 	/**
-	 * Removes the given TextureBin from this ShaderBin.
+	 * Removes the given AttributeBin from this EnvironmentSet.
 	 */
-	void removeTextureBin(TextureBin t)
+	void removeAttributeBin(AttributeBin a)
 	{
-
-		// If the TextureBin being remove is contained in addTextureBins,
-		// then remove the TextureBin from the addList
-		if (addTextureBins.contains(t))
+		a.shaderBin = null;
+		// If the attributeBin being remove is contained in addAttributeBins, then
+		// remove the attributeBin from the addList
+		if (addAttributeBins.contains(a))
 		{
-			addTextureBins.remove(addTextureBins.indexOf(t));
+			addAttributeBins.remove(addAttributeBins.indexOf(a));
 		}
 		else
 		{
-			if (t.prev == null)
+			if (a.prev == null)
 			{ // At the head of the list
-				textureBinList = t.next;
-				if (t.next != null)
+				attributeBinList = a.next;
+				if (a.next != null)
 				{
-					t.next.prev = null;
+					a.next.prev = null;
 				}
 			}
 			else
 			{ // In the middle or at the end.
-				t.prev.next = t.next;
-				if (t.next != null)
+				a.prev.next = a.next;
+				if (a.next != null)
 				{
-					t.next.prev = t.prev;
+					a.next.prev = a.prev;
 				}
 			}
 		}
+		a.prev = null;
+		a.next = null;
 
-		t.shaderBin = null;
-		t.prev = null;
-		t.next = null;
+		if (a.definingRenderingAttributes != null && (a.definingRenderingAttributes.changedFrequent != 0))
+			a.definingRenderingAttributes = null;
+		a.onUpdateList &= ~AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
 
-		t.clear();
-
-		if (textureBinList == null && addTextureBins.size() == 0)
+		if (attributeBinList == null && addAttributeBins.size() == 0)
 		{
 			// Note: Removal of this shaderBin as a user of the rendering
 			// atttrs is done during removeRenderAtom() in RenderMolecule.java
-			attributeBin.removeShaderBin(this);
+			environmentSet.removeShaderBin(this);
 		}
 	}
 
@@ -330,18 +263,14 @@ class ShaderBin implements ObjectUpdate
 	void render(Canvas3D cv)
 	{
 
-		TextureBin tb;
-
-		// System.err.println("ShaderBin.render() shaderProgram = " + shaderProgram);
-
 		// include this ShaderBin to the to-be-updated list in canvas
 		cv.setStateToUpdate(Canvas3D.SHADERBIN_BIT, this);
 
-		tb = textureBinList;
-		while (tb != null)
+		AttributeBin a = attributeBinList;
+		while (a != null)
 		{
-			tb.render(cv);
-			tb = tb.next;
+			a.render(cv);
+			a = a.next;
 		}
 	}
 
@@ -403,13 +332,4 @@ class ShaderBin implements ObjectUpdate
 		componentDirty = 0;
 	}
 
-	void incrActiveTextureBin()
-	{
-		numEditingTextureBins++;
-	}
-
-	void decrActiveTextureBin()
-	{
-		numEditingTextureBins--;
-	}
 }

@@ -2,6 +2,7 @@ package javax.media.j3d;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
@@ -168,13 +169,30 @@ public class JoglesContext extends JoglContext
 	}
 
 	//Performance issue
-	//getGL2ES2  just made full screening morrowind crash (maybe tiny method which double checks
-	// unbox,  getGL2ES2, context and get GL2ES2 are expensive! (a tiny bit)
 	// possibly I can stop calling bind 0?
 	// maybe no call to glFinish?
 	// up to full screen and back improves render performance!!! what
 
 	///For frame stats
+	
+	
+	//1  Renderer.doWork ->
+	//1  RenderBin.render -> (can be the 3 background calls or the 3 normal calls (opaque/ordered/transparent)
+	//4  LightBin.render ->
+	//12 EnvironmentSet.render ->
+	//36 AttributeBin.render ->
+	//1407 ShaderBin.render ->
+	//1440 TextureBin.render -> .render -> .render -> .renderList
+	//3355 RenderMolecule.render ->
+	//1 VertexArrayRenderMethod.render ->
+	//Canvas3D.updateState ->
+	//Canvas3D.updateEnvStat ->
+	//ShaderBin.updateAttributes ->
+	//GLSLShaderProgramRetained.updateNative -> .enableShaderProgram -> .enableShaderProgram
+	//109+592 JoglesPipeline.useGLSLShaderProgram
+	
+	
+	
 
 	public static class PerFrameStats
 	{

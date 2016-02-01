@@ -1937,7 +1937,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.bindGLSLVertexAttrName()");
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.bindGLSLVertexAttrName++;
-		
+
 		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		//gl.glBindAttribLocation(unbox(shaderProgramId), attrIndex + VirtualUniverse.mc.glslVertexAttrOffset, attrName);
 
@@ -1964,7 +1964,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.lookupGLSLShaderAttrNames()");
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.lookupGLSLShaderAttrNames++;
-		
+
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
@@ -2056,6 +2056,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.useGLSLShaderProgram() " + unbox(shaderProgramId));
 
+	
 		if (OUTPUT_PER_FRAME_STATS)
 		{
 			if (((JoglesContext) ctx).prevProgramId == unbox(shaderProgramId))
@@ -2066,16 +2067,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				((JoglesContext) ctx).perFrameStats.useGLSLShaderProgram++;
 				((JoglesContext) ctx).perFrameStats.usedPrograms.add(shaderProgramId);
-			}
-			((JoglesContext) ctx).prevProgramId = unbox(shaderProgramId);
+			}			
 		}
-
+		
+		//FIXME: causes disappears morrowind testing show a redundant call is expensive
+		if (((JoglesContext) ctx).prevProgramId == unbox(shaderProgramId))
+			return null;
+		((JoglesContext) ctx).prevProgramId = unbox(shaderProgramId);
+		
 		if (shaderProgramId == null)
 		{
 			if (!USE_NULL_SHADER_WARNING_GIVEN)
 				System.err.println("Null shader passed for use");
 			USE_NULL_SHADER_WARNING_GIVEN = true;
 		}
+		
+
 
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();

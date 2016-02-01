@@ -107,9 +107,14 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	EnvironmentSet prev = null;
 
 	/**
-	 * List of attrributeBins to be added next Frame
+	 * The list of ShaderBins in this AttributeBin
 	 */
-	ArrayList<AttributeBin> addAttributeBins = new ArrayList<AttributeBin>();
+	ShaderBin shaderBinList = null;
+	/**
+	 * List of shaderBins to be added next frame
+	 */
+	ArrayList<ShaderBin> addShaderBins = new ArrayList<ShaderBin>();
+	int numEditingShaderBins = 0;
 
 	/**
 	 * Canvas Dirty Mask for
@@ -126,11 +131,6 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	 */
 	boolean onUpdateList = false;
 
-	/**
-	 * The list of AttributeBins in this EnvironmentSet
-	 */
-	AttributeBin attributeBinList = null;
-
 	EnvironmentSet(RenderAtom ra, LightRetained[] lightList, FogRetained fog, ModelClipRetained modelClip, RenderBin rb)
 	{
 		renderBin = rb;
@@ -145,7 +145,8 @@ class EnvironmentSet extends Object implements ObjectUpdate
 		prev = null;
 		next = null;
 		onUpdateList = false;
-		attributeBinList = null;
+		shaderBinList = null;
+		numEditingShaderBins = 0;
 		lights.clear();
 		ambLights.clear();
 		sceneAmbient.x = 0.0f;
@@ -331,33 +332,37 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	@Override
 	public void updateObject()
 	{
-		int i;
-		AttributeBin a;
+		ShaderBin sb;
+		int i, size;
 
-		if (addAttributeBins.size() > 0)
+		size = addShaderBins.size();
+		if (size > 0)
 		{
-			a = addAttributeBins.get(0);
-			if (attributeBinList == null)
-			{
-				attributeBinList = a;
+			// TODO : JADA - sort by ShaderProgram to avoid state trashing.
+			// right now this is just bangs them on the front of the queue
+			// MUST be in order
 
+			sb = addShaderBins.get(0);
+			if (shaderBinList == null)
+			{
+				shaderBinList = sb;
 			}
 			else
 			{
-				a.next = attributeBinList;
-				attributeBinList.prev = a;
-				attributeBinList = a;
+				sb.next = shaderBinList;
+				shaderBinList.prev = sb;
+				shaderBinList = sb;
 			}
-			for (i = 1; i < addAttributeBins.size(); i++)
+			for (i = 1; i < size; i++)
 			{
-				a = addAttributeBins.get(i);
-				a.next = attributeBinList;
-				attributeBinList.prev = a;
-				attributeBinList = a;
+				sb = addShaderBins.get(i);
+				sb.next = shaderBinList;
+				shaderBinList.prev = sb;
+				shaderBinList = sb;
 			}
-		}
 
-		addAttributeBins.clear();
+		}
+		addShaderBins.clear();
 
 		if (canvasDirty != 0)
 		{
@@ -389,70 +394,78 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	}
 
 	/**
-	 * Adds the given AttributeBin to this EnvironmentSet.
+	 * Adds the given shaderBin to this AttributeBin.
 	 */
-	void addAttributeBin(AttributeBin a, RenderBin rb)
+	void addShaderBin(ShaderBin sb, RenderBin rb, ShaderAppearanceRetained sApp)
 	{
-		a.environmentSet = this;
-		addAttributeBins.add(a);
+
+		sb.environmentSet = this;
+
+		if (sApp != null)
+		{
+			// ShaderBin should reference to the mirror components. -- JADA.
+			// System.err.println("AttributeBin : sApp.isMirror = " + sApp.isMirror);
+			assert (sApp.isMirror);
+			sb.shaderProgram = sApp.shaderProgram;
+			sb.shaderAttributeSet = sApp.shaderAttributeSet;
+		}
+		sb.shaderAppearance = sApp;
+
+		addShaderBins.add(sb);
+
 		if (!onUpdateList)
 		{
 			rb.objUpdateList.add(this);
 			onUpdateList = true;
 		}
+
 	}
 
 	/**
-	 * Removes the given AttributeBin from this EnvironmentSet.
+	 * Removes the given shaderBin from this AttributeBin.
 	 */
-	void removeAttributeBin(AttributeBin a)
+	void removeShaderBin(ShaderBin sb)
 	{
-		int i;
 
-		a.environmentSet = null;
-		// If the attributeBin being remove is contained in addAttributeBins, then
-		// remove the attributeBin from the addList
-		if (addAttributeBins.contains(a))
+		// If the shaderBin being remove is contained in addShaderBins,
+		// then remove the shadereBin from the addList
+		if (addShaderBins.contains(sb))
 		{
-			addAttributeBins.remove(addAttributeBins.indexOf(a));
+			addShaderBins.remove(addShaderBins.indexOf(sb));
 		}
 		else
 		{
-			if (a.prev == null)
+			if (sb.prev == null)
 			{ // At the head of the list
-				attributeBinList = a.next;
-				if (a.next != null)
+				shaderBinList = sb.next;
+				if (sb.next != null)
 				{
-					a.next.prev = null;
+					sb.next.prev = null;
 				}
 			}
 			else
 			{ // In the middle or at the end.
-				a.prev.next = a.next;
-				if (a.next != null)
+				sb.prev.next = sb.next;
+				if (sb.next != null)
 				{
-					a.next.prev = a.prev;
+					sb.next.prev = sb.prev;
 				}
 			}
 		}
-		a.prev = null;
-		a.next = null;
 
-		if (a.definingRenderingAttributes != null && (a.definingRenderingAttributes.changedFrequent != 0))
-			a.definingRenderingAttributes = null;
-		a.onUpdateList &= ~AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
+		sb.clear();
 
-		if (attributeBinList == null && addAttributeBins.size() == 0)
+		if (shaderBinList == null && addShaderBins.size() == 0)
 		{
 			// Now remove this environment set from all the lights and fogs
 			// that use this
 			int sz = lights.size();
-			for (i = 0; i < sz; i++)
+			for (int i = 0; i < sz; i++)
 			{
 				lights.get(i).environmentSets.remove(this);
 			}
 			sz = ambLights.size();
-			for (i = 0; i < sz; i++)
+			for (int i = 0; i < sz; i++)
 			{
 				ambLights.get(i).environmentSets.remove(this);
 			}
@@ -461,7 +474,9 @@ class EnvironmentSet extends Object implements ObjectUpdate
 				fog.environmentSets.remove(this);
 			}
 			lightBin.removeEnvironmentSet(this);
+
 		}
+
 	}
 
 	void updateSceneAmbient()
@@ -499,17 +514,20 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	 */
 	void render(Canvas3D cv)
 	{
-		AttributeBin a;
-
+		//System.out.println("	EnvironmentSet.render " + this);
 		// include this EnvironmentSet to the to-be-updated list in Canvas
 		cv.setStateToUpdate(Canvas3D.ENVIRONMENTSET_BIT, this);
 
-		a = attributeBinList;
-		while (a != null)
+		ShaderBin sb = shaderBinList;
+		while (sb != null)
 		{
-			a.render(cv);
-			a = a.next;
+			//Wildly assumes ordered program order
+			//if(sb.prev==null || !sb.prev.shaderProgram.equals(sb.shaderProgram))
+
+			sb.render(cv);
+			sb = sb.next;
 		}
+
 	}
 
 	void updateAttributes(Canvas3D cv)
@@ -619,5 +637,15 @@ class EnvironmentSet extends Object implements ObjectUpdate
 
 		cv.environmentSet = this;
 
+	}
+
+	void incrActiveShaderBin()
+	{
+		numEditingShaderBins++;
+	}
+
+	void decrActiveShaderBin()
+	{
+		numEditingShaderBins--;
 	}
 }

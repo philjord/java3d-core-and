@@ -32,92 +32,102 @@ import java.util.ArrayList;
  * An OrderedBin contains an array of OrderedCollection, each represents
  * a child of the OrderedGroup
  */
-class OrderedBin extends Object {
-// ArrayList of orderedCollection, one for each child of the orderedGroup
-ArrayList<OrderedCollection> orderedCollections = new ArrayList<OrderedCollection>();
+class OrderedBin extends Object
+{
+	// ArrayList of orderedCollection, one for each child of the orderedGroup
+	ArrayList<OrderedCollection> orderedCollections = new ArrayList<OrderedCollection>();
 
-    // orderedGroup source
-    OrderedGroupRetained source;
-    OrderedChildInfo childInfoList= null;
-    OrderedChildInfo lastChildInfo = null;
+	// orderedGroup source
+	OrderedGroupRetained source;
+	OrderedChildInfo childInfoList = null;
+	OrderedChildInfo lastChildInfo = null;
 
-    boolean onUpdateList = false;
+	boolean onUpdateList = false;
 
-// Value of already existing orderedCollection
-ArrayList<Integer> setOCForCI = new ArrayList<Integer>();
-ArrayList<OrderedCollection> valueOfSetOCForCI = new ArrayList<OrderedCollection>();
+	// Value of already existing orderedCollection
+	ArrayList<Integer> setOCForCI = new ArrayList<Integer>();
+	ArrayList<OrderedCollection> valueOfSetOCForCI = new ArrayList<OrderedCollection>();
 
-// Value of orderedCollection based on oi, these arrays
-// have size > 0 only during update_view;
-ArrayList<Integer> setOCForOI = new ArrayList<Integer>();
-ArrayList<OrderedCollection> valueOfSetOCForOI = new ArrayList<OrderedCollection>();
+	// Value of orderedCollection based on oi, these arrays
+	// have size > 0 only during update_view;
+	ArrayList<Integer> setOCForOI = new ArrayList<Integer>();
+	ArrayList<OrderedCollection> valueOfSetOCForOI = new ArrayList<OrderedCollection>();
 
-    OrderedBin(int nchildren, OrderedGroupRetained src){
-        int i;
-        for (i=0; i< nchildren; i++) {
-            orderedCollections.add(null);
-        }
-        source = src;
-    }
-
-    void addRemoveOrderedCollection() {
-	int i, index;
-
-	// Add the setValues first, since they reflect already existing
-	// orderedCollection
-	for (i = 0; i < setOCForCI.size(); i++) {
-		index = setOCForCI.get(i).intValue();
-		OrderedCollection oc = valueOfSetOCForCI.get(i);
-	    orderedCollections.set(index, oc);
+	OrderedBin(int nchildren, OrderedGroupRetained src)
+	{
+		int i;
+		for (i = 0; i < nchildren; i++)
+		{
+			orderedCollections.add(null);
+		}
+		source = src;
 	}
 
-	setOCForCI.clear();
-	valueOfSetOCForCI.clear();
+	void addRemoveOrderedCollection()
+	{
+		int i, index;
 
-	while (childInfoList != null) {
-	    if (childInfoList.type == OrderedChildInfo.ADD) {
-		orderedCollections.add(childInfoList.childId, childInfoList.value);
-	    }
-	    else if (childInfoList.type == OrderedChildInfo.REMOVE) {
-		orderedCollections.remove(childInfoList.childId);
-	    }
-	    childInfoList = childInfoList.next;
+		// Add the setValues first, since they reflect already existing
+		// orderedCollection
+		for (i = 0; i < setOCForCI.size(); i++)
+		{
+			index = setOCForCI.get(i).intValue();
+			OrderedCollection oc = valueOfSetOCForCI.get(i);
+			orderedCollections.set(index, oc);
+		}
+
+		setOCForCI.clear();
+		valueOfSetOCForCI.clear();
+
+		while (childInfoList != null)
+		{
+			if (childInfoList.type == OrderedChildInfo.ADD)
+			{
+				orderedCollections.add(childInfoList.childId, childInfoList.value);
+			}
+			else if (childInfoList.type == OrderedChildInfo.REMOVE)
+			{
+				orderedCollections.remove(childInfoList.childId);
+			}
+			childInfoList = childInfoList.next;
+		}
+
+		// Now update the sets based on oi, since the og.orderedChildIdTable reflects
+		// the childIds for the next frame, use the table to set the oc at the
+		// correct place
+		for (i = 0; i < setOCForOI.size(); i++)
+		{
+			index = setOCForOI.get(i).intValue();
+			OrderedCollection oc = valueOfSetOCForOI.get(i);
+			int ci = source.orderedChildIdTable[index];
+			orderedCollections.set(ci, oc);
+		}
+		setOCForOI.clear();
+		valueOfSetOCForOI.clear();
+
+		onUpdateList = false;
+		lastChildInfo = null;
+
 	}
 
-	// Now update the sets based on oi, since the og.orderedChildIdTable reflects
-	// the childIds for the next frame, use the table to set the oc at the
-	// correct place
-	for (i = 0; i < setOCForOI.size(); i++) {
-		index = setOCForOI.get(i).intValue();
-		OrderedCollection oc = valueOfSetOCForOI.get(i);
-	    int ci = source.orderedChildIdTable[index];
-	    orderedCollections.set(ci, oc);
+	void addChildInfo(OrderedChildInfo cinfo)
+	{
+		// Add this cinfo at the end
+		if (childInfoList == null)
+		{
+			childInfoList = cinfo;
+			lastChildInfo = cinfo;
+		}
+		else
+		{
+			// Add at the end
+			cinfo.prev = lastChildInfo;
+			lastChildInfo.next = cinfo;
+			cinfo.next = null;
+			// Update this to be the last child
+			lastChildInfo = cinfo;
+		}
+
 	}
-	setOCForOI.clear();
-	valueOfSetOCForOI.clear();
-
-	onUpdateList = false;
-	lastChildInfo = null;
-
-
-    }
-    void addChildInfo(OrderedChildInfo cinfo) {
-	// Add this cinfo at the end
-	if (childInfoList == null) {
-	    childInfoList = cinfo;
-	    lastChildInfo = cinfo;
-	}
-	else {
-	    // Add at the end
-	    cinfo.prev = lastChildInfo;
-	    lastChildInfo.next = cinfo;
-	    cinfo.next = null;
-	    // Update this to be the last child
-	    lastChildInfo = cinfo;
-	}
-
-    }
 
 }
-
-

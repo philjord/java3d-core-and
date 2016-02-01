@@ -44,7 +44,7 @@ class TransparentRenderingInfo extends Object implements TransparencySortGeom {
     /**
      * update state before rendering transparent objects
      */
-	boolean updateState(Canvas3D cv) {
+    boolean updateState(Canvas3D cv) {
 
 	TextureBin textureBin = rm.textureBin;
 	AttributeBin attributeBin = textureBin.attributeBin;
@@ -74,22 +74,22 @@ class TransparentRenderingInfo extends Object implements TransparencySortGeom {
 
         // XXXX : Code cleanup needed : The following code segment should simply test
         //        each bin independently and update it if necessary.
-        if (cv.environmentSet != attributeBin.environmentSet) {
+        if (cv.environmentSet != shaderBin.environmentSet) {
 
             boolean visible = (attributeBin.definingRenderingAttributes == null ||
                     attributeBin.definingRenderingAttributes.visible);
 
-            if ( (attributeBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
+            if ( (shaderBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
                     == View.VISIBILITY_DRAW_VISIBLE && !visible) ||
-                    (attributeBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
+                    (shaderBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
                     == View.VISIBILITY_DRAW_INVISIBLE && visible)) {
                 return false;
             }
 
             // Fix to issue 314. Set the appropriate bits for the dirty bins
             // and call the update state method.
-            cv.setStateToUpdate(Canvas3D.LIGHTBIN_BIT, attributeBin.environmentSet.lightBin);
-            cv.setStateToUpdate(Canvas3D.ENVIRONMENTSET_BIT, attributeBin.environmentSet);
+            cv.setStateToUpdate(Canvas3D.LIGHTBIN_BIT, shaderBin.environmentSet.lightBin);
+            cv.setStateToUpdate(Canvas3D.ENVIRONMENTSET_BIT, shaderBin.environmentSet);
             cv.setStateToUpdate(Canvas3D.ATTRIBUTEBIN_BIT, attributeBin);
             cv.setStateToUpdate(Canvas3D.SHADERBIN_BIT, shaderBin);
             cv.updateEnvState();
@@ -98,9 +98,9 @@ class TransparentRenderingInfo extends Object implements TransparencySortGeom {
             boolean visible = (attributeBin.definingRenderingAttributes == null ||
                     attributeBin.definingRenderingAttributes.visible);
 
-            if ( (attributeBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
+            if ( (shaderBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
                     == View.VISIBILITY_DRAW_VISIBLE && !visible) ||
-                    (attributeBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
+                    (shaderBin.environmentSet.renderBin.view.viewCache.visibilityPolicy
                     == View.VISIBILITY_DRAW_INVISIBLE && visible)) {
                 return false;
             }
