@@ -38,7 +38,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.IllegalComponentStateException;
 import java.awt.Point;
 import java.awt.Window;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -50,15 +49,8 @@ import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector4d;
 
-import com.jogamp.nativewindow.WindowClosingProtocol.WindowClosingMode;
-import com.jogamp.newt.event.WindowAdapter;
-import com.jogamp.newt.event.WindowEvent;
-import com.jogamp.newt.event.WindowListener;
-import com.jogamp.newt.event.WindowUpdateEvent;
 import com.jogamp.newt.opengl.GLWindow;
-import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
-import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
 
 /**
@@ -1035,7 +1027,7 @@ public class Canvas3D extends Canvas
 		this(dummyObj1, graphicsConfiguration, getGraphicsConfig(graphicsConfiguration), offScreen);
 	}
 
-	private static final boolean USE_NEWT = false;
+	public static final boolean USE_NEWT = true;
 	private GLWindow glwindow = null;
 
 	// Private constructor only called by the previous private constructor.
@@ -1053,6 +1045,15 @@ public class Canvas3D extends Canvas
 		{
 			final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
 			final GLCapabilities cap = new GLCapabilities(pro);
+
+			//System.out.println("caps depth: " + cap.getDepthBits());  //  16			
+			//System.out.println("caps double buffered: " + cap.getDoubleBuffered());  // true
+			//System.out.println("caps sample buffers: " + cap.getSampleBuffers());  // false
+
+			// better values
+			// cap.setDepthBits(24);
+			cap.setStencilBits(8);
+			cap.setSampleBuffers(true);
 
 			this.glwindow = GLWindow.create(cap);
 			this.glwindow.setSize(10, 10);
@@ -2104,7 +2105,7 @@ public class Canvas3D extends Canvas
 		{
 			retVal = createNewContext(this.drawable, shareCtx, isSharedCtx, this.offScreen);
 		}
-		
+
 		// compute the max available texture units
 		maxAvailableTextureUnits = Math.max(maxTextureUnits, maxTextureImageUnits);
 		// reset 'antialiasingSet' if new context is created for an already existing Canvas3D,

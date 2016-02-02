@@ -3472,7 +3472,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updateTextureUnitState++;
 
-	
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// glClientActiveTexture does not exist, but I think that's ok
@@ -4567,10 +4566,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).outputPerFrameData();
 
 		//PERF:
-	//	if (wait)
-	//		gl.glFinish();
-	//	else
-			gl.glFlush();
+		//	if (wait)
+		//		gl.glFinish();
+		//	else
+		gl.glFlush();
 
 	}
 
@@ -4597,6 +4596,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.releaseCtx++;
 		GLContext context = context(ctx);
+
 		context.release();
 		return true;
 	}
@@ -5888,6 +5888,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.swapBuffers()");
 		GLDrawable draw = drawable(drawable);
+		 
 		draw.swapBuffers();
 	}
 
@@ -6035,21 +6036,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (drawable == null)
 			return null;
 		return ((JoglDrawable) drawable).getGLDrawable();
-	}
-
-	//Used to get caps for the canvas3d
-	private static GLCapabilities caps(Canvas3D ctx)
-	{
-		if (ctx.drawable != null)
-		{
-			// latest state for on- and offscreen drawables
-			return (GLCapabilities) drawable(ctx.drawable).getChosenGLCapabilities();
-		}
-		else
-		{
-			// state at the time of 'getBestConfiguration'
-			return ((JoglGraphicsConfiguration) ctx.graphicsConfiguration).getGLCapabilities();
-		}
 	}
 
 	//----------------------------------------------------------------------
@@ -6321,9 +6307,107 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
+	// Methods to get actual capabilities from Canvas3D
+	@Override
+	boolean hasDoubleBuffer(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasDoubleBuffer()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getDoubleBuffered());
+		return caps(cv).getDoubleBuffered();
+	}
+
+	@Override
+	boolean hasStereo(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasStereo()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getStereo());
+		return caps(cv).getStereo();
+	}
+
+	@Override
+	int getStencilSize(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.getStencilSize()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getStencilBits());
+		return caps(cv).getStencilBits();
+	}
+
+	@Override
+	boolean hasSceneAntialiasingMultisample(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasSceneAntialiasingMultisample()");
+		if (VERBOSE)
+			System.err.println("  Returning " + caps(cv).getSampleBuffers());
+
+		return caps(cv).getSampleBuffers();
+	}
+
+	@Override
+	boolean hasSceneAntialiasingAccum(Canvas3D cv)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.hasSceneAntialiasingAccum()");
+		//Accum style antialiasing is gone
+		return false;
+		/*GLCapabilities caps = caps(cv);
+		if (VERBOSE)
+			System.err
+					.println("  Returning " + (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0));
+		return (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0);
+		*/
+
+	}
+
+	//Used to get caps for the canvas3d
+	private static GLCapabilities caps(Canvas3D ctx)
+	{
+		if (ctx.drawable != null)
+		{
+			// latest state for on- and offscreen drawables
+			return (GLCapabilities) drawable(ctx.drawable).getChosenGLCapabilities();
+		}
+		else
+		{
+			// state at the time of 'getBestConfiguration'
+			return ((JoglGraphicsConfiguration) ctx.graphicsConfiguration).getGLCapabilities();
+		}
+	}
+
 	// AWT AWT AWT AWT AWT AWT AWT AWT AWT
 	// ---------------------------------------------------------------------
 
+	// Determine whether specified graphics config is supported by pipeline
+	@Override
+	boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct, GraphicsConfiguration gc)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.isGraphicsConfigSupported()");
+
+		// FIXME: it looks like this method is implemented incorrectly
+		// in the existing NativePipeline in both the Windows and X11
+		// ports. According to the semantics of the javadoc, it looks
+		// like this method is supposed to figure out the OpenGL
+		// capabilities which would be requested by the passed
+		// GraphicsConfiguration object were it to be used, and see
+		// whether it is possible to create a context with them.
+		// Instead, on both platforms, the implementations basically set
+		// up a query based on the contents of the
+		// GraphicsConfigTemplate3D object, using the
+		// GraphicsConfiguration object only to figure out on which
+		// GraphicsDevice and screen we're making the request, and see
+		// whether it's possible to choose an OpenGL pixel format based
+		// on that information. This makes this method less useful and
+		// we can probably just safely return true here uniformly
+		// without breaking anything.
+		return true;
+	}
 	//
 	// Canvas3D / GraphicsConfigTemplate3D methods - logic dealing with
 	// native graphics configuration or drawing surface
@@ -6532,99 +6616,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return config;
 	}
 
-	// Determine whether specified graphics config is supported by pipeline
-	@Override
-	boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct, GraphicsConfiguration gc)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.isGraphicsConfigSupported()");
-
-		// FIXME: it looks like this method is implemented incorrectly
-		// in the existing NativePipeline in both the Windows and X11
-		// ports. According to the semantics of the javadoc, it looks
-		// like this method is supposed to figure out the OpenGL
-		// capabilities which would be requested by the passed
-		// GraphicsConfiguration object were it to be used, and see
-		// whether it is possible to create a context with them.
-		// Instead, on both platforms, the implementations basically set
-		// up a query based on the contents of the
-		// GraphicsConfigTemplate3D object, using the
-		// GraphicsConfiguration object only to figure out on which
-		// GraphicsDevice and screen we're making the request, and see
-		// whether it's possible to choose an OpenGL pixel format based
-		// on that information. This makes this method less useful and
-		// we can probably just safely return true here uniformly
-		// without breaking anything.
-		return true;
-	}
-
-	// Methods to get actual capabilities from Canvas3D
-	@Override
-	boolean hasDoubleBuffer(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasDoubleBuffer()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getDoubleBuffered());
-		return caps(cv).getDoubleBuffered();
-	}
-
-	@Override
-	boolean hasStereo(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasStereo()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getStereo());
-		return caps(cv).getStereo();
-	}
-
-	@Override
-	int getStencilSize(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.getStencilSize()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getStencilBits());
-		return caps(cv).getStencilBits();
-	}
-
-	@Override
-	boolean hasSceneAntialiasingMultisample(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasSceneAntialiasingMultisample()");
-		if (VERBOSE)
-			System.err.println("  Returning " + caps(cv).getSampleBuffers());
-
-		return caps(cv).getSampleBuffers();
-	}
-
-	@Override
-	boolean hasSceneAntialiasingAccum(Canvas3D cv)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.hasSceneAntialiasingAccum()");
-		//Accum style antialiasing is gone
-		return false;
-		/*GLCapabilities caps = caps(cv);
-		if (VERBOSE)
-			System.err
-					.println("  Returning " + (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0));
-		return (caps.getAccumRedBits() > 0 && caps.getAccumGreenBits() > 0 && caps.getAccumBlueBits() > 0);
-		*/
-
-	}
-
 	private boolean checkedForGetScreenMethod = false;
 	private Method getScreenMethod = null;
 
 	@Override
-	//Screen3d calls it which is inited in the init of Canvas3D
+	//Screen3D class calls during init and that init is only called in the init of Canvas3D
+	// Notice this is using reflection on the GraphicsDevice!
 	int getScreen(final GraphicsDevice graphicsDevice)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.getScreen()");
+		// can I just do this and damn it?
+		// this appear to work fine, but not if you move the screen 
+		// from one monitor to the other between frame show and start render
+		if (true)
+			return 0;
 
 		if (!checkedForGetScreenMethod)
 		{
@@ -6664,10 +6670,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return 0;
 	}
 
+	// getBestConfiguration ONLY below here VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+	// Non pipeline interface too
+
 	//----------------------------------------------------------------------
 	// Helper classes and methods to support query context functionality
 	// and pixel format selection
-
+	// Used by Query Canvas apabilitiesCapturer and therefore only get best configuration
 	private interface ExtendedCapabilitiesChooser extends GLCapabilitiesChooser
 	{
 		public void init(GLContext context);
@@ -6680,7 +6689,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// and OpenGL context. Apparently simply turning off the
 	// single-threaded mode isn't enough to do this.
 
-	//USED BY GET BEST CONFIGURATION
+	// Used by get best configuration
 	private final class QueryCanvas extends Canvas
 	{
 
@@ -6870,7 +6879,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}*/
 
-	//used by createQueryContext and getBestConfiguration above
+	//used by getBestConfiguration above
 	private static void disposeOnEDT(final Frame f)
 	{
 		Runnable r = new Runnable() {
