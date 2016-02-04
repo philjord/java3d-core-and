@@ -26,24 +26,24 @@
 
 package javax.media.j3d;
 
-import java.awt.color.ColorSpace;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.PixelInterleavedSampleModel;
-import java.awt.image.RenderedImage;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
+ 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.logging.Level;
+
+import javaawt.color.ColorSpace;
+import javaawt.image.BufferedImage;
+import javaawt.image.ColorModel;
+import javaawt.image.ComponentColorModel;
+import javaawt.image.DataBuffer;
+import javaawt.image.DataBufferByte;
+import javaawt.image.DataBufferInt;
+import javaawt.image.PixelInterleavedSampleModel;
+import javaawt.image.RenderedImage;
+import javaawt.image.SampleModel;
+import javaawt.image.WritableRaster;
 
 
 /**
@@ -124,7 +124,11 @@ abstract class ImageComponentRetained extends NodeComponentRetained {
     // and imageData is a non power of 2 image
     // and graphics driver doesn't support NPOT extension.
     private ImageData imageDataPowerOfTwo;
-    private AffineTransformOp powerOfTwoATOp;
+    
+    // <AND> removed only for NPOT which is old
+    //private AffineTransformOp powerOfTwoATOp;
+    
+    
     // The following flag means that if the image is non-power-of-two and the
     // card doesn't support NPOT texture, we will scale the image to a power
     // of two.
@@ -855,10 +859,13 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
     }
 
     private void updateImageDataPowerOfTwo(int depthIndex) {
-        assert enforceNonPowerOfTwoSupport;
+        /*assert enforceNonPowerOfTwoSupport;
         BufferedImage bufImage = imageData.createBufferedImage(depthIndex);
         BufferedImage scaledImg = powerOfTwoATOp.filter(bufImage, null);
-        copySupportedImageToImageData(scaledImg, 0, imageDataPowerOfTwo);
+        copySupportedImageToImageData(scaledImg, 0, imageDataPowerOfTwo);*/
+    	 
+    		throw new UnsupportedOperationException();
+    	 
     }
 
     /*
@@ -955,7 +962,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
         int w, h, i, j, m, n;
         int dstBegin;
         Object pixel = null;
-        java.awt.image.Raster ras;
+        javaawt.image.Raster ras;
         int lineUnits;          // nbytes per line in dst image buffer
         int sign;		// -1 for going down
         int dstLineUnits;	// sign * lineUnits
@@ -1370,7 +1377,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
         int w, h, i, j, m, n;
         int dstBegin;
         Object pixel = null;
-        java.awt.image.Raster ras;
+        javaawt.image.Raster ras;
         // dst image buffer
         int sign;				// -1 for going down
         int dstLineBytes;			// sign * lineBytes
@@ -1879,7 +1886,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
         // scale if scales aren't 1.0
         if (!(xScale == 1.0f && yScale == 1.0f)) {
 
-            if (imageData == null) {
+        	/*     if (imageData == null) {
                 // This is a byRef, support format and is a RenderedImage case.
                 // See ImageComponent2DRetained.set(RenderedImage image)
                 RenderedImage ri = (RenderedImage) getRefImage(0);
@@ -1895,7 +1902,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
                         ,null);
 
 
-                // Create image data object with buffer for image. */
+                // Create image data object with buffer for image. 
                 imageData = createRenderedImageDataObject(null);
                 copySupportedImageToImageData(ri, 0, imageData);
 
@@ -1904,12 +1911,12 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
             assert imageData != null;
 
             // Create a supported BufferedImage type.
-            BufferedImage bi = imageData.createBufferedImage(0);
+                    BufferedImage bi = imageData.createBufferedImage(0);
 
             int imageType = bi.getType();
             BufferedImage scaledImg = new BufferedImage(npotWidth, npotHeight, imageType);
 
-            AffineTransform at = AffineTransform.getScaleInstance(xScale,
+             AffineTransform at = AffineTransform.getScaleInstance(xScale,
                     yScale);
 
             powerOfTwoATOp = new AffineTransformOp(at,
@@ -1917,13 +1924,17 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
 
             powerOfTwoATOp.filter(bi, scaledImg);
 
+          
+            
+            
             // System.err.println("bi " + bi.getColorModel());
             // System.err.println("scaledImg " + scaledImg.getColorModel());
 
             imageDataPowerOfTwo = createRenderedImageDataObject(null, npotWidth, npotHeight);
             // Since bi is created from imageData, it's imageType is supported.
             copySupportedImageToImageData(scaledImg, 0, imageDataPowerOfTwo);
-
+            */
+            throw new UnsupportedOperationException();
         } else {
             imageDataPowerOfTwo = null;
         }
@@ -2203,7 +2214,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
         }
     }
 
-    static Object getDataElementBuffer(java.awt.image.Raster ras) {
+    static Object getDataElementBuffer(javaawt.image.Raster ras) {
         int nc = ras.getNumDataElements();
 
         switch (ras.getTransferType()) {

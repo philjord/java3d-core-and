@@ -4545,104 +4545,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//gl.glDisable(GL2ES2.GL_TEXTURE_CUBE_MAP);
 	}
 
-	/**
-	 *  This native method makes sure that the rendering for this canvas
-	 *  gets done now.
-	 */
-	@Override
-	// render is it's own thread so finish stops nothing
-	void syncRender(Context ctx, boolean wait)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.syncRender()");
-
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
-		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-
-		// clean up any buffers that need freeing
-		doClearBuffers(ctx);
-
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).outputPerFrameData();
-
-		//PERF:
-		//	if (wait)
-		//		gl.glFinish();
-		//	else
-		gl.glFlush();
-
-	}
-
-	// The native method that sets this ctx to be the current one
-	@Override
-	boolean useCtx(Context ctx, Drawable drawable)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.useCtx()");
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.useCtx++;
-
-		GLContext context = context(ctx);
-		int res = context.makeCurrent();
-		return (res != GLContext.CONTEXT_NOT_CURRENT);
-	}
-
-	// Optionally release the context. Returns true if the context was released.
-	@Override
-	boolean releaseCtx(Context ctx)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.releaseCtx()");
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.releaseCtx++;
-		GLContext context = context(ctx);
-
-		context.release();
-		return true;
-	}
-
-	@Override
-	void clear(Context ctx, float r, float g, float b, boolean clearStencil)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.clear()");
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.clear++;
-
-		JoglContext jctx = (JoglContext) ctx;
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
-		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-
-		// apparently push/pop is just shader uniforms now
-		//http://stackoverflow.com/questions/7637830/glpushattrib-glpopattrib-stack-implementation-in-gles
-		// no in fact it is a bit more complex than that
-		//http://stackoverflow.com/questions/21066485/since-glpushattrib-glpopattrib-are-deprecated-what-is-the-new-way-to-save-attri
-		// experiments seem like dropping push/pop is ok now nothing uses it now
-
-		// Mask of which buffers to clear, this always includes color & depth
-		int clearMask = GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_COLOR_BUFFER_BIT;
-
-		// Issue 239 - clear stencil if specified
-		if (clearStencil)
-		{
-			//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT);
-
-			gl.glClearStencil(0);
-			gl.glStencilMask(~0);
-			clearMask |= GL2ES2.GL_STENCIL_BUFFER_BIT;
-		}
-		else
-		{
-			//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT);
-		}
-
-		gl.glDepthMask(true);
-		gl.glClearColor(r, g, b, jctx.getAlphaClearValue());
-		gl.glClear(clearMask);
-		//gl.glPopAttrib();
-
-	}
-
 	//deburners only
 	private Matrix4d deburnV = new Matrix4d();
 	private Matrix4d deburnM = new Matrix4d();
@@ -5340,6 +5242,116 @@ class JoglesPipeline extends JoglesDEPPipeline
 		dst[14] = src[11];
 		dst[15] = src[15];
 	}
+
+	@Override
+	void clear(Context ctx, float r, float g, float b, boolean clearStencil)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.clear()");
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).perFrameStats.clear++;
+
+		JoglContext jctx = (JoglContext) ctx;
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+
+		// apparently push/pop is just shader uniforms now
+		//http://stackoverflow.com/questions/7637830/glpushattrib-glpopattrib-stack-implementation-in-gles
+		// no in fact it is a bit more complex than that
+		//http://stackoverflow.com/questions/21066485/since-glpushattrib-glpopattrib-are-deprecated-what-is-the-new-way-to-save-attri
+		// experiments seem like dropping push/pop is ok now nothing uses it now
+
+		// Mask of which buffers to clear, this always includes color & depth
+		int clearMask = GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_COLOR_BUFFER_BIT;
+
+		// Issue 239 - clear stencil if specified
+		if (clearStencil)
+		{
+			//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT);
+
+			gl.glClearStencil(0);
+			gl.glStencilMask(~0);
+			clearMask |= GL2ES2.GL_STENCIL_BUFFER_BIT;
+		}
+		else
+		{
+			//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT);
+		}
+
+		gl.glDepthMask(true);
+		gl.glClearColor(r, g, b, jctx.getAlphaClearValue());
+		gl.glClear(clearMask);
+		//gl.glPopAttrib();
+
+	}
+
+	/**
+	 *  This native method makes sure that the rendering for this canvas
+	 *  gets done now.
+	 */
+	@Override
+	// render is it's own thread so finish stops nothing
+	void syncRender(Context ctx, boolean wait)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.syncRender()");
+
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+
+		// clean up any buffers that need freeing
+		doClearBuffers(ctx);
+
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).outputPerFrameData();
+
+		//PERF:
+		//if (wait)
+		//	gl.glFinish();
+		//else
+			gl.glFlush();
+
+	}
+
+	// The native method for swapBuffers - onscreen only
+	@Override
+	void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.swapBuffers()");
+		GLDrawable draw = drawable(drawable);
+
+		draw.swapBuffers();
+	}
+
+	// The native method that sets this ctx to be the current one
+	@Override
+	boolean useCtx(Context ctx, Drawable drawable)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.useCtx()");
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).perFrameStats.useCtx++;
+
+		GLContext context = context(ctx);
+		int res = context.makeCurrent();
+		return (res != GLContext.CONTEXT_NOT_CURRENT);
+	}
+
+	// Optionally release the context. Returns true if the context was released.
+	@Override
+	boolean releaseCtx(Context ctx)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.releaseCtx()");
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).perFrameStats.releaseCtx++;
+		GLContext context = context(ctx);
+
+		context.release();
+		return true;
+	}
+
 	// ---------------------------------------------------------------------
 
 	//
@@ -5607,6 +5619,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// Apparently we are supposed to make the context current at this point
 		// and set up a bunch of properties
 
+		glContext.makeCurrent();
+		/*
 		// Work around for some low end graphics driver bug, such as Intel Chipset.
 		// Issue 324 : Lockup J3D program and throw exception using JOGL renderer
 		boolean failed = false;
@@ -5631,12 +5645,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 		while (failed && (failCount < MAX_FAIL_COUNT));
-
+		
 		if (failCount == MAX_FAIL_COUNT)
 		{
 			throw new IllegalRenderingStateException("Unable to make new context current after " + failCount + "tries");
 		}
-
+		*/
 		GL2ES2 gl = glContext.getGL().getGL2ES2();
 
 		//New context that stores information about current render pass		
@@ -5707,6 +5721,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	// This is the native method for creating the underlying graphics context.
+	//Once NewtWindow is working this becomes a simple unsupported operation
 	@Override
 	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
 	{
@@ -5879,17 +5894,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		return ctx;
-	}
-
-	// The native method for swapBuffers - onscreen only
-	@Override
-	void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable)
-	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.swapBuffers()");
-		GLDrawable draw = drawable(drawable);
-		 
-		draw.swapBuffers();
 	}
 
 	@Override

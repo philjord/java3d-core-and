@@ -30,70 +30,94 @@ import java.awt.IllegalComponentStateException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
+import javaawt.Dimension;
+import javaawt.Point;
+
 /**
  * The CanvasViewEventCatcher class is used to track events on a Canvas3D that
  * may cause view matries to change.
  *
  */
-class CanvasViewEventCatcher extends ComponentAdapter {
+class CanvasViewEventCatcher extends ComponentAdapter
+{
 
-    // The canvas associated with this event catcher
-    private Canvas3D canvas;
-    private static final boolean DEBUG = false;
+	// The canvas associated with this event catcher
+	private Canvas3D canvas;
+	private static final boolean DEBUG = false;
 
-    CanvasViewEventCatcher(Canvas3D c) {
-	canvas = c;
-    }
-
-    @Override
-    public void componentResized(ComponentEvent e) {
-	if (DEBUG) {
-	    System.err.println("Component resized " + e);
+	CanvasViewEventCatcher(Canvas3D c)
+	{
+		canvas = c;
 	}
 
-	if(e.getComponent() == canvas ) {
-	    if (DEBUG) {
-		System.err.println("It is canvas!");
-	    }
-	    synchronized(canvas) {
-                synchronized (canvas.dirtyMaskLock) {
-                    canvas.cvDirtyMask[0] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
-                    canvas.cvDirtyMask[1] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
-                }
-		canvas.resizeGraphics2D = true;
-	    }
+	@Override
+	public void componentResized(ComponentEvent e)
+	{
+		if (DEBUG)
+		{
+			System.err.println("Component resized " + e);
+		}
 
-	    // see comment below
-	    try {
-		canvas.newSize = canvas.getSize();
-		canvas.newPosition = canvas.getLocationOnScreen();
-	    } catch (IllegalComponentStateException ex) {}
+		if (e.getComponent() == canvas)
+		{
+			if (DEBUG)
+			{
+				System.err.println("It is canvas!");
+			}
+			synchronized (canvas)
+			{
+				synchronized (canvas.dirtyMaskLock)
+				{
+					canvas.cvDirtyMask[0] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
+					canvas.cvDirtyMask[1] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
+				}
+				canvas.resizeGraphics2D = true;
+			}
+
+			// see comment below
+			try
+			{
+				canvas.newSize = new Dimension((int)canvas.getSize().getWidth(), (int)canvas.getSize().getHeight());
+				canvas.newPosition = new Point(canvas.getLocationOnScreen().x, canvas.getLocationOnScreen().y);
+			}
+			catch (IllegalComponentStateException ex)
+			{
+			}
+
+		}
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent e)
+	{
+		if (DEBUG)
+		{
+			System.err.println("Component moved " + e);
+		}
+
+		synchronized (canvas)
+		{
+			synchronized (canvas.dirtyMaskLock)
+			{
+				canvas.cvDirtyMask[0] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
+				canvas.cvDirtyMask[1] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
+			}
+		}
+		// Can't sync. with canvas lock since canvas.getLocationOnScreen()
+		// required Component lock. The order is reverse of
+		// removeNotify() lock sequence which required Component lock
+		// first, then canvas lock in removeComponentListener()
+
+		try
+		{
+			canvas.newSize = new Dimension((int)canvas.getSize().getWidth(), (int)canvas.getSize().getHeight());
+			canvas.newPosition = new Point(canvas.getLocationOnScreen().x, canvas.getLocationOnScreen().y);
+		
+		}
+		catch (IllegalComponentStateException ex)
+		{
+		}
 
 	}
-    }
-
-    @Override
-    public void componentMoved(ComponentEvent e) {
-	if (DEBUG) {
-	    System.err.println("Component moved " + e);
-	}
-
-        synchronized(canvas) {
-            synchronized (canvas.dirtyMaskLock) {
-                canvas.cvDirtyMask[0] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
-                canvas.cvDirtyMask[1] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
-            }
-        }
-	// Can't sync. with canvas lock since canvas.getLocationOnScreen()
-	// required Component lock. The order is reverse of
-	// removeNotify() lock sequence which required Component lock
-	// first, then canvas lock in removeComponentListener()
-
-	try {
-	    canvas.newSize = canvas.getSize();
-	    canvas.newPosition = canvas.getLocationOnScreen();
-	} catch (IllegalComponentStateException ex) {}
-
-    }
 
 }

@@ -23,7 +23,9 @@
  *
  */
 
-package java.awt.geom;
+package javaawt.geom;
+
+import javaawt.geom.Dimension2D;
 
 /**
  * The <code>Dimension2D</code> class is to encapsulate a width
@@ -46,7 +48,7 @@ public abstract class Dimension2D implements Cloneable {
      * the information necessary to satisfy the various accessor
      * methods below.
      *
-     * @see java.awt.Dimension
+     * @see javaawt.Dimension
      * @since 1.2
      */
     protected Dimension2D() {

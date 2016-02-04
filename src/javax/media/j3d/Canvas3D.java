@@ -29,14 +29,12 @@ package javax.media.j3d;
 //<AND>import java.awt.AWTEvent;
 import java.awt.Canvas;
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.IllegalComponentStateException;
-import java.awt.Point;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -52,6 +50,9 @@ import javax.vecmath.Vector4d;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
+
+import javaawt.Dimension;
+import javaawt.Point;
 
 /**
  * The Canvas3D class provides a drawing canvas for 3D rendering.  It
@@ -1030,6 +1031,11 @@ public class Canvas3D extends Canvas
 	public static final boolean USE_NEWT = true;
 	private GLWindow glwindow = null;
 
+	public GLWindow getGLWindow()
+	{
+		return glwindow;
+	}
+
 	// Private constructor only called by the previous private constructor.
 	// The graphicsConfiguration parameter is used by Canvas3D to lookup the
 	// graphics device and graphics template. The graphicsConfiguration2
@@ -1039,7 +1045,7 @@ public class Canvas3D extends Canvas
 			boolean offScreen)
 	{
 
-		super(graphicsConfiguration2);
+		super(USE_NEWT ? null : graphicsConfiguration2);
 
 		if (USE_NEWT)
 		{
@@ -1059,7 +1065,12 @@ public class Canvas3D extends Canvas
 			this.glwindow.setSize(10, 10);
 			this.glwindow.setTitle("Test GLWindow");
 			this.glwindow.setVisible(true);
+
 			this.glwindow.getContext();
+
+			//this.glwindow.setAlwaysOnTop(true);
+			//this.glwindow.setFullscreen(true);
+
 		}
 
 		//this.offScreen = offScreen;
@@ -1112,6 +1123,7 @@ public class Canvas3D extends Canvas
 
 		// Assert that offScreen is *not* stereo
 		//  assert (offScreen && useStereo) == false;
+
 	}
 
 	/**
@@ -1186,11 +1198,15 @@ public class Canvas3D extends Canvas
 
 			try
 			{
-				newSize = getSize();
-				newPosition = getLocationOnScreen();
+				newSize = new Dimension(getSize().width, getSize().height);
+				newPosition = new Point(getLocationOnScreen().x,getLocationOnScreen().y) ;
 
 				if (USE_NEWT)
+				{
+
 					this.glwindow.setSize(newSize.width, newSize.height);
+
+				}
 
 			}
 			catch (IllegalComponentStateException e)
@@ -2111,6 +2127,13 @@ public class Canvas3D extends Canvas
 		// reset 'antialiasingSet' if new context is created for an already existing Canvas3D,
 		// e.g. resizing offscreen Canvas3D
 		antialiasingSet = false;
+
+		System.out.println("maxAvailableTextureUnits " + this.maxAvailableTextureUnits);
+		System.out.println("maxCombinedTextureImageUnits " + this.maxCombinedTextureImageUnits);
+		System.out.println("maxTexCoordSets " + this.maxTexCoordSets);
+		System.out.println("maxTextureImageUnits " + this.maxTextureImageUnits);
+		System.out.println("maxTextureUnits " + this.maxTextureUnits);
+		System.out.println("maxVertexTextureImageUnits " + this.maxVertexTextureImageUnits);
 
 		return retVal;
 	}
@@ -3752,7 +3775,7 @@ public class Canvas3D extends Canvas
 	}
 
 	@Override
-	public Point getLocationOnScreen()
+	public java.awt.Point getLocationOnScreen()
 	{
 		try
 		{
@@ -3762,7 +3785,7 @@ public class Canvas3D extends Canvas
 		{
 		}
 
-		return new Point();
+		return new java.awt.Point();
 	}
 
 	void setProjectionMatrix(Context ctx, Transform3D projTrans)

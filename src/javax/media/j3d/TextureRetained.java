@@ -26,8 +26,6 @@
 
 package javax.media.j3d;
 
-import java.awt.image.DataBufferByte;
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -35,6 +33,9 @@ import javax.vecmath.Color4f;
 import javax.vecmath.Point2f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Tuple3f;
+
+import javaawt.image.DataBufferByte;
+import javaawt.image.RenderedImage;
 
 /**
  * The Texture object is a component object of an Appearance object
@@ -1509,7 +1510,7 @@ abstract class TextureRetained extends NodeComponentRetained
 				imageXOffset = image.tilew - curw;
 				for (int n = 0; n < image.numXTiles; n++)
 				{
-					java.awt.image.Raster ras;
+					javaawt.image.Raster ras;
 					ras = ((RenderedImage) image.getRefImage(0)).getTile(n, m);
 					byte[] data = ((DataBufferByte) ras.getDataBuffer()).getData();
 					updateTextureSubImage(cv, face, level, xoffset, yoffset, format, image.getImageFormatTypeIntValue(false), imageXOffset,
@@ -1655,7 +1656,7 @@ abstract class TextureRetained extends NodeComponentRetained
 				numYTiles += 1;
 			}
 
-			java.awt.image.Raster ras;
+			javaawt.image.Raster ras;
 
 			int textureX = x; // x offset in the texture
 			int textureY = y; // y offset in the texture

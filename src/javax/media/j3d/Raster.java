@@ -26,10 +26,10 @@
 
 package javax.media.j3d;
 
-import java.awt.Dimension;
-import java.awt.Point;
-
 import javax.vecmath.Point3f;
+
+import javaawt.Dimension;
+import javaawt.Point;
 
 
 /**

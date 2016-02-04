@@ -26,8 +26,6 @@
 
 package javax.media.j3d;
 
-import java.awt.Dimension;
-import java.awt.Point;
 import java.util.ArrayList;
 
 import javax.vecmath.Point2d;
@@ -35,6 +33,9 @@ import javax.vecmath.Point2i;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Point4d;
+
+import javaawt.Dimension;
+import javaawt.Point;
 
 /**
  * A Retained Raster.

@@ -31,11 +31,11 @@ import java.awt.DisplayMode;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.ImageCapabilities;
+import java.awt.image.VolatileImage;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.awt.image.VolatileImage;
 
 import com.jogamp.nativewindow.awt.AWTGraphicsDevice;
 import com.jogamp.opengl.GLCapabilities;

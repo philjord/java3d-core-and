@@ -26,8 +26,8 @@
 
 package javax.media.j3d;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
+import javaawt.image.BufferedImage;
+import javaawt.image.RenderedImage;
 
 /**
  * This class defines a 2D image component.

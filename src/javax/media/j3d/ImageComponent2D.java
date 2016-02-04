@@ -26,9 +26,10 @@
 
 package javax.media.j3d;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.util.logging.Level;
+
+import javaawt.image.BufferedImage;
+import javaawt.image.RenderedImage;
 
 /**
  * This class defines a 2D image component.  This is used for texture
