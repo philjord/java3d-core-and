@@ -42,6 +42,7 @@ import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.DefaultGLCapabilitiesChooser;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLCapabilitiesChooser;
 import com.jogamp.opengl.GLContext;
@@ -3843,34 +3844,27 @@ class JoglesPipeline extends JoglesDEPPipeline
 			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 				internalFormat = GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 				break;
-			case GL2.GL_COMPRESSED_RG_RGTC2:
-			//FIXME: is this format ok now? - no normal maps are bum
-			//if (gl.isExtensionAvailable("GL_EXT_texture_compression_latc")) 
-			{
-				//gl.isExtensionAvailable("GL_EXT_texture_compression_latc")
-				//GL_ATI_texture_compression_3dc
-				//GL_AMD_compressed_3DC_texture
-
-				//internalFormat =  GL2ES2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
-				//internalFormat =  0x8837;//GL2ES2.GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
-				//internalFormat = 0x87FA;//3DC_XY_AMD
-				internalFormat = GL2.GL_COMPRESSED_RG_RGTC2;
-
-				//LATC2_XYSwizzle
-
-				// this is what I want to use
-				//#define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837
-				//#define FOURCC_ATI2 0x32495441
-			}
-			//else
-			{
-				//	internalFormat = GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; // looks terrible
-			}
+			case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+				//TODO: note not available on ES2 or ES3
+				//http://tech-artists.org/wiki/Normal_map_compression
+				//https://www.opengl.org/discussion_boards/showthread.php/167670-DXT5n
+				//Apparently LATC2 is what it's called now ATI2N was ATI cards only name
+				internalFormat = GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
+				//vec4 normalMap1 = texture2D( NormalMap, offset );
+				//swizzle the alpha and green  
+				//vec4 normalMap = vec4( normalMap1.ag * 2.0 - 1.0, 0.0, 0.0 );  
+				//re-create the z  
+				//normalMap.z = sqrt( 1.0 - dot( normalMap.xy, normalMap.xy ) ); 	
 				break;
 			case GL2.GL_RGBA_S3TC:
 				internalFormat = GL2.GL_RGBA_S3TC;
 				format = GL2ES2.GL_RGBA;
 
+				break;
+			case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
+				//GL3.GL_COMPRESSED_RGBA8_ETC2:
+				//GL3.GL_COMPRESSED_SRGBA8_ETC2:
+				//Is this the ETC2 format support?
 				break;
 			///////////////////////////////////////////////////PJPJPJ////////////////////
 			case ImageComponentRetained.TYPE_USHORT_GRAY:
@@ -3893,7 +3887,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				//DXT
 				if (internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT //
 						|| internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT //
-						|| internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT || internalFormat == GL2.GL_COMPRESSED_RG_RGTC2)
+						|| internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT //
+						|| internalFormat == GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT)
 				{
 					//DXT
 					ByteBuffer bb = (ByteBuffer) data;
@@ -5309,7 +5304,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//if (wait)
 		//	gl.glFinish();
 		//else
-			gl.glFlush();
+		gl.glFlush();
 
 	}
 
