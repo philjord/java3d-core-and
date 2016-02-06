@@ -169,6 +169,19 @@ public class JoglesContext extends JoglContext
 
 	}
 
+	// below here are openGL state tracking to reduce unnecessary native calls
+	public static class GL_State
+	{
+		public boolean depthBufferEnableOverride;
+		public boolean depthBufferEnable;
+		public boolean depthBufferWriteEnableOverride;
+		public boolean depthBufferWriteEnable;
+		public boolean userStencilAvailable;
+		public boolean stencilEnable;
+	}
+
+	public GL_State gl_state = new GL_State();
+	
 	//Performance issue
 	// possibly I can stop calling bind 0?
 	// maybe no call to glFinish?
@@ -195,8 +208,8 @@ public class JoglesContext extends JoglContext
 	{
 		public long frameStartTime;
 
-		//public HashSet<ShaderProgramId> usedPrograms = new HashSet<ShaderProgramId>();
-		public ArrayList<ShaderProgramId> usedPrograms = new ArrayList<ShaderProgramId>();
+		public HashSet<ShaderProgramId> usedPrograms = new HashSet<ShaderProgramId>();
+		//public ArrayList<ShaderProgramId> usedPrograms = new ArrayList<ShaderProgramId>();
 		//public HashSet<String> usedProgramNames = new HashSet<String>();
 		//TODO: how do I get these?
 		//public HashMap<ShaderProgramId, String> usedProgramNames = new HashMap<ShaderProgramId, String>();

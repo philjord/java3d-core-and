@@ -45,6 +45,8 @@ import java.awt.event.WindowListener;
  * The EventCatcher class is used to track events on a Canvas3D using the
  * 1.1 event model.  Most events are sent to the canvas for processing.
  */
+@Deprecated
+//THis can be dumped no longer used by canvas3d
 class EventCatcher extends Object implements ComponentListener, FocusListener,
 		KeyListener, MouseListener, MouseMotionListener, MouseWheelListener, WindowListener {
 

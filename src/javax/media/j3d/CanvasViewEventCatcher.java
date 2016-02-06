@@ -38,6 +38,8 @@ import javaawt.Point;
  * may cause view matries to change.
  *
  */
+@Deprecated
+//Newt listens to itself now
 class CanvasViewEventCatcher extends ComponentAdapter
 {
 

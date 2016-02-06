@@ -36,6 +36,12 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.IllegalComponentStateException;
 import java.awt.Window;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -863,10 +869,11 @@ public class Canvas3D extends Canvas
 	boolean vfPlanesValid = false;
 
 	// The event catcher for this canvas.
-	EventCatcher eventCatcher;
+//	EventCatcher eventCatcher;
 
 	// The view event catcher for this canvas.
-	private CanvasViewEventCatcher canvasViewEventCatcher;
+//	private CanvasViewEventCatcher canvasViewEventCatcher;
+	private CanvasViewEventCatcherNewt canvasViewEventCatcherNewt;
 
 	// The top-level parent window for this canvas.
 	private Window windowParent;
@@ -1086,8 +1093,9 @@ public class Canvas3D extends Canvas
 		GraphicsDevice graphicsDevice;
 		graphicsDevice = graphicsConfiguration.getDevice();
 
-		eventCatcher = new EventCatcher(this);
-		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
+//		eventCatcher = new EventCatcher(this);
+//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
+		canvasViewEventCatcherNewt = new CanvasViewEventCatcherNewt(this);
 
 		synchronized (VirtualUniverse.mc.deviceScreenMap)
 		{
@@ -1199,13 +1207,11 @@ public class Canvas3D extends Canvas
 			try
 			{
 				newSize = new Dimension(getSize().width, getSize().height);
-				newPosition = new Point(getLocationOnScreen().x,getLocationOnScreen().y) ;
+				newPosition = new Point(getLocationOnScreen().x, getLocationOnScreen().y);
 
 				if (USE_NEWT)
 				{
-
 					this.glwindow.setSize(newSize.width, newSize.height);
-
 				}
 
 			}
@@ -1290,18 +1296,20 @@ public class Canvas3D extends Canvas
 			{
 				windowParent = (Window) container;
 			}
-			container.addComponentListener(eventCatcher);
-			container.addComponentListener(canvasViewEventCatcher);
+//			container.addComponentListener(eventCatcher);
+//			container.addComponentListener(canvasViewEventCatcher);
 			containerParentList.add(container);
 			container = container.getParent();
 		}
 
-		this.addComponentListener(eventCatcher);
-		this.addComponentListener(canvasViewEventCatcher);
+//		this.addComponentListener(eventCatcher);
+//		this.addComponentListener(canvasViewEventCatcher);
+		this.getGLWindow().addWindowListener(canvasViewEventCatcherNewt);
+		
 
 		if (windowParent != null)
 		{
-			windowParent.addWindowListener(eventCatcher);
+//			windowParent.addWindowListener(eventCatcher);
 		}
 
 		synchronized (dirtyMaskLock)
@@ -1435,14 +1443,15 @@ public class Canvas3D extends Canvas
 		// Release and clear.
 		for (Container container : containerParentList)
 		{
-			container.removeComponentListener(eventCatcher);
-			container.removeComponentListener(canvasViewEventCatcher);
+//			container.removeComponentListener(eventCatcher);
+//			container.removeComponentListener(canvasViewEventCatcher);
 		}
 		containerParentList.clear();
-		this.removeComponentListener(eventCatcher);
-		this.removeComponentListener(canvasViewEventCatcher);
+//		this.removeComponentListener(eventCatcher);
+//		this.removeComponentListener(canvasViewEventCatcher);
+		this.getGLWindow().removeWindowListener(canvasViewEventCatcherNewt);
 
-		if (eventCatcher != null)
+/*		if (eventCatcher != null)
 		{
 			this.removeFocusListener(eventCatcher);
 			this.removeKeyListener(eventCatcher);
@@ -1450,11 +1459,11 @@ public class Canvas3D extends Canvas
 			this.removeMouseMotionListener(eventCatcher);
 			this.removeMouseWheelListener(eventCatcher);
 			eventCatcher.reset();
-		}
+		}*/
 
 		if (windowParent != null)
 		{
-			windowParent.removeWindowListener(eventCatcher);
+//			windowParent.removeWindowListener(eventCatcher);
 			windowParent.requestFocus();
 		}
 
@@ -2128,12 +2137,12 @@ public class Canvas3D extends Canvas
 		// e.g. resizing offscreen Canvas3D
 		antialiasingSet = false;
 
-		System.out.println("maxAvailableTextureUnits " + this.maxAvailableTextureUnits);
-		System.out.println("maxCombinedTextureImageUnits " + this.maxCombinedTextureImageUnits);
-		System.out.println("maxTexCoordSets " + this.maxTexCoordSets);
-		System.out.println("maxTextureImageUnits " + this.maxTextureImageUnits);
-		System.out.println("maxTextureUnits " + this.maxTextureUnits);
-		System.out.println("maxVertexTextureImageUnits " + this.maxVertexTextureImageUnits);
+//		System.out.println("maxAvailableTextureUnits " + this.maxAvailableTextureUnits);
+//		System.out.println("maxCombinedTextureImageUnits " + this.maxCombinedTextureImageUnits);
+//		System.out.println("maxTexCoordSets " + this.maxTexCoordSets);
+//		System.out.println("maxTextureImageUnits " + this.maxTextureImageUnits);
+//		System.out.println("maxTextureUnits " + this.maxTextureUnits);
+//		System.out.println("maxVertexTextureImageUnits " + this.maxVertexTextureImageUnits);
 
 		return retVal;
 	}
@@ -4834,6 +4843,43 @@ public class Canvas3D extends Canvas
 	boolean hasSceneAntialiasingAccum()
 	{
 		return Pipeline.getPipeline().hasSceneAntialiasingAccum(this);
+	}
+
+	@Override
+	public synchronized void addMouseListener(MouseListener l)
+	{
+		super.addMouseListener(l);
+		new Throwable("Canvas3d.addMouseListener(MouseListener l) swap for newt").printStackTrace();
+	}
+
+	public synchronized void addKeyListener(KeyListener l)
+	{
+		super.addKeyListener(l);
+		new Throwable("Canvas3d.addKeyListener swap for newt").printStackTrace();
+	}
+
+	public synchronized void addComponentListener(ComponentListener l)
+	{
+		super.addComponentListener(l);
+		new Throwable("Canvas3d.addComponentListener swap for newt").printStackTrace();
+	}
+
+	public synchronized void addFocusListener(FocusListener l)
+	{
+		super.addFocusListener(l);
+		new Throwable("Canvas3d.addFocusListener swap for newt").printStackTrace();
+	}
+
+	public synchronized void addMouseMotionListener(MouseMotionListener l)
+	{
+		super.addMouseMotionListener(l);
+		new Throwable("Canvas3d.addMouseMotionListener swap for newt").printStackTrace();
+	}
+
+	public synchronized void addMouseWheelListener(MouseWheelListener l)
+	{
+		super.addMouseWheelListener(l);
+		new Throwable("Canvas3d.addMouseWheelListener swap for newt").printStackTrace();
 	}
 
 }

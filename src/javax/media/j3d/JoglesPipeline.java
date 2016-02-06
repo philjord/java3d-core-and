@@ -42,6 +42,7 @@ import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.DefaultGLCapabilitiesChooser;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLCapabilitiesChooser;
@@ -3077,17 +3078,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//rasterOp gear drop completely
 
 		// stencil stuff still good
-
-		if (!depthBufferEnableOverride)
+		JoglesContext joglesctx = ((JoglesContext) ctx);
+		if (joglesctx.gl_state.depthBufferEnableOverride != depthBufferEnable || joglesctx.gl_state.depthBufferEnable != depthBufferEnable)
 		{
-			if (depthBufferEnable)
+			joglesctx.gl_state.depthBufferEnableOverride = depthBufferEnable;
+			joglesctx.gl_state.depthBufferEnable = depthBufferEnable;
+			if (!depthBufferEnableOverride)
 			{
-				gl.glEnable(GL2ES2.GL_DEPTH_TEST);
-				gl.glDepthFunc(getFunctionValue(depthTestFunction));
-			}
-			else
-			{
-				gl.glDisable(GL2ES2.GL_DEPTH_TEST);
+				if (depthBufferEnable)
+				{
+					gl.glEnable(GL2ES2.GL_DEPTH_TEST);
+					gl.glDepthFunc(getFunctionValue(depthTestFunction));
+				}
+				else
+				{
+					gl.glDisable(GL2ES2.GL_DEPTH_TEST);
+				}
 			}
 		}
 
@@ -3102,7 +3108,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glDepthMask(false);
 			}
 		}
-		JoglesContext joglesctx = ((JoglesContext) ctx);
+
 		if (alphaTestFunction == RenderingAttributes.ALWAYS)
 		{
 			//gl.glDisable(GL2ES2.GL_ALPHA_TEST);
@@ -3623,10 +3629,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		// checking of the availability of the extension is already done
 		// in the shared code
-		gl.glTexParameteri(target, GL2.GL_TEXTURE_BASE_LEVEL, baseLevel);
-		gl.glTexParameteri(target, GL2.GL_TEXTURE_MAX_LEVEL, maximumLevel);
-		gl.glTexParameterf(target, GL2.GL_TEXTURE_MIN_LOD, minimumLOD);
-		gl.glTexParameterf(target, GL2.GL_TEXTURE_MAX_LOD, maximumLOD);
+		//Apparently these are available in ES3
+		//gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_BASE_LEVEL, baseLevel);
+		//http://stackoverflow.com/questions/12767917/is-using-gl-nearest-mipmap-or-gl-linear-mipmap-for-gl-texture-min-filter-con
+		// so hopefully ES2 just assumes the mip maps given are correct and ignores this call
+
+		gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
+		//gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MIN_LOD, minimumLOD);
+		//gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MAX_LOD, maximumLOD);
 	}
 
 	private static void updateTextureAnisotropicFilter(Context ctx, int target, float degree)

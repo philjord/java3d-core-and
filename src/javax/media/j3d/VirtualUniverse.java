@@ -694,8 +694,8 @@ void disableFocusEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.disableFocusEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.disableFocusEvents();
 			}
 		}
 	}
@@ -712,8 +712,8 @@ void enableFocusEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.enableFocusEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.enableFocusEvents();
 			}
 		}
 	}
@@ -730,8 +730,8 @@ void disableKeyEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.disableKeyEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.disableKeyEvents();
 			}
 		}
 	}
@@ -748,8 +748,8 @@ void enableKeyEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.enableKeyEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.enableKeyEvents();
 			}
 		}
 	}
@@ -766,8 +766,8 @@ void disableMouseEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.disableMouseEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.disableMouseEvents();
 			}
 		}
 	}
@@ -784,8 +784,8 @@ void enableMouseEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.enableMouseEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.enableMouseEvents();
 			}
 		}
 	}
@@ -802,8 +802,8 @@ void disableMouseMotionEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.disableMouseMotionEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.disableMouseMotionEvents();
 			}
 		}
 	}
@@ -820,8 +820,8 @@ void enableMouseMotionEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.enableMouseMotionEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.enableMouseMotionEvents();
 			}
 		}
 	}
@@ -838,8 +838,8 @@ void disableMouseWheelEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.disableMouseWheelEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.disableMouseWheelEvents();
 			}
 		}
 	}
@@ -856,8 +856,8 @@ void enableMouseWheelEvents() {
 			while (cvs.hasMoreElements()) {
 				Canvas3D cv = cvs.nextElement();
 				// offscreen canvas does not have event catcher
-				if (cv.eventCatcher != null)
-					cv.eventCatcher.enableMouseWheelEvents();
+//				if (cv.eventCatcher != null)
+//					cv.eventCatcher.enableMouseWheelEvents();
 			}
 		}
 	}
