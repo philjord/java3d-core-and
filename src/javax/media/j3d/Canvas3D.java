@@ -26,23 +26,9 @@
 
 package javax.media.j3d;
 
-//<AND>import java.awt.AWTEvent;
-import java.awt.Canvas;
-import java.awt.Container;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.IllegalComponentStateException;
-import java.awt.Window;
-import java.awt.event.ComponentListener;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 
 import javax.vecmath.Color3f;
@@ -875,11 +861,11 @@ public class Canvas3D //extends Canvas
 	private CanvasViewEventCatcherNewt canvasViewEventCatcherNewt;
 
 	// The top-level parent window for this canvas.
-	private Window windowParent;
+//	private Window windowParent;
 
 	// Issue 458 - list of all parent containers for this canvas
 	// (includes top-level parent window)
-	private LinkedList<Container> containerParentList = new LinkedList<Container>();
+//	private LinkedList<Container> containerParentList = new LinkedList<Container>();
 
 	// flag that indicates if light has changed
 	boolean lightChanged = false;
@@ -992,31 +978,9 @@ public class Canvas3D //extends Canvas
 
 	}
 
-	/**
-	 * Method to return whether or not the Canvas3D is recursively visible;
-	 * that is, whether the Canas3D is currently visible on the screen. Note
-	 * that we don't directly use isShowing() because that won't work for an
-	 * auto-offScreen Canvas3D.
-	 */
-	private boolean isRecursivelyVisible()
-	{
-		return true;
-		//Container parent = getParent();
-		//return isVisible() && parent != null && parent.isShowing();
-	}
+ 
 
-	/**
-	 * Method to return whether the top-level Window parent is iconified
-	 */
-	private boolean isIconified()
-	{
-		if (windowParent instanceof Frame)
-		{
-			return (((Frame) windowParent).getExtendedState() & Frame.ICONIFIED) != 0;
-		}
-
-		return false;
-	}
+ 
 
 	// Issue 458 - evaluate this Canvas3D's visibility whenever we get a
 	// Window or Component Event that could change it.
@@ -1059,11 +1023,11 @@ public class Canvas3D //extends Canvas
 	 * @param g the graphics context
 	 */
 	//@Override
-	public void paint(Graphics g)
+	public void paintALike( )
 	{
 		if (!firstPaintCalled && added && validCanvas && validGraphicsMode())
 		{
-			try
+			//try
 			{
 				newSize = new Dimension(this.glwindow.getWidth(), this.glwindow.getHeight());
 				newPosition = new Point(getLocationOnScreen().x, getLocationOnScreen().y);
@@ -1071,9 +1035,9 @@ public class Canvas3D //extends Canvas
 				this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
 
 			}
-			catch (IllegalComponentStateException e)
+			//catch (IllegalComponentStateException e)
 			{
-				return;
+			//	return;
 			}
 
 			synchronized (drawingSurfaceObject)
@@ -1151,9 +1115,9 @@ public class Canvas3D //extends Canvas
 
 		// Issue 458 - Add the eventCatcher as a component listener for each
 		// parent container in the window hierarchy
-		assert containerParentList.isEmpty();
+//		assert containerParentList.isEmpty();
 
-		windowParent = null;
+//		windowParent = null;
 		//Container container = this.getParent();
 		//while (container != null)
 		{
@@ -1215,7 +1179,7 @@ public class Canvas3D //extends Canvas
 		this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
 		evaluateVisiblilty();
 		evaluateActive();
-		paint(null);
+		paintALike();
 
 		if (rdr != null)
 		{
@@ -1312,12 +1276,12 @@ public class Canvas3D //extends Canvas
 		//super.removeNotify();
 
 		// Release and clear.
-		for (Container container : containerParentList)
+//		for (Container container : containerParentList)
 		{
 			//			container.removeComponentListener(eventCatcher);
 			//			container.removeComponentListener(canvasViewEventCatcher);
 		}
-		containerParentList.clear();
+//		containerParentList.clear();
 		//		this.removeComponentListener(eventCatcher);
 		//		this.removeComponentListener(canvasViewEventCatcher);
 		this.getGLWindow().removeWindowListener(canvasViewEventCatcherNewt);
@@ -1332,7 +1296,7 @@ public class Canvas3D //extends Canvas
 					eventCatcher.reset();
 				}*/
 
-		if (windowParent != null)
+//		if (windowParent != null)
 		{
 			//			windowParent.removeWindowListener(eventCatcher);
 			//windowParent.requestFocus();
@@ -1352,7 +1316,7 @@ public class Canvas3D //extends Canvas
 
 		// Fix for issue 102 removing strong reference and avoiding memory leak
 		// due retention of parent container
-		this.windowParent = null;
+//		this.windowParent = null;
 	}
 
 	void allocateCanvasId()

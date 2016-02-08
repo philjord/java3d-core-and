@@ -380,22 +380,7 @@ public abstract class Point2D implements Cloneable {
         return Math.sqrt(px * px + py * py);
     }
 
-    /**
-     * Creates a new object of the same class and with the
-     * same contents as this object.
-     * @return     a clone of this instance.
-     * @exception  OutOfMemoryError            if there is not enough memory.
-     * @see        java.lang.Cloneable
-     * @since      1.2
-     */
-    public Object clone() {
-        try {
-            return super.clone();
-        } catch (CloneNotSupportedException e) {
-            // this shouldn't happen, since we are Cloneable
-            throw new InternalError(e);
-        }
-    }
+ 
 
     /**
      * Returns the hashcode for this <code>Point2D</code>.

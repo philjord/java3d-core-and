@@ -26,21 +26,12 @@
 
 package javax.media.j3d;
 
-import java.awt.AWTException;
-import java.awt.ImageCapabilities;
-import java.awt.image.VolatileImage;
-
-import javaawt.Rectangle;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-
-import com.jogamp.nativewindow.awt.AWTGraphicsDevice;
 import com.jogamp.opengl.GLCapabilities;
 
 import java2.awt.DisplayMode;
 import java2.awt.GraphicsConfiguration;
 import java2.awt.GraphicsDevice;
+import javaawt.Rectangle;
 
 /**
  * Class implementing the GraphicsConfiguration API, but not a "real"
