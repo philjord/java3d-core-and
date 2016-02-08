@@ -71,7 +71,7 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 
     void enableFocusEvents() {
 	if (!focusEvents) {
-	    canvas.addFocusListener(this);
+//	    canvas.addFocusListener(this);
 	    focusEvents = true;
 	}
     }
@@ -79,18 +79,18 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 
     void disableFocusEvents() {
 	if (focusEvents) {
-	    canvas.removeFocusListener(this);
+//	    canvas.removeFocusListener(this);
 	    focusEvents = false;
 	}
     }
 
     void enableKeyEvents() {
 	if (!keyEvents) {
-	    canvas.addKeyListener(this);
+//	    canvas.addKeyListener(this);
 	    keyEvents = true;
 	    // listen for mouseEntered events for keyboard focusing
             if (!mouseListenerAdded) {
-                canvas.addMouseListener(this);
+//                canvas.addMouseListener(this);
                 mouseListenerAdded = true;
             }
 	}
@@ -98,12 +98,12 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 
     void disableKeyEvents() {
 	if (keyEvents) {
-	    canvas.removeKeyListener(this);
+//	    canvas.removeKeyListener(this);
 	    keyEvents = false;
 	    // listen for mouseEntered events for keyboard focusing
 	    if (!mouseEvents) {
 		if (mouseListenerAdded) {
-		    canvas.removeMouseListener(this);
+//		    canvas.removeMouseListener(this);
 		    mouseListenerAdded = false;
 		}
 	    }
@@ -116,7 +116,7 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 	if (!mouseEvents) {
 	    mouseEvents = true;
             if (!mouseListenerAdded) {
-	        canvas.addMouseListener(this);
+//	        canvas.addMouseListener(this);
                 mouseListenerAdded = true;
             }
 	}
@@ -127,7 +127,7 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 	    mouseEvents = false;
 	    if (!keyEvents) {
 		if (mouseListenerAdded) {
-		    canvas.removeMouseListener(this);
+//		    canvas.removeMouseListener(this);
 		    mouseListenerAdded = false;
 		}
 	    }
@@ -136,7 +136,7 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 
     void enableMouseMotionEvents() {
 	if (!mouseMotionEvents) {
-	    canvas.addMouseMotionListener(this);
+//	    canvas.addMouseMotionListener(this);
 	    mouseMotionEvents = true;
 	}
     }
@@ -144,14 +144,14 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 
     void disableMouseMotionEvents() {
 	if (mouseMotionEvents) {
-	    canvas.removeMouseMotionListener(this);
+//	    canvas.removeMouseMotionListener(this);
 	    mouseMotionEvents = false;
 	}
     }
 
     void enableMouseWheelEvents() {
 	if (!mouseWheelEvents) {
-	    canvas.addMouseWheelListener(this);
+//	    canvas.addMouseWheelListener(this);
 	    mouseWheelEvents = true;
 	}
     }
@@ -159,7 +159,7 @@ class EventCatcher extends Object implements ComponentListener, FocusListener,
 
     void disableMouseWheelEvents() {
 	if (mouseWheelEvents) {
-	    canvas.removeMouseWheelListener(this);
+//	    canvas.removeMouseWheelListener(this);
 	    mouseWheelEvents = false;
 	}
     }

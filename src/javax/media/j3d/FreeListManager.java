@@ -26,7 +26,7 @@
 
 package javax.media.j3d;
 
-
+@Deprecated
 class FreeListManager {
 
     private static final boolean DEBUG = false;

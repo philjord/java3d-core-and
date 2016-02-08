@@ -35,6 +35,7 @@ import javax.vecmath.Vector3f;
  * This class implements a Shape3D backend for the abstract
  * GeometryDecompressor.
  */
+@Deprecated
 class GeometryDecompressorShape3D extends GeometryDecompressor {
     private static final boolean debug = false ;
     private static final boolean benchmark = false ;

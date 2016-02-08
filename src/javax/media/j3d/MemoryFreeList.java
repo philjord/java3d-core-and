@@ -33,6 +33,7 @@ import java.util.Arrays;
  * Class for storing various free lists.  This class must be
  * synchronized because different threads may try to access the lists.
  */
+@Deprecated
 class MemoryFreeList {
 
     // never go smaller than the initial capacity

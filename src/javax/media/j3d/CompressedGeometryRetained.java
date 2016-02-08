@@ -35,6 +35,7 @@ import javax.vecmath.Point3d;
  * hardware support becomes available, increased rendering performance
  * will also result from the use of compressed geometry.
  */
+@Deprecated
 class CompressedGeometryRetained extends GeometryRetained {
 
     // If not in by-reference mode, a 48-byte header as defined by the

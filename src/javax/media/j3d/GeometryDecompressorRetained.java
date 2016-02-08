@@ -34,6 +34,7 @@ import javax.vecmath.Vector3f;
  * This class implements a retained geometry backend for the abstract
  * GeometryDecompressor.
  */
+@Deprecated
 class GeometryDecompressorRetained extends GeometryDecompressor {
     private static final boolean debug = false ;
     private static final boolean benchmark = false ;

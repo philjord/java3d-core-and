@@ -43,6 +43,7 @@ import javax.vecmath.Vector3f;
  * @see GeneralizedStrip
  * @see GeometryDecompressor
  */
+@Deprecated
 class GeneralizedVertexList implements GeneralizedStripFlags {
 
 // The ArrayList containing the vertices.

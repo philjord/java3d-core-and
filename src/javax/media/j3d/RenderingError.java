@@ -26,8 +26,9 @@
 
 package javax.media.j3d;
 
-import java.awt.GraphicsDevice;
 import java.io.PrintStream;
+
+import java2.awt.GraphicsDevice;
 
 /**
  * RenderingError is a container object that holds the details of

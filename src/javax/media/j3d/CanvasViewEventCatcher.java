@@ -60,7 +60,7 @@ class CanvasViewEventCatcher extends ComponentAdapter
 			System.err.println("Component resized " + e);
 		}
 
-		if (e.getComponent() == canvas)
+	/*	if (e.getComponent() == canvas)
 		{
 			if (DEBUG)
 			{
@@ -86,7 +86,7 @@ class CanvasViewEventCatcher extends ComponentAdapter
 			{
 			}
 
-		}
+		}*/
 	}
 
 	@Override
@@ -112,8 +112,8 @@ class CanvasViewEventCatcher extends ComponentAdapter
 
 		try
 		{
-			canvas.newSize = new Dimension((int)canvas.getSize().getWidth(), (int)canvas.getSize().getHeight());
-			canvas.newPosition = new Point(canvas.getLocationOnScreen().x, canvas.getLocationOnScreen().y);
+		//	canvas.newSize = new Dimension((int)canvas.getSize().getWidth(), (int)canvas.getSize().getHeight());
+		//	canvas.newPosition = new Point(canvas.getLocationOnScreen().x, canvas.getLocationOnScreen().y);
 		
 		}
 		catch (IllegalComponentStateException ex)

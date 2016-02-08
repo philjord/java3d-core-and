@@ -35,6 +35,7 @@ import javax.vecmath.Vector3f;
  * consisting of a generalized triangle strip, line strip, or point array,
  * along with possible global color and normal changes.
  */
+@Deprecated
 abstract class GeometryDecompressor {
     private static final boolean debug = false ;
     private static final boolean benchmark = false ;

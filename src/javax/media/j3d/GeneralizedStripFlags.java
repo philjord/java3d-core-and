@@ -36,6 +36,7 @@ package javax.media.j3d;
  * @see GeneralizedStrip
  * @see GeneralizedVertexList
  */
+@Deprecated
 interface GeneralizedStripFlags {
 
     /**

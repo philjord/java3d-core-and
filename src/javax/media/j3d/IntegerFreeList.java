@@ -25,7 +25,7 @@
  */
 
 package javax.media.j3d;
-
+@Deprecated
 class IntegerFreeList extends MemoryFreeList {
 
     int count = 0;

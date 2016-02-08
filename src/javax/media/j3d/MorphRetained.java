@@ -41,7 +41,7 @@ import javax.vecmath.Vector3f;
 /**
  * A morph leaf node consisting of geometery and appearance properties.
  */
-
+@Deprecated
 class MorphRetained extends LeafRetained implements GeometryUpdater {
 
     // These bits should match the Shape3D bits ...(Since the mirrors for

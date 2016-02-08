@@ -31,9 +31,6 @@ import java.awt.Canvas;
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.Graphics;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.IllegalComponentStateException;
 import java.awt.Window;
 import java.awt.event.ComponentListener;
@@ -57,6 +54,8 @@ import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 
+import java2.awt.GraphicsConfiguration;
+import java2.awt.GraphicsDevice;
 import javaawt.Dimension;
 import javaawt.Point;
 
@@ -307,7 +306,7 @@ import javaawt.Point;
  * @see View
  * @see GraphicsContext3D
  */
-public class Canvas3D extends Canvas
+public class Canvas3D //extends Canvas
 {
 	/**
 	 * Specifies the left field of a field-sequential stereo rendering loop.
@@ -869,10 +868,10 @@ public class Canvas3D extends Canvas
 	boolean vfPlanesValid = false;
 
 	// The event catcher for this canvas.
-//	EventCatcher eventCatcher;
+	//	EventCatcher eventCatcher;
 
 	// The view event catcher for this canvas.
-//	private CanvasViewEventCatcher canvasViewEventCatcher;
+	//	private CanvasViewEventCatcher canvasViewEventCatcher;
 	private CanvasViewEventCatcherNewt canvasViewEventCatcherNewt;
 
 	// The top-level parent window for this canvas.
@@ -900,142 +899,6 @@ public class Canvas3D extends Canvas
 	// and canvas removeNotify() called while Renderer is running
 	boolean ctxChanged = false;
 
-	// Default graphics configuration
-	private static GraphicsConfiguration defaultGcfg = null;
-
-	// Returns default graphics configuration if user passes null
-	// into the Canvas3D constructor
-	private static synchronized GraphicsConfiguration defaultGraphicsConfiguration()
-	{
-		if (defaultGcfg == null)
-		{
-			GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
-			defaultGcfg = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getBestConfiguration(template);
-		}
-		return defaultGcfg;
-	}
-
-	// Returns true if this is a valid graphics configuration, obtained
-	// via a GraphicsConfigTemplate3D.
-	private static boolean isValidConfig(GraphicsConfiguration gconfig)
-	{
-		// If this is a valid GraphicsConfiguration object, then it will
-		// be in the graphicsConfigTable
-		return graphicsConfigTable.containsKey(gconfig);
-	}
-
-	// Checks the given graphics configuration, and throws an exception if
-	// the config is null or invalid.
-	private static synchronized GraphicsConfiguration checkForValidGraphicsConfig(GraphicsConfiguration gconfig, boolean offScreen)
-	{
-
-		// Issue 266 - for backwards compatibility with legacy applications,
-		// we will accept a null GraphicsConfiguration for an on-screen Canvas3D
-		// only if the "allowNullGraphicsConfig" system property is set to true.
-		if (!offScreen && VirtualUniverse.mc.allowNullGraphicsConfig)
-		{
-			if (gconfig == null)
-			{
-				// Print out warning if Canvas3D is called with a
-				// null GraphicsConfiguration
-				System.err.println(J3dI18N.getString("Canvas3D7"));
-				System.err.println("    " + J3dI18N.getString("Canvas3D18"));
-
-				// Use a default graphics config
-				gconfig = defaultGraphicsConfiguration();
-			}
-		}
-
-		// Validate input graphics config
-		if (gconfig == null)
-		{
-			throw new NullPointerException(J3dI18N.getString("Canvas3D19"));
-		}
-		else if (!isValidConfig(gconfig))
-		{
-			throw new IllegalArgumentException(J3dI18N.getString("Canvas3D17"));
-		}
-
-		return gconfig;
-	}
-
-	// Return the actual graphics config that will be used to construct
-	// the AWT Canvas. This is permitted to be non-unique or null.
-	private static GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
-	{
-		return Pipeline.getPipeline().getGraphicsConfig(gconfig);
-	}
-
-	/**
-	 * Constructs and initializes a new Canvas3D object that Java 3D
-	 * can render into. The following Canvas3D attributes are initialized
-	 * to default values as shown:
-	 * <ul>
-	 * left manual eye in image plate : (0.142, 0.135, 0.4572)<br>
-	 * right manual eye in image plate : (0.208, 0.135, 0.4572)<br>
-	 * stereo enable : true<br>
-	 * double buffer enable : true<br>
-	 * monoscopic view policy : View.CYCLOPEAN_EYE_VIEW<br>
-	 * off-screen mode : false<br>
-	 * off-screen buffer : null<br>
-	 * off-screen location : (0,0)<br>
-	 * </ul>
-	 *
-	 * @param graphicsConfiguration a valid GraphicsConfiguration object that
-	 * will be used to create the canvas.  This object should not be null and
-	 * should be created using a GraphicsConfigTemplate3D or the
-	 * getPreferredConfiguration() method of the SimpleUniverse utility.  For
-	 * backward compatibility with earlier versions of Java 3D, a null or
-	 * default GraphicsConfiguration will still work when used to create a
-	 * Canvas3D on the default screen, but an error message will be printed.
-	 * A NullPointerException or IllegalArgumentException will be thrown in a
-	 * subsequent release.
-	 *
-	 * @exception IllegalArgumentException if the specified
-	 * GraphicsConfiguration does not support 3D rendering
-	 */
-	public Canvas3D(GraphicsConfiguration graphicsConfiguration)
-	{
-		this(null, checkForValidGraphicsConfig(graphicsConfiguration, false), false);
-	}
-
-	/**
-	 * Constructs and initializes a new Canvas3D object that Java 3D
-	 * can render into.
-	 *
-	 * @param graphicsConfiguration a valid GraphicsConfiguration object
-	 * that will be used to create the canvas.  This must be created either
-	 * with a GraphicsConfigTemplate3D or by using the
-	 * getPreferredConfiguration() method of the SimpleUniverse utility.
-	 *
-	 * @param offScreen a flag that indicates whether this canvas is
-	 * an off-screen 3D rendering canvas.  Note that if offScreen
-	 * is set to true, this Canvas3D object cannot be used for normal
-	 * rendering; it should not be added to any Container object.
-	 *
-	 * @exception NullPointerException if the GraphicsConfiguration
-	 * is null.
-	 *
-	 * @exception IllegalArgumentException if the specified
-	 * GraphicsConfiguration does not support 3D rendering
-	 *
-	 * @since Java 3D 1.2
-	 */
-	public Canvas3D(GraphicsConfiguration graphicsConfiguration, boolean offScreen)
-	{
-		this(null, checkForValidGraphicsConfig(graphicsConfiguration, offScreen), offScreen);
-	}
-
-	// Private constructor only called by the two public constructors after
-	// they have validated the graphics config (and possibly constructed a new
-	// default config).
-	// The graphics config must be valid, unique, and non-null.
-	private Canvas3D(Object dummyObj1, GraphicsConfiguration graphicsConfiguration, boolean offScreen)
-	{
-		this(dummyObj1, graphicsConfiguration, getGraphicsConfig(graphicsConfiguration), offScreen);
-	}
-
-	public static final boolean USE_NEWT = true;
 	private GLWindow glwindow = null;
 
 	public GLWindow getGLWindow()
@@ -1043,58 +906,53 @@ public class Canvas3D extends Canvas
 		return glwindow;
 	}
 
-	// Private constructor only called by the previous private constructor.
-	// The graphicsConfiguration parameter is used by Canvas3D to lookup the
-	// graphics device and graphics template. The graphicsConfiguration2
-	// parameter is generated by the Pipeline from graphicsConfiguration and
-	// is only used to initialize the java.awt.Canvas.
-	private Canvas3D(Object dummyObj1, GraphicsConfiguration graphicsConfiguration, GraphicsConfiguration graphicsConfiguration2,
-			boolean offScreen)
+	//TODO: public that accepts caps
+	//TODO: something about a headless version for just behaviors and live ness
+
+	// where you would normally add to a frame and set size and say frame.setVisible(true)
+	//canvas3D.getGLWindow().setSize()
+	//canvas3D.addNotify();
+	//canvas3D.paint(null);
+	public Canvas3D()
 	{
 
-		super(USE_NEWT ? null : graphicsConfiguration2);
+		//super(null);
 
-		if (USE_NEWT)
-		{
-			final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
-			final GLCapabilities cap = new GLCapabilities(pro);
+		final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
+		final GLCapabilities cap = new GLCapabilities(pro);
 
-			//System.out.println("caps depth: " + cap.getDepthBits());  //  16			
-			//System.out.println("caps double buffered: " + cap.getDoubleBuffered());  // true
-			//System.out.println("caps sample buffers: " + cap.getSampleBuffers());  // false
+		//System.out.println("caps depth: " + cap.getDepthBits());  //  16			
+		//System.out.println("caps double buffered: " + cap.getDoubleBuffered());  // true
+		//System.out.println("caps sample buffers: " + cap.getSampleBuffers());  // false
 
-			// better values
-			// cap.setDepthBits(24);
-			cap.setStencilBits(8);
-			cap.setSampleBuffers(true);
+		// better values
+		// cap.setDepthBits(24);
+		cap.setStencilBits(8);
+		cap.setSampleBuffers(true);
 
-			this.glwindow = GLWindow.create(cap);
-			this.glwindow.setSize(10, 10);
-			this.glwindow.setTitle("Test GLWindow");
-			this.glwindow.setVisible(true);
+		this.glwindow = GLWindow.create(cap);
+		this.glwindow.setSize(10, 10);
+		this.glwindow.setTitle("Test GLWindow");
+		this.glwindow.setVisible(true);
 
-			this.glwindow.getContext();
+		this.glwindow.getContext();
 
-			//this.glwindow.setAlwaysOnTop(true);
-			//this.glwindow.setFullscreen(true);
-
-		}
+		//this.glwindow.setAlwaysOnTop(true);
+		//this.glwindow.setFullscreen(true);
 
 		//this.offScreen = offScreen;
-		this.graphicsConfiguration = graphicsConfiguration;
+		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
 
 		// Issue 163 : Set dirty bits for both Renderer and RenderBin
 		cvDirtyMask[0] = VIEW_INFO_DIRTY;
 		cvDirtyMask[1] = VIEW_INFO_DIRTY;
 
-		GraphicsConfigInfo gcInfo = graphicsConfigTable.get(graphicsConfiguration);
-		requestedStencilSize = gcInfo.getGraphicsConfigTemplate3D().getStencilSize();
+		requestedStencilSize = cap.getStencilBits();
 
-		GraphicsDevice graphicsDevice;
-		graphicsDevice = graphicsConfiguration.getDevice();
+		GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
 
-//		eventCatcher = new EventCatcher(this);
-//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
+		//		eventCatcher = new EventCatcher(this);
+		//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
 		canvasViewEventCatcherNewt = new CanvasViewEventCatcherNewt(this);
 
 		synchronized (VirtualUniverse.mc.deviceScreenMap)
@@ -1142,8 +1000,9 @@ public class Canvas3D extends Canvas
 	 */
 	private boolean isRecursivelyVisible()
 	{
-		Container parent = getParent();
-		return isVisible() && parent != null && parent.isShowing();
+		return true;
+		//Container parent = getParent();
+		//return isVisible() && parent != null && parent.isShowing();
 	}
 
 	/**
@@ -1163,7 +1022,8 @@ public class Canvas3D extends Canvas
 	// Window or Component Event that could change it.
 	void evaluateVisiblilty()
 	{
-		boolean nowVisible = isRecursivelyVisible() && !isIconified();
+		//boolean nowVisible = isRecursivelyVisible() && !isIconified();
+		boolean nowVisible = this.glwindow.isVisible();
 
 		// Only need to reevaluate and repaint if visibility has changed
 		if (this.visible != nowVisible)
@@ -1198,21 +1058,17 @@ public class Canvas3D extends Canvas
 	 * to function properly.
 	 * @param g the graphics context
 	 */
-	@Override
+	//@Override
 	public void paint(Graphics g)
 	{
 		if (!firstPaintCalled && added && validCanvas && validGraphicsMode())
 		{
-
 			try
 			{
-				newSize = new Dimension(getSize().width, getSize().height);
+				newSize = new Dimension(this.glwindow.getWidth(), this.glwindow.getHeight());
 				newPosition = new Point(getLocationOnScreen().x, getLocationOnScreen().y);
 
-				if (USE_NEWT)
-				{
-					this.glwindow.setSize(newSize.width, newSize.height);
-				}
+				this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
 
 			}
 			catch (IllegalComponentStateException e)
@@ -1232,6 +1088,15 @@ public class Canvas3D extends Canvas
 		redraw();
 	}
 
+	//@Override
+	public javaawt.Point getLocationOnScreen()
+	{
+		com.jogamp.nativewindow.util.Point storage = new com.jogamp.nativewindow.util.Point();
+		this.glwindow.getLocationOnScreen(storage);
+		return new Point(storage.getX(), storage.getY());
+
+	}
+
 	// When this canvas is added to a frame, this notification gets called.  We
 	// can get drawing surface information at this time.  Note: we cannot get
 	// the X11 window id yet, unless it is a reset condition.
@@ -1241,7 +1106,7 @@ public class Canvas3D extends Canvas
 	 * method need to call super.addNotify() in their addNotify() method for Java 3D
 	 * to function properly.
 	 */
-	@Override
+	//@Override
 	public void addNotify()
 	{
 		// Return immediately if addNotify called twice with no removeNotify
@@ -1280,7 +1145,7 @@ public class Canvas3D extends Canvas
 		// Issue 131: Don't call super for off-screen Canvas3D
 		if (!offScreen)
 		{
-			super.addNotify();
+			//super.addNotify();
 		}
 		screen.addUser(this);
 
@@ -1289,27 +1154,26 @@ public class Canvas3D extends Canvas
 		assert containerParentList.isEmpty();
 
 		windowParent = null;
-		Container container = this.getParent();
-		while (container != null)
+		//Container container = this.getParent();
+		//while (container != null)
 		{
-			if (container instanceof Window)
+			//	if (container instanceof Window)
 			{
-				windowParent = (Window) container;
+				//		windowParent = (Window) container;
 			}
-//			container.addComponentListener(eventCatcher);
-//			container.addComponentListener(canvasViewEventCatcher);
-			containerParentList.add(container);
-			container = container.getParent();
+			//			container.addComponentListener(eventCatcher);
+			//			container.addComponentListener(canvasViewEventCatcher);
+			//	containerParentList.add(container);
+			//	container = container.getParent();
 		}
 
-//		this.addComponentListener(eventCatcher);
-//		this.addComponentListener(canvasViewEventCatcher);
+		//		this.addComponentListener(eventCatcher);
+		//		this.addComponentListener(canvasViewEventCatcher);
 		this.getGLWindow().addWindowListener(canvasViewEventCatcherNewt);
-		
 
-		if (windowParent != null)
+		//	if (windowParent != null)
 		{
-//			windowParent.addWindowListener(eventCatcher);
+			//			windowParent.addWindowListener(eventCatcher);
 		}
 
 		synchronized (dirtyMaskLock)
@@ -1328,9 +1192,9 @@ public class Canvas3D extends Canvas
 		// call evaluateActive for the same reason.
 		if (offScreen)
 		{
-			firstPaintCalled = true;
-			visible = true;
-			evaluateActive();
+			//firstPaintCalled = true;
+			//visible = true;
+			//evaluateActive();
 		}
 
 		// In case the same canvas is removed and add back,
@@ -1345,6 +1209,13 @@ public class Canvas3D extends Canvas
 		{
 			view.universe.checkForEnableEvents();
 		}
+
+		// get the GLWindow cranking!
+		this.glwindow.setVisible(true);
+		this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
+		evaluateVisiblilty();
+		evaluateActive();
+		paint(null);
 
 		if (rdr != null)
 		{
@@ -1369,7 +1240,7 @@ public class Canvas3D extends Canvas
 	 * method need to call super.removeNotify() in their removeNotify()
 	 * method for Java 3D to function properly.
 	 */
-	@Override
+	//@Override
 	public void removeNotify()
 	{
 		// Return immediately if addNotify not called first
@@ -1438,33 +1309,33 @@ public class Canvas3D extends Canvas
 		// it will free graphics2D textureID
 		//<AND>graphics2D = null;</>
 
-		super.removeNotify();
+		//super.removeNotify();
 
 		// Release and clear.
 		for (Container container : containerParentList)
 		{
-//			container.removeComponentListener(eventCatcher);
-//			container.removeComponentListener(canvasViewEventCatcher);
+			//			container.removeComponentListener(eventCatcher);
+			//			container.removeComponentListener(canvasViewEventCatcher);
 		}
 		containerParentList.clear();
-//		this.removeComponentListener(eventCatcher);
-//		this.removeComponentListener(canvasViewEventCatcher);
+		//		this.removeComponentListener(eventCatcher);
+		//		this.removeComponentListener(canvasViewEventCatcher);
 		this.getGLWindow().removeWindowListener(canvasViewEventCatcherNewt);
 
-/*		if (eventCatcher != null)
-		{
-			this.removeFocusListener(eventCatcher);
-			this.removeKeyListener(eventCatcher);
-			this.removeMouseListener(eventCatcher);
-			this.removeMouseMotionListener(eventCatcher);
-			this.removeMouseWheelListener(eventCatcher);
-			eventCatcher.reset();
-		}*/
+		/*		if (eventCatcher != null)
+				{
+					this.removeFocusListener(eventCatcher);
+					this.removeKeyListener(eventCatcher);
+					this.removeMouseListener(eventCatcher);
+					this.removeMouseMotionListener(eventCatcher);
+					this.removeMouseWheelListener(eventCatcher);
+					eventCatcher.reset();
+				}*/
 
 		if (windowParent != null)
 		{
-//			windowParent.removeWindowListener(eventCatcher);
-			windowParent.requestFocus();
+			//			windowParent.removeWindowListener(eventCatcher);
+			//windowParent.requestFocus();
 		}
 
 		added = false;
@@ -1508,6 +1379,7 @@ public class Canvas3D extends Canvas
 	// This decides if the canvas is active
 	void evaluateActive()
 	{
+
 		// Note that no need to check for isRunning, we want
 		// view register in order to create scheduler in pure immedite mode
 		// Also we can't use this as lock, otherwise there is a
@@ -2078,6 +1950,7 @@ public class Canvas3D extends Canvas
 		}*/
 	}
 
+	//PJ - this is not called in retained mode
 	void doSwap()
 	{
 
@@ -2119,17 +1992,8 @@ public class Canvas3D extends Canvas
 	 */
 	Context createNewContext(Context shareCtx, boolean isSharedCtx)
 	{
-		Context retVal;
-
-		if (USE_NEWT)
-		{
-			retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow.getDelegatedDrawable(),
-					this.glwindow.getContext(), shareCtx, isSharedCtx);
-		}
-		else
-		{
-			retVal = createNewContext(this.drawable, shareCtx, isSharedCtx, this.offScreen);
-		}
+		Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow.getDelegatedDrawable(),
+				this.glwindow.getContext(), shareCtx, isSharedCtx);
 
 		// compute the max available texture units
 		maxAvailableTextureUnits = Math.max(maxTextureUnits, maxTextureImageUnits);
@@ -2137,12 +2001,12 @@ public class Canvas3D extends Canvas
 		// e.g. resizing offscreen Canvas3D
 		antialiasingSet = false;
 
-//		System.out.println("maxAvailableTextureUnits " + this.maxAvailableTextureUnits);
-//		System.out.println("maxCombinedTextureImageUnits " + this.maxCombinedTextureImageUnits);
-//		System.out.println("maxTexCoordSets " + this.maxTexCoordSets);
-//		System.out.println("maxTextureImageUnits " + this.maxTextureImageUnits);
-//		System.out.println("maxTextureUnits " + this.maxTextureUnits);
-//		System.out.println("maxVertexTextureImageUnits " + this.maxVertexTextureImageUnits);
+		//		System.out.println("maxAvailableTextureUnits " + this.maxAvailableTextureUnits);
+		//		System.out.println("maxCombinedTextureImageUnits " + this.maxCombinedTextureImageUnits);
+		//		System.out.println("maxTexCoordSets " + this.maxTexCoordSets);
+		//		System.out.println("maxTextureImageUnits " + this.maxTextureImageUnits);
+		//		System.out.println("maxTextureUnits " + this.maxTextureUnits);
+		//		System.out.println("maxVertexTextureImageUnits " + this.maxVertexTextureImageUnits);
 
 		return retVal;
 	}
@@ -3783,20 +3647,6 @@ public class Canvas3D extends Canvas
 		ctxTimeStamp = VirtualUniverse.mc.getContextTimeStamp();
 	}
 
-	@Override
-	public java.awt.Point getLocationOnScreen()
-	{
-		try
-		{
-			return super.getLocationOnScreen();
-		}
-		catch (IllegalComponentStateException e)
-		{
-		}
-
-		return new java.awt.Point();
-	}
-
 	void setProjectionMatrix(Context ctx, Transform3D projTrans)
 	{
 		this.projTrans = projTrans;
@@ -4822,64 +4672,85 @@ public class Canvas3D extends Canvas
 
 	boolean hasDoubleBuffer()
 	{
-		return Pipeline.getPipeline().hasDoubleBuffer(this);
+		return glwindow.getChosenGLCapabilities().getDoubleBuffered();
+		//Pipeline.getPipeline().hasDoubleBuffer(this);
 	}
 
 	boolean hasStereo()
 	{
-		return Pipeline.getPipeline().hasStereo(this);
+		return glwindow.getChosenGLCapabilities().getStereo();
+		//Pipeline.getPipeline().hasStereo(this);
 	}
 
 	int getStencilSize()
 	{
-		return Pipeline.getPipeline().getStencilSize(this);
+		return glwindow.getChosenGLCapabilities().getStencilBits();
+		//Pipeline.getPipeline().getStencilSize(this);
 	}
 
 	boolean hasSceneAntialiasingMultisample()
 	{
-		return Pipeline.getPipeline().hasSceneAntialiasingMultisample(this);
+		return glwindow.getChosenGLCapabilities().getSampleBuffers();
+		//Pipeline.getPipeline().hasSceneAntialiasingMultisample(this);
 	}
 
 	boolean hasSceneAntialiasingAccum()
 	{
-		return Pipeline.getPipeline().hasSceneAntialiasingAccum(this);
+		return false;
+		//Pipeline.getPipeline().hasSceneAntialiasingAccum(this);
 	}
 
-	@Override
+	//Replacers for Components gear
+	public int getWidth()
+	{
+		return this.glwindow.getWidth();
+	}
+
+	public int getHeight()
+	{
+		return this.glwindow.getHeight();
+	}
+
+	public GraphicsConfiguration getGraphicsConfiguration()
+	{
+		return this.graphicsConfiguration;
+	}
+
+	/*@Override
 	public synchronized void addMouseListener(MouseListener l)
 	{
 		super.addMouseListener(l);
 		new Throwable("Canvas3d.addMouseListener(MouseListener l) swap for newt").printStackTrace();
 	}
-
+	
 	public synchronized void addKeyListener(KeyListener l)
 	{
 		super.addKeyListener(l);
 		new Throwable("Canvas3d.addKeyListener swap for newt").printStackTrace();
 	}
-
+	
 	public synchronized void addComponentListener(ComponentListener l)
 	{
 		super.addComponentListener(l);
 		new Throwable("Canvas3d.addComponentListener swap for newt").printStackTrace();
 	}
-
+	
 	public synchronized void addFocusListener(FocusListener l)
 	{
 		super.addFocusListener(l);
 		new Throwable("Canvas3d.addFocusListener swap for newt").printStackTrace();
 	}
-
+	
 	public synchronized void addMouseMotionListener(MouseMotionListener l)
 	{
 		super.addMouseMotionListener(l);
 		new Throwable("Canvas3d.addMouseMotionListener swap for newt").printStackTrace();
 	}
-
+	
 	public synchronized void addMouseWheelListener(MouseWheelListener l)
 	{
 		super.addMouseWheelListener(l);
 		new Throwable("Canvas3d.addMouseWheelListener swap for newt").printStackTrace();
-	}
+	}*/
 
 }

@@ -26,10 +26,11 @@
 
 package javax.media.j3d;
 
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
+
+import java2.awt.GraphicsConfiguration;
+import java2.awt.GraphicsDevice;
 
 /**
  * Abstract pipeline class for rendering pipeline methods. All rendering

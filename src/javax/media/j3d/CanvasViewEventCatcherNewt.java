@@ -24,14 +24,14 @@ class CanvasViewEventCatcherNewt implements WindowListener
 	@Override
 	public void windowResized(WindowEvent e)
 	{
-		synchronized (canvas)
+	synchronized (canvas)
 		{
 			synchronized (canvas.dirtyMaskLock)
 			{
 				canvas.cvDirtyMask[0] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
 				canvas.cvDirtyMask[1] |= Canvas3D.MOVED_OR_RESIZED_DIRTY;
 			}
-			canvas.resizeGraphics2D = true;
+//			canvas.resizeGraphics2D = true;
 		}
 
 		canvas.newSize = new Dimension((int) canvas.getGLWindow().getWidth(), (int) canvas.getGLWindow().getHeight());

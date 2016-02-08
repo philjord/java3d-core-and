@@ -39,6 +39,7 @@ package javax.media.j3d;
  * @see GeneralizedVertexList
  * @see GeometryDecompressor
  */
+@Deprecated
 class GeneralizedStrip {
     private static final boolean debug = false ;
 
