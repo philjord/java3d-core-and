@@ -1,28 +1,3 @@
-/*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- */
 
 package javax.media.j3d;
 
@@ -861,11 +836,11 @@ public class Canvas3D //extends Canvas
 	private CanvasViewEventCatcherNewt canvasViewEventCatcherNewt;
 
 	// The top-level parent window for this canvas.
-//	private Window windowParent;
+	//	private Window windowParent;
 
 	// Issue 458 - list of all parent containers for this canvas
 	// (includes top-level parent window)
-//	private LinkedList<Container> containerParentList = new LinkedList<Container>();
+	//	private LinkedList<Container> containerParentList = new LinkedList<Container>();
 
 	// flag that indicates if light has changed
 	boolean lightChanged = false;
@@ -978,10 +953,6 @@ public class Canvas3D //extends Canvas
 
 	}
 
- 
-
- 
-
 	// Issue 458 - evaluate this Canvas3D's visibility whenever we get a
 	// Window or Component Event that could change it.
 	void evaluateVisiblilty()
@@ -1023,7 +994,7 @@ public class Canvas3D //extends Canvas
 	 * @param g the graphics context
 	 */
 	//@Override
-	public void paintALike( )
+	public void paintALike()
 	{
 		if (!firstPaintCalled && added && validCanvas && validGraphicsMode())
 		{
@@ -1037,7 +1008,7 @@ public class Canvas3D //extends Canvas
 			}
 			//catch (IllegalComponentStateException e)
 			{
-			//	return;
+				//	return;
 			}
 
 			synchronized (drawingSurfaceObject)
@@ -1115,9 +1086,9 @@ public class Canvas3D //extends Canvas
 
 		// Issue 458 - Add the eventCatcher as a component listener for each
 		// parent container in the window hierarchy
-//		assert containerParentList.isEmpty();
+		//		assert containerParentList.isEmpty();
 
-//		windowParent = null;
+		//		windowParent = null;
 		//Container container = this.getParent();
 		//while (container != null)
 		{
@@ -1276,12 +1247,12 @@ public class Canvas3D //extends Canvas
 		//super.removeNotify();
 
 		// Release and clear.
-//		for (Container container : containerParentList)
+		//		for (Container container : containerParentList)
 		{
 			//			container.removeComponentListener(eventCatcher);
 			//			container.removeComponentListener(canvasViewEventCatcher);
 		}
-//		containerParentList.clear();
+		//		containerParentList.clear();
 		//		this.removeComponentListener(eventCatcher);
 		//		this.removeComponentListener(canvasViewEventCatcher);
 		this.getGLWindow().removeWindowListener(canvasViewEventCatcherNewt);
@@ -1296,7 +1267,7 @@ public class Canvas3D //extends Canvas
 					eventCatcher.reset();
 				}*/
 
-//		if (windowParent != null)
+		//		if (windowParent != null)
 		{
 			//			windowParent.removeWindowListener(eventCatcher);
 			//windowParent.requestFocus();
@@ -1316,7 +1287,7 @@ public class Canvas3D //extends Canvas
 
 		// Fix for issue 102 removing strong reference and avoiding memory leak
 		// due retention of parent container
-//		this.windowParent = null;
+		//		this.windowParent = null;
 	}
 
 	void allocateCanvasId()
@@ -4679,42 +4650,5 @@ public class Canvas3D //extends Canvas
 	{
 		return this.graphicsConfiguration;
 	}
-
-	/*@Override
-	public synchronized void addMouseListener(MouseListener l)
-	{
-		super.addMouseListener(l);
-		new Throwable("Canvas3d.addMouseListener(MouseListener l) swap for newt").printStackTrace();
-	}
-	
-	public synchronized void addKeyListener(KeyListener l)
-	{
-		super.addKeyListener(l);
-		new Throwable("Canvas3d.addKeyListener swap for newt").printStackTrace();
-	}
-	
-	public synchronized void addComponentListener(ComponentListener l)
-	{
-		super.addComponentListener(l);
-		new Throwable("Canvas3d.addComponentListener swap for newt").printStackTrace();
-	}
-	
-	public synchronized void addFocusListener(FocusListener l)
-	{
-		super.addFocusListener(l);
-		new Throwable("Canvas3d.addFocusListener swap for newt").printStackTrace();
-	}
-	
-	public synchronized void addMouseMotionListener(MouseMotionListener l)
-	{
-		super.addMouseMotionListener(l);
-		new Throwable("Canvas3d.addMouseMotionListener swap for newt").printStackTrace();
-	}
-	
-	public synchronized void addMouseWheelListener(MouseWheelListener l)
-	{
-		super.addMouseWheelListener(l);
-		new Throwable("Canvas3d.addMouseWheelListener swap for newt").printStackTrace();
-	}*/
 
 }
