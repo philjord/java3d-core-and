@@ -41,19 +41,8 @@ import java2.awt.GraphicsDevice;
  */
 class JoglesPipeline extends JoglesDEPPipeline
 {
-	//PJPJPJPJPJ
-	public static boolean TOOLS3D_MARKER = true; //used to check jar load order
-
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
-	// Debugging output for graphics configuration selection
-	private static final boolean DEBUG_CONFIG = false;
-	// Prints extra debugging information
-	private static final boolean EXTRA_DEBUGGING = false;
-	// Number of milliseconds to wait for windows to pop up on screen
-	private static final int WAIT_TIME = 1000;
-	// Configurable constant just in case we want to change this later
-	private static final int MIN_FRAME_SIZE = 1;
 
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
@@ -4163,11 +4152,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		// amazingly this should be fine unchanged 
 
-		if (EXTRA_DEBUGGING)
-		{
-			System.err.println("minFilter: " + getFilterName(minFilter) + " magFilter: " + getFilterName(magFilter));
-		}
-
 		// FIXME: unclear whether we really need to set up the enum values
 		// in the JoglContext as is done in the native code depending on
 		// extension availability; maybe this is the defined fallback
@@ -6670,10 +6654,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Helper classes and methods to support query context functionality
 	// and pixel format selection
 	// Used by Query Canvas apabilitiesCapturer and therefore only get best configuration
-//	private interface ExtendedCapabilitiesChooser extends GLCapabilitiesChooser
-//	{
-//		public void init(GLContext context);
-//	}
+	//	private interface ExtendedCapabilitiesChooser extends GLCapabilitiesChooser
+	//	{
+	//		public void init(GLContext context);
+	//	}
 
 	// Canvas subclass to help with various query operations such as the
 	// "query context" mechanism and pixel format selection.
