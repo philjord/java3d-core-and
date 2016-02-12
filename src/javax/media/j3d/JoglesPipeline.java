@@ -91,12 +91,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static void doClearBuffers(Context ctx)
 	{
-
-		//Possibly the GC of the underlying buffers sorts this out, when I call these I get crashes
-		// I wanted to call in doSwap or sunc of releaseCtx but the thread is not the issue
-		// though I have discovered even glIsBuffer crashes and teh hasmaps I use are strong refs?
-		// 
-
 		JoglesContext joglesctx = (JoglesContext) ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
 		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
@@ -268,6 +262,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglesContext ctx = (JoglesContext) absCtx;
 		GL2ES2 gl = ctx.gl2es2();
 		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		LocationData locs = getLocs(ctx, gl, geo);
+
+		//If any buffers need loading do that now and skip a render for this frame
+		boolean buffersLoaded = loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
+				vertexAttrSizes, vertexAttrBufs);
+
+		//Don't do a draw as it will stutter the GPU if buffers are being loaded
+		if (buffersLoaded)
+			return;
 
 		setFFPAttributes(ctx, gl, geo, numActiveTexUnit);
 
@@ -288,51 +291,39 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (ctx.getShaderProgram() != null)
 		{
-			LocationData locs = ctx.geoToLocationData.get(ctx.getShaderProgram());
-
-			int coordoff = 3 * initialCoordIndex;
 			// Define the data pointers
 			if (floatCoordDefined)
 			{
-				fverts.position(coordoff);
+
 				//gl.glVertexPointer(3, GL2ES2.GL_FLOAT, 0, fverts);
 
 				if (locs.glVertex != -1)
 				{
 					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
+					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+							|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 					Integer bufId = ctx.geoToCoordBuf.get(geo);
 					if (bufId == null)
 					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						int usage = morphable ? GL2ES2.GL_STREAM_DRAW : GL2ES2.GL_STATIC_DRAW;
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
-
-						ctx.geoToCoordBuf.put(geo, bufId);
-
-						if (ctx.geoToCoordBuf.size() % 500 == 0)
-						{
-							System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size());
-						}
+						new Throwable("Buffer load issue!").printStackTrace();
 					}
 					else
 					{
-						if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						//a good cDirty  
+						//if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+						if (morphable)
 						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							int coordoff = 3 * initialCoordIndex;
+							fverts.position(coordoff);
 							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
 						}
-					}
 
-					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-					gl.glEnableVertexAttribArray(locs.glVertex);//must be called after Pointer above
-					// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
+						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glVertex);//must be called after Pointer above
+						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
+					}
 				}
 				else
 				{
@@ -354,19 +345,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (floatColorsDefined)
 			{
-				int coloroff;
-				int sz;
-				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-				{
-					coloroff = 4 * initialColorIndex;
-					sz = 4;
-				}
-				else
-				{
-					coloroff = 3 * initialColorIndex;
-					sz = 3;
-				}
-				fclrs.position(coloroff);
 				//gl.glColorPointer(sz, GL2ES2.GL_FLOAT, 0, fclrs);
 
 				if (locs.glColor != -1)
@@ -374,28 +352,36 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer bufId = ctx.geoToColorBuf.get(geo);
 					if (bufId == null)
 					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
-
-						ctx.geoToColorBuf.put(geo, bufId);
+						new Throwable("Buffer load issue!").printStackTrace();
 					}
 					else
 					{
-						if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+						int coloroff;
+						int sz;
+						if ((vformat & GeometryArray.WITH_ALPHA) != 0)
 						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+							coloroff = 4 * initialColorIndex;
+							sz = 4;
 						}
+						else
+						{
+							coloroff = 3 * initialColorIndex;
+							sz = 3;
+						}
+						fclrs.position(coloroff);
+
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						//a good cDirty and a DYNAMIC_DRAW call needed
+						/*if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+						{							
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+						}*/
+
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glColor);//must be called after Pointer above
+						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 					}
 
-					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, 0, 0);
-					gl.glEnableVertexAttribArray(locs.glColor);//must be called after Pointer above
-					// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 				}
 			}
 			else if (byteColorsDefined)
@@ -424,21 +410,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (locs.glColor != -1)
 					gl.glDisableVertexAttribArray(locs.glColor);
 
-				/*if (ctx.materialData.diffuse[0] + ctx.materialData.diffuse[1] + ctx.materialData.diffuse[2]
-						+ ctx.materialData.diffuse[3] != 4)
-				{
-					System.out.println("No colors ignoreVertColor set to 1");
-					System.out.println("hopefully materialData.diffuse is " + ctx.materialData.diffuse[0] + " "
-							+ ctx.materialData.diffuse[1] + " " + ctx.materialData.diffuse[2] + " " + ctx.materialData.diffuse[3]);
-					//	System.out.println("single color would have been " + ctx.currentColor[0] + " " + ctx.currentColor[1] + " "
-					//			+ ctx.currentColor[2] + " " + ctx.currentColor[3]);
-				}*/
 			}
 
 			if (normalsDefined)
 			{
-				int normoff = 3 * initialNormalIndex;
-				norms.position(normoff);
 				//gl.glNormalPointer(GL2ES2.GL_FLOAT, 0, norms);
 
 				if (locs.glNormal != -1)
@@ -446,28 +421,24 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer bufId = ctx.geoToNormalBuf.get(geo);
 					if (bufId == null)
 					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL2ES2.GL_STATIC_DRAW);
-
-						ctx.geoToNormalBuf.put(geo, bufId);
+						new Throwable("Buffer load issue!").printStackTrace();
 					}
 					else
 					{
-						if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
-						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						//a good cDirty and a DYNAMIC_DRAW call needed
+						/*if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
+						{			
+							int normoff = 3 * initialNormalIndex;
+							norms.position(normoff);				
 							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
-						}
+						}*/
+
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
+						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 					}
 
-					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-					gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
-					// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 				}
 			}
 			else
@@ -483,44 +454,38 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						FloatBuffer vertexAttrs = vertexAttrBufs[index];
-						int sz = vertexAttrSizes[index];
-						vertexAttrs.position(0);
+						
 						//ctx.vertexAttrPointer(gl, i, sz, GL2ES2.GL_FLOAT, 0, vertexAttrs, geo);
 						//ctx.enableVertexAttrArray(gl, i);
 
 						HashMap<Integer, Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
 						if (bufIds == null)
 						{
-							bufIds = new HashMap<Integer, Integer>();
-							ctx.geoToVertAttribBuf.put(geo, bufIds);
+							new Throwable("Buffer load issue!").printStackTrace();
 						}
 
 						Integer bufId = bufIds.get(index);
 						if (bufId == null)
 						{
-							int[] tmp2 = new int[1];
-							gl.glGenBuffers(1, tmp2, 0);
-							bufId = new Integer(tmp2[0]);
-							bufIds.put(index, bufId);
-							
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
-									GL2ES2.GL_STATIC_DRAW);
+							new Throwable("Buffer load issue!").printStackTrace();
 						}
 						else
-						{
-							if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+						{							
+							int sz = vertexAttrSizes[index];
+							
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							//a good cDirty and a DYNAMIC_DRAW call needed
+							/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
 							{
-								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+								FloatBuffer vertexAttrs = vertexAttrBufs[index];
+								vertexAttrs.position(0);
 								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
-							}
-						}
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
-						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);
+							}*/
+							
+							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
+							// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);
+						}						
 					}
 				}
 			}
@@ -865,6 +830,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 			GL2ES2 gl = ctx.gl2es2();
 			//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
+			LocationData locs = getLocs(ctx, gl, geo);
+
+			//If any buffers need loading do that now and skip a render for this frame
+			boolean buffersLoaded = loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
+					vertexAttrSizes, vertexAttrBufs);
+
+			//Don't do a draw as it will stutter the GPU if buffers are being loaded
+			if (buffersLoaded)
+				return;
+
 			// wild debug code, don't forget sop in swapBufers
 			//System.out.println("Geo drawing " + geo.source.getName());
 
@@ -878,12 +853,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-			LocationData locs = ctx.geoToLocationData.get(ctx.getShaderProgram());
-
 			// Define the data pointers
 			if (floatCoordDefined)
 			{
-				fverts.position(0);
 				//gl.glVertexPointer(3, GL2ES2.GL_FLOAT, 0, fverts);
 
 				// See this discussion
@@ -893,41 +865,31 @@ class JoglesPipeline extends JoglesDEPPipeline
 				//Building of buffers etc and index buffers should really take place not on the j3d thread if possible
 				if (locs.glVertex != -1)
 				{
-					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-
 					Integer bufId = ctx.geoToCoordBuf.get(geo);
 					if (bufId == null)
 					{
-						boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
-
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						int usage = morphable ? GL2ES2.GL_STREAM_DRAW : GL2ES2.GL_STATIC_DRAW;
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
-
-						ctx.geoToCoordBuf.put(geo, bufId);
-
-						if (ctx.geoToCoordBuf.size() % 500 == 0)
-						{
-							System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size());
-						}
+						new Throwable("Buffer load issue!").printStackTrace();
 					}
 					else
 					{
-						if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+						//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+						boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+								|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						//TODO: I suspect my cDirty flag is not coming through as it should
+						//if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+						if (morphable)
 						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							fverts.position(0);
 							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
 						}
+
+						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glVertex);//must be called after Pointer above
+						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 					}
 
-					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-					gl.glEnableVertexAttribArray(locs.glVertex);//must be called after Pointer above
-					// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 				}
 				else
 				{
@@ -948,16 +910,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (floatColorsDefined)
 			{
-				fclrs.position(0);
-				int sz = 0;
-				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-				{
-					sz = 4;
-				}
-				else
-				{
-					sz = 3;
-				}
 				//gl.glColorPointer(sz, GL2ES2.GL_FLOAT, 0, fclrs);
 
 				if (locs.glColor != -1)
@@ -965,28 +917,29 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer bufId = ctx.geoToColorBuf.get(geo);
 					if (bufId == null)
 					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
-
-						ctx.geoToColorBuf.put(geo, bufId);
+						new Throwable("Buffer load issue!").printStackTrace();
 					}
 					else
 					{
-						if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
-						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
-						}
+						int sz = 0;
+						if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+							sz = 4;
+						else
+							sz = 3;
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+
+						//a good cDirty and a DYNAMIC_DRAW call needed
+						/*	if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+							{
+								fclrs.position(0);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+							}*/
+
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glColor);//must be called after Pointer above
+						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 					}
 
-					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, 0, 0);
-					gl.glEnableVertexAttribArray(locs.glColor);//must be called after Pointer above
-					// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 				}
 			}
 			else if (byteColorsDefined)
@@ -1024,36 +977,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (normalsDefined)
 			{
-				norms.position(0);
-				//gl.glNormalPointer(GL2ES2.GL_FLOAT, 0, norms);
-
 				if (locs.glNormal != -1)
 				{
+					//gl.glNormalPointer(GL2ES2.GL_FLOAT, 0, norms);
+
 					Integer bufId = ctx.geoToNormalBuf.get(geo);
 					if (bufId == null)
 					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL2ES2.GL_STATIC_DRAW);
-
-						ctx.geoToNormalBuf.put(geo, bufId);
+						new Throwable("Buffer load issue!").printStackTrace();
 					}
 					else
 					{
-						if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
-						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						//a good cDirty and a DYNAMIC_DRAW call needed
+						/*if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
+						{	
+							norms.position(0);						
 							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
-						}
+						}*/
+
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
+						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 					}
 
-					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-					gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
-					// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);//  I must unbind 
 				}
 			}
 			else
@@ -1069,44 +1016,37 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						FloatBuffer vertexAttrs = vertexAttrBufs[index];
-						int sz = vertexAttrSizes[index];
-						vertexAttrs.position(0);
 						//ctx.vertexAttrPointer(gl, i, sz, GL2ES2.GL_FLOAT, 0, vertexAttrs, geo);
 						//ctx.enableVertexAttrArray(gl, i);
 
 						HashMap<Integer, Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
 						if (bufIds == null)
 						{
-							bufIds = new HashMap<Integer, Integer>();
-							ctx.geoToVertAttribBuf.put(geo, bufIds);
+							new Throwable("Buffer load issue!").printStackTrace();
 						}
 
 						Integer bufId = bufIds.get(index);
 						if (bufId == null)
 						{
-							int[] tmp2 = new int[1];
-							gl.glGenBuffers(1, tmp2, 0);
-							bufId = new Integer(tmp2[0]);
-							bufIds.put(index, bufId);
-
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
-									GL2ES2.GL_STATIC_DRAW);
+							new Throwable("Buffer load issue!").printStackTrace();
 						}
 						else
 						{
-							if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							//a good cDirty and a DYNAMIC_DRAW call needed
+							/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
 							{
-								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+								FloatBuffer vertexAttrs = vertexAttrBufs[index];								
+								vertexAttrs.position(0);
 								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
-							}
-						}
+							}*/
 
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
-						// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);
+							int sz = vertexAttrSizes[index];
+
+							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
+							// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);
+						}
 					}
 				}
 			}
@@ -1183,7 +1123,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				else
 				{
-					if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
+					//a good cDirty and a DYNAMIC_DRAW call needed
+					/*if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
 					{
 						int offset = initialIndexIndex;
 						IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
@@ -1192,14 +1133,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 							indicesBuffer.position(offset);
 							int count = sarray[i];
 							int indBufId = stripInd[i];
-
+					
 							gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
 							gl.glBufferSubData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0, count * Integer.SIZE / 8, indicesBuffer);
 							//gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 							offset += count;
-						}
-					 
-					}
+					}*/
 				}
 
 				for (int i = 0; i < strip_len; i++)
@@ -1241,13 +1180,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				else
 				{
-					if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
+					//a good cDirty and a DYNAMIC_DRAW call needed
+					/*if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
 					{
 						IntBuffer indBuf = IntBuffer.wrap(indexCoord);
 						indBuf.position(initialIndexIndex);
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, indexBufId.intValue());
 						gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, indBuf.remaining() * Integer.SIZE / 8, indBuf);
-					}
+					}*/
 				}
 
 				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
@@ -1305,6 +1245,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		}
 		else
+
 		{
 			// do nothing warning already given by FFP
 		}
@@ -1332,17 +1273,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// another glDraw call
 	// until glFinish
 
-	/**
-	 * Over time we have had things recorded and in FFP they are considered current state
-	 * in programmable we have to push them across manually each time recorded in JoglesContext
-	 * @param gl
-	 */
-	private void setFFPAttributes(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, int numActiveTexUnitState)
+	private static LocationData getLocs(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo)
 	{
 		if (ctx.getShaderProgram() != null)
 		{
-			if (OUTPUT_PER_FRAME_STATS)
-				ctx.perFrameStats.setFFPAttributes++;
 			int shaderProgramId = ctx.getShaderProgram().getValue();
 
 			LocationData locs = ctx.geoToLocationData.get(ctx.getShaderProgram());
@@ -1400,6 +1334,24 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				ctx.geoToLocationData.put(ctx.getShaderProgram(), locs);
 			}
+			return locs;
+		}
+		return null;
+	}
+
+	/**
+	 * Over time we have had things recorded and in FFP they are considered current state
+	 * in programmable we have to push them across manually each time recorded in JoglesContext
+	 * @param gl
+	 */
+	private void setFFPAttributes(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, int numActiveTexUnitState)
+	{
+		if (ctx.getShaderProgram() != null)
+		{
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.setFFPAttributes++;
+
+			LocationData locs = getLocs(ctx, gl, geo);
 
 			if (locs.glProjectionMatrix != -1)
 				gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, toArray(ctx.currentProjMat), 0);
@@ -1496,44 +1448,161 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
 
+	private static boolean loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, LocationData locs, int vdefined,
+			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
+			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs)
+	{
+		boolean buffersLoaded = false;
+
+		boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
+		boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
+		boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
+		boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
+		boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
+		boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
+
+		if (floatCoordDefined && locs.glVertex != -1)
+		{
+			Integer bufId = ctx.geoToCoordBuf.get(geo);
+			if (bufId == null)
+			{
+				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+						|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
+				fverts.position(0);
+				int[] tmp = new int[1];
+				gl.glGenBuffers(1, tmp, 0);
+				bufId = new Integer(tmp[0]);
+
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+				int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
+
+				ctx.geoToCoordBuf.put(geo, bufId);
+
+				if (ctx.geoToCoordBuf.size() % 500 == 0)
+				{
+					System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size());
+				}
+				buffersLoaded = true;
+			}
+		}
+
+		if (floatColorsDefined && locs.glColor != -1)
+		{
+			Integer bufId = ctx.geoToColorBuf.get(geo);
+			if (bufId == null)
+			{
+				fclrs.position(0);
+				int[] tmp = new int[1];
+				gl.glGenBuffers(1, tmp, 0);
+				bufId = new Integer(tmp[0]);
+
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
+
+				ctx.geoToColorBuf.put(geo, bufId);
+				buffersLoaded = true;
+			}
+		}
+
+		if (normalsDefined && locs.glNormal != -1)
+		{
+			Integer bufId = ctx.geoToNormalBuf.get(geo);
+			if (bufId == null)
+			{
+				norms.position(0);
+
+				int[] tmp = new int[1];
+				gl.glGenBuffers(1, tmp, 0);
+				bufId = new Integer(tmp[0]);
+
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL2ES2.GL_STATIC_DRAW);
+
+				ctx.geoToNormalBuf.put(geo, bufId);
+				buffersLoaded = true;
+			}
+		}
+
+		if (vattrDefined)
+		{
+			for (int index = 0; index < vertexAttrCount; index++)
+			{
+				Integer attribLoc = locs.genAttIndexToLoc.get(index);
+				if (attribLoc != null && attribLoc.intValue() != -1)
+				{
+					FloatBuffer vertexAttrs = vertexAttrBufs[index];
+
+					vertexAttrs.position(0);
+
+					HashMap<Integer, Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
+					if (bufIds == null)
+					{
+						bufIds = new HashMap<Integer, Integer>();
+						ctx.geoToVertAttribBuf.put(geo, bufIds);
+					}
+
+					Integer bufId = bufIds.get(index);
+					if (bufId == null)
+					{
+						int[] tmp2 = new int[1];
+						gl.glGenBuffers(1, tmp2, 0);
+						bufId = new Integer(tmp2[0]);
+						bufIds.put(index, bufId);
+
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
+								GL2ES2.GL_STATIC_DRAW);
+						buffersLoaded = true;
+					}
+
+				}
+			}
+		}
+
+		return buffersLoaded;
+	}
+
 	//Possibly once vert atribs only this call can become a noop
 	@Override
 	void setVertexFormat(Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha, boolean ignoreVertexColors)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.setVertexFormat()");
-
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-
-		// Enable and disable the appropriate pointers
-		if ((vformat & GeometryArray.NORMALS) != 0)
-		{
-			//gl.glEnableClientState(GL2ES2.GL_NORMAL_ARRAY);
-		}
-		else
-		{
-			//gl.glDisableClientState(GL2ES2.GL_NORMAL_ARRAY);
-		}
-		if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
-		{
-			//gl.glEnableClientState(GL2ES2.GL_COLOR_ARRAY);
-		}
-		else
-		{
+		/*	if (VERBOSE)
+				System.err.println("JoglPipeline.setVertexFormat()");
+		
+			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		
+			// Enable and disable the appropriate pointers
+			if ((vformat & GeometryArray.NORMALS) != 0)
+			{
+				//gl.glEnableClientState(GL2ES2.GL_NORMAL_ARRAY);
+			}
+			else
+			{
+				//gl.glDisableClientState(GL2ES2.GL_NORMAL_ARRAY);
+			}
+			if (!ignoreVertexColors && ((vformat & GeometryArray.COLOR) != 0))
+			{
+				//gl.glEnableClientState(GL2ES2.GL_COLOR_ARRAY);
+			}
+			else
+			{
+				//gl.glDisableClientState(GL2ES2.GL_COLOR_ARRAY);
+			}
+		
+			if ((vformat & GeometryArray.COORDINATES) != 0)
+			{
+				//gl.glEnableClientState(GL2ES2.GL_VERTEX_ARRAY);
+			}
+			else
+			{
+				//gl.glDisableClientState(GL2ES2.GL_VERTEX_ARRAY);
+			}
 			//gl.glDisableClientState(GL2ES2.GL_COLOR_ARRAY);
-		}
-
-		if ((vformat & GeometryArray.COORDINATES) != 0)
-		{
-			//gl.glEnableClientState(GL2ES2.GL_VERTEX_ARRAY);
-		}
-		else
-		{
 			//gl.glDisableClientState(GL2ES2.GL_VERTEX_ARRAY);
-		}
-		//gl.glDisableClientState(GL2ES2.GL_COLOR_ARRAY);
-		//gl.glDisableClientState(GL2ES2.GL_VERTEX_ARRAY);
-		//gl.glDisableClientState(GL2ES2.GL_NORMAL_ARRAY);
+			//gl.glDisableClientState(GL2ES2.GL_NORMAL_ARRAY);*/
 	}
 
 	// called by the 2 executes above
