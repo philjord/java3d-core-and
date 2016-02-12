@@ -262,7 +262,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean ignoreVertexColors, int vcount, int vformat, int vdefined, int initialCoordIndex, FloatBuffer fverts,
 			DoubleBuffer dverts, int initialColorIndex, FloatBuffer fclrs, ByteBuffer bclrs, int initialNormalIndex, FloatBuffer norms,
 			int vertexAttrCount, int[] vertexAttrSizes, int[] vertexAttrIndices, FloatBuffer[] vertexAttrBufs, int texCoordMapLength,
-			int[] texCoordSetMap, int numActiveTexUnit, int[] texindices, int texStride, FloatBuffer[] texCoords, int cdirty, int[] sarray,
+			int[] texCoordSetMap, int numActiveTexUnit, int[] texindices, int texStride, FloatBuffer[] texCoords, int cDirty, int[] sarray,
 			int strip_len, int[] start_array)
 	{
 		JoglesContext ctx = (JoglesContext) absCtx;
@@ -313,7 +313,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						int usage = morphable ? GL2ES2.GL_STREAM_DRAW : GL2ES2.GL_STATIC_DRAW;
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
 
-						ctx.geoToCoordBuf.put(geo, bufId.intValue());
+						ctx.geoToCoordBuf.put(geo, bufId);
 
 						if (ctx.geoToCoordBuf.size() % 500 == 0)
 						{
@@ -322,10 +322,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					else
 					{
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
-						if (morphable)
+						if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+						}
 					}
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -380,7 +381,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
 
-						ctx.geoToColorBuf.put(geo, bufId.intValue());
+						ctx.geoToColorBuf.put(geo, bufId);
+					}
+					else
+					{
+						if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+						}
 					}
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -444,7 +453,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL2ES2.GL_STATIC_DRAW);
 
-						ctx.geoToNormalBuf.put(geo, bufId.intValue());
+						ctx.geoToNormalBuf.put(geo, bufId);
+					}
+					else
+					{
+						if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
+						}
 					}
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -486,11 +503,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 							gl.glGenBuffers(1, tmp2, 0);
 							bufId = new Integer(tmp2[0]);
 							bufIds.put(index, bufId);
-
-							//TODO: I just made vertex attributes static is that ok??
+							
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
 									GL2ES2.GL_STATIC_DRAW);
+						}
+						else
+						{
+							if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+							{
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+							}
 						}
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -870,11 +894,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (locs.glVertex != -1)
 				{
 					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
 
 					Integer bufId = ctx.geoToCoordBuf.get(geo);
 					if (bufId == null)
 					{
+						boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE);
+
 						int[] tmp = new int[1];
 						gl.glGenBuffers(1, tmp, 0);
 						bufId = new Integer(tmp[0]);
@@ -883,7 +908,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						int usage = morphable ? GL2ES2.GL_STREAM_DRAW : GL2ES2.GL_STATIC_DRAW;
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fverts.remaining() * Float.SIZE / 8, fverts, usage);
 
-						ctx.geoToCoordBuf.put(geo, bufId.intValue());
+						ctx.geoToCoordBuf.put(geo, bufId);
 
 						if (ctx.geoToCoordBuf.size() % 500 == 0)
 						{
@@ -892,10 +917,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					else
 					{
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						//only update is modifiable (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
-						if (morphable)
+						if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+						}
 					}
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -946,7 +972,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
 
-						ctx.geoToColorBuf.put(geo, bufId.intValue());
+						ctx.geoToColorBuf.put(geo, bufId);
+					}
+					else
+					{
+						if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+						}
 					}
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -1005,7 +1039,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL2ES2.GL_STATIC_DRAW);
 
-						ctx.geoToNormalBuf.put(geo, bufId.intValue());
+						ctx.geoToNormalBuf.put(geo, bufId);
+					}
+					else
+					{
+						if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
+						}
 					}
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -1048,10 +1090,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 							bufId = new Integer(tmp2[0]);
 							bufIds.put(index, bufId);
 
-							//TODO: I just made vertex attributes static is that ok??
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
 									GL2ES2.GL_STATIC_DRAW);
+						}
+						else
+						{
+							if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+							{
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+							}
 						}
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
@@ -1126,11 +1175,31 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
 						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
-						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+						//gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 						offset += count;
 					}
 
 					ctx.geoToIndStripBuf.put(geo, stripInd);
+				}
+				else
+				{
+					if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
+					{
+						int offset = initialIndexIndex;
+						IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
+						for (int i = 0; i < strip_len; i++)
+						{
+							indicesBuffer.position(offset);
+							int count = sarray[i];
+							int indBufId = stripInd[i];
+
+							gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
+							gl.glBufferSubData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0, count * Integer.SIZE / 8, indicesBuffer);
+							//gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+							offset += count;
+						}
+					 
+					}
 				}
 
 				for (int i = 0; i < strip_len; i++)
@@ -1142,11 +1211,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
 					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_INT, 0);
-					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+					//gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 					if (OUTPUT_PER_FRAME_STATS)
 						joglesctx.perFrameStats.glDrawElements++;
 				}
+				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 			}
 			else
@@ -1165,9 +1235,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 					indexBufId = new Integer(tmp[0]);
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
 					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
-					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+					//gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 					ctx.geoToIndBuf.put(geo, indexBufId);
 
+				}
+				else
+				{
+					if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
+					{
+						IntBuffer indBuf = IntBuffer.wrap(indexCoord);
+						indBuf.position(initialIndexIndex);
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, indexBufId.intValue());
+						gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, indBuf.remaining() * Integer.SIZE / 8, indBuf);
+					}
 				}
 
 				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
@@ -3730,14 +3810,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// the glPixelTransferf alpha madness which I don't understand can be deleted along with the texture formats
 		// the other look like they are ok, though the supported compressed will be different
 
-		int format = 0, internalFormat = 0;
-		int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
-		boolean forceAlphaToOne = false;
+		/*	from ES2 spec
+		  format
+		    Specifies the format of the pixel data.
+		    The following symbolic values are accepted:
+		    GL_ALPHA,
+		    GL_RGB,
+		    GL_RGBA,
+		    GL_LUMINANCE, and
+		    GL_LUMINANCE_ALPHA.
+		type
+		    Specifies the data type of the pixel data.
+		    The following symbolic values are accepted:
+		    GL_UNSIGNED_BYTE,
+		    GL_UNSIGNED_SHORT_5_6_5,
+		    GL_UNSIGNED_SHORT_4_4_4_4, and
+		    GL_UNSIGNED_SHORT_5_5_5_1.*/
+
+		int internalFormat = 0;
 
 		switch (textureFormat)
 		{
 		case Texture.INTENSITY:
-			internalFormat = GL2.GL_INTENSITY;
+			new Throwable("Texture.INTENSITY not supported").printStackTrace();
+			//internalFormat = GL2.GL_INTENSITY;
 			break;
 		case Texture.LUMINANCE:
 			internalFormat = GL2ES2.GL_LUMINANCE;
@@ -3771,6 +3867,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// should default to false
 			//gl.glTexParameteri(target, GL2ES2.GL_GENERATE_MIPMAP, GL2ES2.GL_FALSE);
 		}
+
+		int format = 0;
 
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
@@ -3886,6 +3984,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
 		{
 
+			//FIXME: I suspect I will only support byte buffer images so perhaps the INT type can be deprecated?
+			System.out.println("IMAGE_DATA_TYPE_INT_ in use!");
+			int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
+			boolean forceAlphaToOne = false;
 			switch (imageFormat)
 			{
 			/* GL_BGR */
@@ -3955,10 +4057,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// glPixelStorei does not accept GL_UNPACK_ROW_LENGTH
 		// alpha stuff gone just comment away
 
-		int format = 0, internalFormat = 0;
-		int numBytes = 0;
-		int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
-		boolean forceAlphaToOne = false;
 		boolean pixelStore = false;
 
 		//FIXME:
@@ -3974,10 +4072,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//gl.glPixelStorei(GL2ES2.GL_UNPACK_ROW_LENGTH, tilew);
 		}
 
+		int internalFormat = 0;
+
 		switch (textureFormat)
 		{
 		case Texture.INTENSITY:
-			internalFormat = GL2.GL_INTENSITY;
+			//internalFormat = GL2.GL_INTENSITY;
+			new Throwable("Texture.INTENSITY not supported").printStackTrace();
 			break;
 		case Texture.LUMINANCE:
 			internalFormat = GL2ES2.GL_LUMINANCE;
@@ -4001,6 +4102,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
 		{
+			int format = 0;
+			int numBytes = 0;
 
 			switch (imageFormat)
 			{
@@ -4073,7 +4176,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
 		{
-
+			int format = 0;
+			int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
+			boolean forceAlphaToOne = false;
 			switch (imageFormat)
 			{
 			/* GL_BGR */
@@ -4192,41 +4297,41 @@ class JoglesPipeline extends JoglesDEPPipeline
 		case Texture.BASE_LEVEL_LINEAR:
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER, GL2ES2.GL_LINEAR);
 			break;
-		case Texture.LINEAR_SHARPEN:
-			// We should never get here as we've disabled the TEXTURE_SHARPEN feature
-			//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_LINEAR_SHARPEN_SGIS);
-			break;
-		case Texture.LINEAR_SHARPEN_RGB:
-			// We should never get here as we've disabled the TEXTURE_SHARPEN feature
-			//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_LINEAR_SHARPEN_COLOR_SGIS);
-			break;
-		case Texture.LINEAR_SHARPEN_ALPHA:
-			// We should never get here as we've disabled the TEXTURE_SHARPEN feature
-			//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_LINEAR_SHARPEN_ALPHA_SGIS);
-			break;
-		case Texture2D.LINEAR_DETAIL:
-			// We should never get here as we've disabled the TEXTURE_DETAIL feature
-			//            	gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_LINEAR_DETAIL_SGIS);
-			break;
-		case Texture2D.LINEAR_DETAIL_RGB:
-			// We should never get here as we've disabled the TEXTURE_DETAIL feature
-			//            	gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_LINEAR_DETAIL_COLOR_SGIS);
-			break;
-		case Texture2D.LINEAR_DETAIL_ALPHA:
-			// We should never get here as we've disabled the TEXTURE_DETAIL feature
-			//            	gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_LINEAR_DETAIL_ALPHA_SGIS);
-			break;
-		case Texture.FILTER4:
-			// We should never get here as we've disabled the FILTER4 feature
-			//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
-			//                        GL2ES2.GL_FILTER4_SGIS);
-			break;
+		/*		case Texture.LINEAR_SHARPEN:
+					// We should never get here as we've disabled the TEXTURE_SHARPEN feature
+					//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_LINEAR_SHARPEN_SGIS);
+					break;
+				case Texture.LINEAR_SHARPEN_RGB:
+					// We should never get here as we've disabled the TEXTURE_SHARPEN feature
+					//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_LINEAR_SHARPEN_COLOR_SGIS);
+					break;
+				case Texture.LINEAR_SHARPEN_ALPHA:
+					// We should never get here as we've disabled the TEXTURE_SHARPEN feature
+					//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_LINEAR_SHARPEN_ALPHA_SGIS);
+					break;
+				case Texture2D.LINEAR_DETAIL:
+					// We should never get here as we've disabled the TEXTURE_DETAIL feature
+					//            	gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_LINEAR_DETAIL_SGIS);
+					break;
+				case Texture2D.LINEAR_DETAIL_RGB:
+					// We should never get here as we've disabled the TEXTURE_DETAIL feature
+					//            	gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_LINEAR_DETAIL_COLOR_SGIS);
+					break;
+				case Texture2D.LINEAR_DETAIL_ALPHA:
+					// We should never get here as we've disabled the TEXTURE_DETAIL feature
+					//            	gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_LINEAR_DETAIL_ALPHA_SGIS);
+					break;
+				case Texture.FILTER4:
+					// We should never get here as we've disabled the FILTER4 feature
+					//                gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER,
+					//                        GL2ES2.GL_FILTER4_SGIS);
+					break;*/
 		}
 	}
 
@@ -4239,7 +4344,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// amazingly this should be fine at top
 		//except the R gear at bottom and boundary color
 		// but I'm dropping 3dtexture support so no probs and who cares about boundary color
-		// FIXME: CLAMP_TO_BOUNDARY is gone so now just set as GL_CLAMP_TO_EDGE
+		// FIXME: CLAMP_TO_BOUNDARYand GL_CLAMP are gone so now just set as GL_CLAMP_TO_EDGE
 		//GL_MIRRORED_REPEAT needs to be added
 
 		// set texture wrap parameter
@@ -4249,13 +4354,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_REPEAT);
 			break;
 		case Texture.CLAMP:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
 			break;
 		case Texture.CLAMP_TO_EDGE:
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
 			break;
 		case Texture.CLAMP_TO_BOUNDARY:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP_TO_EDGE);
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
 			break;
 		}
 
@@ -4265,13 +4370,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_REPEAT);
 			break;
 		case Texture.CLAMP:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP);
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
 			break;
 		case Texture.CLAMP_TO_EDGE:
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
 			break;
 		case Texture.CLAMP_TO_BOUNDARY:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2.GL_CLAMP_TO_EDGE);
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
 			break;
 		}
 
@@ -4311,40 +4416,40 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}*/
 	}
 
-	private static final String getFilterName(int filter)
-	{
-		switch (filter)
+	/*	private static final String getFilterName(int filter)
 		{
-		case Texture.FASTEST:
-			return "Texture.FASTEST";
-		case Texture.NICEST:
-			return "Texture.NICEST";
-		case Texture.BASE_LEVEL_POINT:
-			return "Texture.BASE_LEVEL_POINT";
-		case Texture.BASE_LEVEL_LINEAR:
-			return "Texture.BASE_LEVEL_LINEAR";
-		case Texture.MULTI_LEVEL_POINT:
-			return "Texture.MULTI_LEVEL_POINT";
-		case Texture.MULTI_LEVEL_LINEAR:
-			return "Texture.MULTI_LEVEL_LINEAR";
-		case Texture.FILTER4:
-			return "Texture.FILTER4";
-		case Texture.LINEAR_SHARPEN:
-			return "Texture.LINEAR_SHARPEN";
-		case Texture.LINEAR_SHARPEN_RGB:
-			return "Texture.LINEAR_SHARPEN_RGB";
-		case Texture.LINEAR_SHARPEN_ALPHA:
-			return "Texture.LINEAR_SHARPEN_ALPHA";
-		case Texture2D.LINEAR_DETAIL:
-			return "Texture.LINEAR_DETAIL";
-		case Texture2D.LINEAR_DETAIL_RGB:
-			return "Texture.LINEAR_DETAIL_RGB";
-		case Texture2D.LINEAR_DETAIL_ALPHA:
-			return "Texture.LINEAR_DETAIL_ALPHA";
-		default:
-			return "(unknown)";
-		}
-	}
+			switch (filter)
+			{
+			case Texture.FASTEST:
+				return "Texture.FASTEST";
+			case Texture.NICEST:
+				return "Texture.NICEST";
+			case Texture.BASE_LEVEL_POINT:
+				return "Texture.BASE_LEVEL_POINT";
+			case Texture.BASE_LEVEL_LINEAR:
+				return "Texture.BASE_LEVEL_LINEAR";
+			case Texture.MULTI_LEVEL_POINT:
+				return "Texture.MULTI_LEVEL_POINT";
+			case Texture.MULTI_LEVEL_LINEAR:
+				return "Texture.MULTI_LEVEL_LINEAR";
+			case Texture.FILTER4:
+				return "Texture.FILTER4";
+			case Texture.LINEAR_SHARPEN:
+				return "Texture.LINEAR_SHARPEN";
+			case Texture.LINEAR_SHARPEN_RGB:
+				return "Texture.LINEAR_SHARPEN_RGB";
+			case Texture.LINEAR_SHARPEN_ALPHA:
+				return "Texture.LINEAR_SHARPEN_ALPHA";
+			case Texture2D.LINEAR_DETAIL:
+				return "Texture.LINEAR_DETAIL";
+			case Texture2D.LINEAR_DETAIL_RGB:
+				return "Texture.LINEAR_DETAIL_RGB";
+			case Texture2D.LINEAR_DETAIL_ALPHA:
+				return "Texture.LINEAR_DETAIL_ALPHA";
+			default:
+				return "(unknown)";
+			}
+		}*/
 
 	// mapping from java enum to gl enum
 	private static final int[] _gl_textureCubeMapFace = { GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
@@ -4924,15 +5029,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_MULTI_TEXTURE;
 			cv.multiTexAccelerated = true;
 			int[] tmp = new int[1];
-			gl.glGetIntegerv(GL2.GL_MAX_TEXTURE_UNITS, tmp, 0);
+			gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_IMAGE_UNITS, tmp, 0);
 			cv.maxTextureUnits = tmp[0];
 			cv.maxTexCoordSets = cv.maxTextureUnits;
-			if (gl.isExtensionAvailable("GL_ARB_vertex_shader"))
-			{
-				gl.glGetIntegerv(GL2.GL_MAX_TEXTURE_COORDS_ARB, tmp, 0);
-				cv.maxTexCoordSets = tmp[0];
-			}
-
 		}
 
 		//Combine function gone as shader not FFP
@@ -5232,21 +5331,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// experiments seem like dropping push/pop is ok now nothing uses it now
 
 		// Mask of which buffers to clear, this always includes color & depth
-		int clearMask = GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_COLOR_BUFFER_BIT;
+		int clearMask = GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT;
 
+		//NOTE stencil also always cleared
 		// Issue 239 - clear stencil if specified
-		if (clearStencil)
-		{
-			//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT);
-
-			gl.glClearStencil(0);
-			gl.glStencilMask(~0);
-			clearMask |= GL2ES2.GL_STENCIL_BUFFER_BIT;
-		}
-		else
-		{
-			//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT);
-		}
+		/*	if (clearStencil)
+			{
+				//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT);
+		
+				gl.glClearStencil(0);
+				gl.glStencilMask(~0);
+				clearMask |= GL2ES2.GL_STENCIL_BUFFER_BIT;
+			}
+			else
+			{
+				//gl.glPushAttrib(GL2ES2.GL_DEPTH_BUFFER_BIT);
+			}*/
 
 		gl.glDepthMask(true);
 		gl.glClearColor(r, g, b, jctx.getAlphaClearValue());
@@ -6240,26 +6340,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			return GL_VERSION_1_3 == 1;
 		}
 
-		private int GL_EXT_multi_draw_arrays = 0;
-
-		private boolean GL_EXT_multi_draw_arrays(GL2ES2 gl)
-		{
-			if (GL_EXT_multi_draw_arrays == 0)
-				GL_EXT_multi_draw_arrays = gl.isExtensionAvailable("GL_EXT_multi_draw_arrays") ? 1 : -1;
-
-			return GL_EXT_multi_draw_arrays == 1;
-		}
-
-		private int GL_VERSION_1_4 = 0;
-
-		private boolean GL_VERSION_1_4(GL2ES2 gl)
-		{
-			if (GL_VERSION_1_4 == 0)
-				GL_VERSION_1_4 = gl.isExtensionAvailable("GL_VERSION_1_4") ? 1 : -1;
-
-			return GL_VERSION_1_4 == 1;
-		}
-
 		private int GL_EXT_abgr = 0;
 
 		private boolean GL_EXT_abgr(GL2ES2 gl)
@@ -6279,6 +6359,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			return GL_ARB_imaging == 1;
 		}
+
 	}
 
 	// Methods to get actual capabilities from Canvas3D

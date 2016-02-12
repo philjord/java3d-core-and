@@ -11,14 +11,21 @@ import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector4d;
 
+import com.jogamp.common.GlueGenVersion;
+import com.jogamp.common.util.VersionUtil;
 import com.jogamp.newt.opengl.GLWindow;
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.JoglVersion;
 
 import java2.awt.GraphicsConfiguration;
 import java2.awt.GraphicsDevice;
 import javaawt.Dimension;
 import javaawt.Point;
+import jogamp.common.os.PlatformPropsImpl;
 
 /**
  * The Canvas3D class provides a drawing canvas for 3D rendering.  It
@@ -878,6 +885,9 @@ public class Canvas3D //extends Canvas
 	{
 
 		//super(null);
+		
+		// only uncomment to discover props
+		//displayGLVersionInfo();
 
 		final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
 		final GLCapabilities cap = new GLCapabilities(pro);
@@ -4651,4 +4661,64 @@ public class Canvas3D //extends Canvas
 		return this.graphicsConfiguration;
 	}
 
+	private void displayGLVersionInfo()
+	{
+		final String info1 = "JOGL Version Info" + PlatformPropsImpl.NEWLINE + VersionUtil.getPlatformInfo() + PlatformPropsImpl.NEWLINE
+				+ GlueGenVersion.getInstance() + PlatformPropsImpl.NEWLINE + JoglVersion.getInstance() + PlatformPropsImpl.NEWLINE;
+		System.out.println(info1);
+
+		final GLProfile glp;
+		if (GLProfile.isAvailable(GLProfile.GL2ES2))
+		{
+			glp = GLProfile.get(GLProfile.GL2ES2);
+		}
+		else if (GLProfile.isAvailable(GLProfile.GL2ES1))
+		{
+			glp = GLProfile.get(GLProfile.GL2ES1);
+		}
+		else
+		{
+			glp = null;
+			System.out.println("No GLProfile GL2ES2 nor GL2ES1 available!");
+		}
+		if (null != glp)
+		{
+			// create GLWindow (-> incl. underlying NEWT Display, Screen & Window)
+			final GLCapabilities caps = new GLCapabilities(glp);
+			final GLWindow glWindow = GLWindow.create(caps);
+			glWindow.setUndecorated(true);
+			glWindow.setSize(32, 32);
+			glWindow.setPosition(0, 0);
+
+			glWindow.addGLEventListener(new GLEventListener() {
+				public void init(final GLAutoDrawable drawable)
+				{
+					final GL gl = drawable.getGL();
+					final StringBuilder sb = new StringBuilder();
+					sb.append(JoglVersion.getGLInfo(gl, null, true)).append(PlatformPropsImpl.NEWLINE);
+					sb.append("Requested: ").append(PlatformPropsImpl.NEWLINE);
+					sb.append(drawable.getNativeSurface().getGraphicsConfiguration().getRequestedCapabilities())
+							.append(PlatformPropsImpl.NEWLINE).append(PlatformPropsImpl.NEWLINE);
+					sb.append("Chosen: ").append(PlatformPropsImpl.NEWLINE);
+					sb.append(drawable.getChosenGLCapabilities()).append(PlatformPropsImpl.NEWLINE).append(PlatformPropsImpl.NEWLINE);
+					final String info2 = sb.toString();
+					// Log.d(MD.TAG, info2); // too big!
+					System.out.println(info2);
+				}
+
+				public void reshape(final GLAutoDrawable drawable, final int x, final int y, final int width, final int height)
+				{
+				}
+
+				public void display(final GLAutoDrawable drawable)
+				{
+				}
+
+				public void dispose(final GLAutoDrawable drawable)
+				{
+				}
+			});
+			glWindow.setVisible(true);
+		}
+	}
 }
