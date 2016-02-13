@@ -412,17 +412,18 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 	if (this.refCount <= 0) {
 	    isShared = false;
 	}
-	
-		//FIXME: big ugly hack for buffers
+	 	//FIXME: PJPJPJ big ugly hack for buffers
 		//This looks like a good indicator of being disposed
 		for(Context ctx: ctxExecutedOn)
+		{			
 			((JoglesPipeline)Pipeline.getPipeline()).registerClearBuffers(ctx, this);
+		}
 		
 		ctxExecutedOn.clear();
     }
     
-    //FIXME: big ugly hack for buffers
-    private HashSet<Context> ctxExecutedOn = new HashSet<Context>();
+    //FIXME: PJPJPJ big ugly hack for buffers
+    protected HashSet<Context> ctxExecutedOn = new HashSet<Context>();
 
     @Override
     void computeBoundingBox() {
@@ -2209,7 +2210,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 		 int screen,
                  boolean ignoreVertexColors) {
 
-    	//FIXME: big ugly hack for buffers
+    	//FIXME: PJPJPJ big ugly hack for buffers
     	ctxExecutedOn.add(cv.ctx);
     	
     	

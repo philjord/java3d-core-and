@@ -269,8 +269,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 				vertexAttrSizes, vertexAttrBufs);
 
 		//Don't do a draw as it will stutter the GPU if buffers are being loaded
-		if (buffersLoaded)
-			return;
+		// looks bad, need the view frustum to be oversized or something so there is a tiny preload
+	//	if (buffersLoaded)
+	//		return;
 
 		setFFPAttributes(ctx, gl, geo, numActiveTexUnit);
 
@@ -837,8 +838,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					vertexAttrSizes, vertexAttrBufs);
 
 			//Don't do a draw as it will stutter the GPU if buffers are being loaded
-			if (buffersLoaded)
-				return;
+			//if (buffersLoaded)
+			//	return;
 
 			// wild debug code, don't forget sop in swapBufers
 			//System.out.println("Geo drawing " + geo.source.getName());
