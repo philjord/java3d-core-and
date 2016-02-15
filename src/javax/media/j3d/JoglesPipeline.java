@@ -270,8 +270,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		//Don't do a draw as it will stutter the GPU if buffers are being loaded
 		// looks bad, need the view frustum to be oversized or something so there is a tiny preload
-	//	if (buffersLoaded)
-	//		return;
+		//	if (buffersLoaded)
+		//		return;
 
 		setFFPAttributes(ctx, gl, geo, numActiveTexUnit);
 
@@ -455,7 +455,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						
+
 						//ctx.vertexAttrPointer(gl, i, sz, GL2ES2.GL_FLOAT, 0, vertexAttrs, geo);
 						//ctx.enableVertexAttrArray(gl, i);
 
@@ -471,9 +471,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 							new Throwable("Buffer load issue!").printStackTrace();
 						}
 						else
-						{							
+						{
 							int sz = vertexAttrSizes[index];
-							
+
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 							//a good cDirty and a DYNAMIC_DRAW call needed
 							/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
@@ -482,11 +482,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 								vertexAttrs.position(0);
 								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
 							}*/
-							
+
 							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
 							gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
 							// is this ok? gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, 0);
-						}						
+						}
 					}
 				}
 			}
@@ -3982,39 +3982,34 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				break;
 			///////////////////////////////////////////////////PJPJPJ////////////////////
-			//DXT              
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-				internalFormat = GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-				break;
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-				internalFormat = GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-				break;
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-				internalFormat = GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-				break;
-			case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
-				//TODO: note not available on ES2 or ES3
-				//http://tech-artists.org/wiki/Normal_map_compression
-				//https://www.opengl.org/discussion_boards/showthread.php/167670-DXT5n
-				//Apparently LATC2 is what it's called now ATI2N was ATI cards only name
-				internalFormat = GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
-				//vec4 normalMap1 = texture2D( NormalMap, offset );
-				//swizzle the alpha and green  
-				//vec4 normalMap = vec4( normalMap1.ag * 2.0 - 1.0, 0.0, 0.0 );  
-				//re-create the z  
-				//normalMap.z = sqrt( 1.0 - dot( normalMap.xy, normalMap.xy ) ); 	
-				break;
-			case GL2.GL_RGBA_S3TC:
-				internalFormat = GL2.GL_RGBA_S3TC;
-				format = GL2ES2.GL_RGBA;
+			//DXT    
 
-				break;
+			// notice fall through
+			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+			case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+			case GL2.GL_RGBA_S3TC:
 			case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
-				//GL3.GL_COMPRESSED_RGBA8_ETC2:
-				//GL3.GL_COMPRESSED_SRGBA8_ETC2:
-				//Is this the ETC2 format support?
+				//ASTC
+			case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_5x4_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_5x5_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_6x5_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_6x6_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_8x5_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_8x6_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_8x8_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_10x5_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_10x6_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_10x8_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_10x10_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_12x10_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR:
+				internalFormat = imageFormat;
+				format = -1;// indicate compressed
 				break;
-			///////////////////////////////////////////////////PJPJPJ////////////////////
+			/////////////////////////////////////PJPJPJ//////////////////////////////
 			case ImageComponentRetained.TYPE_USHORT_GRAY:
 			case ImageComponentRetained.TYPE_INT_BGR:
 			case ImageComponentRetained.TYPE_INT_RGB:
@@ -4033,10 +4028,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				//////////////////////////////////////////////PJPJPJPJPJPJ//////////////////////////////////////
 				//DXT
-				if (internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT //
-						|| internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT //
-						|| internalFormat == GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT //
-						|| internalFormat == GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT)
+				if (format == -1)
 				{
 					//DXT
 					ByteBuffer bb = (ByteBuffer) data;
@@ -4127,7 +4119,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// glPixelStorei does not accept GL_UNPACK_ROW_LENGTH
 		// alpha stuff gone just comment away
 
-		boolean pixelStore = false;
+		//boolean pixelStore = false;
 
 		//FIXME:
 		//One value affects the packing of pixel data into memory:
@@ -4137,7 +4129,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (imgXOffset > 0 || (width < tilew))
 		{
-			pixelStore = true;
+			//pixelStore = true;
 			new Throwable("forceAlphaToOne").printStackTrace();
 			//gl.glPixelStorei(GL2ES2.GL_UNPACK_ROW_LENGTH, tilew);
 		}
@@ -4313,7 +4305,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		//FIXME: this is not allowed, see above where it is set
-		if (pixelStore)
+		//if (pixelStore)
 		{
 			//gl.glPixelStorei(GL2ES2.GL_UNPACK_ROW_LENGTH, 0);
 		}
