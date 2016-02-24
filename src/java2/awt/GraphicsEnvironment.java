@@ -1,8 +1,5 @@
 package java2.awt;
 
-import java.util.List;
-
-import com.jogamp.newt.MonitorDevice;
 import com.jogamp.newt.Window;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.GLCapabilities;
@@ -30,13 +27,7 @@ public class GraphicsEnvironment
 		if (upObj instanceof Window)
 		{
 			Window upWin = (Window) upObj;
-			MonitorDevice mm = upWin.getMainMonitor();
-			List<MonitorDevice> mds = mm.getScreen().getMonitorDevices();
-			GraphicsDevice[] ret = new GraphicsDevice[mds.size()];
-			int i = 0;
-			for (MonitorDevice md : mds)
-				ret[i++] = new GraphicsDevice(md);
-			return ret;
+			return new GraphicsDevice[] { new GraphicsDevice(upWin.getScreen()) };
 		}
 		else
 		{
@@ -59,8 +50,7 @@ public class GraphicsEnvironment
 		if (upObj instanceof Window)
 		{
 			Window upWin = (Window) upObj;
-			MonitorDevice mm = upWin.getMainMonitor();
-			return new GraphicsDevice(mm.getScreen().getPrimaryMonitor());
+			return new GraphicsDevice(upWin.getScreen());
 		}
 		else
 		{

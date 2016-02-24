@@ -1,27 +1,24 @@
 package java2.awt;
 
-import com.jogamp.newt.MonitorDevice;
-
-import java2.awt.DisplayMode;
-import java2.awt.GraphicsConfiguration;
+import com.jogamp.newt.Screen;
 
 public class GraphicsDevice
 {
-	private MonitorDevice monitorDevice;
+	private Screen screen;
 
-	public GraphicsDevice(MonitorDevice monitorDevice)
+	public GraphicsDevice(Screen screen)
 	{
-		this.monitorDevice = monitorDevice;
+		this.screen = screen;
 	}
 
 	public String getIDstring()
 	{
-		return monitorDevice.getScreen().getFQName();
+		return screen.getFQName();
 	}
 
 	public DisplayMode getDisplayMode()
 	{		
-		return new DisplayMode(monitorDevice.getScreen());
+		return new DisplayMode(screen);
 	}
 
 	public void setFullScreenWindow(Object object)

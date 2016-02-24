@@ -18,12 +18,12 @@ import javax.vecmath.Matrix4d;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.nativewindow.NativeWindowFactory;
-import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
-import com.jogamp.nativewindow.awt.JAWTWindow;
+
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawable;
@@ -63,8 +63,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	void initialize(Pipeline.Type pipelineType)
 	{
 		super.initialize(pipelineType);
-
-		assert pipelineType == Pipeline.Type.JOGL;
 
 		// Java3D maintains strict control over which threads perform OpenGL work
 		Threading.disableSingleThreading();
@@ -260,38 +258,39 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int strip_len, int[] start_array)
 	{
 		JoglesContext ctx = (JoglesContext) absCtx;
-		GL2ES2 gl = ctx.gl2es2();
-		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		LocationData locs = getLocs(ctx, gl, geo);
-
-		//If any buffers need loading do that now and skip a render for this frame
-		boolean buffersLoaded = loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
-				vertexAttrSizes, vertexAttrBufs);
-
-		//Don't do a draw as it will stutter the GPU if buffers are being loaded
-		// looks bad, need the view frustum to be oversized or something so there is a tiny preload
-		//	if (buffersLoaded)
-		//		return;
-
-		setFFPAttributes(ctx, gl, geo, numActiveTexUnit);
-
-		boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
-		boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
-		boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
-		boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
-		boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
-		boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
-		boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
-
-		// Enable normalize for non-uniform scale (which rescale can't handle)
-		// not used when a shader is active
-		/*if (isNonUniformScale)
-		{			
-			//gl.glEnable(GL2ES2.GL_NORMALIZE);
-		}*/
-
+		
 		if (ctx.getShaderProgram() != null)
 		{
+			GL2ES2 gl = ctx.gl2es2();
+			//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+			LocationData locs = getLocs(ctx, gl, geo);
+
+			//If any buffers need loading do that now and skip a render for this frame
+			boolean buffersLoaded = loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
+					vertexAttrSizes, vertexAttrBufs);
+
+			//Don't do a draw as it will stutter the GPU if buffers are being loaded
+			// looks bad, need the view frustum to be oversized or something so there is a tiny preload
+			//	if (buffersLoaded)
+			//		return;
+
+			setFFPAttributes(ctx, gl, geo, numActiveTexUnit);
+
+			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
+			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
+			boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
+			boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
+			boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
+			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
+			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
+
+			// Enable normalize for non-uniform scale (which rescale can't handle)
+			// not used when a shader is active
+			/*if (isNonUniformScale)
+			{			
+				//gl.glEnable(GL2ES2.GL_NORMALIZE);
+			}*/
+
 			// Define the data pointers
 			if (floatCoordDefined)
 			{
@@ -3982,14 +3981,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				break;
 			///////////////////////////////////////////////////PJPJPJ////////////////////
-			//DXT    
-
+			//DXT   uncompressed D3DFMT_A8R8G8B8 indicator
+			case GL2.GL_RGBA_S3TC:
+				internalFormat = imageFormat;
+				format = GL2ES2.GL_RGBA;
+				;
+				break;
 			// notice fall through
+			//DXT    
 			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
 			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
 			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 			case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
-			case GL2.GL_RGBA_S3TC:
 			case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
 				//ASTC
 			case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
@@ -5051,6 +5054,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//Used by createNewContext above
 	private static int[] extractVersionInfo(String versionString)
 	{
+		//FIXME: use the second flash regex system to get the first number out
+		//examples
+		//OpenGL ES 3.0 V@136.0 AU@ (GIT@I3fa967cfef)
+		//4.5.0 NVIDIA 353.82
+		System.err.println("versionString: " + versionString);
+		if (versionString.startsWith("OpenGL ES "))
+			versionString = versionString.substring("OpenGL ES ".length());
 		StringTokenizer tok = new StringTokenizer(versionString, ". ");
 		int major = Integer.valueOf(tok.nextToken()).intValue();
 		int minor = Integer.valueOf(tok.nextToken()).intValue();
@@ -5146,7 +5156,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (!hasgl13)
 			return;
 
-		if (gl.isExtensionAvailable("GL_ARB_shader_objects") && gl.isExtensionAvailable("GL_ARB_shading_language_100"))
+		if ((gl.isExtensionAvailable("GL_ARB_shader_objects") //
+				&& gl.isExtensionAvailable("GL_ARB_shading_language_100")) //
+				|| gl.isExtensionAvailable("GL_AMD_program_binary_Z400"))
 		{
 
 			// FIXME: this isn't complete and would need to set up the
@@ -5451,9 +5463,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.swapBuffers()");
-		GLDrawable draw = drawable(drawable);
 
-		draw.swapBuffers();
+		GLDrawable draw = drawable(drawable);
+		draw.swapBuffers();		    
 	}
 
 	// The native method that sets this ctx to be the current one
@@ -5743,46 +5755,51 @@ class JoglesPipeline extends JoglesDEPPipeline
 		
 			cv.drawable = new JoglDrawable(glDrawable, nativeWindow);
 			*/
+
 		cv.drawable = new JoglDrawable(glDrawable, null);
 
 		// assuming that this only gets called after addNotify has been called
-		glDrawable.setRealized(true);
+		if (!glDrawable.isRealized())
+		{
+			glDrawable.setRealized(true);
+		}
 
 		// Apparently we are supposed to make the context current at this point
 		// and set up a bunch of properties
 
+		 
 		glContext.makeCurrent();
-		/*
+
 		// Work around for some low end graphics driver bug, such as Intel Chipset.
 		// Issue 324 : Lockup J3D program and throw exception using JOGL renderer
-		boolean failed = false;
-		int failCount = 0;
-		int MAX_FAIL_COUNT = 5;
-		do
-		{
-			failed = false;
-			int res = glContext.makeCurrent();
-			if (res == GLContext.CONTEXT_NOT_CURRENT)
-			{
-				// System.err.println("makeCurrent fail : " + failCount);
-				failed = true;
-				++failCount;
-				try
+		/*		boolean failed = false;
+				int failCount = 0;
+				int MAX_FAIL_COUNT = 5;
+				do
 				{
-					Thread.sleep(100);
+					failed = false;
+					int res = glContext.makeCurrent();
+					if (res == GLContext.CONTEXT_NOT_CURRENT)
+					{
+						// System.err.println("makeCurrent fail : " + failCount);
+						failed = true;
+						++failCount;
+						try
+						{
+							Thread.sleep(100);
+						}
+						catch (InterruptedException e)
+						{
+						}
+					}
 				}
-				catch (InterruptedException e)
-				{
-				}
-			}
-		}
-		while (failed && (failCount < MAX_FAIL_COUNT));
+				while (failed && (failCount < MAX_FAIL_COUNT));
 		
-		if (failCount == MAX_FAIL_COUNT)
-		{
-			throw new IllegalRenderingStateException("Unable to make new context current after " + failCount + "tries");
-		}
-		*/
+				if (failCount == MAX_FAIL_COUNT)
+				{
+					throw new IllegalRenderingStateException("Unable to make new context current after " + failCount + "tries");
+				}*/
+
 		GL2ES2 gl = glContext.getGL().getGL2ES2();
 
 		//New context that stores information about current render pass		
@@ -5857,175 +5874,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	@Override
 	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.createNewContext()");
-
-		GLDrawable glDrawable = null;
-		GLContext glContext = null;
-
-		if (offScreen)
-		{
-			throw new UnsupportedOperationException("Off screen not supported");
-			//glDrawable = drawable(cv.drawable); // cv.drawable != null, set in 'createOffScreenBuffer'
-			//glContext = glDrawable.createContext(context(shareCtx));
-		}
-		else
-		{
-			// determined in 'getBestConfiguration'
-			GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(cv.graphicsConfiguration);
-			AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
-
-			// JAWTWindow
-			JAWTWindow nativeWindow = (JAWTWindow) NativeWindowFactory.getNativeWindow(cv, awtConfig);
-			nativeWindow.lockSurface();
-			try
-			{
-				glDrawable = GLDrawableFactory.getFactory(profile).createGLDrawable(nativeWindow);
-				glContext = glDrawable.createContext(context(shareCtx));
-			}
-			finally
-			{
-				nativeWindow.unlockSurface();
-			}
-
-			cv.drawable = new JoglDrawable(glDrawable, nativeWindow);
-		}
-
-		// assuming that this only gets called after addNotify has been called
-		glDrawable.setRealized(true);
-
-		// Apparently we are supposed to make the context current at this point
-		// and set up a bunch of properties
-
-		// Work around for some low end graphics driver bug, such as Intel Chipset.
-		// Issue 324 : Lockup J3D program and throw exception using JOGL renderer
-		boolean failed = false;
-		int failCount = 0;
-		int MAX_FAIL_COUNT = 5;
-		do
-		{
-			failed = false;
-			int res = glContext.makeCurrent();
-			if (res == GLContext.CONTEXT_NOT_CURRENT)
-			{
-				// System.err.println("makeCurrent fail : " + failCount);
-				failed = true;
-				++failCount;
-				try
-				{
-					Thread.sleep(100);
-				}
-				catch (InterruptedException e)
-				{
-				}
-			}
-		}
-		while (failed && (failCount < MAX_FAIL_COUNT));
-
-		if (failCount == MAX_FAIL_COUNT)
-		{
-			throw new IllegalRenderingStateException("Unable to make new context current after " + failCount + "tries");
-		}
-
-		GL2ES2 gl = glContext.getGL().getGL2ES2();
-
-		//New context that stores information about current render pass		
-		JoglesContext ctx = new JoglesContext(glContext);
-
-		//I can't find a route to hand this back so I'm just printing it out here
-		IntBuffer buff = IntBuffer.allocate(1);
-		gl.glGetIntegerv(GL2ES2.GL_DEPTH_BITS, buff);
-		if (buff.get(0) < Canvas3D.graphicsConfigTable.get(cv.graphicsConfiguration).getGraphicsConfigTemplate3D().getDepthSize())
-			System.err.println("Warning depth buffer smaller than requested: " + buff.get(0));
-
-		try
-		{
-			if (!getPropertiesFromCurrentContext(ctx, gl))
-			{
-				throw new IllegalRenderingStateException("Unable to fetch properties from current OpenGL context");
-			}
-
-			if (!isSharedCtx)
-			{
-				// Set up fields in Canvas3D
-				setupCanvasProperties(cv, ctx, gl);
-			}
-
-			// Enable rescale normal
-			//If enabled and no vertex shader is active...
-			//gl.glEnable(GL2ES2.GL_RESCALE_NORMAL);  
-
-			//The initial value is GL_AMBIENT_AND_DIFFUSE.            
-			//gl.glColorMaterial(GL2ES2.GL_FRONT_AND_BACK, GL2ES2.GL_DIFFUSE);
-			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
-			//gl.glEnable(GL2ES2.GL_COLOR_MATERIAL);//FIXME: once materials and gl_Color working
-
-			/*
-			OpenGL specs:
-			   glReadBuffer specifies a color buffer as the source for subsequent glReadPixels.
-			   This source mode is initially GL_FRONT in single-buffered and GL_BACK in double-buffered configurations.
-			
-			We leave this mode unchanged in on-screen rendering and adjust it in off-screen rendering. See below.
-			*/
-			//          gl.glReadBuffer(GL_FRONT); 		// off window, default for single-buffered non-stereo window
-
-			// Issue 417: JOGL: Mip-mapped NPOT textures rendered incorrectly
-			// J3D images are aligned to 1 byte
-			gl.glPixelStorei(GL2ES2.GL_UNPACK_ALIGNMENT, 1);
-
-			//http://filmicgames.com/archives/233 wow amazing stuff, but lighting is me so hopefully gone
-			// Workaround for issue 400: Enable separate specular by default
-			//gl.glLightModeli(GL2ES2.GL_LIGHT_MODEL_COLOR_CONTROL, GL2ES2.GL_SEPARATE_SPECULAR_COLOR);
-
-			// Mac OS X / JRE 7 : onscreen rendering = offscreen rendering
-			// bind FBO
-			if (!offScreen && glDrawable instanceof GLFBODrawable)
-			{
-				GLFBODrawable fboDrawable = (GLFBODrawable) glDrawable;
-				// bind GLFBODrawable's drawing FBObject
-				// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
-				fboDrawable.getFBObject(GL2ES2.GL_BACK).bind(gl);
-			}
-
-			// FBO or pbuffer
-			if (offScreen)
-			{
-
-				System.err.println("OFFSCREEN!!! this is disabled now!");
-				// Final caps
-				/*	GLCapabilitiesImmutable chosenCaps = glDrawable.getChosenGLCapabilities();
-				
-					// FBO
-					if (glDrawable instanceof GLFBODrawable)
-					{
-						GLFBODrawable fboDrawable = (GLFBODrawable) glDrawable;
-						// bind GLFBODrawable's drawing FBObject
-						// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
-						fboDrawable.getFBObject(GL2ES2.GL_BACK).bind(gl);
-					}
-					// pbuffer
-					else
-					{
-						// Double buffering: read from back buffer, as we don't swap
-						// Even this setting is identical to the initially mode it is set explicitly
-						
-						if (chosenCaps.getDoubleBuffered())
-						{
-							gl.glReadBuffer(GL2ES2.GL_BACK);
-						}
-						else
-						{
-							gl.glReadBuffer(GL2ES2.GL_FRONT);
-						}
-					}*/
-			}
-		}
-		finally
-		{
-			glContext.release();
-		}
-
-		return ctx;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

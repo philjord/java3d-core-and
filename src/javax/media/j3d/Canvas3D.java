@@ -899,38 +899,88 @@ public class Canvas3D //extends Canvas
 		return glwindow;
 	}
 
-	//TODO: public that accepts caps
 	//TODO: something about a headless version for just behaviors and live ness
 
 	// where you would normally add to a frame and set size and say frame.setVisible(true)
 	//canvas3D.getGLWindow().setSize()
 	//canvas3D.addNotify();
-	//canvas3D.paint(null);
+
+	public Canvas3D(GLWindow win)
+	{
+		this.glwindow = win;
+		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
+
+		// Issue 163 : Set dirty bits for both Renderer and RenderBin
+		cvDirtyMask[0] = VIEW_INFO_DIRTY;
+		cvDirtyMask[1] = VIEW_INFO_DIRTY;
+
+		requestedStencilSize = glwindow.getChosenGLCapabilities().getStencilBits();
+
+		GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
+
+		//		eventCatcher = new EventCatcher(this);
+		//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
+		canvasViewEventCatcherNewt = new CanvasViewEventCatcherNewt(this);
+
+		synchronized (VirtualUniverse.mc.deviceScreenMap)
+		{
+			screen = VirtualUniverse.mc.deviceScreenMap.get(graphicsDevice);
+
+			if (screen == null)
+			{
+				screen = new Screen3D(graphicsConfiguration, offScreen);
+				VirtualUniverse.mc.deviceScreenMap.put(graphicsDevice, screen);
+			}
+		}
+
+		lights = new LightRetained[VirtualUniverse.mc.maxLights];
+		frameCount = new int[VirtualUniverse.mc.maxLights];
+		for (int i = 0; i < frameCount.length; i++)
+		{
+			frameCount[i] = -1;
+		}
+
+		// Construct the drawing surface object for this Canvas3D
+		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
+	}
+
 	public Canvas3D()
 	{
+		this(null, null, false);
+	}
 
+	public Canvas3D(GLProfile pro, GLCapabilities cap, boolean fullscreen)
+	{
+		// allow no opts option
+		if (pro == null)
+		{
+			pro = GLProfile.get(GLProfile.GL2GL3);
+			cap = new GLCapabilities(pro);
+
+			// improved values
+			// cap.setDepthBits(24);
+			cap.setStencilBits(8);
+			cap.setSampleBuffers(true);
+
+			fullscreen = false;
+		}
 		//super(null);
-		
-		// only uncomment to discover props
-		//displayGLVersionInfo();
 
-		final GLProfile pro = GLProfile.get(GLProfile.GL2GL3);
-		final GLCapabilities cap = new GLCapabilities(pro);
+		// only uncomment to discover props
+		//displayGLVersionInfo(); 
 
 		//System.out.println("caps depth: " + cap.getDepthBits());  //  16			
 		//System.out.println("caps double buffered: " + cap.getDoubleBuffered());  // true
-		//System.out.println("caps sample buffers: " + cap.getSampleBuffers());  // false
-
-		// better values
-		// cap.setDepthBits(24);
-		cap.setStencilBits(8);
-		cap.setSampleBuffers(true);
+		//System.out.println("caps sample buffers: " + cap.getSampleBuffers());  // false		
 
 		this.glwindow = GLWindow.create(cap);
-		this.glwindow.setSize(10, 10);
-		this.glwindow.setTitle("Test GLWindow");
+		if (fullscreen)
+			this.glwindow.setFullscreen(true);
+		else
+			this.glwindow.setSize(10, 10);
+		this.glwindow.setTitle("GLWindow Canvas3D");
 		this.glwindow.setVisible(true);
-
+		this.glwindow.setRealized(true);
 		this.glwindow.getContext();
 
 		//this.glwindow.setAlwaysOnTop(true);
@@ -971,20 +1021,6 @@ public class Canvas3D //extends Canvas
 
 		// Construct the drawing surface object for this Canvas3D
 		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
-
-		// Get double buffer, stereo available, scene antialiasing
-		// flags from graphics config
-		GraphicsConfigTemplate3D.getGraphicsConfigFeatures(this);
-
-		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
-		useStereo = stereoEnable && stereoAvailable;
-		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
-
-		// Issue 131: assert that only an off-screen canvas can be demand-driven
-		// assert (!offScreen && manualRendering) == false;
-
-		// Assert that offScreen is *not* stereo
-		//  assert (offScreen && useStereo) == false;
 
 	}
 
@@ -1094,6 +1130,12 @@ public class Canvas3D //extends Canvas
 			return;
 		}
 
+		// Issue 131: assert that only an off-screen canvas can be demand-driven
+		// assert (!offScreen && manualRendering) == false;
+
+		// Assert that offScreen is *not* stereo
+		//  assert (offScreen && useStereo) == false;
+
 		Renderer rdr = null;
 
 		if (isRunning && (screen != null))
@@ -1181,11 +1223,45 @@ public class Canvas3D //extends Canvas
 		}
 
 		// get the GLWindow cranking!
-		this.glwindow.setVisible(true);
-		this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
+		if (!this.glwindow.isFullscreen())
+			this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
 		evaluateVisiblilty();
 		evaluateActive();
 		paintALike();
+
+		// Get double buffer, stereo available, scene antialiasing
+		// flags from graphics config
+
+		
+		//Can't call GraphicsConfigTemplate3D.getGraphicsConfigFeatures(this);
+		// under android as addNotify happens on display thread which is also renderer thread so it dealocks 
+		// the various calls below are the result of the getGraphicsConfigFeatures
+		// in the renderer anyway, but we know them right now, no need to wait for createContext etc
+		// see if (reqType == MasterControl.SET_GRAPHICSCONFIG_FEATURES) in Renderer class
+		
+		// --GraphicsConfigTemplate3D.getGraphicsConfigFeatures(this);
+		 
+		doubleBufferAvailable = hasDoubleBuffer();
+		stereoAvailable = hasStereo();
+
+		// Setup stencil related variables.
+		actualStencilSize = getStencilSize();
+		boolean userOwnsStencil = requestedStencilSize > 0;
+	
+		userStencilAvailable = (userOwnsStencil && (actualStencilSize > 0));
+		systemStencilAvailable = (!userOwnsStencil && (actualStencilSize > 0));
+	
+		sceneAntialiasingMultiSamplesAvailable = hasSceneAntialiasingMultisample();
+	
+		if (sceneAntialiasingMultiSamplesAvailable)
+			sceneAntialiasingAvailable = true;
+		
+		
+		
+	
+		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
+		useStereo = stereoEnable && stereoAvailable;
+		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
 
 		if (rdr != null)
 		{
@@ -1962,8 +2038,8 @@ public class Canvas3D //extends Canvas
 	 */
 	Context createNewContext(Context shareCtx, boolean isSharedCtx)
 	{
-		Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow.getDelegatedDrawable(),
-				this.glwindow.getContext(), shareCtx, isSharedCtx);
+		Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow, this.glwindow.getContext(),
+				shareCtx, isSharedCtx);
 
 		// compute the max available texture units
 		maxAvailableTextureUnits = Math.max(maxTextureUnits, maxTextureImageUnits);

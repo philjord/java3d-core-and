@@ -1,16 +1,15 @@
 package java2.awt;
 
-import com.jogamp.newt.MonitorDevice;
+import com.jogamp.newt.Screen;
 import com.jogamp.newt.Window;
 import com.jogamp.newt.opengl.GLWindow;
 
-import java2.awt.GraphicsDevice;
 import javaawt.Rectangle;
 
 public class GraphicsConfiguration
 {
 	private GLWindow win;
-	private MonitorDevice md;
+	private Screen s;
 	private GraphicsDevice d;
 
 	public GraphicsConfiguration(GLWindow win)
@@ -28,8 +27,8 @@ public class GraphicsConfiguration
 			if (upObj instanceof Window)
 			{
 				Window upWin = (Window) upObj;
-				md = upWin.getMainMonitor();
-				d = new GraphicsDevice(md);
+				s = upWin.getScreen();
+				d = new GraphicsDevice(s);
 			}
 			else
 			{
@@ -41,7 +40,7 @@ public class GraphicsConfiguration
 
 	public Rectangle getBounds()
 	{
-		return new Rectangle(0, 0, md.getScreen().getWidth(), md.getScreen().getHeight());
+		return new Rectangle(0, 0, s.getWidth(), s.getHeight());
 	}
 
 }
