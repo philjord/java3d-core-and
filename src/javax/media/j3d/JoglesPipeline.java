@@ -17,19 +17,14 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 
 import com.jogamp.common.nio.Buffers;
-import com.jogamp.nativewindow.NativeWindowFactory;
-
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
-import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawable;
-import com.jogamp.opengl.GLDrawableFactory;
 import com.jogamp.opengl.GLFBODrawable;
-import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.Threading;
 
 import java2.awt.GraphicsConfiguration;
@@ -46,7 +41,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
-	private GLProfile profile;
+	//private GLProfile profile;
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -68,7 +63,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		Threading.disableSingleThreading();
 
 		//profile = GLProfile.get(GLProfile.GL2GL3);
-		profile = GLProfile.get(GLProfile.GL2ES2);
+		//profile = GLProfile.get(GLProfile.GL2ES2);
 	}
 
 	// ---------------------------------------------------------------------
@@ -4021,6 +4016,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				assert false;
 				return;
 			}
+			
+			
 
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 			{
@@ -5058,7 +5055,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//examples
 		//OpenGL ES 3.0 V@136.0 AU@ (GIT@I3fa967cfef)
 		//4.5.0 NVIDIA 353.82
-		System.err.println("versionString: " + versionString);
+		//System.err.println("versionString: " + versionString);
 		if (versionString.startsWith("OpenGL ES "))
 			versionString = versionString.substring("OpenGL ES ".length());
 		StringTokenizer tok = new StringTokenizer(versionString, ". ");
