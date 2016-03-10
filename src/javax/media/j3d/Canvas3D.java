@@ -981,7 +981,7 @@ public class Canvas3D //extends Canvas
 		this.glwindow.setTitle("GLWindow Canvas3D");
 		this.glwindow.setVisible(true);
 		this.glwindow.setRealized(true);
-		this.glwindow.getContext();
+		//this.glwindow.getContext();
 
 		//this.glwindow.setAlwaysOnTop(true);
 		//this.glwindow.setFullscreen(true);

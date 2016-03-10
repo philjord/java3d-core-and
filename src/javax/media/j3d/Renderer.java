@@ -1461,10 +1461,11 @@ class Renderer extends J3dThread
 				// drawingSurfaceObject will safely ignore
 				// this request if this is not lock before
 				canvas.drawingSurfaceObject.unLock();
+				// Issue 260 : indicate fatal error and notify error listeners
+				canvas.setFatalError();
 			}
 
-			// Issue 260 : indicate fatal error and notify error listeners
-			canvas.setFatalError();
+			
 			RenderingError err = new RenderingError(RenderingError.UNEXPECTED_RENDERING_ERROR, J3dI18N.getString("Renderer8"));
 			err.setCanvas3D(canvas);
 			err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
