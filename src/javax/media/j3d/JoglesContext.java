@@ -178,10 +178,21 @@ public class JoglesContext extends JoglContext
 		public boolean depthBufferWriteEnable;
 		public boolean userStencilAvailable;
 		public boolean stencilEnable;
+		public boolean glDepthMask;
+		public boolean glEnableGL_STENCIL_TEST;
+		public int[] setGLSLUniform1i = new int[500];
+		public float[] setGLSLUniform1f = new float[500];
+		public boolean glEnableGL_BLEND;
+		public int glProjectionMatrixLoc;
+		public int currentProjMatInverseLoc;
+		public int currentViewMatLoc;
+		public int glActiveTexture;
+		public int glBindTextureGL_TEXTURE_2D;
+		public int currentProgramId;
 	}
 
 	public GL_State gl_state = new GL_State();
-	
+
 	//Performance issue
 	// possibly I can stop calling bind 0?
 	// maybe no call to glFinish?
@@ -364,7 +375,109 @@ public class JoglesContext extends JoglContext
 		perFrameStats.frameStartTime = System.nanoTime();
 	}
 
-	// dirty check on what useProgram does
-	public int prevProgramId;
+	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
+
+	public Matrix4d deburnV = new Matrix4d();//deburners 
+	public Matrix4d deburnM = new Matrix4d();
+	public float[] tempMat9 = new float[9];
+	public float[] tempMat16 = new float[16];
+	public double[] tempMatD9 = new double[9];
+
+	public float[] toArray(Matrix4d m)
+	{
+		return toArray(m, tempMat16);
+	}
+
+	public static float[] toArray(Matrix4d m, float[] a)
+	{
+		a[0] = (float) m.m00;
+		a[1] = (float) m.m01;
+		a[2] = (float) m.m02;
+		a[3] = (float) m.m03;
+		a[4] = (float) m.m10;
+		a[5] = (float) m.m11;
+		a[6] = (float) m.m12;
+		a[7] = (float) m.m13;
+		a[8] = (float) m.m20;
+		a[9] = (float) m.m21;
+		a[10] = (float) m.m22;
+		a[11] = (float) m.m23;
+		a[12] = (float) m.m30;
+		a[13] = (float) m.m31;
+		a[14] = (float) m.m32;
+		a[15] = (float) m.m33;
+
+		return a;
+	}
+
+	public float[] toArray(Matrix3d m)
+	{
+		return toArray(m, tempMat9);
+	}
+
+	public static float[] toArray(Matrix3d m, float[] a)
+	{
+		a[0] = (float) m.m00;
+		a[1] = (float) m.m01;
+		a[2] = (float) m.m02;
+		a[3] = (float) m.m10;
+		a[4] = (float) m.m11;
+		a[5] = (float) m.m12;
+		a[6] = (float) m.m20;
+		a[7] = (float) m.m21;
+		a[8] = (float) m.m22;
+
+		return a;
+	}
+
+	public double[] toArray3x3(Matrix4d m)
+	{
+		return toArray3x3(m, tempMatD9);
+	}
+
+	public static double[] toArray3x3(Matrix4d m, double[] a)
+	{
+		a[0] = m.m00;
+		a[1] = m.m01;
+		a[2] = m.m02;
+		a[3] = m.m10;
+		a[4] = m.m11;
+		a[5] = m.m12;
+		a[6] = m.m20;
+		a[7] = m.m21;
+		a[8] = m.m22;
+
+		return a;
+	}
+
+	private JoglesMatrixInverter matrixInverter = new JoglesMatrixInverter();
+
+	
+
+	public void invert(Matrix3d m1)
+	{
+		try
+		{
+			matrixInverter.invertGeneral3(m1, m1);
+		}
+		catch (Exception e)
+		{
+			System.err.println("matrixInverter got a failure!");
+			m1.setIdentity();
+		}
+	}
+
+	public void invert(Matrix4d m1)
+	{
+		try
+		{
+			matrixInverter.invertGeneral4(m1, m1);
+		}
+		catch (Exception e)
+		{
+			System.err.println("matrixInverter got a failure!");
+			m1.setIdentity();
+		}
+	}
 
 }

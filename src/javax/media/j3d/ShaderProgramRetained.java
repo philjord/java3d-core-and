@@ -28,7 +28,7 @@ package javax.media.j3d;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * The ShaderProgramRetained object is a component object of an AppearanceRetained
@@ -1091,12 +1091,11 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 
 		ShaderProgramId shaderProgramId = spData.getShaderProgramId();
 
-		
-		Iterator<ShaderAttributeRetained> attrs = attributeSet.getAttrs().values().iterator();
-		while (attrs.hasNext())
+		List<ShaderAttributeRetained> attributes = attributeSet.getAttrValues();
+		for (int i = 0; i < attributes.size(); i++)
 		{
+			ShaderAttributeRetained saRetained = attributes.get(i);
 			ShaderError err = null;
-			ShaderAttributeRetained saRetained = attrs.next();
 
 			// Lookup attribute info for the specified attrName; null means
 			// that the name does not appear in the ShaderProgram, so we will

@@ -914,7 +914,8 @@ public class Canvas3D //extends Canvas
 		cvDirtyMask[0] = VIEW_INFO_DIRTY;
 		cvDirtyMask[1] = VIEW_INFO_DIRTY;
 
-		requestedStencilSize = glwindow.getChosenGLCapabilities().getStencilBits();
+		if (glwindow.isRealized())
+			requestedStencilSize = glwindow.getChosenGLCapabilities().getStencilBits();
 
 		GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
 
@@ -1232,33 +1233,29 @@ public class Canvas3D //extends Canvas
 		// Get double buffer, stereo available, scene antialiasing
 		// flags from graphics config
 
-		
 		//Can't call GraphicsConfigTemplate3D.getGraphicsConfigFeatures(this);
 		// under android as addNotify happens on display thread which is also renderer thread so it dealocks 
 		// the various calls below are the result of the getGraphicsConfigFeatures
 		// in the renderer anyway, but we know them right now, no need to wait for createContext etc
 		// see if (reqType == MasterControl.SET_GRAPHICSCONFIG_FEATURES) in Renderer class
-		
+
 		// --GraphicsConfigTemplate3D.getGraphicsConfigFeatures(this);
-		 
+
 		doubleBufferAvailable = hasDoubleBuffer();
 		stereoAvailable = hasStereo();
 
 		// Setup stencil related variables.
 		actualStencilSize = getStencilSize();
 		boolean userOwnsStencil = requestedStencilSize > 0;
-	
+
 		userStencilAvailable = (userOwnsStencil && (actualStencilSize > 0));
 		systemStencilAvailable = (!userOwnsStencil && (actualStencilSize > 0));
-	
+
 		sceneAntialiasingMultiSamplesAvailable = hasSceneAntialiasingMultisample();
-	
+
 		if (sceneAntialiasingMultiSamplesAvailable)
 			sceneAntialiasingAvailable = true;
-		
-		
-		
-	
+
 		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
 		useStereo = stereoEnable && stereoAvailable;
 		useSharedCtx = VirtualUniverse.mc.isSharedCtx;

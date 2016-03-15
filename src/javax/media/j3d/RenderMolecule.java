@@ -1786,8 +1786,11 @@ class RenderMolecule extends IndexedObject implements ObjectUpdate, NodeComponen
         // include this LightBin to the to-be-updated list in Canvas
         cv.setStateToUpdate(Canvas3D.RENDERMOLECULE_BIT, this);
 
-	boolean modeSupportDL = true;
-	isNonUniformScale = !trans[localToVworldIndex[NodeRetained.LAST_LOCAL_TO_VWORLD]].isCongruent();
+	boolean modeSupportDL = false;// changed as Dlist are no longer supported
+	
+	// No longer needed by pipeline, and VERY expensive	
+	//isNonUniformScale = !trans[localToVworldIndex[NodeRetained.LAST_LOCAL_TO_VWORLD]].isCongruent();
+	
 	// We have to dynamically switch between using displaymode
 	// mode or not instead of decide in canBeInDisplayList(),
 	// since polygonAttribute can be change by editable Appearance
