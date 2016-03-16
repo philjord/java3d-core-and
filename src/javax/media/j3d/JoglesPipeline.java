@@ -1967,7 +1967,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glGetShaderiv(id, GL2ES2.GL_COMPILE_STATUS, status, 0);
 		if (status[0] == 0)
 		{
-			String detailMsg = getInfoLog(gl, id);
+			String detailMsg = getShaderInfoLog(gl, id);
 			ShaderError res = new ShaderError(ShaderError.COMPILE_ERROR, "GLSL shader compile error");
 			res.setDetailMessage(detailMsg);
 			return res;
@@ -2036,7 +2036,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glGetProgramiv(id, GL2ES2.GL_LINK_STATUS, status, 0);
 		if (status[0] == 0)
 		{
-			String detailMsg = getInfoLog(gl, id);
+			String detailMsg = getProgramInfoLog(gl, id);
 			ShaderError res = new ShaderError(ShaderError.LINK_ERROR, "GLSL shader program link error");
 			res.setDetailMessage(detailMsg);
 			return res;
@@ -2226,7 +2226,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return ((JoglShaderObject) id).getValue();
 	}
 
-	private static String getInfoLog(GL2ES2 gl, int id)
+	private static String getShaderInfoLog(GL2ES2 gl, int id)
 	{
 		int[] infoLogLength = new int[1];
 		gl.glGetShaderiv(id, GL2ES2.GL_INFO_LOG_LENGTH, infoLogLength, 0);
@@ -2235,6 +2235,27 @@ class JoglesPipeline extends JoglesDEPPipeline
 			byte[] storage = new byte[infoLogLength[0]];
 			int[] len = new int[1];
 			gl.glGetShaderInfoLog(id, infoLogLength[0], len, 0, storage, 0);
+			try
+			{
+				return new String(storage, 0, len[0], "US-ASCII");
+			}
+			catch (UnsupportedEncodingException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		return null;
+	}
+	
+	private static String getProgramInfoLog(GL2ES2 gl, int id)
+	{
+		int[] infoLogLength = new int[1];
+		gl.glGetProgramiv(id, GL2ES2.GL_INFO_LOG_LENGTH, infoLogLength, 0);
+		if (infoLogLength[0] > 0)
+		{
+			byte[] storage = new byte[infoLogLength[0]];
+			int[] len = new int[1];
+			gl.glGetProgramInfoLog(id, infoLogLength[0], len, 0, storage, 0);
 			try
 			{
 				return new String(storage, 0, len[0], "US-ASCII");
