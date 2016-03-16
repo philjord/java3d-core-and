@@ -462,7 +462,7 @@ public class JoglesContext extends JoglContext
 		}
 		catch (Exception e)
 		{
-			System.err.println("matrixInverter got a failure!");
+			//fine, move along
 			m1.setIdentity();
 		}
 	}
@@ -475,7 +475,7 @@ public class JoglesContext extends JoglContext
 		}
 		catch (Exception e)
 		{
-			System.err.println("matrixInverter got a failure!");
+			//fine, move along
 			m1.setIdentity();
 		}
 	}
