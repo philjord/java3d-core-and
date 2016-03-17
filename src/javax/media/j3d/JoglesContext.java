@@ -32,7 +32,7 @@ public class JoglesContext extends JoglContext
 		return gl2es2;
 		//else
 		//	return context.getGL().getGL2ES2();
-	}
+	}	 
 
 	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
 	//Dirty dirty buffer gen holder thing
@@ -41,6 +41,8 @@ public class JoglesContext extends JoglContext
 	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
 
 	public HashMap<GeometryArrayRetained, Integer> geoToCoordBuf = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, Integer> geoToCoordBufSize = new HashMap<GeometryArrayRetained, Integer>();
+
 	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf = new HashMap<GeometryArrayRetained, Integer>();
 
