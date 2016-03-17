@@ -50,7 +50,7 @@ class Renderer extends J3dThread
 	private static final boolean RENDER_OPAQUE = true;
 	private static final boolean RENDER_ORDERED = true;
 	private static final boolean RENDER_TRANSPARENT = true;
-	
+
 	// This action causes this thread to wait
 	static final int WAIT = 0;
 
@@ -79,8 +79,6 @@ class Renderer extends J3dThread
 	static final int SWAP = 1;
 	static final int REQUESTRENDER = 2;
 	static final int REQUESTCLEANUP = 3;
-
-
 
 	// Renderer Structure used for the messaging to the renderer
 	RendererStructure rendererStructure = new RendererStructure();
@@ -660,7 +658,7 @@ class Renderer extends J3dThread
 					{
 						throw new UnsupportedOperationException();
 						//<AND>
-					
+
 						/*
 						int command = ((Integer) m[nmesg].args[1]).intValue();
 						//System.err.println("command= " + command);
@@ -668,10 +666,10 @@ class Renderer extends J3dThread
 						{
 							continue;
 						}
-
+						
 						try
 						{
-
+						
 							switch (command)
 							{
 							case GraphicsContext3D.CLEAR:
@@ -770,12 +768,12 @@ class Renderer extends J3dThread
 							default:
 								break;
 							}
-
+						
 						}
 						catch (RuntimeException ex)
 						{
 							ex.printStackTrace();
-
+						
 							// Issue 260 : indicate fatal error and notify error listeners
 							canvas.setFatalError();
 							RenderingError err = new RenderingError(RenderingError.CONTEXT_CREATION_ERROR, J3dI18N.getString("Renderer6"));
@@ -783,7 +781,7 @@ class Renderer extends J3dThread
 							err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
 							notifyErrorListeners(err);
 						}
-
+						
 						m[nmesg++].decRefcount();*/
 					}
 					else
@@ -801,8 +799,6 @@ class Renderer extends J3dThread
 						{
 							continue;
 						}
-
-						
 
 						if (renderType == J3dMessage.RENDER_OFFSCREEN)
 						{
@@ -838,7 +834,7 @@ class Renderer extends J3dThread
 
 								// Always lock for context create
 								if (!canvas.drawingSurfaceObject.renderLock())
-								{											
+								{
 									break doneRender;
 								}
 
@@ -857,7 +853,6 @@ class Renderer extends J3dThread
 									if (sharedCtx == null)
 									{
 										canvas.drawingSurfaceObject.unLock();
-										
 
 										// Issue 260 : indicate fatal error and notify error listeners
 										canvas.setFatalError();
@@ -883,7 +878,7 @@ class Renderer extends J3dThread
 
 							// Always lock for context create
 							if (!canvas.drawingSurfaceObject.renderLock())
-							{								
+							{
 								break doneRender;
 							}
 
@@ -902,7 +897,7 @@ class Renderer extends J3dThread
 								if (canvas.ctx == null)
 								{
 									canvas.drawingSurfaceObject.unLock();
-									
+
 									// Issue 260 : indicate fatal error and notify error listeners
 									canvas.setFatalError();
 									RenderingError err = new RenderingError(RenderingError.CONTEXT_CREATION_ERROR,
@@ -997,7 +992,7 @@ class Renderer extends J3dThread
 							canvas.updateViewCache(false, null, null, renderBin.geometryBackground != null);
 
 							if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
-							{								
+							{
 								break doneRender;
 							}
 
@@ -1184,7 +1179,7 @@ class Renderer extends J3dThread
 							canvas.view.inCanvasCallback = false;
 
 							if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
-							{								
+							{
 								break doneRender;
 							}
 
@@ -1281,8 +1276,8 @@ class Renderer extends J3dThread
 										canvas.vworldToEc.mul(canvas.vpcToEc, cvCache.getInfVworldToVpc());
 
 										// render background geometry
-										if(RENDER_BACKGROUND)
-										renderBin.renderBackground(canvas);
+										if (RENDER_BACKGROUND)
+											renderBin.renderBackground(canvas);
 									}
 
 									// setup rendering matrices
@@ -1331,12 +1326,12 @@ class Renderer extends J3dThread
 									}
 
 									// render opaque geometry
-									if(RENDER_OPAQUE)
-									renderBin.renderOpaque(canvas);
+									if (RENDER_OPAQUE)
+										renderBin.renderOpaque(canvas);
 
 									// render ordered geometry
-									if(RENDER_ORDERED)
-									renderBin.renderOrdered(canvas);
+									if (RENDER_ORDERED)
+										renderBin.renderOrdered(canvas);
 
 									// handle renderField callback
 									if (VirtualUniverse.mc.doDsiRenderLock)
@@ -1361,13 +1356,13 @@ class Renderer extends J3dThread
 									}
 									canvas.view.inCanvasCallback = false;
 									if ((VirtualUniverse.mc.doDsiRenderLock) && (!canvas.drawingSurfaceObject.renderLock()))
-									{										
+									{
 										break doneRender;
 									}
 
 									// render transparent geometry
-									if(RENDER_TRANSPARENT)
-									renderBin.renderTransparent(canvas);
+									if (RENDER_TRANSPARENT)
+										renderBin.renderTransparent(canvas);
 
 									if (doAccum)
 										canvas.accum(canvas.ctx, accumValue);
@@ -1424,7 +1419,7 @@ class Renderer extends J3dThread
 						}
 						else
 						{ // if (renderBin != null)
-							
+
 						}
 					}
 				}
@@ -1455,7 +1450,8 @@ class Renderer extends J3dThread
 		catch (RuntimeException ex)
 		{
 			ex.printStackTrace();
-
+			RenderingError err = new RenderingError(RenderingError.UNEXPECTED_RENDERING_ERROR, J3dI18N.getString("Renderer8"));
+			err.setCanvas3D(canvas);
 			if (canvas != null)
 			{
 				// drawingSurfaceObject will safely ignore
@@ -1463,12 +1459,9 @@ class Renderer extends J3dThread
 				canvas.drawingSurfaceObject.unLock();
 				// Issue 260 : indicate fatal error and notify error listeners
 				canvas.setFatalError();
+				err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
 			}
 
-			
-			RenderingError err = new RenderingError(RenderingError.UNEXPECTED_RENDERING_ERROR, J3dI18N.getString("Renderer8"));
-			err.setCanvas3D(canvas);
-			err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
 			notifyErrorListeners(err);
 		}
 	}

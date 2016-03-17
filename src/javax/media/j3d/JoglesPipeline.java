@@ -823,8 +823,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			LocationData locs = getLocs(ctx, gl, geo);
 
 			//If any buffers need loading do that now and skip a render for this frame
-			loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
-					vertexAttrSizes, vertexAttrBufs);
+			loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount, vertexAttrSizes,
+					vertexAttrBufs);
 
 			//Don't do a draw as it will stutter the GPU if buffers are being loaded
 			//if (buffersLoaded) I feel this doesn't help just make a one frame gap and stutters anyway
@@ -3639,22 +3639,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 					gl.glCompressedTexImage2D(target, level, internalFormat, width, height, boundaryWidth, bb.capacity(), bb);
 
-					int err = gl.glGetError();
-					if (err != GL2ES2.GL_NO_ERROR)
+					if (DO_OUTPUT_ERRORS)
 					{
-						System.out.println("glCompressedTexImage2D Error " + err + " target " + target + " level " + level
-								+ " internalFormat " + internalFormat);
-						System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth + " bb.capacity() "
-								+ bb.capacity());
-								//GL_COMPRESSED_RGB8_ETC2 	GL_RGB 	ceil(width/4) * ceil(height/4) * 8
-								//https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
-
-						//on android
-						//glCompressedTexImage2D Error 1281 target 3553 level 9 internalFormat 37492
-						//  width 1 height 2 boundaryWidth 0 bb.capacity() 16
-						//glCompressedTexImage2D Error 1281 target 3553 level 6 internalFormat 33778
-						//width 16 height 16 boundaryWidth 0 bb.capacity() 256 33778=GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-
+						int err = gl.glGetError();
+						if (err != GL2ES2.GL_NO_ERROR)
+						{
+							System.out.println("glCompressedTexImage2D Error " + err + " target " + target + " level " + level
+									+ " internalFormat " + internalFormat);
+							System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth
+									+ " bb.capacity() " + bb.capacity());
+							//https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
+						}
 					}
 				}
 				else
@@ -3667,6 +3662,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
+
 		{
 
 			//FIXME: I suspect I will only support byte buffer images so perhaps the INT type can be deprecated?
@@ -3727,6 +3723,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 		else
+
 		{
 			assert false;
 		}
