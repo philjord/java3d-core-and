@@ -32,7 +32,7 @@ public class JoglesContext extends JoglContext
 		return gl2es2;
 		//else
 		//	return context.getGL().getGL2ES2();
-	}	 
+	}
 
 	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
 	//Dirty dirty buffer gen holder thing
@@ -176,6 +176,7 @@ public class JoglesContext extends JoglContext
 	{
 		public boolean depthBufferEnableOverride;
 		public boolean depthBufferEnable;
+		public int depthTestFunction;
 		public boolean depthBufferWriteEnableOverride;
 		public boolean depthBufferWriteEnable;
 		public boolean userStencilAvailable;
@@ -189,8 +190,12 @@ public class JoglesContext extends JoglContext
 		public int currentProjMatInverseLoc;
 		public int currentViewMatLoc;
 		public int glActiveTexture;
-		public int glBindTextureGL_TEXTURE_2D;
 		public int currentProgramId;
+		//public int[] glBindTextureGL_TEXTURE_2D = new int[500];// indexed based on current glActiveTexture
+		public int cullFace;
+		public float polygonOffsetFactor;
+		public float polygonOffset;
+
 	}
 
 	public GL_State gl_state = new GL_State();
@@ -453,8 +458,6 @@ public class JoglesContext extends JoglContext
 	}
 
 	private JoglesMatrixInverter matrixInverter = new JoglesMatrixInverter();
-
-	
 
 	public void invert(Matrix3d m1)
 	{
