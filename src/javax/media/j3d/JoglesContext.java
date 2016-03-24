@@ -1,11 +1,16 @@
 package javax.media.j3d;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLContext;
@@ -61,11 +66,11 @@ public class JoglesContext extends JoglContext
 	// for usage details
 	public static class LightData
 	{
-		public float[] ambient = new float[4];
-		public float[] diffuse = new float[4];
-		public float[] specular = new float[4];
-		public float[] pos = new float[4];
-		public float[] spotDir = new float[4];
+		public Vector4f ambient = new Vector4f();
+		public Vector4f diffuse = new Vector4f();
+		public Vector4f specular = new Vector4f();
+		public Vector4f pos = new Vector4f();
+		public Vector4f spotDir = new Vector4f();
 		public float GL_CONSTANT_ATTENUATION;
 		public float GL_LINEAR_ATTENUATION;
 		public float GL_QUADRATIC_ATTENUATION;
@@ -80,9 +85,9 @@ public class JoglesContext extends JoglContext
 	public static class FogData
 	{
 		public boolean enable = false;
-		public float[] expColor = new float[3];
+		public Vector3f expColor = new Vector3f();
 		public float expDensity = 0;
-		public float[] linearColor = new float[3];
+		public Vector3f linearColor = new Vector3f();
 		public float linearStart = 0;
 		public float linearEnd = 0;
 	}
@@ -92,10 +97,10 @@ public class JoglesContext extends JoglContext
 	public static class MaterialData
 	{
 		public boolean lightEnabled = true;
-		public float[] emission = new float[3];
-		public float[] ambient = new float[3];
-		public float[] specular = new float[3];
-		public float[] diffuse = new float[4];
+		public Vector3f emission = new Vector3f();
+		public Vector3f ambient = new Vector3f();
+		public Vector3f specular = new Vector3f();
+		public Vector4f diffuse = new Vector4f();
 		public float shininess;
 	}
 
@@ -105,7 +110,7 @@ public class JoglesContext extends JoglContext
 	// For coloring implementation details
 
 	//only for no lighting, materialDiffuse or vertex colors otherwise
-	public float[] objectColor = new float[4];
+	public Vector4f objectColor = new Vector4f();
 
 	public float pointSize = 0;
 
@@ -124,7 +129,7 @@ public class JoglesContext extends JoglContext
 	// should use getMaximumLights() in pipeline
 	public boolean[] enabledLights = new boolean[8];
 
-	public float[] currentAmbientColor = new float[4];
+	public Vector4f currentAmbientColor = new Vector4f();
 
 	public Matrix4d textureTransform = new Matrix4d();
 
@@ -166,7 +171,7 @@ public class JoglesContext extends JoglContext
 		public int glColor = -1;
 		public int glNormal = -1;
 
-		public int[] glMultiTexCoord;
+		public int[] glMultiTexCoord = new int[16];
 		public HashMap<Integer, Integer> genAttIndexToLoc = new HashMap<Integer, Integer>();
 
 	}
@@ -186,15 +191,34 @@ public class JoglesContext extends JoglContext
 		public int[] setGLSLUniform1i = new int[500];
 		public float[] setGLSLUniform1f = new float[500];
 		public boolean glEnableGL_BLEND;
+		public int srcBlendFunction;
+		public int dstBlendFunction;
 		public int glProjectionMatrixLoc;
 		public int currentProjMatInverseLoc;
 		public int currentViewMatLoc;
 		public int glActiveTexture;
 		public int currentProgramId;
-		//public int[] glBindTextureGL_TEXTURE_2D = new int[500];// indexed based on current glActiveTexture
+		public int[] glBindTextureGL_TEXTURE_2D = new int[35000];// indexed based on current glActiveTexture
 		public int cullFace;
 		public float polygonOffsetFactor;
 		public float polygonOffset;
+
+		public int ignoreVertexColorsLoc;
+		public boolean ignoreVertexColors;
+		public int glFrontMaterialdiffuseLoc;
+		public Vector4f glFrontMaterialdiffuse = new Vector4f();
+		public int glFrontMaterialemissionLoc;
+		public Vector3f glFrontMaterialemission = new Vector3f();
+		public int glFrontMaterialspecularLoc;
+		public Vector3f glFrontMaterialspecular = new Vector3f();
+		public int glFrontMaterialshininessLoc;
+		public float glFrontMaterialshininess;
+		public int glLightModelambientLoc;
+		public Vector4f glLightModelambient = new Vector4f();
+		public int objectColorLoc;
+		public Vector4f objectColor = new Vector4f();
+		public int textureTransformLoc;
+		public Matrix4d textureTransform = new Matrix4d();
 
 	}
 
@@ -233,6 +257,7 @@ public class JoglesContext extends JoglContext
 		//public HashMap<ShaderProgramId, String> usedProgramNames = new HashMap<ShaderProgramId, String>();
 
 		public int geoToClearBuffers;
+		public int glDrawStripArrays;//
 		public int glDrawArrays;
 		public int glDrawElements;
 		public int setFFPAttributes;
@@ -292,15 +317,30 @@ public class JoglesContext extends JoglContext
 		public int setDepthBufferWriteEnable;
 		public int redundantUseProgram;
 
+		public int glVertexAttribPointerNormals;
+		public int glVertexAttribPointerUserAttribs;
+		public int glVertexAttribPointerColor;
+		public int glVertexAttribPointerCoord;
+		public int glBufferData;
+		public int glBufferSubData;
+
 		public void outputPerFrameData()
 		{
+			boolean highInterestOnly = true;
 
-			System.out.println("geoToClearBuffers " + geoToClearBuffers);
-			System.out.println("glDrawArrays " + glDrawArrays);
-			System.out.println("glDrawElements " + glDrawElements);
-			System.out.println("setFFPAttributes " + setFFPAttributes);
+			if (highInterestOnly)
+				System.out.println("geoToClearBuffers " + geoToClearBuffers);
+			if (highInterestOnly)
+				System.out.println("glDrawStripArrays " + glDrawStripArrays);
+			if (highInterestOnly)
+				System.out.println("glDrawArrays " + glDrawArrays);
+			if (highInterestOnly)
+				System.out.println("glDrawElements " + glDrawElements);
+			if (highInterestOnly)
+				System.out.println("setFFPAttributes " + setFFPAttributes);
 			System.out.println("geoToLocationData " + geoToLocationData);
-			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
+			if (highInterestOnly)
+				System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
 			System.out.print("createGLSLShader " + createGLSLShader);
 			System.out.print("\tcreateGLSLShaderProgram " + createGLSLShaderProgram);
 			System.out.print("\tcompileGLSLShader " + compileGLSLShader);
@@ -308,16 +348,16 @@ public class JoglesContext extends JoglContext
 			System.out.print("\tdestroyGLSLShaderProgram " + destroyGLSLShaderProgram);
 			System.out.print("\tlinkGLSLShaderProgram " + linkGLSLShaderProgram);
 			System.out.print("\tbindGLSLVertexAttrName " + bindGLSLVertexAttrName);
-			System.out.print("\tlookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
-			System.out.println("updateDirectionalLight " + updateDirectionalLight);
-			System.out.println("updatePointLight " + updatePointLight);
-			System.out.println("updateSpotLight " + updateSpotLight);
-			System.out.println("updateExponentialFog " + updateExponentialFog);
-			System.out.println("updateLinearFog " + updateLinearFog);
-			System.out.println("disableFog " + disableFog);
-			System.out.println("setFogEnableFlag " + setFogEnableFlag);
+			System.out.println("\tlookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
+			System.out.print("updateDirectionalLight " + updateDirectionalLight);
+			System.out.print("\tupdatePointLight " + updatePointLight);
+			System.out.println("\tupdateSpotLight " + updateSpotLight);
+			System.out.print("updateExponentialFog " + updateExponentialFog);
+			System.out.print("\tupdateLinearFog " + updateLinearFog);
+			System.out.print("\tdisableFog " + disableFog);
+			System.out.println("\tsetFogEnableFlag " + setFogEnableFlag);
 			System.out.println("updateLineAttributes " + updateLineAttributes);
-			System.out.println("resetLineAttributes " + resetLineAttributes);
+			System.out.print("\tresetLineAttributes " + resetLineAttributes);
 			System.out.println("updateMaterial " + updateMaterial);
 			System.out.println("updateMaterialColor " + updateMaterialColor);
 			System.out.print("updateColoringAttributes " + updateColoringAttributes);
@@ -328,35 +368,59 @@ public class JoglesContext extends JoglContext
 			System.out.println("\tresetPolygonAttributes " + resetPolygonAttributes);
 			System.out.print("updateRenderingAttributes " + updateRenderingAttributes);
 			System.out.println("\tresetRenderingAttributes " + resetRenderingAttributes);
-			System.out.print("updateTransparencyAttributes " + updateTransparencyAttributes);
-			System.out.println("\tresetTransparency " + resetTransparency);
+			if (highInterestOnly)
+				System.out.print("updateTransparencyAttributes " + updateTransparencyAttributes);
+			if (highInterestOnly)
+				System.out.println("\tresetTransparency " + resetTransparency);
 			System.out.print("updateTextureAttributes " + updateTextureAttributes);
 			System.out.println("\tresetTextureAttributes " + resetTextureAttributes);
 			System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
-			System.out.println("updateTextureUnitState " + updateTextureUnitState);
-			System.out.println("bindTexture2D " + bindTexture2D);
-			System.out.println("bindTextureCubeMap " + bindTextureCubeMap);
+			if (highInterestOnly)
+				System.out.println("updateTextureUnitState " + updateTextureUnitState);
+			if (highInterestOnly)
+				System.out.println("bindTexture2D " + bindTexture2D);
+			if (highInterestOnly)
+				System.out.println("bindTextureCubeMap " + bindTextureCubeMap);
 			System.out.println("setBlendColor " + setBlendColor);
-			System.out.println("setBlendFunc " + setBlendFunc);
+			if (highInterestOnly)
+				System.out.println("setBlendFunc " + setBlendFunc);
 			System.out.println("setFullSceneAntialiasing " + setFullSceneAntialiasing);
 			System.out.println("setLightEnables " + setLightEnables);
 			System.out.println("setSceneAmbient " + setSceneAmbient);
-			System.out.println("activeTextureUnit " + activeTextureUnit);
-			System.out.println("resetTextureNative " + resetTextureNative);
+			if (highInterestOnly)
+				System.out.println("activeTextureUnit " + activeTextureUnit);
+			if (highInterestOnly)
+				System.out.println("resetTextureNative " + resetTextureNative);
 			System.out.println("useCtx " + useCtx);
 			System.out.println("releaseCtx " + releaseCtx);
 			System.out.println("clear " + clear);
 			System.out.println("setModelViewMatrix " + setModelViewMatrix);
 			System.out.println("setProjectionMatrix " + setProjectionMatrix);
 			System.out.println("setViewport " + setViewport);
-			System.out.println("freeTexture " + freeTexture);
-			System.out.println("generateTexID " + generateTexID);
+			if (highInterestOnly)
+				System.out.println("freeTexture " + freeTexture);
+			if (highInterestOnly)
+				System.out.println("generateTexID " + generateTexID);
 			System.out.println("setDepthBufferWriteEnable " + setDepthBufferWriteEnable);
-			System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram);
-			System.out.println("redundantUseProgram " + redundantUseProgram);
+			if (highInterestOnly)
+				System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram);
+			if (highInterestOnly)
+				System.out.println("redundantUseProgram " + redundantUseProgram);
+			if (highInterestOnly)
+				System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
+			if (highInterestOnly)
+				System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
+			if (highInterestOnly)
+				System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
+			if (highInterestOnly)
+				System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);
+			if (highInterestOnly)
+				System.out.println("glBufferData " + glBufferData);
+			if (highInterestOnly)
+				System.out.println("glBufferSubData " + glBufferSubData);
 
-			for (ShaderProgramId id : usedPrograms)
-				System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());
+			//for (ShaderProgramId id : usedPrograms)
+			//	System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());
 
 			System.out.println("frameTime ns " + (System.nanoTime() - frameStartTime) + " = fps: "
 					+ (1000 / ((System.nanoTime() - frameStartTime) / 1000000L)));
@@ -483,6 +547,68 @@ public class JoglesContext extends JoglContext
 			//fine, move along
 			m1.setIdentity();
 		}
+	}
+
+	//More single threaded death-defying gear
+
+	private FloatBuffer matFB4x4;
+
+	public FloatBuffer toFB4(float[] f)
+	{
+		if (matFB4x4 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB4x4 = bb.asFloatBuffer();
+		}
+		matFB4x4.position(0);
+		matFB4x4.put(f);
+		matFB4x4.position(0);
+		return matFB4x4;
+	}
+
+	public FloatBuffer toFB3(float[] f)
+	{
+		if (matFB3x3 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB3x3 = bb.asFloatBuffer();
+		}
+		matFB3x3.position(0);
+		matFB3x3.put(f);
+		matFB3x3.position(0);
+		return matFB3x3;
+	}
+
+	public FloatBuffer toFB(Matrix4d m)
+	{
+		if (matFB4x4 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB4x4 = bb.asFloatBuffer();
+		}
+		matFB4x4.position(0);
+		matFB4x4.put(toArray(m));
+		matFB4x4.position(0);
+		return matFB4x4;
+	}
+
+	private FloatBuffer matFB3x3;
+
+	public FloatBuffer toFB(Matrix3d m)
+	{
+		if (matFB3x3 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(9 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB3x3 = bb.asFloatBuffer();
+		}
+		matFB3x3.position(0);
+		matFB3x3.put(toArray(m));
+		matFB3x3.position(0);
+		return matFB3x3;
 	}
 
 }
