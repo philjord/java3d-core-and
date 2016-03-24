@@ -72,7 +72,7 @@ public abstract class SceneGraphObject extends Object {
     SceneGraphObjectRetained retained;
 
     // This object's capability bits
-    protected long capabilityBits = 0L;
+    private long capabilityBits = 0L;
 
     // This object's capabilityIsFrequent bits
     private long capabilityIsFrequentBits = ~0L;
@@ -138,6 +138,11 @@ public abstract class SceneGraphObject extends Object {
                 setCapability(bits[i]);
             }
         }
+    }
+    
+    public void clearCapabilities()
+    {
+    	 capabilityBits = 0L;
     }
 
     /**
