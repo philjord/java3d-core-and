@@ -108,7 +108,6 @@ class JoglContext implements Context
 		hasMultisample = val;
 	}
 
-
 	// Used in vertex attribute implementation
 	JoglShaderObject getShaderProgram()
 	{

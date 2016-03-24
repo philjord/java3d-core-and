@@ -203,26 +203,49 @@ public class JoglesContext extends JoglContext
 		public float polygonOffsetFactor;
 		public float polygonOffset;
 
-		public int ignoreVertexColorsLoc;
 		public boolean ignoreVertexColors;
-		public int glFrontMaterialdiffuseLoc;
 		public Vector4f glFrontMaterialdiffuse = new Vector4f();
-		public int glFrontMaterialemissionLoc;
 		public Vector3f glFrontMaterialemission = new Vector3f();
-		public int glFrontMaterialspecularLoc;
 		public Vector3f glFrontMaterialspecular = new Vector3f();
-		public int glFrontMaterialshininessLoc;
 		public float glFrontMaterialshininess;
-		public int glLightModelambientLoc;
 		public Vector4f glLightModelambient = new Vector4f();
-		public int objectColorLoc;
 		public Vector4f objectColor = new Vector4f();
-		public int textureTransformLoc;
 		public Matrix4d textureTransform = new Matrix4d();
-
+		public Matrix4d modelMatrix = new Matrix4d();
+		public Matrix4d glModelViewMatrix = new Matrix4d();
+		public Matrix4d glModelViewMatrixInverse = new Matrix4d();
+		public Matrix4d glModelViewProjectionMatrix = new Matrix4d();
+		public Matrix3d glNormalMatrix = new Matrix3d();
 	}
 
 	public GL_State gl_state = new GL_State();
+
+	// program used on last run through of FFP, so nearly like gl_state
+	public int prevShaderProgram;
+
+	public static class ShaderFFPLocations
+	{
+		public int glProjectionMatrix;
+		public int glProjectionMatrixInverse;
+		public int modelMatrix;
+		public int viewMatrix;
+		public int glModelViewMatrix;
+		public int glModelViewMatrixInverse;
+		public int glModelViewProjectionMatrix;
+		public int glNormalMatrix;
+		public int glFrontMaterialdiffuse;
+		public int glFrontMaterialemission;
+		public int glFrontMaterialspecular;
+		public int glFrontMaterialshininess;
+		public int ignoreVertexColors;
+		public int glLightModelambient;
+		public int glLightSource0position;
+		public int glLightSource0diffuse;
+		public int textureTransform;
+	}
+
+	//some sort of previous shader system ?
+	public ShaderFFPLocations[] shaderFFPLocations = new ShaderFFPLocations[100];
 
 	//Performance issue
 	// possibly I can stop calling bind 0?
@@ -324,6 +347,18 @@ public class JoglesContext extends JoglContext
 		public int glBufferData;
 		public int glBufferSubData;
 
+		public int modelMatrixUpdated;
+		public int glModelViewMatrixUpdated;
+		public int glModelViewProjectionMatrixUpdated;
+		public int glNormalMatrixUpdated;
+		public int glModelViewMatrixInverseUpdated;
+
+		public int modelMatrixSkipped;
+		public int glModelViewMatrixSkipped;
+		public int glModelViewProjectionMatrixSkipped;
+		public int glNormalMatrixSkipped;
+		public int glModelViewMatrixInverseSkipped;
+
 		public void outputPerFrameData()
 		{
 			boolean highInterestOnly = true;
@@ -418,6 +453,17 @@ public class JoglesContext extends JoglContext
 				System.out.println("glBufferData " + glBufferData);
 			if (highInterestOnly)
 				System.out.println("glBufferSubData " + glBufferSubData);
+
+			if (highInterestOnly)
+				System.out.println("modelMatrixUpdated " + modelMatrixUpdated + " modelMatrixSkipped " + modelMatrixSkipped);
+			if (highInterestOnly)
+				System.out.println(
+						"glModelViewMatrixUpdated " + glModelViewMatrixUpdated + " glModelViewMatrixSkipped " + glModelViewMatrixSkipped);
+			if (highInterestOnly)
+				System.out.println("glModelViewProjectionMatrixUpdated " + glModelViewProjectionMatrixUpdated
+						+ " glModelViewProjectionMatrixSkipped " + glModelViewProjectionMatrixSkipped);
+			if (highInterestOnly)
+				System.out.println("glNormalMatrixUpdated " + glNormalMatrixUpdated + " glNormalMatrixSkipped " + glNormalMatrixSkipped);
 
 			//for (ShaderProgramId id : usedPrograms)
 			//	System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());
