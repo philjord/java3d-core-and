@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.media.j3d.JoglesContext.GL_State;
 import javax.media.j3d.JoglesContext.LightData;
 import javax.media.j3d.JoglesContext.LocationData;
 import javax.vecmath.Vector4f;
@@ -42,17 +43,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
 	//FIXME: this minimise call causes at least:
-	// Terrible non transparent shape in fallout3 outside megaton, though turnig this off now cause fallout to go mental
+	// Terrible non transparent shape in fallout3 outside megaton
 	// causes morrowind LAND near by to show weird weirdness glActiveTexture is the culprit I think
-	// the show load screen is ruined by this as well
 	// fallout 4 shows transparency on things that shouldn't be	
-	// and now things are a bit faster I get a crazy craash to desktop no info!
+	// I get a crazy craash to desktop no info!
+	
+	// ok with shader below false, my only current issues are the ignorevertexcolor ones from fallout 3 and 4
 
-	//does not require MINIMISE_NATIVE_CALLS
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
-	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = false;
-	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = false;
-	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = false;
+	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
+	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
+	// this one causes fallout4 load screen to look crazy
+	private static final boolean MINIMISE_NATIVE_SHADER = false;
+	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	//private GLProfile profile;
 
@@ -1373,31 +1376,41 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//TODO: notice these matrix can be sent through as a bunch, so the native calls would be very reduced!
 
 			//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
-			if (locs.glProjectionMatrix != -1 && locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc)
+			if (locs.glProjectionMatrix != -1)
 			{
-				gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, ctx.toFB(ctx.currentProjMat));
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
-				outputErrors(ctx);
+				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc))
+				{
+					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, ctx.toFB(ctx.currentProjMat));
+					if (MINIMISE_NATIVE_CALLS_FFP)
+						ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
+					outputErrors(ctx);
+				}
 			}
-			if (locs.glProjectionMatrixInverse != -1 && locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc)
+			if (locs.glProjectionMatrixInverse != -1)
 			{
-				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.toFB(ctx.currentProjMatInverse));
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
-				outputErrors(ctx);
+				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
+				{
+					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.toFB(ctx.currentProjMatInverse));
+					if (MINIMISE_NATIVE_CALLS_FFP)
+						ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
+					outputErrors(ctx);
+				}
 			}
-			if (locs.viewMatrix != -1 && locs.viewMatrix != ctx.gl_state.currentViewMatLoc)
+			if (locs.viewMatrix != -1)
 			{
-				gl.glUniformMatrix4fv(locs.viewMatrix, 1, false, ctx.toFB(ctx.currentViewMat));
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.currentViewMatLoc = locs.viewMatrix;
-				outputErrors(ctx);
+				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.viewMatrix != ctx.gl_state.currentViewMatLoc))
+				{
+					gl.glUniformMatrix4fv(locs.viewMatrix, 1, false, ctx.toFB(ctx.currentViewMat));
+					if (MINIMISE_NATIVE_CALLS_FFP)
+						ctx.gl_state.currentViewMatLoc = locs.viewMatrix;
+					outputErrors(ctx);
+				}
 			}
 
 			if (locs.modelMatrix != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
 				{
 					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
 					outputErrors(ctx);
@@ -1408,12 +1421,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.modelMatrixUpdated++;
 				}
 				else if (OUTPUT_PER_FRAME_STATS)
+				{
 					ctx.perFrameStats.modelMatrixSkipped++;
+				}
 			}
 
 			if (locs.glModelViewMatrix != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
 				{
 					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
 					outputErrors(ctx);
@@ -1424,12 +1440,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glModelViewMatrixUpdated++;
 				}
 				else if (OUTPUT_PER_FRAME_STATS)
+				{
 					ctx.perFrameStats.glModelViewMatrixSkipped++;
+				}
 			}
 			if (locs.glModelViewMatrixInverse != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse))
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 				{
 					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
 					outputErrors(ctx);
@@ -1440,13 +1458,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
 				}
 				else if (OUTPUT_PER_FRAME_STATS)
+				{
 					ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
+				}
 			}
 
 			if (locs.glModelViewProjectionMatrix != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat))
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
 				{
 					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
 					outputErrors(ctx);
@@ -1457,12 +1477,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
 				}
 				else if (OUTPUT_PER_FRAME_STATS)
+				{
 					ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
+				}
 			}
 
 			if (locs.glNormalMatrix != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 				{
 					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
 					outputErrors(ctx);
@@ -1472,13 +1495,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glNormalMatrixUpdated++;
 				}
 				else if (OUTPUT_PER_FRAME_STATS)
+				{
 					ctx.perFrameStats.glNormalMatrixSkipped++;
+				}
 			}
 
 			// if set one of the 2 colors below should be used by the shader (material for lighting)
+			
+			
+			// this is causing trouble in the transparent objects outside megaton
+			// also seen in transparent tarpaulins in fallout 4 diamond city
 			if (locs.ignoreVertexColors != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors)
+				//FIXME: cause terrible toruble
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
 				{
 					gl.glUniform1i(locs.ignoreVertexColors, ctx.renderingData.ignoreVertexColors ? 1 : 0);
 					outputErrors(ctx);
@@ -1490,7 +1521,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//send material data through
 			if (locs.glFrontMaterialdiffuse != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse))
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse)))
 				{
 					gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
 							ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
@@ -1501,7 +1533,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			if (locs.glFrontMaterialemission != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission))
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission)))
 				{
 					gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
 							ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
@@ -1513,7 +1546,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (locs.glFrontMaterialspecular != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular))
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular)))
 				{
 					gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
 							ctx.materialData.specular.z);
@@ -1524,7 +1558,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			if (locs.glFrontMaterialshininess != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess)
+				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+						|| ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess))
 				{
 					gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
 					outputErrors(ctx);
@@ -1536,7 +1571,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//ambient does not come from material notice
 			if (locs.glLightModelambient != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor)))
 				{
 					gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y,
 							ctx.currentAmbientColor.z, ctx.currentAmbientColor.w);
@@ -1549,7 +1585,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
 			if (locs.objectColor != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor)))
 				{
 					gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
 					outputErrors(ctx);
@@ -1606,12 +1643,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (locs.textureTransform != -1)
 			{
-				if (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
 				{
 					gl.glUniformMatrix4fv(locs.textureTransform, 1, false, ctx.toFB(ctx.textureTransform));
 					//gl.glUniformMatrix4fv(locs.textureTransform, 1, false, ctx.toArray(ctx.textureTransform), 0);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_OTHER)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.textureTransform.set(ctx.textureTransform);
 				}
 			}
@@ -1852,11 +1890,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglesContext joglesctx = (JoglesContext) ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
 		int loc = unbox(uniformLocation);
-		if (joglesctx.gl_state.setGLSLUniform1i[loc] != value)
+		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1i[loc] != value)
 		{
 			gl.glUniform1i(loc, value);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS_OTHER)
+			if (MINIMISE_NATIVE_SHADER)
 				joglesctx.gl_state.setGLSLUniform1i[loc] = value;
 		}
 		return null;
@@ -1872,11 +1910,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglesContext joglesctx = (JoglesContext) ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
 		int loc = unbox(uniformLocation);
-		if (joglesctx.gl_state.setGLSLUniform1f[loc] != value)
+		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1f[loc] != value)
 		{
 			gl.glUniform1f(loc, value);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS_OTHER)
+			if (MINIMISE_NATIVE_SHADER)
 				joglesctx.gl_state.setGLSLUniform1f[loc] = value;
 		}
 		return null;
@@ -2426,7 +2464,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		if (joglesContext.gl_state.currentProgramId != unbox(shaderProgramId))
+		if (!MINIMISE_NATIVE_SHADER || joglesContext.gl_state.currentProgramId != unbox(shaderProgramId))
 		{
 			if (shaderProgramId == null)
 			{
@@ -2440,7 +2478,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glUseProgram(unbox(shaderProgramId));
 			outputErrors(ctx);
 			joglesContext.setShaderProgram((JoglShaderObject) shaderProgramId);
-			if (MINIMISE_NATIVE_CALLS_OTHER)
+
+			if (MINIMISE_NATIVE_SHADER)
 				joglesContext.gl_state.currentProgramId = unbox(shaderProgramId);
 
 		}
@@ -3517,7 +3556,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			//Morrowind land shows problems, but need texture unit above turn off as well
 			// possibly only the 2 glActiveTexture need turning off?
-			if (MINIMISE_NATIVE_CALLS_TEXTURE
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE
 					|| (joglesContext.gl_state.glBindTextureGL_TEXTURE_2D[joglesContext.gl_state.glActiveTexture] != objectId))
 			{
 				gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, objectId);
@@ -5262,6 +5301,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		GLDrawable draw = drawable(drawable);
 		draw.swapBuffers();
+
+		//test effect
+		((JoglesContext) ctx).gl_state = new GL_State();
 	}
 
 	private static void outputErrors(Context ctx)
