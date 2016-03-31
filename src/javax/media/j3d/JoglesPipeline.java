@@ -41,10 +41,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
-	//FIXME: this minimise call causes at least 2 issues so far
-	// terribble non transparent shape in fallout3 outside megaton, though turnig this off now cause fallout to go mental
+	//FIXME: this minimise call causes at least:
+	// Terrible non transparent shape in fallout3 outside megaton, though turnig this off now cause fallout to go mental
 	// causes morrowind LAND near by to show weird weirdness glActiveTexture is the culprit I think
-	private static final boolean MINIMISE_NATIVE_CALLS = true;
+	// the show load screen is ruined by this as well
+	// fallout 4 shows transparency on things that shouldn't be	
+	// and now things are a bit faster I get a crazy craash to desktop no info!
+
+	//does not require MINIMISE_NATIVE_CALLS
+	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
+	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = false;
+	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = false;
+	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = false;
 
 	//private GLProfile profile;
 
@@ -91,8 +99,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		JoglesContext joglesctx = (JoglesContext) ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
-		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-
 		synchronized (joglesctx.geoToClearBuffers)
 		{
 			for (GeometryArrayRetained geo : joglesctx.geoToClearBuffers)
@@ -1370,21 +1376,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (locs.glProjectionMatrix != -1 && locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc)
 			{
 				gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, ctx.toFB(ctx.currentProjMat));
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
 				outputErrors(ctx);
 			}
 			if (locs.glProjectionMatrixInverse != -1 && locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc)
 			{
 				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.toFB(ctx.currentProjMatInverse));
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
 				outputErrors(ctx);
 			}
 			if (locs.viewMatrix != -1 && locs.viewMatrix != ctx.gl_state.currentViewMatLoc)
 			{
 				gl.glUniformMatrix4fv(locs.viewMatrix, 1, false, ctx.toFB(ctx.currentViewMat));
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.currentViewMatLoc = locs.viewMatrix;
 				outputErrors(ctx);
 			}
@@ -1395,7 +1401,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
 
 					if (OUTPUT_PER_FRAME_STATS)
@@ -1412,7 +1418,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
 					outputErrors(ctx);
 
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glModelViewMatrixUpdated++;
@@ -1428,7 +1434,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
 					outputErrors(ctx);
 
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
@@ -1445,7 +1451,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
 					outputErrors(ctx);
 
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
@@ -1460,7 +1466,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glNormalMatrixUpdated++;
@@ -1476,7 +1482,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glUniform1i(locs.ignoreVertexColors, ctx.renderingData.ignoreVertexColors ? 1 : 0);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.ignoreVertexColors = ctx.renderingData.ignoreVertexColors;
 				}
 			}
@@ -1489,7 +1495,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
 							ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glFrontMaterialdiffuse.set(ctx.materialData.diffuse);
 				}
 			}
@@ -1500,7 +1506,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
 							ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glFrontMaterialemission.set(ctx.materialData.emission);
 				}
 			}
@@ -1512,7 +1518,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
 							ctx.materialData.specular.z);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glFrontMaterialspecular.set(ctx.materialData.specular);
 				}
 			}
@@ -1522,7 +1528,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glFrontMaterialshininess = ctx.materialData.shininess;
 				}
 			}
@@ -1535,7 +1541,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y,
 							ctx.currentAmbientColor.z, ctx.currentAmbientColor.w);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glLightModelambient.set(ctx.currentAmbientColor);
 				}
 			}
@@ -1547,7 +1553,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.objectColor.set(ctx.objectColor);
 				}
 			}
@@ -1605,7 +1611,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glUniformMatrix4fv(locs.textureTransform, 1, false, ctx.toFB(ctx.textureTransform));
 					//gl.glUniformMatrix4fv(locs.textureTransform, 1, false, ctx.toArray(ctx.textureTransform), 0);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_OTHER)
 						ctx.gl_state.textureTransform.set(ctx.textureTransform);
 				}
 			}
@@ -1850,7 +1856,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			gl.glUniform1i(loc, value);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.setGLSLUniform1i[loc] = value;
 		}
 		return null;
@@ -1870,7 +1876,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			gl.glUniform1f(loc, value);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.setGLSLUniform1f[loc] = value;
 		}
 		return null;
@@ -2434,7 +2440,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glUseProgram(unbox(shaderProgramId));
 			outputErrors(ctx);
 			joglesContext.setShaderProgram((JoglShaderObject) shaderProgramId);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesContext.gl_state.currentProgramId = unbox(shaderProgramId);
 
 		}
@@ -3089,7 +3095,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			outputErrors(ctx);
 
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.cullFace = cullFace;
 		}
 
@@ -3106,9 +3112,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glDisable(GL2ES2.GL_POLYGON_OFFSET_FILL);
 			}
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.polygonOffsetFactor = polygonOffsetFactor;
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.polygonOffset = polygonOffset;
 		}
 		joglesctx.polygonMode = polygonMode;
@@ -3131,7 +3137,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glCullFace(GL2ES2.GL_BACK);
 			gl.glEnable(GL2ES2.GL_CULL_FACE);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.cullFace = PolygonAttributes.CULL_BACK;
 		}
 
@@ -3140,9 +3146,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glPolygonOffset(0.0f, 0.0f);
 			gl.glDisable(GL2ES2.GL_POLYGON_OFFSET_FILL);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.polygonOffsetFactor = 0.0f;
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.polygonOffset = 0.0f;
 		}
 
@@ -3188,11 +3194,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 			}
 
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.depthBufferEnableOverride = depthBufferEnable;
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.depthBufferEnable = depthBufferEnable;
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.depthTestFunction = depthTestFunction;
 		}
 
@@ -3204,7 +3210,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glDepthMask(true);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_OTHER)
 						joglesctx.gl_state.glDepthMask = true;
 				}
 			}
@@ -3214,7 +3220,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glDepthMask(false);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_OTHER)
 						joglesctx.gl_state.glDepthMask = true;
 				}
 			}
@@ -3251,7 +3257,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glStencilFunc(getFunctionValue(stencilFunction), stencilReferenceValue, stencilCompareMask);
 					gl.glStencilMask(stencilWriteMask);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_OTHER)
 						joglesctx.gl_state.glEnableGL_STENCIL_TEST = true;
 				}
 
@@ -3262,7 +3268,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS)
+					if (MINIMISE_NATIVE_CALLS_OTHER)
 						joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
 				}
 			}
@@ -3288,7 +3294,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				gl.glDepthMask(true);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_OTHER)
 					joglesctx.gl_state.glDepthMask = true;
 			}
 		}
@@ -3298,7 +3304,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				gl.glEnable(GL2ES2.GL_DEPTH_TEST);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_OTHER)
 					joglesctx.gl_state.depthBufferEnable = true;
 			}
 		}
@@ -3306,7 +3312,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.depthTestFunction = RenderingAttributes.LESS_OR_EQUAL;
 		}
 
@@ -3334,8 +3340,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				|| ((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
 				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
 		{
-			//if (joglesctx.gl_state.glEnableGL_BLEND != true || joglesctx.gl_state.srcBlendFunction != srcBlendFunction
-			//		|| joglesctx.gl_state.dstBlendFunction != dstBlendFunction)
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
+					|| joglesctx.gl_state.srcBlendFunction != srcBlendFunction || joglesctx.gl_state.dstBlendFunction != dstBlendFunction))
 			{
 				gl.glEnable(GL2ES2.GL_BLEND);
 				// valid range of blendFunction 0..3 is already verified in shared code.
@@ -3343,22 +3349,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 				outputErrors(ctx);
 				//TODO: updateTransparencyAttributes MINIMISE_NATIVE_CALLS trouble in fallout 3 by megaton
 				//in fact nothing I do here fixes the fallout3 problem at all
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.glEnableGL_BLEND = true;
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.srcBlendFunction = srcBlendFunction;
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.dstBlendFunction = dstBlendFunction;
 			}
 
 		}
 		else
 		{
-			//if (joglesctx.gl_state.glEnableGL_BLEND != false)
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != false))
 			{
 				gl.glDisable(GL2ES2.GL_BLEND);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.glEnableGL_BLEND = false;
 			}
 		}
@@ -3380,27 +3386,28 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
 				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
 		{
-			//if (joglesctx.gl_state.glEnableGL_BLEND != true || joglesctx.gl_state.srcBlendFunction != TransparencyAttributes.BLEND_SRC_ALPHA
-			//		|| joglesctx.gl_state.dstBlendFunction != TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA)
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
+					|| joglesctx.gl_state.srcBlendFunction != TransparencyAttributes.BLEND_SRC_ALPHA
+					|| joglesctx.gl_state.dstBlendFunction != TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA))
 			{
 				gl.glEnable(GL2ES2.GL_BLEND);
 				gl.glBlendFunc(GL2ES2.GL_SRC_ALPHA, GL2ES2.GL_ONE_MINUS_SRC_ALPHA);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.glEnableGL_BLEND = true;
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.srcBlendFunction = TransparencyAttributes.BLEND_SRC_ALPHA;
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.dstBlendFunction = TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA;
 			}
 		}
 		else
 		{
-			//if (joglesctx.gl_state.glEnableGL_BLEND != false)
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != false))
 			{
 				gl.glDisable(GL2ES2.GL_BLEND);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.glEnableGL_BLEND = false;
 			}
 
@@ -3477,11 +3484,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (index >= 0)
 		{
-			//if (joglesContext.gl_state.glActiveTexture != (index + GL2ES2.GL_TEXTURE0))
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE || (joglesContext.gl_state.glActiveTexture != (index + GL2ES2.GL_TEXTURE0)))
 			{
 				gl.glActiveTexture(index + GL2ES2.GL_TEXTURE0);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TEXTURE)
 					joglesContext.gl_state.glActiveTexture = (index + GL2ES2.GL_TEXTURE0);
 			}
 		}
@@ -3510,12 +3517,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			//Morrowind land shows problems, but need texture unit above turn off as well
 			// possibly only the 2 glActiveTexture need turning off?
-			if (joglesContext.gl_state.glBindTextureGL_TEXTURE_2D[joglesContext.gl_state.glActiveTexture] != objectId)
+			if (MINIMISE_NATIVE_CALLS_TEXTURE
+					|| (joglesContext.gl_state.glBindTextureGL_TEXTURE_2D[joglesContext.gl_state.glActiveTexture] != objectId))
 			{
 				gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, objectId);
 				outputErrors(ctx);
 
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TEXTURE)
 					joglesContext.gl_state.glBindTextureGL_TEXTURE_2D[joglesContext.gl_state.glActiveTexture] = objectId;
 			}
 
@@ -3588,10 +3596,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static void updateTextureLodRange(Context ctx, int target, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
-
-		//FIXME: removal of these causes major trouble
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
-		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
 		//I notice these 4 parameters don't appear under GL2ES2
 
@@ -3607,7 +3612,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// checking of the availability of the extension is already done
 		// in the shared code
 		//Apparently these are available in ES3
+
 		//gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_BASE_LEVEL, baseLevel);
+
 		//http://stackoverflow.com/questions/12767917/is-using-gl-nearest-mipmap-or-gl-linear-mipmap-for-gl-texture-min-filter-con
 		// so hopefully ES2 just assumes the mip maps given are correct and ignores this call
 
@@ -3622,7 +3629,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		//FIXME: is this a true thing to send in?
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
-		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
 		//it appears GL_TEXTURE_MAX_ANISOTROPY_EXT is still part of ES2 
 		// but not allowed for glTexParameterf
@@ -4252,11 +4258,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 
-		// amazingly this should be fine at top
-		//except the R gear at bottom and boundary color
+		// except the R gear at bottom and boundary color
 		// but I'm dropping 3dtexture support so no probs and who cares about boundary color
-		// FIXME: CLAMP_TO_BOUNDARYand GL_CLAMP are gone so now just set as GL_CLAMP_TO_EDGE
-		//GL_MIRRORED_REPEAT needs to be added
+		// CLAMP_TO_BOUNDARYand GL_CLAMP are gone so now just set as GL_CLAMP_TO_EDGE
+		// FIXME: GL_MIRRORED_REPEAT needs to be added
 
 		// set texture wrap parameter
 		switch (boundaryModeS)
@@ -4403,17 +4408,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 
-		if (joglesctx.gl_state.glEnableGL_BLEND != true || joglesctx.gl_state.srcBlendFunction != srcBlendFunction
-				|| joglesctx.gl_state.dstBlendFunction != dstBlendFunction)
+		if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
+				|| joglesctx.gl_state.srcBlendFunction != srcBlendFunction || joglesctx.gl_state.dstBlendFunction != dstBlendFunction))
 		{
 			gl.glEnable(GL2ES2.GL_BLEND);
 			gl.glBlendFunc(blendFunctionTable[srcBlendFunction], blendFunctionTable[dstBlendFunction]);
 			outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 				joglesctx.gl_state.glEnableGL_BLEND = true;
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 				joglesctx.gl_state.srcBlendFunction = srcBlendFunction;
-			if (MINIMISE_NATIVE_CALLS)
+			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 				joglesctx.gl_state.dstBlendFunction = dstBlendFunction;
 		}
 	}
@@ -4500,11 +4505,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (texUnitIndex >= 0)
 		{
-			if (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0))
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE || (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0)))
 			{
 				gl.glActiveTexture(texUnitIndex + GL2ES2.GL_TEXTURE0);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TEXTURE)
 					joglesContext.gl_state.glActiveTexture = (texUnitIndex + GL2ES2.GL_TEXTURE0);
 			}
 		}
@@ -4525,14 +4530,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (texUnitIndex >= 0)
 		{
-			//if (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0))
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE || (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0)))
 			{
 				gl.glActiveTexture(texUnitIndex + GL2ES2.GL_TEXTURE0);
 				//TODO: should I enable these?  
 				//gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, 0);//-1 is no texture , 0 is default
 				//gl.glBindTexture(GL2ES2.GL_TEXTURE_CUBE_MAP, 0);
 				outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS)
+				if (MINIMISE_NATIVE_CALLS_TEXTURE)
 					joglesContext.gl_state.glActiveTexture = (texUnitIndex + GL2ES2.GL_TEXTURE0);
 			}
 		}
@@ -5403,6 +5408,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			if (enable)
 			{
+				System.out.println("I just set MULTISAMPLE just then");
 				gl.glEnable(GL2ES2.GL_MULTISAMPLE);
 			}
 			else
