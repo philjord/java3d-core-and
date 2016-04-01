@@ -15,6 +15,8 @@ import javax.vecmath.Vector4f;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLContext;
 
+import utils.SparseArray;
+
 public class JoglesContext extends JoglContext
 {
 	//TODO: heaps of lights appears to kill performance, why?
@@ -51,13 +53,13 @@ public class JoglesContext extends JoglContext
 	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf = new HashMap<GeometryArrayRetained, Integer>();
 
-	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
+	public HashMap<GeometryArrayRetained, SparseArray<Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, SparseArray<Integer>>();
 
 	public HashMap<Object, LocationData> geoToLocationData = new HashMap<Object, LocationData>();
 
-	public HashMap<GeometryArrayRetained, HashMap<Integer, Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, HashMap<Integer, Integer>>();
+	public HashMap<GeometryArrayRetained, SparseArray<Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, SparseArray<Integer>>();
 
-	public HashMap<Integer, HashMap<String, Integer>> progToGenVertAttNameToGenVertAttIndex = new HashMap<Integer, HashMap<String, Integer>>();
+	public SparseArray<HashMap<String, Integer>> progToGenVertAttNameToGenVertAttIndex = new SparseArray<HashMap<String, Integer>>();
 
 	// note anything may be reused if not updated between execute calls
 
@@ -172,7 +174,7 @@ public class JoglesContext extends JoglContext
 		public int glNormal = -1;
 
 		public int[] glMultiTexCoord = new int[16];
-		public HashMap<Integer, Integer> genAttIndexToLoc = new HashMap<Integer, Integer>();
+		public SparseArray<Integer> genAttIndexToLoc = new SparseArray<Integer>();
 
 	}
 
@@ -189,7 +191,9 @@ public class JoglesContext extends JoglContext
 		public boolean glDepthMask;
 		public boolean glEnableGL_STENCIL_TEST;
 		public int[] setGLSLUniform1i = new int[500];
+		public int[] clearer1 = new int[500];
 		public float[] setGLSLUniform1f = new float[500];
+		public float[] clearer2 = new float[500];
 		public boolean glEnableGL_BLEND;
 		public int srcBlendFunction;
 		public int dstBlendFunction;
@@ -199,6 +203,7 @@ public class JoglesContext extends JoglContext
 		public int glActiveTexture;
 		public int currentProgramId;
 		public int[] glBindTextureGL_TEXTURE_2D = new int[35000];// indexed based on current glActiveTexture
+		public int[] clearer3 = new int[35000];
 		public int cullFace;
 		public float polygonOffsetFactor;
 		public float polygonOffset;
@@ -216,6 +221,46 @@ public class JoglesContext extends JoglContext
 		public Matrix4d glModelViewMatrixInverse = new Matrix4d();
 		public Matrix4d glModelViewProjectionMatrix = new Matrix4d();
 		public Matrix3d glNormalMatrix = new Matrix3d();
+
+		public void clear()
+		{
+			depthBufferEnableOverride = false;
+			depthBufferEnable = false;
+			depthTestFunction = 0;
+			depthBufferWriteEnableOverride = false;
+			depthBufferWriteEnable = false;
+			userStencilAvailable = false;
+			stencilEnable = false;
+			glDepthMask = false;
+			glEnableGL_STENCIL_TEST = false;
+			System.arraycopy(clearer1, 0, setGLSLUniform1i, 0, setGLSLUniform1i.length);
+			System.arraycopy(clearer2, 0, setGLSLUniform1f, 0, setGLSLUniform1f.length);
+			glEnableGL_BLEND = false;
+			srcBlendFunction = 0;
+			dstBlendFunction = 0;
+			glProjectionMatrixLoc = 0;
+			currentProjMatInverseLoc = 0;
+			currentViewMatLoc = 0;
+			glActiveTexture = 0;
+			currentProgramId = 0;
+			System.arraycopy(clearer3, 0, glBindTextureGL_TEXTURE_2D, 0, glBindTextureGL_TEXTURE_2D.length);
+			cullFace = 0;
+			polygonOffsetFactor = 0;
+			polygonOffset = 0;
+			ignoreVertexColors = false;
+			glFrontMaterialdiffuse.set(0, 0, 0, 0);
+			glFrontMaterialemission.set(0, 0, 0);
+			glFrontMaterialspecular.set(0, 0, 0);
+			glFrontMaterialshininess = 0;
+			glLightModelambient.set(0, 0, 0, 0);
+			objectColor.set(0, 0, 0, 0);
+			textureTransform.setIdentity();
+			modelMatrix.setIdentity();
+			glModelViewMatrix.setIdentity();
+			glModelViewMatrixInverse.setIdentity();
+			glModelViewProjectionMatrix.setIdentity();
+			glNormalMatrix.setIdentity();
+		}
 	}
 
 	public GL_State gl_state = new GL_State();

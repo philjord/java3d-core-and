@@ -27,6 +27,7 @@ import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.GLFBODrawable;
 import com.jogamp.opengl.Threading;
 
+import utils.SparseArray;
 import java2.awt.GraphicsConfiguration;
 import java2.awt.GraphicsDevice;
 
@@ -43,11 +44,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
 	//FIXME: this minimise call causes at least:
-	// Terrible non transparent shape in fallout3 outside megaton
+	// Odd non transparent shape in fallout3 outside megaton, but it appears to be a behavior thing, so more investigation reqiuired
+	// might just be a bad shader
 	// causes morrowind LAND near by to show weird weirdness glActiveTexture is the culprit I think
-	// fallout 4 shows transparency on things that shouldn't be	
-	// I get a crazy craash to desktop no info!
-	
+	// fallout 4 shows transparency on things that shouldn't be	but improved by the new GL_State call on swap
+
 	// ok with shader below false, my only current issues are the ignorevertexcolor ones from fallout 3 and 4
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
@@ -125,22 +126,25 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glDeleteBuffers(bufIds.length, bufIds, 0);
 				}
 
-				HashMap<Integer, Integer> tcBufIds = joglesctx.geoToTexCoordsBuf.get(geo);
+				SparseArray<Integer> tcBufIds = joglesctx.geoToTexCoordsBuf.get(geo);
 				if (tcBufIds != null)
 				{
-					for (Integer tcBufId : tcBufIds.values())
+					for (int i = 0; i < tcBufIds.size(); i++)
 					{
+						Integer tcBufId = tcBufIds.get(tcBufIds.keyAt(i));
+
 						if (tcBufId != null)
 							gl.glDeleteBuffers(1, new int[] { tcBufId.intValue() }, 0);
 					}
 					tcBufIds.clear();
 				}
 
-				HashMap<Integer, Integer> vaBufIds = joglesctx.geoToVertAttribBuf.get(geo);
+				SparseArray<Integer> vaBufIds = joglesctx.geoToVertAttribBuf.get(geo);
 				if (vaBufIds != null)
 				{
-					for (Integer vaBufId : vaBufIds.values())
+					for (int i = 0; i < vaBufIds.size(); i++)
 					{
+						Integer vaBufId = vaBufIds.get(vaBufIds.keyAt(i));
 						if (vaBufId != null)
 							gl.glDeleteBuffers(1, new int[] { vaBufId.intValue() }, 0);
 					}
@@ -474,7 +478,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						HashMap<Integer, Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
+						SparseArray<Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
 						if (bufIds == null)
 						{
 							new Throwable("Buffer load issue!").printStackTrace();
@@ -1027,7 +1031,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						HashMap<Integer, Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
+						SparseArray<Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
 						if (bufIds == null)
 						{
 							new Throwable("Buffer load issue!").printStackTrace();
@@ -1344,7 +1348,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						int index = attToIndex.get(attrib);
 						int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
-						locs.genAttIndexToLoc.put(index, attribLoc);
+						locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
 					}
 				}
 
@@ -1501,8 +1505,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 
 			// if set one of the 2 colors below should be used by the shader (material for lighting)
-			
-			
+
 			// this is causing trouble in the transparent objects outside megaton
 			// also seen in transparent tarpaulins in fallout 4 diamond city
 			if (locs.ignoreVertexColors != -1)
@@ -1780,10 +1783,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 					vertexAttrs.position(0);
 
-					HashMap<Integer, Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
+					SparseArray<Integer> bufIds = ctx.geoToVertAttribBuf.get(geo);
 					if (bufIds == null)
 					{
-						bufIds = new HashMap<Integer, Integer>();
+						bufIds = new SparseArray<Integer>();
 						ctx.geoToVertAttribBuf.put(geo, bufIds);
 					}
 
@@ -1836,10 +1839,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (locs.glMultiTexCoord[texUnit] != -1)
 			{
-				HashMap<Integer, Integer> bufIds = ctx.geoToTexCoordsBuf.get(geo);
+				SparseArray<Integer> bufIds = ctx.geoToTexCoordsBuf.get(geo);
 				if (bufIds == null)
 				{
-					bufIds = new HashMap<Integer, Integer>();
+					bufIds = new SparseArray<Integer>();
 					ctx.geoToTexCoordsBuf.put(geo, bufIds);
 				}
 
@@ -5302,8 +5305,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		GLDrawable draw = drawable(drawable);
 		draw.swapBuffers();
 
-		//test effect
-		((JoglesContext) ctx).gl_state = new GL_State();
+		//test effect, seems to improve the ignore vertexcolors problem?
+		((JoglesContext) ctx).gl_state.clear();
 	}
 
 	private static void outputErrors(Context ctx)
