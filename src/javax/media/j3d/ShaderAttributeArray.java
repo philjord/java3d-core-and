@@ -26,7 +26,6 @@
 
 package javax.media.j3d;
 
-
 /**
  * The ShaderAttributeArray object encapsulates a uniform shader
  * attribute whose value is specified explicitly. The shader variable
@@ -55,109 +54,149 @@ package javax.media.j3d;
  * @since Java 3D 1.4
  */
 
-public class ShaderAttributeArray extends ShaderAttributeObject {
-    /**
-     * Constructs a new ShaderAttributeArray object with the specified
-     * <code>(attrName,&nbsp;value)</code> pair. The specified value
-     * must be an array of one of the allowed class types.
-     * A deep copy of the array is stored.
-     *
-     * @param attrName the name of the shader attribute
-     * @param value the value of the shader attribute
-     *
-     * @exception NullPointerException if attrName or value is null
-     *
-     * @exception ClassCastException if value is not an array of
-     * one of the allowed classes
-     */
-    public ShaderAttributeArray(String attrName, Object value) {
-	super(attrName, value);
-    }
-
-    // Implement abstract getValue method
-    @Override
-    public Object getValue() {
-        if (isLiveOrCompiled())
-	    if (!this.getCapability(ALLOW_VALUE_READ))
-		throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
-
- 	return ((ShaderAttributeArrayRetained)this.retained).getValue();
-    }
-
-    // Implement abstract setValue method
-    @Override
-    public void setValue(Object value) {
-	if (value == null) {
-	    throw new NullPointerException();
+public class ShaderAttributeArray extends ShaderAttributeObject
+{
+	/**
+	 * Constructs a new ShaderAttributeArray object with the specified
+	 * <code>(attrName,&nbsp;value)</code> pair. The specified value
+	 * must be an array of one of the allowed class types.
+	 * A deep copy of the array is stored.
+	 *
+	 * @param attrName the name of the shader attribute
+	 * @param value the value of the shader attribute
+	 *
+	 * @exception NullPointerException if attrName or value is null
+	 *
+	 * @exception ClassCastException if value is not an array of
+	 * one of the allowed classes
+	 */
+	public ShaderAttributeArray(String attrName, Object value)
+	{
+		super(attrName, value);
 	}
 
-        if (isLiveOrCompiled())
-	    if (!this.getCapability(ALLOW_VALUE_WRITE))
-		throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject1"));
+	// Implement abstract getValue method
+	@Override
+	public Object getValue()
+	{
+		if (isLiveOrCompiled())
+			if (!this.getCapability(ALLOW_VALUE_READ))
+				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
 
-	if (isLive())
-	    ((ShaderAttributeArrayRetained)this.retained).setValue(value);
-	else
-	    ((ShaderAttributeArrayRetained)this.retained).initValue(value);
-
-    }
-
-
-    /**
-     * Sets the specified array element of the value of this shader
-     * attribute to the specified value.
-     * A copy of the object is stored.
-     *
-     * @param value the new value of the shader attribute
-     *
-     * @exception NullPointerException if value is null
-     *
-     * @exception ClassCastException if value is not an instance of
-     * the same base class as the individual elements of the array object
-     * used to construct this shader attribute object.
-     *
-     * @exception CapabilityNotSetException if appropriate capability is
-     * not set and this object is part of live or compiled scene graph
-     */
-    public void setValue(int index, Object value) {
-	if (value == null) {
-	    throw new NullPointerException();
+		return ((ShaderAttributeArrayRetained) this.retained).getValue();
 	}
 
-        if (isLiveOrCompiled())
-	    if (!this.getCapability(ALLOW_VALUE_WRITE))
-		throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject1"));
+	// Implement abstract setValue method
+	@Override
+	public void setValue(Object value)
+	{
+		if (value == null)
+		{
+			throw new NullPointerException();
+		}
 
-	if (isLive())
-	    ((ShaderAttributeArrayRetained)this.retained).setValue(index, value);
-	else {
-	    ((ShaderAttributeArrayRetained)this.retained).initValue(index, value);
+		if (isLiveOrCompiled())
+			if (!this.getCapability(ALLOW_VALUE_WRITE))
+				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject1"));
+
+		if (isLive())
+			((ShaderAttributeArrayRetained) this.retained).setValue(value);
+		else
+			((ShaderAttributeArrayRetained) this.retained).initValue(value);
+
 	}
-    }
 
-    /**
-     * Returns the number of elements in the value array.
-     *
-     * @return the number of elements in the value array
-     *
-     * @exception CapabilityNotSetException if appropriate capability is
-     * not set and this object is part of live or compiled scene graph
-     */
-    public int length() {
-        if (isLiveOrCompiled())
-	    if (!this.getCapability(ALLOW_VALUE_READ))
-		throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
+	/**
+	 * Sets the specified array element of the value of this shader
+	 * attribute to the specified value.
+	 * A copy of the object is stored.
+	 *
+	 * @param value the new value of the shader attribute
+	 *
+	 * @exception NullPointerException if value is null
+	 *
+	 * @exception ClassCastException if value is not an instance of
+	 * the same base class as the individual elements of the array object
+	 * used to construct this shader attribute object.
+	 *
+	 * @exception CapabilityNotSetException if appropriate capability is
+	 * not set and this object is part of live or compiled scene graph
+	 */
+	public void setValue(int index, Object value)
+	{
+		if (value == null)
+		{
+			throw new NullPointerException();
+		}
 
-        return ((ShaderAttributeArrayRetained)this.retained).length();
-    }
+		if (isLiveOrCompiled())
+			if (!this.getCapability(ALLOW_VALUE_WRITE))
+				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject1"));
 
-    /**
-     * Creates a retained mode ShaderAttributeArrayRetained object that this
-     * ShaderAttributeArray component object will point to.
-     */
-    @Override
-    void createRetained() {
-	this.retained = new ShaderAttributeArrayRetained();
-	this.retained.setSource(this);
-    }
+		if (isLive())
+			((ShaderAttributeArrayRetained) this.retained).setValue(index, value);
+		else
+		{
+			((ShaderAttributeArrayRetained) this.retained).initValue(index, value);
+		}
+	}
+
+	/**
+	 * Returns the number of elements in the value array.
+	 *
+	 * @return the number of elements in the value array
+	 *
+	 * @exception CapabilityNotSetException if appropriate capability is
+	 * not set and this object is part of live or compiled scene graph
+	 */
+	public int length()
+	{
+		if (isLiveOrCompiled())
+			if (!this.getCapability(ALLOW_VALUE_READ))
+				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
+
+		return ((ShaderAttributeArrayRetained) this.retained).length();
+	}
+
+	/**
+	 * Creates a retained mode ShaderAttributeArrayRetained object that this
+	 * ShaderAttributeArray component object will point to.
+	 */
+	@Override
+	void createRetained()
+	{
+		this.retained = new ShaderAttributeArrayRetained();
+		this.retained.setSource(this);
+	}
+
+	@Override
+	public boolean equals(Object anObject)
+	{
+		if (this == anObject)
+		{
+			return true;
+		}
+		if (anObject instanceof ShaderAttributeArray)
+		{
+			ShaderAttributeArray anotherShaderAttributeArray = (ShaderAttributeArray) anObject;
+			if (this.getAttributeName().equals(anotherShaderAttributeArray.getAttributeName()))
+			{
+				Object[] values = (Object[]) getValue();
+				Object[] otherValues = (Object[]) anotherShaderAttributeArray.getValue();
+				int n = values.length;
+				if (n == otherValues.length)
+				{
+					int i = 0;
+					while (n-- != 0)
+					{
+						if (!values[i].equals(otherValues[i]))
+							return false;
+						i++;
+					}
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

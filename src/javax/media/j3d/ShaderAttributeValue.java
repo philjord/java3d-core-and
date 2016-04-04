@@ -112,5 +112,26 @@ public class ShaderAttributeValue extends ShaderAttributeObject {
 	this.retained = new ShaderAttributeValueRetained();
 	this.retained.setSource(this);
     }
+    
+    
+    @Override
+	public boolean equals(Object anObject)
+	{
+		if (this == anObject)
+		{
+			return true;
+		}
+		if (anObject instanceof ShaderAttributeValue)
+		{
+			ShaderAttributeValue anotherShaderAttributeValue = (ShaderAttributeValue) anObject;
+			if (this.getAttributeName().equals(anotherShaderAttributeValue.getAttributeName()))
+			{
+				Object value = getValue();
+				Object otherValue = anotherShaderAttributeValue.getValue();				
+				return value.equals(otherValue);				
+			}
+		}
+		return false;
+	}
 
 }

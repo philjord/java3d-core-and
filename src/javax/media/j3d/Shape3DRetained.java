@@ -2564,7 +2564,7 @@ final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(ArrayList userL
 
 
     boolean isEquivalent(Shape3DRetained shape) {
-	if (this.appearance != shape.appearance ||
+	if (!this.appearance.equals(shape.appearance) ||
 	    // Scoping info should be same since they are under same group
 	    this.appearanceOverrideEnable != shape.appearanceOverrideEnable ||
 	    this.isPickable != shape.isPickable ||
