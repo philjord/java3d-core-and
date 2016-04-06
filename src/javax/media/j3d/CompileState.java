@@ -185,6 +185,10 @@ AppearanceRetained getAppearance(AppearanceRetained app) {
 		Shape3DRetained[] shapes = new Shape3DRetained[numShapes];
 		curList.copyInto(shapes);
 		Shape3DRetained[] toBeMergedShapes = new Shape3DRetained[numShapes];
+//must be at least 2 to try a merge
+		if(numShapes>1)
+		{
+
 		for (int i = 0; i < numShapes; i++) {
 		    if (shapes[i] == null) {
 			continue;
@@ -284,6 +288,7 @@ AppearanceRetained getAppearance(AppearanceRetained app) {
 		    }
 		    // add the shape to the dest
 		}
+	    }
 	    }
 	}
 

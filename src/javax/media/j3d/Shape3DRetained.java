@@ -1406,18 +1406,19 @@ Enumeration getAllGeometries(int id) {
 	// currentLocalToVworld in the intersect test, it will then
 	// be more costly and really beat the purpose of eliminating
 	// the static transform group
-        if (isPickable || isCollidable ||
+        if (pickable || collidable ||
 	    	source.getCapability(Shape3D.ALLOW_PICKABLE_WRITE) ||
 	    	source.getCapability(Shape3D.ALLOW_COLLIDABLE_WRITE)) {
 	    return false;
 	}
 
-	if (appearance != null &&
-	    (appearance.transparencyAttributes != null && appearance.transparencyAttributes.transparencyMode != TransparencyAttributes.NONE))
-	    return false;
+     //PJ why?   
+//	if (appearance != null &&
+//	    (appearance.transparencyAttributes != null && appearance.transparencyAttributes.transparencyMode != TransparencyAttributes.NONE))
+//	    return false;
 
 	GeometryRetained geo;
-	boolean alphaEditable;
+//	boolean alphaEditable;
 
 	for (int i=0; i<geometryList.size(); i++) {
 	    geo = geometryList.get(i);
@@ -1425,7 +1426,7 @@ Enumeration getAllGeometries(int id) {
 		if (geo.refCnt > 1) {
 		    return false;
 		}
-		alphaEditable = isAlphaEditable(geo);
+//		alphaEditable = isAlphaEditable(geo);
 		if (geo instanceof GeometryArrayRetained) {
 		    geo.isEditable = !((GeometryArrayRetained)geo).isWriteStatic();
 
@@ -1439,7 +1440,12 @@ Enumeration getAllGeometries(int id) {
 
 		}
 
-		if (!geo.canBeInDisplayList(alphaEditable)) {
+		//PJ display list gone, but why were they special?
+//		if (!geo.canBeInDisplayList(alphaEditable)) {
+//		    return false;
+//		}
+		//PJ don't touch editables
+		if (geo.isEditable) {
 		    return false;
 		}
 	    }
@@ -1450,6 +1456,7 @@ Enumeration getAllGeometries(int id) {
 
     @Override
     void compile(CompileState compState) {
+   	
 	AppearanceRetained newApp;
 
 	super.compile(compState);
@@ -1492,8 +1499,7 @@ Enumeration getAllGeometries(int id) {
 
     @Override
     void merge(CompileState compState) {
-
-
+    	
 	if (mergeFlag == SceneGraphObjectRetained.DONT_MERGE) {
 
 	    // no need to save the staticTransform here

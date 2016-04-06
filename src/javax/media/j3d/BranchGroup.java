@@ -577,4 +577,12 @@ public class BranchGroup extends Group {
 
     }
 
+    /**
+     * Strictly for debug!
+     */
+	public void outputTraversal() 
+	{
+		((BranchGroupRetained)this.retained).traverse(false,1);	
+	}
+
 }

@@ -11,7 +11,6 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.media.j3d.JoglesContext.GL_State;
 import javax.media.j3d.JoglesContext.LightData;
 import javax.media.j3d.JoglesContext.LocationData;
 import javax.vecmath.Vector4f;
@@ -267,7 +266,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			GL2ES2 gl = ctx.gl2es2();
 			JoglesContext joglesctx = ((JoglesContext) ctx);
-			LocationData locs = getLocs(ctx, gl, geo);
+			LocationData locs = getLocs(ctx, gl);
 
 			//If any buffers need loading do that now and skip a render for this frame
 			loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount, vertexAttrSizes,
@@ -278,7 +277,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//	if (buffersLoaded)
 			//		return;
 
-			setFFPAttributes(ctx, gl, geo, numActiveTexUnit);
+			//			setFFPAttributes(ctx, gl);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -432,7 +431,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glUniform1i(locs.ignoreVertexColors, 1);
 				outputErrors(ctx);
 				if (locs.glColor != -1)
+				{
 					gl.glDisableVertexAttribArray(locs.glColor);
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDisableVertexAttribArray++;
+				}
 			}
 
 			if (normalsDefined)
@@ -468,7 +471,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			else
 			{
 				if (locs.glNormal != -1)
+				{
 					gl.glDisableVertexAttribArray(locs.glNormal);
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDisableVertexAttribArray++;
+				}
 			}
 
 			if (vattrDefined)
@@ -528,7 +535,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					else
 					{
 						if (locs.glMultiTexCoord[i] != -1)
+						{
 							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glDisableVertexAttribArray++;
+						}
 					}
 				}
 
@@ -567,9 +578,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.glDrawArrays(primType, start_array[i], sarray[i]);
 						outputErrors(ctx);
 						if (OUTPUT_PER_FRAME_STATS)
-							joglesctx.perFrameStats.glDrawStripArrays++;
+							joglesctx.perFrameStats.glDrawStripArraysStrips++;
 					}
 				}
+				if (OUTPUT_PER_FRAME_STATS)
+					joglesctx.perFrameStats.glDrawStripArrays++;
 			}
 			else
 			{
@@ -607,7 +620,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
+					{
 						gl.glDisableVertexAttribArray(attribLoc);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
 				}
 			}
 
@@ -616,13 +633,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
 				{
 					if (locs.glMultiTexCoord[i] != -1)
+					{
 						gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
 				}
 			}
 		}
 		else
 		{
-			// do nothing warning already given by FFP
+			if (!NO_PROGRAM_WARNING_GIVEN)
+				System.err.println("Execute called with no shader Program in use!");
+			NO_PROGRAM_WARNING_GIVEN = true;
 		}
 
 		outputErrors(ctx);
@@ -826,7 +849,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			GL2ES2 gl = ctx.gl2es2();
 
-			LocationData locs = getLocs(ctx, gl, geo);
+			LocationData locs = getLocs(ctx, gl);
 
 			//If any buffers need loading do that now and skip a render for this frame
 			loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount, vertexAttrSizes,
@@ -839,7 +862,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// wild debug code, don't forget sop in swapBufers
 			//System.out.println("Geo drawing " + geo.source.getName());
 
-			setFFPAttributes(ctx, gl, geo, numActiveTexUnitState);
+			//			setFFPAttributes(ctx, gl);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -986,7 +1009,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glUniform1i(locs.ignoreVertexColors, 1);
 				outputErrors(ctx);
 				if (locs.glColor != -1)
+				{
 					gl.glDisableVertexAttribArray(locs.glColor);
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDisableVertexAttribArray++;
+				}
 			}
 
 			if (normalsDefined)
@@ -1021,7 +1048,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			else
 			{
 				if (locs.glNormal != -1)
+				{
 					gl.glDisableVertexAttribArray(locs.glNormal);
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDisableVertexAttribArray++;
+				}
 			}
 
 			if (vattrDefined)
@@ -1082,7 +1113,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					else
 					{
 						if (locs.glMultiTexCoord[i] != -1)
+						{
 							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glDisableVertexAttribArray++;
+						}
 					}
 				}
 
@@ -1159,6 +1194,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}*/
 				}
 
+				//FIXME: given cost of draw calls one fat strip array call across the whole lot surely better
+
 				for (int i = 0; i < strip_len; i++)
 				{
 					int count = sarray[i];
@@ -1175,9 +1212,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 					outputErrors(ctx);
 
 					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glDrawElements++;
+						ctx.perFrameStats.glDrawStripElementsStrips++;
 				}
 				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glDrawStripElements++;
 
 			}
 			else
@@ -1252,7 +1292,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					//ctx.disableVertexAttrArray(gl, i);
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
+					{
 						gl.glDisableVertexAttribArray(attribLoc);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
 				}
 			}
 
@@ -1261,14 +1305,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
 				{
 					if (locs.glMultiTexCoord[i] != -1)
+					{
 						gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
 				}
 			}
 
 		}
 		else
 		{
-			// do nothing warning already given by FFP
+			if (!NO_PROGRAM_WARNING_GIVEN)
+				System.err.println("Execute called with no shader Program in use!");
+			NO_PROGRAM_WARNING_GIVEN = true;
 		}
 		outputErrors(ctx);
 	}
@@ -1294,7 +1344,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// another glDraw call
 	// until glFinish
 
-	private static LocationData getLocs(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo)
+	private static LocationData getLocs(JoglesContext ctx, GL2ES2 gl)
 	{
 		if (ctx.getShaderProgram() != null)
 		{
@@ -1366,7 +1416,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	 * @param gl
 	 */
 
-	private void setFFPAttributes(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, int numActiveTexUnitState)
+	private void setFFPAttributes(JoglesContext ctx, GL2ES2 gl)
 	{
 		if (ctx.getShaderProgram() != null)
 		{
@@ -1376,7 +1426,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.setFFPAttributes++;
 
-			LocationData locs = getLocs(ctx, gl, geo);
+			LocationData locs = getLocs(ctx, gl);
 			//TODO: notice these matrix can be sent through as a bunch, so the native calls would be very reduced!
 
 			//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
@@ -1416,7 +1466,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
 				{
-					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
+					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
+					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
@@ -1435,7 +1486,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
 				{
-					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+					//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1453,7 +1505,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 				{
-					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1472,7 +1525,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
 				{
-					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1491,7 +1545,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 				{
-					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
@@ -1666,12 +1721,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			ctx.prevShaderProgram = currentShaderId;
 			outputErrors(ctx);
 		}
-		else
-		{
-			if (!NO_PROGRAM_WARNING_GIVEN)
-				System.err.println("Execute called with no shader Program in use!");
-			NO_PROGRAM_WARNING_GIVEN = true;
-		}
+
+		// happens on the first call sometimes, for background or clear or something
 
 	}
 
@@ -4626,6 +4677,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.currentNormalMat.set(joglesctx.toArray3x3(joglesctx.currentModelViewMat));
 		joglesctx.invert(joglesctx.currentNormalMat);
 		joglesctx.currentNormalMat.transpose();
+
+		//After this it's only ExecuteGeom so the FFP gear is done for now
+		GL2ES2 gl = joglesctx.gl2es2();
+		setFFPAttributes(joglesctx, gl);
 
 	}
 

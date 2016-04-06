@@ -325,8 +325,11 @@ public class JoglesContext extends JoglContext
 		//public HashMap<ShaderProgramId, String> usedProgramNames = new HashMap<ShaderProgramId, String>();
 
 		public int geoToClearBuffers;
-		public int glDrawStripArrays;//
+		public int glDrawStripArrays;
+		public int glDrawStripArraysStrips;
 		public int glDrawArrays;
+		public int glDrawStripElements;
+		public int glDrawStripElementsStrips;
 		public int glDrawElements;
 		public int setFFPAttributes;
 		public int geoToLocationData;
@@ -391,6 +394,7 @@ public class JoglesContext extends JoglContext
 		public int glVertexAttribPointerCoord;
 		public int glBufferData;
 		public int glBufferSubData;
+		public int glDisableVertexAttribArray;
 
 		public int modelMatrixUpdated;
 		public int glModelViewMatrixUpdated;
@@ -404,111 +408,92 @@ public class JoglesContext extends JoglContext
 		public int glNormalMatrixSkipped;
 		public int glModelViewMatrixInverseSkipped;
 
+		
+
 		public void outputPerFrameData()
 		{
 			boolean highInterestOnly = true;
 
-			if (highInterestOnly)
-				System.out.println("geoToClearBuffers " + geoToClearBuffers);
-			if (highInterestOnly)
-				System.out.println("glDrawStripArrays " + glDrawStripArrays);
-			if (highInterestOnly)
-				System.out.println("glDrawArrays " + glDrawArrays);
-			if (highInterestOnly)
-				System.out.println("glDrawElements " + glDrawElements);
-			if (highInterestOnly)
-				System.out.println("setFFPAttributes " + setFFPAttributes);
-			System.out.println("geoToLocationData " + geoToLocationData);
-			if (highInterestOnly)
-				System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
-			System.out.print("createGLSLShader " + createGLSLShader);
-			System.out.print("\tcreateGLSLShaderProgram " + createGLSLShaderProgram);
-			System.out.print("\tcompileGLSLShader " + compileGLSLShader);
-			System.out.print("\tdestroyGLSLShader " + destroyGLSLShader);
-			System.out.print("\tdestroyGLSLShaderProgram " + destroyGLSLShaderProgram);
-			System.out.print("\tlinkGLSLShaderProgram " + linkGLSLShaderProgram);
-			System.out.print("\tbindGLSLVertexAttrName " + bindGLSLVertexAttrName);
-			System.out.println("\tlookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
-			System.out.print("updateDirectionalLight " + updateDirectionalLight);
-			System.out.print("\tupdatePointLight " + updatePointLight);
-			System.out.println("\tupdateSpotLight " + updateSpotLight);
-			System.out.print("updateExponentialFog " + updateExponentialFog);
-			System.out.print("\tupdateLinearFog " + updateLinearFog);
-			System.out.print("\tdisableFog " + disableFog);
-			System.out.println("\tsetFogEnableFlag " + setFogEnableFlag);
-			System.out.println("updateLineAttributes " + updateLineAttributes);
-			System.out.print("\tresetLineAttributes " + resetLineAttributes);
-			System.out.println("updateMaterial " + updateMaterial);
-			System.out.println("updateMaterialColor " + updateMaterialColor);
-			System.out.print("updateColoringAttributes " + updateColoringAttributes);
-			System.out.println("\tresetColoringAttributes " + resetColoringAttributes);
-			System.out.print("updatePointAttributes " + updatePointAttributes);
-			System.out.println("\tresetPointAttributes " + resetPointAttributes);
-			System.out.print("updatePolygonAttributes " + updatePolygonAttributes);
-			System.out.println("\tresetPolygonAttributes " + resetPolygonAttributes);
-			System.out.print("updateRenderingAttributes " + updateRenderingAttributes);
-			System.out.println("\tresetRenderingAttributes " + resetRenderingAttributes);
-			if (highInterestOnly)
-				System.out.print("updateTransparencyAttributes " + updateTransparencyAttributes);
-			if (highInterestOnly)
-				System.out.println("\tresetTransparency " + resetTransparency);
+			System.out.println("geoToClearBuffers " + geoToClearBuffers);
+			System.out.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
+			System.out.println("glDrawArrays " + glDrawArrays);
+			System.out.println("glDrawStripElements " + glDrawStripElements + "\t made up of glDrawStripElementsStrips " + glDrawStripElementsStrips);
+			System.out.println("glDrawElements " + glDrawElements);
+			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
+			System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
+			System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
+			System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
+			System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);			
+			System.out.println("glBufferData " + glBufferData);
+			System.out.println("glBufferSubData " + glBufferSubData);
+			System.out.println("glDisableVertexAttribArray " + glDisableVertexAttribArray);			
+			System.out.println("---");
+			System.out.println("setModelViewMatrix " + setModelViewMatrix);
+			System.out.println("setFFPAttributes " + setFFPAttributes);
+			System.out.println("modelMatrixUpdated " + modelMatrixUpdated + " modelMatrixSkipped " + modelMatrixSkipped);
+			System.out.println(
+					"glModelViewMatrixUpdated " + glModelViewMatrixUpdated + " glModelViewMatrixSkipped " + glModelViewMatrixSkipped);
+			System.out.println("glModelViewProjectionMatrixUpdated " + glModelViewProjectionMatrixUpdated
+					+ " glModelViewProjectionMatrixSkipped " + glModelViewProjectionMatrixSkipped);
+			System.out.println("glNormalMatrixUpdated " + glNormalMatrixUpdated + " glNormalMatrixSkipped " + glNormalMatrixSkipped);
+			System.out.println("---");
+			if (!highInterestOnly)
+			{
+				System.out.println("geoToLocationData " + geoToLocationData);
+				System.out.print("createGLSLShader " + createGLSLShader);
+				System.out.print("\tcreateGLSLShaderProgram " + createGLSLShaderProgram);
+				System.out.print("\tcompileGLSLShader " + compileGLSLShader);
+				System.out.print("\tdestroyGLSLShader " + destroyGLSLShader);
+				System.out.print("\tdestroyGLSLShaderProgram " + destroyGLSLShaderProgram);
+				System.out.print("\tlinkGLSLShaderProgram " + linkGLSLShaderProgram);
+				System.out.print("\tbindGLSLVertexAttrName " + bindGLSLVertexAttrName);
+				System.out.println("\tlookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
+				System.out.print("updateDirectionalLight " + updateDirectionalLight);
+				System.out.print("\tupdatePointLight " + updatePointLight);
+				System.out.println("\tupdateSpotLight " + updateSpotLight);
+				System.out.print("updateExponentialFog " + updateExponentialFog);
+				System.out.print("\tupdateLinearFog " + updateLinearFog);
+				System.out.print("\tdisableFog " + disableFog);
+				System.out.println("\tsetFogEnableFlag " + setFogEnableFlag);
+				System.out.print("updateLineAttributes " + updateLineAttributes);
+				System.out.println("\tresetLineAttributes " + resetLineAttributes);
+				System.out.print("updateMaterial " + updateMaterial);
+				System.out.println("\tupdateMaterialColor " + updateMaterialColor);
+				System.out.print("updateColoringAttributes " + updateColoringAttributes);
+				System.out.println("\tresetColoringAttributes " + resetColoringAttributes);
+				System.out.print("updatePointAttributes " + updatePointAttributes);
+				System.out.println("\tresetPointAttributes " + resetPointAttributes);
+				System.out.print("updatePolygonAttributes " + updatePolygonAttributes);
+				System.out.println("\tresetPolygonAttributes " + resetPolygonAttributes);
+				System.out.print("updateRenderingAttributes " + updateRenderingAttributes);
+				System.out.println("\tresetRenderingAttributes " + resetRenderingAttributes);
+				System.out.println("setFullSceneAntialiasing " + setFullSceneAntialiasing);
+				System.out.println("setLightEnables " + setLightEnables);
+				System.out.println("setSceneAmbient " + setSceneAmbient);
+				System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
+				System.out.println("useCtx " + useCtx);
+				System.out.println("releaseCtx " + releaseCtx);
+				System.out.println("clear " + clear);
+				System.out.println("setViewport " + setViewport);
+				System.out.println("setProjectionMatrix " + setProjectionMatrix);
+			}
+
+			System.out.print("updateTransparencyAttributes " + updateTransparencyAttributes);
+			System.out.println("\tresetTransparency " + resetTransparency);
 			System.out.print("updateTextureAttributes " + updateTextureAttributes);
 			System.out.println("\tresetTextureAttributes " + resetTextureAttributes);
-			System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
-			if (highInterestOnly)
-				System.out.println("updateTextureUnitState " + updateTextureUnitState);
-			if (highInterestOnly)
-				System.out.println("bindTexture2D " + bindTexture2D);
-			if (highInterestOnly)
-				System.out.println("bindTextureCubeMap " + bindTextureCubeMap);
+			System.out.println("updateTextureUnitState " + updateTextureUnitState);
+			System.out.println("bindTexture2D " + bindTexture2D);
+			System.out.println("bindTextureCubeMap " + bindTextureCubeMap);
 			System.out.println("setBlendColor " + setBlendColor);
-			if (highInterestOnly)
-				System.out.println("setBlendFunc " + setBlendFunc);
-			System.out.println("setFullSceneAntialiasing " + setFullSceneAntialiasing);
-			System.out.println("setLightEnables " + setLightEnables);
-			System.out.println("setSceneAmbient " + setSceneAmbient);
-			if (highInterestOnly)
-				System.out.println("activeTextureUnit " + activeTextureUnit);
-			if (highInterestOnly)
-				System.out.println("resetTextureNative " + resetTextureNative);
-			System.out.println("useCtx " + useCtx);
-			System.out.println("releaseCtx " + releaseCtx);
-			System.out.println("clear " + clear);
-			System.out.println("setModelViewMatrix " + setModelViewMatrix);
-			System.out.println("setProjectionMatrix " + setProjectionMatrix);
-			System.out.println("setViewport " + setViewport);
-			if (highInterestOnly)
-				System.out.println("freeTexture " + freeTexture);
-			if (highInterestOnly)
-				System.out.println("generateTexID " + generateTexID);
+			System.out.println("setBlendFunc " + setBlendFunc);
+			System.out.println("activeTextureUnit " + activeTextureUnit);
+			System.out.println("resetTextureNative " + resetTextureNative);
+			System.out.println("freeTexture " + freeTexture);
+			System.out.println("generateTexID " + generateTexID);
 			System.out.println("setDepthBufferWriteEnable " + setDepthBufferWriteEnable);
-			if (highInterestOnly)
-				System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram);
-			if (highInterestOnly)
-				System.out.println("redundantUseProgram " + redundantUseProgram);
-			if (highInterestOnly)
-				System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
-			if (highInterestOnly)
-				System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
-			if (highInterestOnly)
-				System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
-			if (highInterestOnly)
-				System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);
-			if (highInterestOnly)
-				System.out.println("glBufferData " + glBufferData);
-			if (highInterestOnly)
-				System.out.println("glBufferSubData " + glBufferSubData);
-
-			if (highInterestOnly)
-				System.out.println("modelMatrixUpdated " + modelMatrixUpdated + " modelMatrixSkipped " + modelMatrixSkipped);
-			if (highInterestOnly)
-				System.out.println(
-						"glModelViewMatrixUpdated " + glModelViewMatrixUpdated + " glModelViewMatrixSkipped " + glModelViewMatrixSkipped);
-			if (highInterestOnly)
-				System.out.println("glModelViewProjectionMatrixUpdated " + glModelViewProjectionMatrixUpdated
-						+ " glModelViewProjectionMatrixSkipped " + glModelViewProjectionMatrixSkipped);
-			if (highInterestOnly)
-				System.out.println("glNormalMatrixUpdated " + glNormalMatrixUpdated + " glNormalMatrixSkipped " + glNormalMatrixSkipped);
+			System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram);
+			System.out.println("redundantUseProgram " + redundantUseProgram);
 
 			//for (ShaderProgramId id : usedPrograms)
 			//	System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());

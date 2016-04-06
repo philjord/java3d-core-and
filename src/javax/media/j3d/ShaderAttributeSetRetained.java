@@ -97,7 +97,11 @@ private Map<String, ShaderAttributeRetained> attrs = new HashMap<String, ShaderA
      * not set and this object is part of live or compiled scene graph
      */
     ShaderAttribute get(String attrName) {
-	return (ShaderAttribute)attrs.get(attrName).source;
+    	ShaderAttributeRetained sAttr = attrs.get(attrName);
+    	if(sAttr!=null)
+    		return (ShaderAttribute)attrs.get(attrName).source;
+    	else
+    		return null;
     }
 
     /**

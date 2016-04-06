@@ -428,12 +428,13 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
 	for (int i = 0; i < level; i++) {
 	     System.err.print(".");
 	}
-	System.err.print(this);
+	System.err.print(
+			this.source.getName() + " ret:" + this.getClass().getSimpleName() + " source:" + this.source.getClass().getSimpleName());
 
 	if (isStatic()) {
 	    System.err.print(" (s)");
 	} else {
-	    System.err.print(" (w)");
+	    System.err.print(" (non-s)");
 	}
 	System.err.println();
 	System.err.println(transform.toString());
@@ -495,8 +496,9 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
 	    staticTransform = compState.staticTransform;
 	    mergeTransform(compState.staticTransform);
 	}
-
-	if (mergeFlag == SceneGraphObjectRetained.MERGE) {
+	
+	//PJ normal transform were some old display list rubbish
+	/*if (mergeFlag == SceneGraphObjectRetained.MERGE) {
 
 	    // before we push down the static transform, check
 	    // to see if the transform will be pushed down to shapes
@@ -504,13 +506,14 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
             // the normal transform has uniform scale or not. If
 	    // it doesn't, don't push it down.
 
+		
 	    if (this.needNormalsTransform) {
 		Transform3D normalXform = this.getNormalTransform();
 		if (!normalXform.isCongruent()) {
 		    mergeFlag = SceneGraphObjectRetained.DONT_MERGE;
 		}
 	    }
-	}
+	}*/
 
 	if (mergeFlag == SceneGraphObjectRetained.MERGE) {
 	    saveStaticTransform = compState.staticTransform;
