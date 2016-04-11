@@ -3,6 +3,7 @@ package javax.media.j3d;
 import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -277,7 +278,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//	if (buffersLoaded)
 			//		return;
 
-			//			setFFPAttributes(ctx, gl);
+			setFFPAttributes(ctx, gl);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -432,7 +433,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				outputErrors(ctx);
 				if (locs.glColor != -1)
 				{
-					gl.glDisableVertexAttribArray(locs.glColor);
+					//gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -472,7 +473,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				if (locs.glNormal != -1)
 				{
-					gl.glDisableVertexAttribArray(locs.glNormal);
+					//gl.glDisableVertexAttribArray(locs.glNormal);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -536,7 +537,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						if (locs.glMultiTexCoord[i] != -1)
 						{
-							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+							//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.glDisableVertexAttribArray++;
 						}
@@ -621,7 +622,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						gl.glDisableVertexAttribArray(attribLoc);
+						//gl.glDisableVertexAttribArray(attribLoc);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -634,7 +635,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					if (locs.glMultiTexCoord[i] != -1)
 					{
-						gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+						//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -862,7 +863,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// wild debug code, don't forget sop in swapBufers
 			//System.out.println("Geo drawing " + geo.source.getName());
 
-			//			setFFPAttributes(ctx, gl);
+			setFFPAttributes(ctx, gl);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -1010,7 +1011,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				outputErrors(ctx);
 				if (locs.glColor != -1)
 				{
-					gl.glDisableVertexAttribArray(locs.glColor);
+					//gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -1049,7 +1050,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				if (locs.glNormal != -1)
 				{
-					gl.glDisableVertexAttribArray(locs.glNormal);
+					//gl.glDisableVertexAttribArray(locs.glNormal);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -1114,7 +1115,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						if (locs.glMultiTexCoord[i] != -1)
 						{
-							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+							//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.glDisableVertexAttribArray++;
 						}
@@ -1148,15 +1149,34 @@ class JoglesPipeline extends JoglesDEPPipeline
 					break;
 				}
 
+				//so currently morrowind land is happy with being stitched, but oblivions is madness!
+				// I'm sure it's the land cos you can see the underside
+				// I notice mention of degenerate triangles in the grid elevation builder
+				// so maybe time to step away from it?
+				boolean DO_STITCH = true;
 				int[] stripInd = ctx.geoToIndStripBuf.get(geo);
 				// if no index buffers build build them now
 				if (stripInd == null)
 				{
+					// are we stitching up?
+					if (strip_len > 1 && DO_STITCH)
+					{
+						IntBuffer stitchedTriIndexes = stitchTriStrips(strip_len, sarray, initialIndexIndex, indexCoord);
+						//now set it up as a single tristrip
+						strip_len = 1;
+						sarray = new int[] { stitchedTriIndexes.capacity() - initialIndexIndex };
+						ctx.geoToIndStripSwappedSize.put(geo, stitchedTriIndexes.capacity() - initialIndexIndex);
+						//System.out.println("stitched and put " +sarray[0] + " "+geo);
+					}
+
 					stripInd = new int[strip_len];
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int offset = initialIndexIndex;
-					IntBuffer indicesBuffer = IntBuffer.wrap(indexCoord);
+					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 4);
+					bb.order(ByteOrder.nativeOrder());
+					IntBuffer indicesBuffer = bb.asIntBuffer();
+					indicesBuffer.put(indexCoord);
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(offset);
@@ -1194,7 +1214,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}*/
 				}
 
-				//FIXME: given cost of draw calls one fat strip array call across the whole lot surely better
+				// second time around we have unstitched values fix up!
+				if (strip_len > 1 && DO_STITCH)
+				{
+					strip_len = 1;
+					sarray = new int[] { ctx.geoToIndStripSwappedSize.get(geo) };
+					//System.out.println("reseen stitched and got " +sarray[0] + " "+geo);
+				}
 
 				for (int i = 0; i < strip_len; i++)
 				{
@@ -1229,7 +1255,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					//create and fill index buffer
 					//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
-					IntBuffer indBuf = IntBuffer.wrap(indexCoord);
+					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 4);
+					bb.order(ByteOrder.nativeOrder());
+					IntBuffer indBuf = bb.asIntBuffer();
+					indBuf.put(indexCoord);
 					indBuf.position(initialIndexIndex);
 
 					int[] tmp = new int[1];
@@ -1293,7 +1322,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						gl.glDisableVertexAttribArray(attribLoc);
+						//gl.glDisableVertexAttribArray(attribLoc);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -1306,7 +1335,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					if (locs.glMultiTexCoord[i] != -1)
 					{
-						gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+						//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -1327,22 +1356,57 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
 	//
 
-	//<AND> new for andy all the FFP uniforms handed across
-	//Order of calls:
-	//Sync from previous, in other words start of frame
-	//Projection set
-	//If lights need updating 
-	//		View set and Model set to identity 
-	//		Update of light values set
-	//If sceneAmbient needs updating
-	//		call scene ambient update
-	//Shader program Id set (we are doing a geometry now) 
-	//If material != null Material set  
-	//View set and Model set (Model being for this geometry)
-	//Geometry itself set and glDraw or glDrawElements called
-	// then some changes
-	// another glDraw call
-	// until glFinish
+	private static IntBuffer stitchTriStrips(int strip_len, int[] sarray, int initialIndexIndex, int[] indexCoord)
+	{
+		//TODO: How to make degenerate tri strips joined up
+		//What do we need to put in between, in order to link up the triangles? 
+		//We’ll need an even number of new triangles in order to preserve the winding. 
+		//We can do this by repeating the last vertex of the first row, 
+		//and the first vertex of the second row. http://www.learnopengles.com/tag/degenerate-triangles/
+
+		// first how big = size0+1...1+sizeN+1...1+sizeLen
+		// equals sum strips + (numstrip*2)-2
+		int totalStitchedIndexSize = 0;
+		for (int i = 0; i < strip_len; i++)
+			totalStitchedIndexSize += sarray[i];
+
+		totalStitchedIndexSize += (strip_len * 2) - 2;
+
+		// now put the tristrip indexes into a  single fat buffer, with degenerates...
+		int dstOffset = initialIndexIndex;
+		int srcOffset = initialIndexIndex;
+		ByteBuffer bb = ByteBuffer.allocateDirect(totalStitchedIndexSize * 4);
+		bb.order(ByteOrder.nativeOrder());
+		IntBuffer totalIndicesBuffer = bb.asIntBuffer();
+
+		for (int i = 0; i < strip_len; i++)
+		{
+			// first one no repeated first
+			if (i != 0)
+			{
+				//repeat first
+				totalIndicesBuffer.put(dstOffset, indexCoord[srcOffset]);
+				dstOffset++;
+			}
+
+			int count = sarray[i];
+			totalIndicesBuffer.position(dstOffset);
+			totalIndicesBuffer.put(indexCoord, srcOffset, count);
+			dstOffset += count;
+			srcOffset += count;
+
+			//last one no repeat last
+			if (i != strip_len - 1)
+			{
+				//repeat last
+				totalIndicesBuffer.put(dstOffset, indexCoord[srcOffset]);
+				dstOffset++;
+			}
+
+		}
+		return totalIndicesBuffer;
+
+	}
 
 	private static LocationData getLocs(JoglesContext ctx, GL2ES2 gl)
 	{
@@ -4678,9 +4742,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.invert(joglesctx.currentNormalMat);
 		joglesctx.currentNormalMat.transpose();
 
+		// with set ffp in modelview I get no savings on this ffp minimise, but I do get cock-ups
+		// so I think unnessasary calls to this method to reset teh view or something between geoms
+		//are casuing me trouble
 		//After this it's only ExecuteGeom so the FFP gear is done for now
-		GL2ES2 gl = joglesctx.gl2es2();
-		setFFPAttributes(joglesctx, gl);
+		//		GL2ES2 gl = joglesctx.gl2es2();
+		//		setFFPAttributes(joglesctx, gl);
 
 	}
 

@@ -1412,13 +1412,13 @@ Enumeration getAllGeometries(int id) {
 	    return false;
 	}
 
-     //PJ why?   
-//	if (appearance != null &&
-//	    (appearance.transparencyAttributes != null && appearance.transparencyAttributes.transparencyMode != TransparencyAttributes.NONE))
-//	    return false;
+  
+	if (appearance != null &&
+	    (appearance.transparencyAttributes != null && appearance.transparencyAttributes.transparencyMode != TransparencyAttributes.NONE))
+	    return false;
 
 	GeometryRetained geo;
-//	boolean alphaEditable;
+	boolean alphaEditable;
 
 	for (int i=0; i<geometryList.size(); i++) {
 	    geo = geometryList.get(i);
@@ -1426,7 +1426,7 @@ Enumeration getAllGeometries(int id) {
 		if (geo.refCnt > 1) {
 		    return false;
 		}
-//		alphaEditable = isAlphaEditable(geo);
+		alphaEditable = isAlphaEditable(geo);
 		if (geo instanceof GeometryArrayRetained) {
 		    geo.isEditable = !((GeometryArrayRetained)geo).isWriteStatic();
 
@@ -1441,9 +1441,9 @@ Enumeration getAllGeometries(int id) {
 		}
 
 		//PJ display list gone, but why were they special?
-//		if (!geo.canBeInDisplayList(alphaEditable)) {
-//		    return false;
-//		}
+		if (!geo.canBeInDisplayList(alphaEditable)) {
+		    return false;
+		}
 		//PJ don't touch editables
 		if (geo.isEditable) {
 		    return false;

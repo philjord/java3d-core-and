@@ -46,6 +46,7 @@ public class JoglesContext extends JoglContext
 
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
+	public HashMap<GeometryArrayRetained, Integer> geoToIndStripSwappedSize = new HashMap<GeometryArrayRetained, Integer>();
 
 	public HashMap<GeometryArrayRetained, Integer> geoToCoordBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToCoordBufSize = new HashMap<GeometryArrayRetained, Integer>();
@@ -408,25 +409,25 @@ public class JoglesContext extends JoglContext
 		public int glNormalMatrixSkipped;
 		public int glModelViewMatrixInverseSkipped;
 
-		
-
 		public void outputPerFrameData()
 		{
 			boolean highInterestOnly = true;
 
 			System.out.println("geoToClearBuffers " + geoToClearBuffers);
-			System.out.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
+			System.out
+					.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
 			System.out.println("glDrawArrays " + glDrawArrays);
-			System.out.println("glDrawStripElements " + glDrawStripElements + "\t made up of glDrawStripElementsStrips " + glDrawStripElementsStrips);
+			System.out.println(
+					"glDrawStripElements " + glDrawStripElements + "\t made up of glDrawStripElementsStrips " + glDrawStripElementsStrips);
 			System.out.println("glDrawElements " + glDrawElements);
 			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
 			System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
 			System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
 			System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
-			System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);			
+			System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);
 			System.out.println("glBufferData " + glBufferData);
 			System.out.println("glBufferSubData " + glBufferSubData);
-			System.out.println("glDisableVertexAttribArray " + glDisableVertexAttribArray);			
+			System.out.println("glDisableVertexAttribArray " + glDisableVertexAttribArray + " note native called commented out, trouble?");
 			System.out.println("---");
 			System.out.println("setModelViewMatrix " + setModelViewMatrix);
 			System.out.println("setFFPAttributes " + setFFPAttributes);
