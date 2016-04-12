@@ -1480,7 +1480,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	 * @param gl
 	 */
 
-	private void setFFPAttributes(JoglesContext ctx, GL2ES2 gl)
+	private static void setFFPAttributes(JoglesContext ctx, GL2ES2 gl)
 	{
 		if (ctx.getShaderProgram() != null)
 		{
@@ -1530,8 +1530,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
 				{
-					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
-					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
+					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
+					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
@@ -1550,8 +1550,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
 				{
-					//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
-					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
+						gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+					//gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1569,8 +1569,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 				{
-					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
-					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
+					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1589,8 +1589,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
 				{
-					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
-					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
+					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1609,8 +1609,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 				{
-					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
-					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
+					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
@@ -4063,7 +4063,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					ByteBuffer bb = (ByteBuffer) data;
 
-					gl.glCompressedTexImage2D(target, level, internalFormat, width, height, boundaryWidth, bb.capacity(), bb);
+					gl.glCompressedTexImage2D(target, level, internalFormat, width, height, boundaryWidth, bb.limit(), bb);
 
 					if (DO_OUTPUT_ERRORS)
 					{
