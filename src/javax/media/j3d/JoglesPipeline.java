@@ -46,10 +46,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//FIXME: this minimise call causes at least:
 	// Odd non transparent shape in fallout3 outside megaton, but it appears to be a behavior thing, so more investigation reqiuired
 	// might just be a bad shader
-	// causes morrowind LAND near by to show weird weirdness glActiveTexture is the culprit I think
-	// fallout 4 shows transparency on things that shouldn't be	but improved by the new GL_State call on swap
-
 	// ok with shader below false, my only current issues are the ignorevertexcolor ones from fallout 3 and 4
+	// but morrowind trees are disappearing leaves too now?
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
@@ -216,10 +214,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// get color array
 		if (floatColorsDefined)
 		{
-			if (cfdata != null)
-				fclrs = getColorArrayBuffer(cfdata);
-			else
+			if (cdataBuffer != null)
 				fclrs = (FloatBuffer) cdataBuffer;
+			else
+				fclrs = getColorArrayBuffer(cfdata);
 		}
 		else if (byteColorsDefined)
 		{
@@ -807,10 +805,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// get color array
 		if (floatColorsDefined)
 		{
-			if (cfdata != null)
-				fclrs = getColorArrayBuffer(cfdata);
-			else
+			if (cdataBuffer != null)
 				fclrs = (FloatBuffer) cdataBuffer;
+			else
+				fclrs = getColorArrayBuffer(cfdata);
+
 		}
 		else if (byteColorsDefined)
 		{
@@ -1530,8 +1529,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
 				{
-					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
-					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
+					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
+					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
@@ -1550,8 +1549,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
 				{
-						gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
-					//gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
+					//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1569,8 +1568,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 				{
-					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
-					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
+					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1589,8 +1588,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
 				{
-					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
-					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
+					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
 					outputErrors(ctx);
 
 					if (MINIMISE_NATIVE_CALLS_FFP)
@@ -1609,8 +1608,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 				{
-					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
-					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
+					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
@@ -1625,11 +1624,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			// if set one of the 2 colors below should be used by the shader (material for lighting)
 
-			// this is causing trouble in the transparent objects outside megaton
-			// also seen in transparent tarpaulins in fallout 4 diamond city
 			if (locs.ignoreVertexColors != -1)
 			{
-				//FIXME: cause terrible toruble
 				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
 						|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
 				{
@@ -1768,8 +1764,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
 				{
-					gl.glUniformMatrix4fv(locs.textureTransform, 1, false, ctx.toFB(ctx.textureTransform));
-					//gl.glUniformMatrix4fv(locs.textureTransform, 1, false, ctx.toArray(ctx.textureTransform), 0);
+					//gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
+					gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toArray(ctx.textureTransform), 0);	
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.textureTransform.set(ctx.textureTransform);
@@ -3581,15 +3577,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int textureFormat)
 	{
 		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTextureAttributes()");
+			System.err.println("JoglPipeline.updateTextureAttributes() " + lineString(transform));
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updateTextureAttributes++;
 
-		double[] mx = new double[16];
-		copyTranspose(transform, mx);
-
 		JoglesContext joglesctx = (JoglesContext) ctx;
-		joglesctx.textureTransform.set(mx);
+		joglesctx.textureTransform.set(transform);
 	}
 
 	// native method for setting default TextureAttributes
@@ -4072,8 +4065,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 						{
 							System.out.println("glCompressedTexImage2D Error " + err + " target " + target + " level " + level
 									+ " internalFormat " + internalFormat);
-							System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth
-									+ " bb.capacity() " + bb.capacity());
+							System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth + " bb.limit() "
+									+ bb.limit());
 							//https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
 						}
 					}
@@ -5348,6 +5341,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	}
 
+	// Not needed generally as transpose can be called on the inteface with gl
 	private static void copyTranspose(double[] src, double[] dst)
 	{
 		dst[0] = src[0];
