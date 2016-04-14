@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -1160,7 +1161,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					// are we stitching up?
 					if (strip_len > 1 && DO_STITCH)
 					{
-						IntBuffer stitchedTriIndexes = stitchTriStrips(strip_len, sarray, initialIndexIndex, indexCoord);
+						ShortBuffer stitchedTriIndexes = stitchTriStrips(strip_len, sarray, initialIndexIndex, indexCoord);
 						//now set it up as a single tristrip
 						strip_len = 1;
 						sarray = new int[] { stitchedTriIndexes.capacity() - initialIndexIndex };
@@ -1172,10 +1173,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int offset = initialIndexIndex;
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 4);
+					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
 					bb.order(ByteOrder.nativeOrder());
-					IntBuffer indicesBuffer = bb.asIntBuffer();
-					indicesBuffer.put(indexCoord);
+					ShortBuffer indicesBuffer = bb.asShortBuffer();
+					for (int s = 0; s < indexCoord.length; s++)
+						indicesBuffer.put(s, (short)indexCoord[s]);
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(offset);
@@ -1183,7 +1185,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						int indBufId = stripInd[i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
 						outputErrors(ctx);
 						offset += count;
 
@@ -1233,7 +1235,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					//GL_UNSIGNED_INT
 
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_INT, 0);
+					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					outputErrors(ctx);
 
 					if (OUTPUT_PER_FRAME_STATS)
@@ -1254,17 +1256,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					//create and fill index buffer
 					//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 4);
+					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
 					bb.order(ByteOrder.nativeOrder());
-					IntBuffer indBuf = bb.asIntBuffer();
-					indBuf.put(indexCoord);
+					ShortBuffer indBuf = bb.asShortBuffer();
+					for (int s = 0; s < indexCoord.length; s++)
+						indBuf.put(s, (short)indexCoord[s]);
 					indBuf.position(initialIndexIndex);
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
 					indexBufId = new Integer(tmp[0]);// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
 					outputErrors(ctx);
 					ctx.geoToIndBuf.put(geo, indexBufId);
 
@@ -1297,13 +1300,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 					//gl.glDrawElements(GL2ES2.GL_QUADS, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
+					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
+					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
 				}
 				outputErrors(ctx);
@@ -1355,7 +1358,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
 	//
 
-	private static IntBuffer stitchTriStrips(int strip_len, int[] sarray, int initialIndexIndex, int[] indexCoord)
+	private static ShortBuffer stitchTriStrips(int strip_len, int[] sarray, int initialIndexIndex, int[] indexCoord)
 	{
 		//TODO: How to make degenerate tri strips joined up
 		//What do we need to put in between, in order to link up the triangles? 
@@ -1374,9 +1377,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// now put the tristrip indexes into a  single fat buffer, with degenerates...
 		int dstOffset = initialIndexIndex;
 		int srcOffset = initialIndexIndex;
-		ByteBuffer bb = ByteBuffer.allocateDirect(totalStitchedIndexSize * 4);
+		ByteBuffer bb = ByteBuffer.allocateDirect(totalStitchedIndexSize * 2);
 		bb.order(ByteOrder.nativeOrder());
-		IntBuffer totalIndicesBuffer = bb.asIntBuffer();
+		ShortBuffer totalIndicesBuffer = bb.asShortBuffer();
 
 		for (int i = 0; i < strip_len; i++)
 		{
@@ -1384,13 +1387,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (i != 0)
 			{
 				//repeat first
-				totalIndicesBuffer.put(dstOffset, indexCoord[srcOffset]);
+				totalIndicesBuffer.put(dstOffset, (short)indexCoord[srcOffset]);
 				dstOffset++;
 			}
 
 			int count = sarray[i];
 			totalIndicesBuffer.position(dstOffset);
-			totalIndicesBuffer.put(indexCoord, srcOffset, count);
+			
+			for (int s = 0; s < count; s++)
+				totalIndicesBuffer.put(s, (short)indexCoord[srcOffset+s]);
+			 
 			dstOffset += count;
 			srcOffset += count;
 
@@ -1398,7 +1404,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (i != strip_len - 1)
 			{
 				//repeat last
-				totalIndicesBuffer.put(dstOffset, indexCoord[srcOffset]);
+				totalIndicesBuffer.put(dstOffset, (short)indexCoord[srcOffset]);
 				dstOffset++;
 			}
 
@@ -1765,7 +1771,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
 				{
 					//gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
-					gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toArray(ctx.textureTransform), 0);	
+					gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toArray(ctx.textureTransform), 0);
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.textureTransform.set(ctx.textureTransform);
