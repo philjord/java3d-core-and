@@ -1793,7 +1793,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
-	private static long coordsLoaded = 0;
+
 
 	private static boolean loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, LocationData locs, int vdefined,
 			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
@@ -1832,15 +1832,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				if (ctx.geoToCoordBuf.size() % 500 == 0)
 				{
-					System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size() + " coordsLoaded " + coordsLoaded);
+					System.out.println("Coord buffer count " + ctx.geoToCoordBuf.size());
 				}
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glBufferData++;
 
 				buffersLoaded = true;
-
-				coordsLoaded += fverts.capacity();
 			}
 		}
 
