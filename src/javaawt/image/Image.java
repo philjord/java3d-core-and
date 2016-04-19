@@ -1,8 +1,6 @@
 package javaawt.image;
 
 import javaawt.Graphics;
-import javaawt.image.ImageObserver;
-import javaawt.image.ImageProducer;
 
 public abstract class Image
 {

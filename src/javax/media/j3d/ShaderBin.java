@@ -27,7 +27,6 @@
 package javax.media.j3d;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 
 // XXXX : We should have a common Bin object that all other Bins extend from.

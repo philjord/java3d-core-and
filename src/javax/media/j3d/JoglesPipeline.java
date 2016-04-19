@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import javax.media.j3d.JoglesContext.LightData;
 import javax.media.j3d.JoglesContext.LocationData;
+import javax.vecmath.SingularMatrixException;
 import javax.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
@@ -28,9 +29,9 @@ import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.GLFBODrawable;
 import com.jogamp.opengl.Threading;
 
-import utils.SparseArray;
 import java2.awt.GraphicsConfiguration;
 import java2.awt.GraphicsDevice;
+import utils.SparseArray;
 
 /**
  * Concrete implementation of Pipeline class for the JOGL rendering
@@ -56,6 +57,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// this one causes fallout4 load screen to look crazy
 	private static final boolean MINIMISE_NATIVE_SHADER = false;
 	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
+
+	//crazy new ffp buffer weird ness
+	private static final boolean NON_UBO = true;
 
 	//private GLProfile profile;
 
@@ -311,8 +315,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 							int coordoff = 3 * initialCoordIndex;
 							fverts.position(coordoff);
 							//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
-							if (ctx.geoToCoordBufSize.get(geo) != (fverts.remaining() * Float.SIZE / 8))
+							if (ctx.geoToCoordBufSize.get(geo) != fverts.remaining())
 							{
+								System.err.println(
+										"Morphable buffer changed " + ctx.geoToCoordBufSize.get(geo) + " != " + fverts.remaining());
+
 								gl.glDeleteBuffers(1, new int[] { bufId.intValue() }, 0);
 								outputErrors(ctx);
 
@@ -325,8 +332,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
 								outputErrors(ctx);
 								ctx.geoToCoordBuf.put(geo, bufId);
-								ctx.geoToCoordBufSize.put(geo, (fverts.remaining() * Float.SIZE / 8));
-								//System.err.println("Morphable buffer changed");
+								ctx.geoToCoordBufSize.put(geo, fverts.remaining());
 
 								if (OUTPUT_PER_FRAME_STATS)
 									ctx.perFrameStats.glBufferData++;
@@ -347,6 +353,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						if (OUTPUT_PER_FRAME_STATS)
 							joglesctx.perFrameStats.glVertexAttribPointerCoord++;
+						if (OUTPUT_PER_FRAME_STATS)
+							joglesctx.perFrameStats.coordCount += ctx.geoToCoordBufSize.get(geo);
 					}
 				}
 				else
@@ -901,8 +909,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 							fverts.position(0);
 
 							//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
-							if (ctx.geoToCoordBufSize.get(geo) != (fverts.remaining() * Float.SIZE / 8))
+							if (ctx.geoToCoordBufSize.get(geo) != fverts.remaining())
 							{
+								System.err.println(
+										"Morphable buffer changed " + ctx.geoToCoordBufSize.get(geo) + " != " + fverts.remaining());
 								gl.glDeleteBuffers(1, new int[] { bufId.intValue() }, 0);
 
 								int[] tmp = new int[1];
@@ -915,8 +925,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 								outputErrors(ctx);
 
 								ctx.geoToCoordBuf.put(geo, bufId);
-								ctx.geoToCoordBufSize.put(geo, (fverts.remaining() * Float.SIZE / 8));
-								//System.err.println("Morphable buffer changed");		
+								ctx.geoToCoordBufSize.put(geo, fverts.remaining());
 
 								if (OUTPUT_PER_FRAME_STATS)
 									ctx.perFrameStats.glBufferData++;
@@ -937,6 +946,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.coordCount += ctx.geoToCoordBufSize.get(geo);
 					}
 
 				}
@@ -1167,6 +1179,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						sarray = new int[] { stitchedTriIndexes.capacity() - initialIndexIndex };
 						ctx.geoToIndStripSwappedSize.put(geo, stitchedTriIndexes.capacity() - initialIndexIndex);
 						//System.out.println("stitched and put " +sarray[0] + " "+geo);
+						ctx.geoToIndBufSize.put(geo, stitchedTriIndexes.capacity() - initialIndexIndex);
 					}
 
 					stripInd = new int[strip_len];
@@ -1177,7 +1190,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					bb.order(ByteOrder.nativeOrder());
 					ShortBuffer indicesBuffer = bb.asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
-						indicesBuffer.put(s, (short)indexCoord[s]);
+						indicesBuffer.put(s, (short) indexCoord[s]);
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(offset);
@@ -1240,11 +1253,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDrawStripElementsStrips++;
+
 				}
 				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
+
+				//note only the first count so multi strips is worng here, but...
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.indexCount += ctx.geoToIndBufSize.get(geo);
 
 			}
 			else
@@ -1260,7 +1278,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					bb.order(ByteOrder.nativeOrder());
 					ShortBuffer indBuf = bb.asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
-						indBuf.put(s, (short)indexCoord[s]);
+						indBuf.put(s, (short) indexCoord[s]);
 					indBuf.position(initialIndexIndex);
 
 					int[] tmp = new int[1];
@@ -1270,6 +1288,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
 					outputErrors(ctx);
 					ctx.geoToIndBuf.put(geo, indexBufId);
+					ctx.geoToIndBufSize.put(geo, indBuf.remaining());
 
 				}
 				else
@@ -1286,6 +1305,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indexBufId.intValue());
 				outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.indexCount += ctx.geoToIndBufSize.get(geo);
+
 				// Need to override if polygonAttributes says we should be drawing lines
 				// Note these are not poly line just contiguos lines between each pair of points
 				// So it looks really rubbish
@@ -1387,16 +1410,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (i != 0)
 			{
 				//repeat first
-				totalIndicesBuffer.put(dstOffset, (short)indexCoord[srcOffset]);
+				totalIndicesBuffer.put(dstOffset, (short) indexCoord[srcOffset]);
 				dstOffset++;
 			}
 
 			int count = sarray[i];
 			totalIndicesBuffer.position(dstOffset);
-			
+
 			for (int s = 0; s < count; s++)
-				totalIndicesBuffer.put(s, (short)indexCoord[srcOffset+s]);
-			 
+				totalIndicesBuffer.put(s, (short) indexCoord[srcOffset + s]);
+
 			dstOffset += count;
 			srcOffset += count;
 
@@ -1404,7 +1427,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (i != strip_len - 1)
 			{
 				//repeat last
-				totalIndicesBuffer.put(dstOffset, (short)indexCoord[srcOffset]);
+				totalIndicesBuffer.put(dstOffset, (short) indexCoord[srcOffset]);
 				dstOffset++;
 			}
 
@@ -1489,303 +1512,312 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (ctx.getShaderProgram() != null)
 		{
-
-			int currentShaderId = ctx.getShaderProgram().getValue();
-
-			if (OUTPUT_PER_FRAME_STATS)
-				ctx.perFrameStats.setFFPAttributes++;
-
-			LocationData locs = getLocs(ctx, gl);
-			//TODO: notice these matrix can be sent through as a bunch, so the native calls would be very reduced!
-
-			//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
-			if (locs.glProjectionMatrix != -1)
+			if (NON_UBO)
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc))
+
+				int currentShaderId = ctx.getShaderProgram().getValue();
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.setFFPAttributes++;
+
+				LocationData locs = getLocs(ctx, gl);
+				//TODO: notice these matrix can be sent through as a bunch, so the native calls would be very reduced!
+
+				//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
+				if (locs.glProjectionMatrix != -1)
 				{
-					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, ctx.toFB(ctx.currentProjMat));
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
+					if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc))
+					{
+						gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, ctx.toFB(ctx.currentProjMat));
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
+						outputErrors(ctx);
+					}
+				}
+				if (locs.glProjectionMatrixInverse != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
+					{
+						gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.toFB(ctx.currentProjMatInverse));
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
+						outputErrors(ctx);
+					}
+				}
+				if (locs.viewMatrix != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (locs.viewMatrix != ctx.gl_state.currentViewMatLoc))
+					{
+						gl.glUniformMatrix4fv(locs.viewMatrix, 1, false, ctx.toFB(ctx.currentViewMat));
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.currentViewMatLoc = locs.viewMatrix;
+						outputErrors(ctx);
+					}
+				}
+
+				if (locs.modelMatrix != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
+					{
+						//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
+						gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.modelMatrixUpdated++;
+					}
+					else if (OUTPUT_PER_FRAME_STATS)
+					{
+						ctx.perFrameStats.modelMatrixSkipped++;
+					}
+				}
+
+				if (locs.glModelViewMatrix != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
+					{
+						//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+						gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
+						outputErrors(ctx);
+
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glModelViewMatrixUpdated++;
+					}
+					else if (OUTPUT_PER_FRAME_STATS)
+					{
+						ctx.perFrameStats.glModelViewMatrixSkipped++;
+					}
+				}
+				if (locs.glModelViewMatrixInverse != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
+					{
+						//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+						gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
+						outputErrors(ctx);
+
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
+					}
+					else if (OUTPUT_PER_FRAME_STATS)
+					{
+						ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
+					}
+				}
+
+				if (locs.glModelViewProjectionMatrix != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
+					{
+						//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+						gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
+						outputErrors(ctx);
+
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
+					}
+					else if (OUTPUT_PER_FRAME_STATS)
+					{
+						ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
+					}
+				}
+
+				if (locs.glNormalMatrix != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
+					{
+						//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+						gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glNormalMatrixUpdated++;
+					}
+					else if (OUTPUT_PER_FRAME_STATS)
+					{
+						ctx.perFrameStats.glNormalMatrixSkipped++;
+					}
+				}
+
+				// if set one of the 2 colors below should be used by the shader (material for lighting)
+
+				if (locs.ignoreVertexColors != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
+					{
+						gl.glUniform1i(locs.ignoreVertexColors, ctx.renderingData.ignoreVertexColors ? 1 : 0);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.ignoreVertexColors = ctx.renderingData.ignoreVertexColors;
+					}
+				}
+
+				//send material data through
+				if (locs.glFrontMaterialdiffuse != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse)))
+					{
+						gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
+								ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glFrontMaterialdiffuse.set(ctx.materialData.diffuse);
+					}
+				}
+				if (locs.glFrontMaterialemission != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission)))
+					{
+						gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
+								ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glFrontMaterialemission.set(ctx.materialData.emission);
+					}
+				}
+
+				if (locs.glFrontMaterialspecular != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular)))
+					{
+						gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
+								ctx.materialData.specular.z);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glFrontMaterialspecular.set(ctx.materialData.specular);
+					}
+				}
+				if (locs.glFrontMaterialshininess != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess))
+					{
+						gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glFrontMaterialshininess = ctx.materialData.shininess;
+					}
+				}
+
+				//ambient does not come from material notice
+				if (locs.glLightModelambient != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
+							|| !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor)))
+					{
+						gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y,
+								ctx.currentAmbientColor.z, ctx.currentAmbientColor.w);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glLightModelambient.set(ctx.currentAmbientColor);
+					}
+				}
+
+				// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
+				if (locs.objectColor != -1)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor)))
+					{
+						gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.objectColor.set(ctx.objectColor);
+					}
+				}
+
+				/*dirLight
+				pointLight
+				spotLight*/
+				//currentEnabledLights
+
+				//For now using first point light, but gonna need to put em all in
+				LightData l0 = null;
+				if (ctx.pointLight[0] != null)
+					l0 = ctx.pointLight[0];
+				else if (ctx.dirLight[0] != null)
+					l0 = ctx.dirLight[0];
+
+				if (l0 != null)
+				{
+					if (locs.glLightSource0position != -1)
+					{
+						gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
+						outputErrors(ctx);
+					}
+					if (locs.glLightSource0diffuse != -1)
+					{
+						gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
+						outputErrors(ctx);
+					}
+				}
+
+				//TODO: particles and points etc
+				//currentPointSize needs to be handed into the particles shader
+
+				//TODO: look at walkway grill in diamond city looks like I've got these wrong
+				// but playing doesn't help
+				// also a plant in morrowind is not doing alpha testing properly
+				if (locs.alphaTestEnabled != -1)
+				{
+					gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
 					outputErrors(ctx);
-				}
-			}
-			if (locs.glProjectionMatrixInverse != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
-				{
-					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.toFB(ctx.currentProjMatInverse));
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
-					outputErrors(ctx);
-				}
-			}
-			if (locs.viewMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.viewMatrix != ctx.gl_state.currentViewMatLoc))
-				{
-					gl.glUniformMatrix4fv(locs.viewMatrix, 1, false, ctx.toFB(ctx.currentViewMat));
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.currentViewMatLoc = locs.viewMatrix;
-					outputErrors(ctx);
-				}
-			}
 
-			if (locs.modelMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
-				{
-					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
-					gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toArray(ctx.currentModelMat), 0);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
+					if (ctx.renderingData.alphaTestEnabled == true)
+					{
+						gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
+						outputErrors(ctx);
+						gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
+						outputErrors(ctx);
+					}
+				}
 
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.modelMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
+				if (locs.textureTransform != -1)
 				{
-					ctx.perFrameStats.modelMatrixSkipped++;
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
+					{
+						//gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
+						gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toArray(ctx.textureTransform), 0);
+						outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.textureTransform.set(ctx.textureTransform);
+					}
 				}
-			}
 
-			if (locs.glModelViewMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
-				{
-					//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
-					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toArray(ctx.currentModelViewMat), 0);
-					outputErrors(ctx);
+				//TODO: needs to be handled ,
+				//ctx.fogData
 
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glModelViewMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.glModelViewMatrixSkipped++;
-				}
-			}
-			if (locs.glModelViewMatrixInverse != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
-				{
-					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
-					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toArray(ctx.currentModelViewMatInverse), 0);
-					outputErrors(ctx);
+				//NOTE water app shows multiple light calculations
 
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
-				}
-			}
-
-			if (locs.glModelViewProjectionMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
-				{
-					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
-					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toArray(ctx.currentModelViewProjMat), 0);
-					outputErrors(ctx);
-
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
-				}
-			}
-
-			if (locs.glNormalMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
-				{
-					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
-					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toArray(ctx.currentNormalMat), 0);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glNormalMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.glNormalMatrixSkipped++;
-				}
-			}
-
-			// if set one of the 2 colors below should be used by the shader (material for lighting)
-
-			if (locs.ignoreVertexColors != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
-				{
-					gl.glUniform1i(locs.ignoreVertexColors, ctx.renderingData.ignoreVertexColors ? 1 : 0);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.ignoreVertexColors = ctx.renderingData.ignoreVertexColors;
-				}
-			}
-
-			//send material data through
-			if (locs.glFrontMaterialdiffuse != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse)))
-				{
-					gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
-							ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialdiffuse.set(ctx.materialData.diffuse);
-				}
-			}
-			if (locs.glFrontMaterialemission != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission)))
-				{
-					gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
-							ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialemission.set(ctx.materialData.emission);
-				}
-			}
-
-			if (locs.glFrontMaterialspecular != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular)))
-				{
-					gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
-							ctx.materialData.specular.z);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialspecular.set(ctx.materialData.specular);
-				}
-			}
-			if (locs.glFrontMaterialshininess != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (currentShaderId != ctx.prevShaderProgram
-						|| ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess))
-				{
-					gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialshininess = ctx.materialData.shininess;
-				}
-			}
-
-			//ambient does not come from material notice
-			if (locs.glLightModelambient != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor)))
-				{
-					gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y,
-							ctx.currentAmbientColor.z, ctx.currentAmbientColor.w);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glLightModelambient.set(ctx.currentAmbientColor);
-				}
-			}
-
-			// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
-			if (locs.objectColor != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor)))
-				{
-					gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.objectColor.set(ctx.objectColor);
-				}
-			}
-
-			/*dirLight
-			pointLight
-			spotLight*/
-			//currentEnabledLights
-
-			//For now using first point light, but gonna need to put em all in
-			LightData l0 = null;
-			if (ctx.pointLight[0] != null)
-				l0 = ctx.pointLight[0];
-			else if (ctx.dirLight[0] != null)
-				l0 = ctx.dirLight[0];
-
-			if (l0 != null)
-			{
-				if (locs.glLightSource0position != -1)
-				{
-					gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
-					outputErrors(ctx);
-				}
-				if (locs.glLightSource0diffuse != -1)
-				{
-					gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
-					outputErrors(ctx);
-				}
-			}
-
-			//TODO: particles and points etc
-			//currentPointSize needs to be handed into the particles shader
-
-			//TODO: look at walkway grill in diamond city looks like I've got these wrong
-			// but playing doesn't help
-			// also a plant in morrowind is not doing alpha testing properly
-			if (locs.alphaTestEnabled != -1)
-			{
-				gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
+				// record for the next loop through FFP
+				ctx.prevShaderProgram = currentShaderId;
 				outputErrors(ctx);
-
-				if (ctx.renderingData.alphaTestEnabled == true)
-				{
-					gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
-					outputErrors(ctx);
-					gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
-					outputErrors(ctx);
-				}
 			}
-
-			if (locs.textureTransform != -1)
+			else
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (currentShaderId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
-				{
-					//gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
-					gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toArray(ctx.textureTransform), 0);
-					outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.textureTransform.set(ctx.textureTransform);
-				}
+				//Uniform blocks!!
+				//			GL3ES3 gl3es3 = (GL3ES3) gl;
+				//			gl3es3.glGetActiveUniformBlockiv(program, uniformBlockIndex, pname, params);
 			}
-
-			//TODO: needs to be handled ,
-			//ctx.fogData
-
-			//NOTE water app shows multiple light calculations
-
-			// record for the next loop through FFP
-			ctx.prevShaderProgram = currentShaderId;
-			outputErrors(ctx);
 		}
 
 		// happens on the first call sometimes, for background or clear or something
@@ -1793,7 +1825,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
-
 
 	private static boolean loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, LocationData locs, int vdefined,
 			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
@@ -1828,7 +1859,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				outputErrors(ctx);
 
 				ctx.geoToCoordBuf.put(geo, bufId);
-				ctx.geoToCoordBufSize.put(geo, (fverts.remaining() * Float.SIZE / 8));
+				ctx.geoToCoordBufSize.put(geo, fverts.remaining());
 
 				if (ctx.geoToCoordBuf.size() % 500 == 0)
 				{
@@ -4779,14 +4810,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.currentProjMat.transpose();
 		joglesctx.gl_state.glProjectionMatrixLoc = -1;//indicate must be updated
 
-		joglesctx.currentProjMatInverse.set(joglesctx.currentProjMat);
-		joglesctx.currentProjMatInverse.invert();
-		joglesctx.gl_state.currentProjMatInverseLoc = -1;
+		try
+		{
+			joglesctx.currentProjMatInverse.set(joglesctx.currentProjMat);
+			joglesctx.currentProjMatInverse.invert();
+			joglesctx.gl_state.currentProjMatInverseLoc = -1;
 
-		projMatrix[8] *= -1.0;
-		projMatrix[9] *= -1.0;
-		projMatrix[10] *= -1.0;
-		projMatrix[11] *= -1.0;
+			projMatrix[8] *= -1.0;
+			projMatrix[9] *= -1.0;
+			projMatrix[10] *= -1.0;
+			projMatrix[11] *= -1.0;
+		}
+		catch (SingularMatrixException e)
+		{
+			System.err.println("" + e);
+		}
 
 	}
 
@@ -5486,6 +5524,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.useCtx++;
 
 		GLContext context = context(ctx);
+
+		if (context.getGLDrawable() == null)
+			System.out.println("context.getGLDrawable() == null!");
+
 		int res = context.makeCurrent();
 		return (res != GLContext.CONTEXT_NOT_CURRENT);
 	}
@@ -5895,7 +5937,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglDrawable joglDrawable = (JoglDrawable) drawable;
 		GLContext context = context(ctx);
 
-		//PJPJPJPJPJPJ using shared ctx and 2 canvases cause NPE here on destroy///////////
+		// possibly bug in marshmallow
+		// google belwo and see its a bug on marshmallow
+		//04-19 00:33:36.941 18278-18322/com.ingenieur.ese.eseandroid E/Surface: getSlotFromBufferLocked: unknown buffer: 0xb8dc6060
+		//04-19 00:33:37.182 18278-18278/com.ingenieur.ese.eseandroid D/JogAmp.NEWT: onStop.0
+
+		//after this a restart adn a swapBuffers call
+		//gl_window.getDelegatedDrawable().swapBuffers();
+		// gets a 
+		//com.jogamp.opengl.GLException: Error swapping buffers, eglError 0x300d, jogamp.opengl.egl.EGLDrawable[realized true,
+
 		if (joglDrawable != null)
 		{
 			if (GLContext.getCurrent() == context)
@@ -5909,8 +5960,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			joglDrawable.destroyNativeWindow();
 		}
-
-		//PJPJPJ/////////////////////////////
 	}
 
 	// This is the native method for getting the number of lights the underlying

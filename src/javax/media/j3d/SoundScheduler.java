@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 
 import javax.vecmath.Point2f;
 import javax.vecmath.Point3d;

@@ -1,7 +1,5 @@
 package javaawt.image;
 
-import javaawt.image.ColorModel;
-
 public class ComponentColorModel extends ColorModel
 {
 

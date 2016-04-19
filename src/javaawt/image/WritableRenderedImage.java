@@ -1,10 +1,6 @@
 package javaawt.image;
 
 import javaawt.Point;
-import javaawt.image.Raster;
-import javaawt.image.RenderedImage;
-import javaawt.image.TileObserver;
-import javaawt.image.WritableRaster;
 
 public interface WritableRenderedImage extends RenderedImage
 {

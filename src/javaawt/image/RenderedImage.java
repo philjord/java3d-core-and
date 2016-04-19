@@ -3,11 +3,6 @@ package javaawt.image;
 import java.util.Vector;
 
 import javaawt.Rectangle;
-import javaawt.image.ColorModel;
-import javaawt.image.Raster;
-import javaawt.image.RenderedImage;
-import javaawt.image.SampleModel;
-import javaawt.image.WritableRaster;
 
  
 

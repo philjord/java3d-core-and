@@ -1,7 +1,5 @@
 package javaawt.image;
 
-import javaawt.image.DataBuffer;
-
 public class Raster
 {
 

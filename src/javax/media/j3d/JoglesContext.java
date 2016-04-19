@@ -45,6 +45,7 @@ public class JoglesContext extends JoglContext
 	//Dirty dirty buffer gen holder thing
 
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, Integer> geoToIndBufSize = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
 	public HashMap<GeometryArrayRetained, Integer> geoToIndStripSwappedSize = new HashMap<GeometryArrayRetained, Integer>();
 
@@ -389,6 +390,8 @@ public class JoglesContext extends JoglContext
 		public int setDepthBufferWriteEnable;
 		public int redundantUseProgram;
 
+		public int coordCount;
+		public int indexCount;
 		public int glVertexAttribPointerNormals;
 		public int glVertexAttribPointerUserAttribs;
 		public int glVertexAttribPointerColor;
@@ -413,21 +416,19 @@ public class JoglesContext extends JoglContext
 		{
 			boolean highInterestOnly = true;
 
-			System.out.println("geoToClearBuffers " + geoToClearBuffers);
+			System.out.println("coordCount " + coordCount + " indexCount " + indexCount);
 			System.out
 					.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
 			System.out.println("glDrawArrays " + glDrawArrays);
 			System.out.println(
 					"glDrawStripElements " + glDrawStripElements + "\t made up of glDrawStripElementsStrips " + glDrawStripElementsStrips);
 			System.out.println("glDrawElements " + glDrawElements);
-			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
-			System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
-			System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
-			System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
 			System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);
-			System.out.println("glBufferData " + glBufferData);
-			System.out.println("glBufferSubData " + glBufferSubData);
-			System.out.println("glDisableVertexAttribArray " + glDisableVertexAttribArray + " note native called commented out, trouble?");
+			System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
+			System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
+			System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
+			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
+			System.out.println("glBufferData " + glBufferData + " glBufferSubData " + glBufferSubData);
 			System.out.println("---");
 			System.out.println("setModelViewMatrix " + setModelViewMatrix);
 			System.out.println("setFFPAttributes " + setFFPAttributes);
@@ -440,6 +441,9 @@ public class JoglesContext extends JoglContext
 			System.out.println("---");
 			if (!highInterestOnly)
 			{
+				System.out.println(
+						"glDisableVertexAttribArray " + glDisableVertexAttribArray + " note native called commented out, trouble?");
+				System.out.println("geoToClearBuffers " + geoToClearBuffers);
 				System.out.println("geoToLocationData " + geoToLocationData);
 				System.out.print("createGLSLShader " + createGLSLShader);
 				System.out.print("\tcreateGLSLShaderProgram " + createGLSLShaderProgram);
@@ -468,10 +472,13 @@ public class JoglesContext extends JoglContext
 				System.out.println("\tresetPolygonAttributes " + resetPolygonAttributes);
 				System.out.print("updateRenderingAttributes " + updateRenderingAttributes);
 				System.out.println("\tresetRenderingAttributes " + resetRenderingAttributes);
+				System.out.println("setBlendColor " + setBlendColor);
 				System.out.println("setFullSceneAntialiasing " + setFullSceneAntialiasing);
 				System.out.println("setLightEnables " + setLightEnables);
 				System.out.println("setSceneAmbient " + setSceneAmbient);
 				System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
+				System.out.println("freeTexture " + freeTexture);
+				System.out.println("generateTexID " + generateTexID);
 				System.out.println("useCtx " + useCtx);
 				System.out.println("releaseCtx " + releaseCtx);
 				System.out.println("clear " + clear);
@@ -484,17 +491,11 @@ public class JoglesContext extends JoglContext
 			System.out.print("updateTextureAttributes " + updateTextureAttributes);
 			System.out.println("\tresetTextureAttributes " + resetTextureAttributes);
 			System.out.println("updateTextureUnitState " + updateTextureUnitState);
-			System.out.println("bindTexture2D " + bindTexture2D);
-			System.out.println("bindTextureCubeMap " + bindTextureCubeMap);
-			System.out.println("setBlendColor " + setBlendColor);
+			System.out.println("bindTexture2D " + bindTexture2D + "\tbindTextureCubeMap " + bindTextureCubeMap);
 			System.out.println("setBlendFunc " + setBlendFunc);
-			System.out.println("activeTextureUnit " + activeTextureUnit);
-			System.out.println("resetTextureNative " + resetTextureNative);
-			System.out.println("freeTexture " + freeTexture);
-			System.out.println("generateTexID " + generateTexID);
+			System.out.println("activeTextureUnit " + activeTextureUnit + "\tresetTextureNative " + resetTextureNative);
 			System.out.println("setDepthBufferWriteEnable " + setDepthBufferWriteEnable);
-			System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram);
-			System.out.println("redundantUseProgram " + redundantUseProgram);
+			System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram + " redundantUseProgram " + redundantUseProgram);
 
 			//for (ShaderProgramId id : usedPrograms)
 			//	System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());

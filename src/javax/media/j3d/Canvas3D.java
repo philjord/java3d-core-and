@@ -983,7 +983,7 @@ public class Canvas3D //extends Canvas
 		this.glwindow.setVisible(true);
 		//this.glwindow.setRealized(true);
 		//this.glwindow.getContext();
-		 
+
 		//this.glwindow.setAlwaysOnTop(true);
 		//this.glwindow.setFullscreen(true);
 
@@ -1018,6 +1018,29 @@ public class Canvas3D //extends Canvas
 		for (int i = 0; i < frameCount.length; i++)
 		{
 			frameCount[i] = -1;
+		}
+
+		// Construct the drawing surface object for this Canvas3D
+		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
+
+	}
+
+	public void setNewGLWindow(GLWindow gl_window)
+	{
+		this.glwindow = gl_window;
+		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
+
+		GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
+
+		synchronized (VirtualUniverse.mc.deviceScreenMap)
+		{
+			screen = VirtualUniverse.mc.deviceScreenMap.get(graphicsDevice);
+
+			if (screen == null)
+			{
+				screen = new Screen3D(graphicsConfiguration, offScreen);
+				VirtualUniverse.mc.deviceScreenMap.put(graphicsDevice, screen);
+			}
 		}
 
 		// Construct the drawing surface object for this Canvas3D

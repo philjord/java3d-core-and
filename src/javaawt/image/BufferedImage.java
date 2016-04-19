@@ -6,16 +6,6 @@ import javaawt.Graphics;
 import javaawt.Graphics2D;
 import javaawt.Point;
 import javaawt.Rectangle;
-import javaawt.image.BufferedImage;
-import javaawt.image.ColorModel;
-import javaawt.image.ImageObserver;
-import javaawt.image.ImageProducer;
-import javaawt.image.Raster;
-import javaawt.image.RenderedImage;
-import javaawt.image.SampleModel;
-import javaawt.image.TileObserver;
-import javaawt.image.WritableRaster;
-import javaawt.image.WritableRenderedImage;
 
 public class BufferedImage extends Image implements WritableRenderedImage
 {

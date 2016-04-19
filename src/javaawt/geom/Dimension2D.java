@@ -25,8 +25,6 @@
 
 package javaawt.geom;
 
-import javaawt.geom.Dimension2D;
-
 /**
  * The <code>Dimension2D</code> class is to encapsulate a width
  * and a height dimension.

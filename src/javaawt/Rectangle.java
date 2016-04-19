@@ -1,9 +1,4 @@
 package javaawt;
- 
-import javaawt.Dimension;
-import javaawt.Point;
-import javaawt.Rectangle;
- 
 
 public class Rectangle 
    
