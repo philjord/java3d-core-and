@@ -529,6 +529,7 @@ public class JoglesContext extends JoglContext
 	public Matrix4d deburnV = new Matrix4d();//deburners 
 	public Matrix4d deburnM = new Matrix4d();
 	public float[] tempMat9 = new float[9];
+	public float[] tempMat12 = new float[12];
 	public float[] tempMat16 = new float[16];
 	public double[] tempMatD9 = new double[9];
 
@@ -575,6 +576,29 @@ public class JoglesContext extends JoglContext
 		a[6] = (float) m.m20;
 		a[7] = (float) m.m21;
 		a[8] = (float) m.m22;
+
+		return a;
+	}
+
+	public float[] toArray3x4(Matrix3d m)
+	{
+		return toArray3x4(m, tempMat12);
+	}
+
+	public static float[] toArray3x4(Matrix3d m, float[] a)
+	{
+		a[0] = (float) m.m00;
+		a[1] = (float) m.m01;
+		a[2] = (float) m.m02;
+		a[3] = 0f;
+		a[4] = (float) m.m10;
+		a[5] = (float) m.m11;
+		a[6] = (float) m.m12;
+		a[7] = 0f;
+		a[8] = (float) m.m20;
+		a[9] = (float) m.m21;
+		a[10] = (float) m.m22;
+		a[11] = 0f;
 
 		return a;
 	}
@@ -687,6 +711,36 @@ public class JoglesContext extends JoglContext
 		matFB3x3.put(toArray(m));
 		matFB3x3.position(0);
 		return matFB3x3;
+	}
+
+	// Not needed generally as transpose can be called on the inteface with gl
+	public static float[] transposeInPlace(float[] src)
+	{
+		float v1 = src[1];
+		float v2 = src[2];
+		float v3 = src[3];
+		float v6 = src[6];
+		float v7 = src[7];
+		float v11 = src[11];
+
+		//src[0] = src[0];		
+		src[1] = src[4];
+		src[2] = src[8];
+		src[3] = src[12];
+		src[4] = v1;
+		//src[5] = src[5];		
+		src[6] = src[9];
+		src[7] = src[13];
+		src[8] = v2;
+		src[9] = v6;
+		//src[10] = src[10];		
+		src[11] = src[14];
+		src[12] = v3;
+		src[13] = v7;
+		src[14] = v11;
+		//src[15] = src[15];
+
+		return src;
 	}
 
 }
