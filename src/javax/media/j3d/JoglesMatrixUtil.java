@@ -1,5 +1,9 @@
 package javax.media.j3d;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.SingularMatrixException;
@@ -9,7 +13,7 @@ import javax.vecmath.SingularMatrixException;
  * @author phil
  *
  */
-class JoglesMatrixInverter
+class JoglesMatrixUtil
 {
 	double result3[] = new double[9];
 	int row_perm3[] = new int[3];
@@ -19,11 +23,11 @@ class JoglesMatrixInverter
 	final void invertGeneral3(Matrix3d thisM, Matrix3d m1)
 	{
 		for (int i = 0; i < 3; i++)
-			row_perm3[i] = 0;		 
-		 
+			row_perm3[i] = 0;
+
 		for (int i = 0; i < 9; i++)
 			result3[i] = 0.0;
-		
+
 		// Use LU decomposition and backsubstitution code specifically
 		// for floating-point 3x3 matrices.
 
@@ -48,7 +52,7 @@ class JoglesMatrixInverter
 		}
 
 		// Perform back substitution on the identity matrix
-		
+
 		result3[0] = 1.0;
 		result3[4] = 1.0;
 		result3[8] = 1.0;
@@ -281,8 +285,8 @@ class JoglesMatrixInverter
 	final void invertGeneral4(Matrix4d thisM, Matrix4d m1)
 	{
 		for (int i = 0; i < 4; i++)
-			row_perm4[i] = 0;		 
-		 
+			row_perm4[i] = 0;
+
 		for (int i = 0; i < 16; i++)
 			result4[i] = 0.0;
 
@@ -351,7 +355,7 @@ class JoglesMatrixInverter
 	boolean luDecomposition4(double[] matrix0, int[] row_perm)
 	{
 		for (int i = 0; i < 4; i++)
-			row_scale4[i] = 0.0;	
+			row_scale4[i] = 0.0;
 		// Determine implicit scaling information by looping over rows
 		{
 			int i, j;
@@ -552,5 +556,222 @@ class JoglesMatrixInverter
 			matrix2[cv + 4 * 0] = (matrix2[cv + 4 * 0] - matrix1[rv + 1] * matrix2[cv + 4 * 1] - matrix1[rv + 2] * matrix2[cv + 4 * 2]
 					- matrix1[rv + 3] * matrix2[cv + 4 * 3]) / matrix1[rv + 0];
 		}
+	}
+
+	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
+
+	public Matrix4d deburnV = new Matrix4d();//deburners 
+	public Matrix4d deburnM = new Matrix4d();
+	public float[] tempMat9 = new float[9];
+	public float[] tempMat12 = new float[12];
+	public float[] tempMat16 = new float[16];
+	public double[] tempMatD9 = new double[9];
+
+	public float[] toArray(Matrix4d m)
+	{
+		return toArray(m, tempMat16);
+	}
+
+	public static float[] toArray(Matrix4d m, float[] a)
+	{
+		a[0] = (float) m.m00;
+		a[1] = (float) m.m01;
+		a[2] = (float) m.m02;
+		a[3] = (float) m.m03;
+		a[4] = (float) m.m10;
+		a[5] = (float) m.m11;
+		a[6] = (float) m.m12;
+		a[7] = (float) m.m13;
+		a[8] = (float) m.m20;
+		a[9] = (float) m.m21;
+		a[10] = (float) m.m22;
+		a[11] = (float) m.m23;
+		a[12] = (float) m.m30;
+		a[13] = (float) m.m31;
+		a[14] = (float) m.m32;
+		a[15] = (float) m.m33;
+
+		return a;
+	}
+
+	public float[] toArray(Matrix3d m)
+	{
+		return toArray(m, tempMat9);
+	}
+
+	public static float[] toArray(Matrix3d m, float[] a)
+	{
+		a[0] = (float) m.m00;
+		a[1] = (float) m.m01;
+		a[2] = (float) m.m02;
+		a[3] = (float) m.m10;
+		a[4] = (float) m.m11;
+		a[5] = (float) m.m12;
+		a[6] = (float) m.m20;
+		a[7] = (float) m.m21;
+		a[8] = (float) m.m22;
+
+		return a;
+	}
+
+	public float[] toArray3x4(Matrix3d m)
+	{
+		return toArray3x4(m, tempMat12);
+	}
+
+	public static float[] toArray3x4(Matrix3d m, float[] a)
+	{
+		a[0] = (float) m.m00;
+		a[1] = (float) m.m01;
+		a[2] = (float) m.m02;
+		a[3] = 0f;
+		a[4] = (float) m.m10;
+		a[5] = (float) m.m11;
+		a[6] = (float) m.m12;
+		a[7] = 0f;
+		a[8] = (float) m.m20;
+		a[9] = (float) m.m21;
+		a[10] = (float) m.m22;
+		a[11] = 0f;
+
+		return a;
+	}
+
+	public double[] toArray3x3(Matrix4d m)
+	{
+		return toArray3x3(m, tempMatD9);
+	}
+
+	public static double[] toArray3x3(Matrix4d m, double[] a)
+	{
+		a[0] = m.m00;
+		a[1] = m.m01;
+		a[2] = m.m02;
+		a[3] = m.m10;
+		a[4] = m.m11;
+		a[5] = m.m12;
+		a[6] = m.m20;
+		a[7] = m.m21;
+		a[8] = m.m22;
+
+		return a;
+	}
+
+	public void invert(Matrix3d m1)
+	{
+		try
+		{
+			invertGeneral3(m1, m1);
+		}
+		catch (Exception e)
+		{
+			//fine, move along
+			m1.setIdentity();
+		}
+	}
+
+	public void invert(Matrix4d m1)
+	{
+		try
+		{
+			invertGeneral4(m1, m1);
+		}
+		catch (Exception e)
+		{
+			//fine, move along
+			m1.setIdentity();
+		}
+	}
+
+	//More single threaded death-defying gear
+
+	private FloatBuffer matFB4x4;
+
+	public FloatBuffer toFB4(float[] f)
+	{
+		if (matFB4x4 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB4x4 = bb.asFloatBuffer();
+		}
+		matFB4x4.position(0);
+		matFB4x4.put(f);
+		matFB4x4.position(0);
+		return matFB4x4;
+	}
+
+	public FloatBuffer toFB3(float[] f)
+	{
+		if (matFB3x3 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB3x3 = bb.asFloatBuffer();
+		}
+		matFB3x3.position(0);
+		matFB3x3.put(f);
+		matFB3x3.position(0);
+		return matFB3x3;
+	}
+
+	public FloatBuffer toFB(Matrix4d m)
+	{
+		if (matFB4x4 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB4x4 = bb.asFloatBuffer();
+		}
+		matFB4x4.position(0);
+		matFB4x4.put(toArray(m));
+		matFB4x4.position(0);
+		return matFB4x4;
+	}
+
+	private FloatBuffer matFB3x3;
+
+	public FloatBuffer toFB(Matrix3d m)
+	{
+		if (matFB3x3 == null)
+		{
+			ByteBuffer bb = ByteBuffer.allocateDirect(9 * 4);
+			bb.order(ByteOrder.nativeOrder());
+			matFB3x3 = bb.asFloatBuffer();
+		}
+		matFB3x3.position(0);
+		matFB3x3.put(toArray(m));
+		matFB3x3.position(0);
+		return matFB3x3;
+	}
+
+	// Not needed generally as transpose can be called on the inteface with gl
+	public static float[] transposeInPlace(float[] src)
+	{
+		float v1 = src[1];
+		float v2 = src[2];
+		float v3 = src[3];
+		float v6 = src[6];
+		float v7 = src[7];
+		float v11 = src[11];
+
+		//src[0] = src[0];		
+		src[1] = src[4];
+		src[2] = src[8];
+		src[3] = src[12];
+		src[4] = v1;
+		//src[5] = src[5];		
+		src[6] = src[9];
+		src[7] = src[13];
+		src[8] = v2;
+		src[9] = v6;
+		//src[10] = src[10];		
+		src[11] = src[14];
+		src[12] = v3;
+		src[13] = v7;
+		src[14] = v11;
+		//src[15] = src[15];
+
+		return src;
 	}
 }

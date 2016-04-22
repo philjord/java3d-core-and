@@ -1,11 +1,8 @@
 package javax.media.j3d;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
@@ -29,20 +26,19 @@ public class JoglesContext extends JoglContext
 	}
 
 	/**
-	 * This is for speed attempts, the getGL2ES2() checks intanceof so it's expensive
+	 * This is for speed attempts, the getGL2ES2() checks instanceof so it's expensive
 	 * @return
 	 */
 	public GL2ES2 gl2es2()
 	{
-		// Morrowind crashes on window size change but it's not this
 		//if (context.getGL() == gl2es2)
 		return gl2es2;
 		//else
 		//	return context.getGL().getGL2ES2();
 	}
 
+	// all buffers created are recorded for each render pass, and for cleanup
 	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
-	//Dirty dirty buffer gen holder thing
 
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
 	public HashMap<GeometryArrayRetained, Integer> geoToIndBufSize = new HashMap<GeometryArrayRetained, Integer>();
@@ -57,13 +53,13 @@ public class JoglesContext extends JoglContext
 
 	public HashMap<GeometryArrayRetained, SparseArray<Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, SparseArray<Integer>>();
 
-	public HashMap<Object, LocationData> geoToLocationData = new HashMap<Object, LocationData>();
+	public SparseArray<LocationData> programToLocationData = new SparseArray<LocationData>();
+	public SparseArray<ByteBuffer> programToUBOBB = new SparseArray<ByteBuffer>();
+	public SparseArray<Integer> programToUBOBuf = new SparseArray<Integer>();
 
 	public HashMap<GeometryArrayRetained, SparseArray<Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, SparseArray<Integer>>();
 
 	public SparseArray<HashMap<String, Integer>> progToGenVertAttNameToGenVertAttIndex = new SparseArray<HashMap<String, Integer>>();
-
-	// note anything may be reused if not updated between execute calls
 
 	//Light data recorded to be handed into shader as uniform on next update
 	//see https://www.opengl.org/sdk/docs/man2/ glLight
@@ -82,9 +78,11 @@ public class JoglesContext extends JoglContext
 		public float GL_SPOT_CUTOFF;
 	}
 
-	public LightData[] dirLight = new LightData[8];
-	public LightData[] pointLight = new LightData[8];
-	public LightData[] spotLight = new LightData[8];
+	// should use getMaximumLights() in pipeline? though it's up to the shader
+	public static int MAX_LIGHTS = 8;
+	public LightData[] dirLight = new LightData[MAX_LIGHTS];
+	public LightData[] pointLight = new LightData[MAX_LIGHTS];
+	public LightData[] spotLight = new LightData[MAX_LIGHTS];
 
 	public static class FogData
 	{
@@ -130,8 +128,7 @@ public class JoglesContext extends JoglContext
 
 	public RenderingData renderingData = new RenderingData();
 
-	// should use getMaximumLights() in pipeline
-	public boolean[] enabledLights = new boolean[8];
+	public boolean[] enabledLights = new boolean[MAX_LIGHTS];
 
 	public Vector4f currentAmbientColor = new Vector4f();
 
@@ -147,13 +144,46 @@ public class JoglesContext extends JoglContext
 	public Matrix4d currentProjMat = new Matrix4d();
 	public Matrix4d currentProjMatInverse = new Matrix4d();
 
+	/**
+	 * On shader creation the various FFP locations are discovered and recorded for use later
+	 * @author phil
+	 *
+	 */
+	public int uboBufId = -1; // the one buffer is bound once then reused, dear god
+	
 	public static class LocationData
 	{
+		//UBO data
+		
+		public int blockIndex = -1;
+		public int blockSize = -1;
+		public int glProjectionMatrixOffset = -1;
+		public int glProjectionMatrixInverseOffset = -1;
+		public int glViewMatrixOffset = -1;
+		public int glModelMatrixOffset = -1;
+		public int glModelViewMatrixOffset = -1;
+		public int glModelViewMatrixInverseOffset = -1;
+		public int glModelViewProjectionMatrixOffset = -1;
+		public int glNormalMatrixOffset = -1;
+		public int glFrontMaterialdiffuseOffset = -1;
+		public int glFrontMaterialemissionOffset = -1;
+		public int glFrontMaterialspecularOffset = -1;
+		public int glFrontMaterialshininessOffset = -1;
+		public int ignoreVertexColorsOffset = -1;
+		public int glLightModelambientOffset = -1;
+		public int objectColorOffset = -1;
+		public int glLightSource0positionOffset = -1;
+		public int glLightSource0diffuseOffset = -1;
+		public int textureTransformOffset = -1;
+		public int alphaTestEnabledOffset = -1;
+		public int alphaTestFunctionOffset = -1;
+		public int alphaTestValueOffset = -1;
 
+		//normal uniform data
 		public int glProjectionMatrix = -1;
 		public int glProjectionMatrixInverse = -1;
-		public int modelMatrix = -1;
-		public int viewMatrix = -1;
+		public int glModelMatrix = -1;
+		public int glViewMatrix = -1;
 		public int glModelViewMatrix = -1;
 		public int glModelViewMatrixInverse = -1;
 		public int glModelViewProjectionMatrix = -1;
@@ -177,10 +207,17 @@ public class JoglesContext extends JoglContext
 
 		public int[] glMultiTexCoord = new int[16];
 		public SparseArray<Integer> genAttIndexToLoc = new SparseArray<Integer>();
+		
 
 	}
 
-	// below here are openGL state tracking to reduce unnecessary native calls
+	/**
+	 *  below here are openGL state tracking to reduce unnecessary native calls
+	 *  Note this is NOT like the "new" or so called current staet above taht needs to be st in the FFP
+	 *  call, this is the old or previously set data, that might not need to be updated
+	 * @author phil
+	 *
+	 */
 	public static class GL_State
 	{
 		public boolean depthBufferEnableOverride;
@@ -267,7 +304,10 @@ public class JoglesContext extends JoglContext
 
 	public GL_State gl_state = new GL_State();
 
-	// program used on last run through of FFP, so nearly like gl_state
+	/**
+	 *  program used on last run through of FFP, so nearly like gl_state above, just a desperate attempt
+	 *  to see if the uniform locations have changed even if a new shader is being used
+	 */
 	public int prevShaderProgram;
 
 	public static class ShaderFFPLocations
@@ -291,221 +331,11 @@ public class JoglesContext extends JoglContext
 		public int textureTransform;
 	}
 
-	//some sort of previous shader system ?
+	//a plce to put teh previous shader locations for FFP minimize calls
 	public ShaderFFPLocations[] shaderFFPLocations = new ShaderFFPLocations[100];
 
-	//Performance issue
-	// possibly I can stop calling bind 0?
-	// maybe no call to glFinish?
-	// up to full screen and back improves render performance!!! what
-
-	///For frame stats
-
-	//1  Renderer.doWork ->
-	//1  RenderBin.render -> (can be the 3 background calls or the 3 normal calls (opaque/ordered/transparent)
-	//4  LightBin.render ->
-	//12 EnvironmentSet.render ->
-	//36 AttributeBin.render ->
-	//1407 ShaderBin.render ->
-	//1440 TextureBin.render -> .render -> .render -> .renderList
-	//3355 RenderMolecule.render ->
-	//1 VertexArrayRenderMethod.render ->
-	//Canvas3D.updateState ->
-	//Canvas3D.updateEnvStat ->
-	//ShaderBin.updateAttributes ->
-	//GLSLShaderProgramRetained.updateNative -> .enableShaderProgram -> .enableShaderProgram
-	//109+592 JoglesPipeline.useGLSLShaderProgram
-
-	public static class PerFrameStats
-	{
-		public long frameStartTime;
-
-		public HashSet<ShaderProgramId> usedPrograms = new HashSet<ShaderProgramId>();
-		//public ArrayList<ShaderProgramId> usedPrograms = new ArrayList<ShaderProgramId>();
-		//public HashSet<String> usedProgramNames = new HashSet<String>();
-		//TODO: how do I get these?
-		//public HashMap<ShaderProgramId, String> usedProgramNames = new HashMap<ShaderProgramId, String>();
-
-		public int geoToClearBuffers;
-		public int glDrawStripArrays;
-		public int glDrawStripArraysStrips;
-		public int glDrawArrays;
-		public int glDrawStripElements;
-		public int glDrawStripElementsStrips;
-		public int glDrawElements;
-		public int setFFPAttributes;
-		public int geoToLocationData;
-		public int enableTexCoordPointer;
-		public int createGLSLShader;
-		public int createGLSLShaderProgram;
-		public int compileGLSLShader;
-		public int destroyGLSLShader;
-		public int destroyGLSLShaderProgram;
-		public int linkGLSLShaderProgram;
-		public int useGLSLShaderProgram;
-		public int bindGLSLVertexAttrName;
-		public int lookupGLSLShaderAttrNames;
-		public int updateDirectionalLight;
-		public int updatePointLight;
-		public int updateSpotLight;
-		public int updateExponentialFog;
-		public int updateLinearFog;
-		public int disableFog;
-		public int setFogEnableFlag;
-		public int updateLineAttributes;
-		public int resetLineAttributes;
-		public int updateMaterial;
-		public int updateMaterialColor;
-		public int updateColoringAttributes;
-		public int resetColoringAttributes;
-		public int updatePointAttributes;
-		public int resetPointAttributes;
-		public int updatePolygonAttributes;
-		public int resetPolygonAttributes;
-		public int updateRenderingAttributes;
-		public int resetRenderingAttributes;
-		public int updateTransparencyAttributes;
-		public int resetTransparency;
-		public int updateTextureAttributes;
-		public int resetTextureAttributes;
-		public int resetTexCoordGeneration;
-		public int updateTextureUnitState;
-		public int bindTexture2D;
-		public int bindTextureCubeMap;
-		public int setBlendColor;
-		public int setBlendFunc;
-		public int setFullSceneAntialiasing;
-		public int setLightEnables;
-		public int setSceneAmbient;
-		public int activeTextureUnit;
-		public int resetTextureNative;
-		public int useCtx;
-		public int releaseCtx;
-		public int clear;
-		public int setModelViewMatrix;
-		public int setProjectionMatrix;
-		public int setViewport;
-		public int freeTexture;
-		public int generateTexID;
-		public int setDepthBufferWriteEnable;
-		public int redundantUseProgram;
-
-		public int coordCount;
-		public int indexCount;
-		public int glVertexAttribPointerNormals;
-		public int glVertexAttribPointerUserAttribs;
-		public int glVertexAttribPointerColor;
-		public int glVertexAttribPointerCoord;
-		public int glBufferData;
-		public int glBufferSubData;
-		public int glDisableVertexAttribArray;
-
-		public int modelMatrixUpdated;
-		public int glModelViewMatrixUpdated;
-		public int glModelViewProjectionMatrixUpdated;
-		public int glNormalMatrixUpdated;
-		public int glModelViewMatrixInverseUpdated;
-
-		public int modelMatrixSkipped;
-		public int glModelViewMatrixSkipped;
-		public int glModelViewProjectionMatrixSkipped;
-		public int glNormalMatrixSkipped;
-		public int glModelViewMatrixInverseSkipped;
-
-		public void outputPerFrameData()
-		{
-			boolean highInterestOnly = true;
-
-			System.out.println("coordCount " + coordCount + " indexCount " + indexCount);
-			System.out
-					.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
-			System.out.println("glDrawArrays " + glDrawArrays);
-			System.out.println(
-					"glDrawStripElements " + glDrawStripElements + "\t made up of glDrawStripElementsStrips " + glDrawStripElementsStrips);
-			System.out.println("glDrawElements " + glDrawElements);
-			System.out.println("glVertexAttribPointerCoord " + glVertexAttribPointerCoord);
-			System.out.println("glVertexAttribPointerNormals " + glVertexAttribPointerNormals);
-			System.out.println("glVertexAttribPointerColor " + glVertexAttribPointerColor);
-			System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
-			System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
-			System.out.println("glBufferData " + glBufferData + " glBufferSubData " + glBufferSubData);
-			System.out.println("---");
-			System.out.println("setModelViewMatrix " + setModelViewMatrix);
-			System.out.println("setFFPAttributes " + setFFPAttributes);
-			System.out.println("modelMatrixUpdated " + modelMatrixUpdated + " modelMatrixSkipped " + modelMatrixSkipped);
-			System.out.println(
-					"glModelViewMatrixUpdated " + glModelViewMatrixUpdated + " glModelViewMatrixSkipped " + glModelViewMatrixSkipped);
-			System.out.println("glModelViewProjectionMatrixUpdated " + glModelViewProjectionMatrixUpdated
-					+ " glModelViewProjectionMatrixSkipped " + glModelViewProjectionMatrixSkipped);
-			System.out.println("glNormalMatrixUpdated " + glNormalMatrixUpdated + " glNormalMatrixSkipped " + glNormalMatrixSkipped);
-			System.out.println("---");
-			if (!highInterestOnly)
-			{
-				System.out.println(
-						"glDisableVertexAttribArray " + glDisableVertexAttribArray + " note native called commented out, trouble?");
-				System.out.println("geoToClearBuffers " + geoToClearBuffers);
-				System.out.println("geoToLocationData " + geoToLocationData);
-				System.out.print("createGLSLShader " + createGLSLShader);
-				System.out.print("\tcreateGLSLShaderProgram " + createGLSLShaderProgram);
-				System.out.print("\tcompileGLSLShader " + compileGLSLShader);
-				System.out.print("\tdestroyGLSLShader " + destroyGLSLShader);
-				System.out.print("\tdestroyGLSLShaderProgram " + destroyGLSLShaderProgram);
-				System.out.print("\tlinkGLSLShaderProgram " + linkGLSLShaderProgram);
-				System.out.print("\tbindGLSLVertexAttrName " + bindGLSLVertexAttrName);
-				System.out.println("\tlookupGLSLShaderAttrNames " + lookupGLSLShaderAttrNames);
-				System.out.print("updateDirectionalLight " + updateDirectionalLight);
-				System.out.print("\tupdatePointLight " + updatePointLight);
-				System.out.println("\tupdateSpotLight " + updateSpotLight);
-				System.out.print("updateExponentialFog " + updateExponentialFog);
-				System.out.print("\tupdateLinearFog " + updateLinearFog);
-				System.out.print("\tdisableFog " + disableFog);
-				System.out.println("\tsetFogEnableFlag " + setFogEnableFlag);
-				System.out.print("updateLineAttributes " + updateLineAttributes);
-				System.out.println("\tresetLineAttributes " + resetLineAttributes);
-				System.out.print("updateMaterial " + updateMaterial);
-				System.out.println("\tupdateMaterialColor " + updateMaterialColor);
-				System.out.print("updateColoringAttributes " + updateColoringAttributes);
-				System.out.println("\tresetColoringAttributes " + resetColoringAttributes);
-				System.out.print("updatePointAttributes " + updatePointAttributes);
-				System.out.println("\tresetPointAttributes " + resetPointAttributes);
-				System.out.print("updatePolygonAttributes " + updatePolygonAttributes);
-				System.out.println("\tresetPolygonAttributes " + resetPolygonAttributes);
-				System.out.print("updateRenderingAttributes " + updateRenderingAttributes);
-				System.out.println("\tresetRenderingAttributes " + resetRenderingAttributes);
-				System.out.println("setBlendColor " + setBlendColor);
-				System.out.println("setFullSceneAntialiasing " + setFullSceneAntialiasing);
-				System.out.println("setLightEnables " + setLightEnables);
-				System.out.println("setSceneAmbient " + setSceneAmbient);
-				System.out.println("resetTexCoordGeneration " + resetTexCoordGeneration);
-				System.out.println("freeTexture " + freeTexture);
-				System.out.println("generateTexID " + generateTexID);
-				System.out.println("useCtx " + useCtx);
-				System.out.println("releaseCtx " + releaseCtx);
-				System.out.println("clear " + clear);
-				System.out.println("setViewport " + setViewport);
-				System.out.println("setProjectionMatrix " + setProjectionMatrix);
-			}
-
-			System.out.print("updateTransparencyAttributes " + updateTransparencyAttributes);
-			System.out.println("\tresetTransparency " + resetTransparency);
-			System.out.print("updateTextureAttributes " + updateTextureAttributes);
-			System.out.println("\tresetTextureAttributes " + resetTextureAttributes);
-			System.out.println("updateTextureUnitState " + updateTextureUnitState);
-			System.out.println("bindTexture2D " + bindTexture2D + "\tbindTextureCubeMap " + bindTextureCubeMap);
-			System.out.println("setBlendFunc " + setBlendFunc);
-			System.out.println("activeTextureUnit " + activeTextureUnit + "\tresetTextureNative " + resetTextureNative);
-			System.out.println("setDepthBufferWriteEnable " + setDepthBufferWriteEnable);
-			System.out.println("useGLSLShaderProgram " + useGLSLShaderProgram + " redundantUseProgram " + redundantUseProgram);
-
-			//for (ShaderProgramId id : usedPrograms)
-			//	System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());
-
-			System.out.println("frameTime ns " + (System.nanoTime() - frameStartTime) + " = fps: "
-					+ (1000 / ((System.nanoTime() - frameStartTime) / 1000000L)));
-		}
-	}
-
-	public PerFrameStats perFrameStats = new PerFrameStats();
+	// The per frame stats
+	public JoglesPerFrameStats perFrameStats = new JoglesPerFrameStats();
 
 	private int statsFrame = 0;
 	private int STATS_OUTPUT_FRAME_FREQ = 50;
@@ -520,227 +350,11 @@ public class JoglesContext extends JoglContext
 			perFrameStats.outputPerFrameData();
 		}
 		// clear for next frame
-		perFrameStats = new PerFrameStats();
+		perFrameStats = new JoglesPerFrameStats();
 		perFrameStats.frameStartTime = System.nanoTime();
 	}
 
-	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
-
-	public Matrix4d deburnV = new Matrix4d();//deburners 
-	public Matrix4d deburnM = new Matrix4d();
-	public float[] tempMat9 = new float[9];
-	public float[] tempMat12 = new float[12];
-	public float[] tempMat16 = new float[16];
-	public double[] tempMatD9 = new double[9];
-
-	public float[] toArray(Matrix4d m)
-	{
-		return toArray(m, tempMat16);
-	}
-
-	public static float[] toArray(Matrix4d m, float[] a)
-	{
-		a[0] = (float) m.m00;
-		a[1] = (float) m.m01;
-		a[2] = (float) m.m02;
-		a[3] = (float) m.m03;
-		a[4] = (float) m.m10;
-		a[5] = (float) m.m11;
-		a[6] = (float) m.m12;
-		a[7] = (float) m.m13;
-		a[8] = (float) m.m20;
-		a[9] = (float) m.m21;
-		a[10] = (float) m.m22;
-		a[11] = (float) m.m23;
-		a[12] = (float) m.m30;
-		a[13] = (float) m.m31;
-		a[14] = (float) m.m32;
-		a[15] = (float) m.m33;
-
-		return a;
-	}
-
-	public float[] toArray(Matrix3d m)
-	{
-		return toArray(m, tempMat9);
-	}
-
-	public static float[] toArray(Matrix3d m, float[] a)
-	{
-		a[0] = (float) m.m00;
-		a[1] = (float) m.m01;
-		a[2] = (float) m.m02;
-		a[3] = (float) m.m10;
-		a[4] = (float) m.m11;
-		a[5] = (float) m.m12;
-		a[6] = (float) m.m20;
-		a[7] = (float) m.m21;
-		a[8] = (float) m.m22;
-
-		return a;
-	}
-
-	public float[] toArray3x4(Matrix3d m)
-	{
-		return toArray3x4(m, tempMat12);
-	}
-
-	public static float[] toArray3x4(Matrix3d m, float[] a)
-	{
-		a[0] = (float) m.m00;
-		a[1] = (float) m.m01;
-		a[2] = (float) m.m02;
-		a[3] = 0f;
-		a[4] = (float) m.m10;
-		a[5] = (float) m.m11;
-		a[6] = (float) m.m12;
-		a[7] = 0f;
-		a[8] = (float) m.m20;
-		a[9] = (float) m.m21;
-		a[10] = (float) m.m22;
-		a[11] = 0f;
-
-		return a;
-	}
-
-	public double[] toArray3x3(Matrix4d m)
-	{
-		return toArray3x3(m, tempMatD9);
-	}
-
-	public static double[] toArray3x3(Matrix4d m, double[] a)
-	{
-		a[0] = m.m00;
-		a[1] = m.m01;
-		a[2] = m.m02;
-		a[3] = m.m10;
-		a[4] = m.m11;
-		a[5] = m.m12;
-		a[6] = m.m20;
-		a[7] = m.m21;
-		a[8] = m.m22;
-
-		return a;
-	}
-
-	private JoglesMatrixInverter matrixInverter = new JoglesMatrixInverter();
-
-	public void invert(Matrix3d m1)
-	{
-		try
-		{
-			matrixInverter.invertGeneral3(m1, m1);
-		}
-		catch (Exception e)
-		{
-			//fine, move along
-			m1.setIdentity();
-		}
-	}
-
-	public void invert(Matrix4d m1)
-	{
-		try
-		{
-			matrixInverter.invertGeneral4(m1, m1);
-		}
-		catch (Exception e)
-		{
-			//fine, move along
-			m1.setIdentity();
-		}
-	}
-
-	//More single threaded death-defying gear
-
-	private FloatBuffer matFB4x4;
-
-	public FloatBuffer toFB4(float[] f)
-	{
-		if (matFB4x4 == null)
-		{
-			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
-			bb.order(ByteOrder.nativeOrder());
-			matFB4x4 = bb.asFloatBuffer();
-		}
-		matFB4x4.position(0);
-		matFB4x4.put(f);
-		matFB4x4.position(0);
-		return matFB4x4;
-	}
-
-	public FloatBuffer toFB3(float[] f)
-	{
-		if (matFB3x3 == null)
-		{
-			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
-			bb.order(ByteOrder.nativeOrder());
-			matFB3x3 = bb.asFloatBuffer();
-		}
-		matFB3x3.position(0);
-		matFB3x3.put(f);
-		matFB3x3.position(0);
-		return matFB3x3;
-	}
-
-	public FloatBuffer toFB(Matrix4d m)
-	{
-		if (matFB4x4 == null)
-		{
-			ByteBuffer bb = ByteBuffer.allocateDirect(16 * 4);
-			bb.order(ByteOrder.nativeOrder());
-			matFB4x4 = bb.asFloatBuffer();
-		}
-		matFB4x4.position(0);
-		matFB4x4.put(toArray(m));
-		matFB4x4.position(0);
-		return matFB4x4;
-	}
-
-	private FloatBuffer matFB3x3;
-
-	public FloatBuffer toFB(Matrix3d m)
-	{
-		if (matFB3x3 == null)
-		{
-			ByteBuffer bb = ByteBuffer.allocateDirect(9 * 4);
-			bb.order(ByteOrder.nativeOrder());
-			matFB3x3 = bb.asFloatBuffer();
-		}
-		matFB3x3.position(0);
-		matFB3x3.put(toArray(m));
-		matFB3x3.position(0);
-		return matFB3x3;
-	}
-
-	// Not needed generally as transpose can be called on the inteface with gl
-	public static float[] transposeInPlace(float[] src)
-	{
-		float v1 = src[1];
-		float v2 = src[2];
-		float v3 = src[3];
-		float v6 = src[6];
-		float v7 = src[7];
-		float v11 = src[11];
-
-		//src[0] = src[0];		
-		src[1] = src[4];
-		src[2] = src[8];
-		src[3] = src[12];
-		src[4] = v1;
-		//src[5] = src[5];		
-		src[6] = src[9];
-		src[7] = src[13];
-		src[8] = v2;
-		src[9] = v6;
-		//src[10] = src[10];		
-		src[11] = src[14];
-		src[12] = v3;
-		src[13] = v7;
-		src[14] = v11;
-		//src[15] = src[15];
-
-		return src;
-	}
+	// just a singleton of the handy matrix/array operations
+	public JoglesMatrixUtil matrixUtil = new JoglesMatrixUtil();
 
 }
