@@ -1454,7 +1454,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.programToLocationData++;
 
-				if (gl.isGL2ES3())
+				if (ATTEMPT_UBO && gl.isGL2ES3())
 				{
 					GL2ES3 gl2es3 = (GL2ES3) gl;
 
@@ -1504,7 +1504,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						IntBuffer indices = IntBuffer.allocate(names.length);
 
-						if (ATTEMPT_UBO && PRESUME_INDICES)
+						if (PRESUME_INDICES)
 						{
 							indices.put(0, 16);
 							indices.put(1, 17);
@@ -1760,162 +1760,159 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.setFFPAttributes++;
 
-			if (ATTEMPT_UBO)
+			if (ATTEMPT_UBO && gl.isGL2ES3())
 			{
-				if (gl.isGL2ES3())
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+
+				if (locs.blockIndex != -1)
 				{
-					GL2ES3 gl2es3 = (GL2ES3) gl;
+					ByteBuffer uboBB = ctx.programToUBOBB.get(shaderProgramId);
 
-					if (locs.blockIndex != -1)
+					if (locs.glProjectionMatrixOffset != -1)
 					{
-						ByteBuffer uboBB = ctx.programToUBOBB.get(shaderProgramId);
-
-						if (locs.glProjectionMatrixOffset != -1)
-						{
-							uboBB.position(locs.glProjectionMatrixOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMat));
-						}
-						if (locs.glProjectionMatrixInverseOffset != -1)
-						{
-							uboBB.position(locs.glProjectionMatrixInverseOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMatInverse));
-						}
-						if (locs.glViewMatrixOffset != -1)
-						{
-							uboBB.position(locs.glViewMatrixOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentViewMat));
-						}
-						if (locs.glModelMatrixOffset != -1)
-						{
-							uboBB.position(locs.glModelMatrixOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelMat));
-						}
-						if (locs.glModelViewMatrixOffset != -1)
-						{
-							uboBB.position(locs.glModelViewMatrixOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMat));
-						}
-						if (locs.glModelViewMatrixInverseOffset != -1)
-						{
-							uboBB.position(locs.glModelViewMatrixInverseOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse));
-						}
-						if (locs.glModelViewProjectionMatrixOffset != -1)
-						{
-							uboBB.position(locs.glModelViewProjectionMatrixOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat));
-						}
-						//3x3 are stored as 3xvec4 (48 bytes before next offset) note use of toArray3x4
-						if (locs.glNormalMatrixOffset != -1)
-						{
-							uboBB.position(locs.glNormalMatrixOffset);
-							uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray3x4(ctx.currentNormalMat));
-						}
-						if (locs.glFrontMaterialdiffuseOffset != -1)
-						{
-							uboBB.position(locs.glFrontMaterialdiffuseOffset);
-							uboBB.asFloatBuffer().put(ctx.materialData.diffuse.x).put(ctx.materialData.diffuse.y)
-									.put(ctx.materialData.diffuse.z).put(ctx.materialData.diffuse.w);
-						}
-						if (locs.glFrontMaterialemissionOffset != -1)
-						{
-							uboBB.position(locs.glFrontMaterialemissionOffset);
-							uboBB.asFloatBuffer().put(ctx.materialData.emission.x).put(ctx.materialData.emission.y)
-									.put(ctx.materialData.emission.z).put(1f); //note extra alpha value to avoid errors
-						}
-						if (locs.glFrontMaterialspecularOffset != -1)
-						{
-							uboBB.position(locs.glFrontMaterialspecularOffset);
-							uboBB.asFloatBuffer().put(ctx.materialData.specular.x).put(ctx.materialData.specular.y)
-									.put(ctx.materialData.specular.z);
-						}
-						if (locs.glFrontMaterialshininessOffset != -1)
-						{
-							uboBB.position(locs.glFrontMaterialshininessOffset);
-							uboBB.asFloatBuffer().put(ctx.materialData.shininess);
-						}
-						// if set one of the 2 colors below should be used by the shader (material for lighting)
-						//   old uniform system appears wrong?
-						if (locs.ignoreVertexColorsOffset != -1)
-						{
-							uboBB.position(locs.ignoreVertexColorsOffset);
-							uboBB.asIntBuffer().put(ctx.renderingData.ignoreVertexColors ? 1 : 0);
-						}
-						if (locs.glLightModelambientOffset != -1)
-						{
-							uboBB.position(locs.glLightModelambientOffset);
-							uboBB.asFloatBuffer().put(ctx.currentAmbientColor.x).put(ctx.currentAmbientColor.y)
-									.put(ctx.currentAmbientColor.z).put(ctx.currentAmbientColor.w);
-						}
-						if (locs.objectColorOffset != -1)
-						{
-							uboBB.position(locs.objectColorOffset);
-							uboBB.asFloatBuffer().put(ctx.objectColor.x).put(ctx.objectColor.y).put(ctx.objectColor.z)
-									.put(ctx.objectColor.w);
-						}
-
-						//For now using first point light, but gonna need to put em all in
-						LightData l0 = null;
-						if (ctx.pointLight[0] != null)
-							l0 = ctx.pointLight[0];
-						else if (ctx.dirLight[0] != null)
-							l0 = ctx.dirLight[0];
-
-						if (l0 != null)
-						{
-							if (locs.glLightSource0positionOffset != -1)
-							{
-								uboBB.position(locs.glLightSource0positionOffset);
-								uboBB.asFloatBuffer().put(l0.pos.x).put(l0.pos.y).put(l0.pos.z).put(l0.pos.w);
-							}
-							if (locs.glLightSource0diffuseOffset != -1)
-							{
-								uboBB.position(locs.glLightSource0diffuseOffset);
-								uboBB.asFloatBuffer().put(l0.diffuse.x).put(l0.diffuse.y).put(l0.diffuse.z).put(l0.diffuse.w);
-							}
-						}
-
-						// TODO: test the transpose
-						if (locs.textureTransformOffset != -1)
-						{
-							uboBB.position(locs.textureTransformOffset);
-							uboBB.asFloatBuffer().put(JoglesMatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.textureTransform)));
-						}
-
-						if (locs.alphaTestEnabledOffset != -1)
-						{
-							uboBB.position(locs.alphaTestEnabledOffset);
-							uboBB.asIntBuffer().put(ctx.renderingData.alphaTestEnabled ? 1 : 0);
-
-							if (ctx.renderingData.alphaTestEnabled == true)
-							{
-								if (locs.alphaTestFunctionOffset != -1)
-								{
-									uboBB.position(locs.alphaTestFunctionOffset);
-									uboBB.asIntBuffer().put(ctx.renderingData.alphaTestFunction);
-								}
-								if (locs.alphaTestValueOffset != -1)
-								{
-									uboBB.position(locs.alphaTestValueOffset);
-									uboBB.asFloatBuffer().put(ctx.renderingData.alphaTestValue);
-								}
-							}
-						}
-
-						uboBB.position(0);// very important!
-
-						/*		Integer bufId =  ctx.programToUBOBuf.get(shaderProgramId);
-								gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, bufId.intValue());
-								gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
-								//Bind the buffer object to the uniform block.
-								gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, locs.blockIndex, bufId.intValue());
-						*/
-						gl2es3.glBufferSubData(GL2ES3.GL_UNIFORM_BUFFER, 0, uboBB.limit(), uboBB);
-						outputErrors(ctx);
-						// we have done our ffp work don't fall through to normal system						
-						return;
+						uboBB.position(locs.glProjectionMatrixOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMat));
 					}
+					if (locs.glProjectionMatrixInverseOffset != -1)
+					{
+						uboBB.position(locs.glProjectionMatrixInverseOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMatInverse));
+					}
+					if (locs.glViewMatrixOffset != -1)
+					{
+						uboBB.position(locs.glViewMatrixOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentViewMat));
+					}
+					if (locs.glModelMatrixOffset != -1)
+					{
+						uboBB.position(locs.glModelMatrixOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelMat));
+					}
+					if (locs.glModelViewMatrixOffset != -1)
+					{
+						uboBB.position(locs.glModelViewMatrixOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMat));
+					}
+					if (locs.glModelViewMatrixInverseOffset != -1)
+					{
+						uboBB.position(locs.glModelViewMatrixInverseOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse));
+					}
+					if (locs.glModelViewProjectionMatrixOffset != -1)
+					{
+						uboBB.position(locs.glModelViewProjectionMatrixOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat));
+					}
+					//3x3 are stored as 3xvec4 (48 bytes before next offset) note use of toArray3x4
+					if (locs.glNormalMatrixOffset != -1)
+					{
+						uboBB.position(locs.glNormalMatrixOffset);
+						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray3x4(ctx.currentNormalMat));
+					}
+					if (locs.glFrontMaterialdiffuseOffset != -1)
+					{
+						uboBB.position(locs.glFrontMaterialdiffuseOffset);
+						uboBB.asFloatBuffer().put(ctx.materialData.diffuse.x).put(ctx.materialData.diffuse.y)
+								.put(ctx.materialData.diffuse.z).put(ctx.materialData.diffuse.w);
+					}
+					if (locs.glFrontMaterialemissionOffset != -1)
+					{
+						uboBB.position(locs.glFrontMaterialemissionOffset);
+						uboBB.asFloatBuffer().put(ctx.materialData.emission.x).put(ctx.materialData.emission.y)
+								.put(ctx.materialData.emission.z).put(1f); //note extra alpha value to avoid errors
+					}
+					if (locs.glFrontMaterialspecularOffset != -1)
+					{
+						uboBB.position(locs.glFrontMaterialspecularOffset);
+						uboBB.asFloatBuffer().put(ctx.materialData.specular.x).put(ctx.materialData.specular.y)
+								.put(ctx.materialData.specular.z);
+					}
+					if (locs.glFrontMaterialshininessOffset != -1)
+					{
+						uboBB.position(locs.glFrontMaterialshininessOffset);
+						uboBB.asFloatBuffer().put(ctx.materialData.shininess);
+					}
+					// if set one of the 2 colors below should be used by the shader (material for lighting)
+					//   old uniform system appears wrong?
+					if (locs.ignoreVertexColorsOffset != -1)
+					{
+						uboBB.position(locs.ignoreVertexColorsOffset);
+						uboBB.asIntBuffer().put(ctx.renderingData.ignoreVertexColors ? 1 : 0);
+					}
+					if (locs.glLightModelambientOffset != -1)
+					{
+						uboBB.position(locs.glLightModelambientOffset);
+						uboBB.asFloatBuffer().put(ctx.currentAmbientColor.x).put(ctx.currentAmbientColor.y).put(ctx.currentAmbientColor.z)
+								.put(ctx.currentAmbientColor.w);
+					}
+					if (locs.objectColorOffset != -1)
+					{
+						uboBB.position(locs.objectColorOffset);
+						uboBB.asFloatBuffer().put(ctx.objectColor.x).put(ctx.objectColor.y).put(ctx.objectColor.z).put(ctx.objectColor.w);
+					}
+
+					//For now using first point light, but gonna need to put em all in
+					LightData l0 = null;
+					if (ctx.pointLight[0] != null)
+						l0 = ctx.pointLight[0];
+					else if (ctx.dirLight[0] != null)
+						l0 = ctx.dirLight[0];
+
+					if (l0 != null)
+					{
+						if (locs.glLightSource0positionOffset != -1)
+						{
+							uboBB.position(locs.glLightSource0positionOffset);
+							uboBB.asFloatBuffer().put(l0.pos.x).put(l0.pos.y).put(l0.pos.z).put(l0.pos.w);
+						}
+						if (locs.glLightSource0diffuseOffset != -1)
+						{
+							uboBB.position(locs.glLightSource0diffuseOffset);
+							uboBB.asFloatBuffer().put(l0.diffuse.x).put(l0.diffuse.y).put(l0.diffuse.z).put(l0.diffuse.w);
+						}
+					}
+
+					// TODO: test the transpose
+					if (locs.textureTransformOffset != -1)
+					{
+						uboBB.position(locs.textureTransformOffset);
+						uboBB.asFloatBuffer().put(JoglesMatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.textureTransform)));
+					}
+
+					if (locs.alphaTestEnabledOffset != -1)
+					{
+						uboBB.position(locs.alphaTestEnabledOffset);
+						uboBB.asIntBuffer().put(ctx.renderingData.alphaTestEnabled ? 1 : 0);
+
+						if (ctx.renderingData.alphaTestEnabled == true)
+						{
+							if (locs.alphaTestFunctionOffset != -1)
+							{
+								uboBB.position(locs.alphaTestFunctionOffset);
+								uboBB.asIntBuffer().put(ctx.renderingData.alphaTestFunction);
+							}
+							if (locs.alphaTestValueOffset != -1)
+							{
+								uboBB.position(locs.alphaTestValueOffset);
+								uboBB.asFloatBuffer().put(ctx.renderingData.alphaTestValue);
+							}
+						}
+					}
+
+					uboBB.position(0);// very important!
+
+					/*		Integer bufId =  ctx.programToUBOBuf.get(shaderProgramId);
+							gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, bufId.intValue());
+							gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
+							//Bind the buffer object to the uniform block.
+							gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, locs.blockIndex, bufId.intValue());
+					*/
+					gl2es3.glBufferSubData(GL2ES3.GL_UNIFORM_BUFFER, 0, uboBB.limit(), uboBB);
+					outputErrors(ctx);
+					// we have done our ffp work don't fall through to normal system						
+					return;
 				}
+
 			}
 
 			//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
