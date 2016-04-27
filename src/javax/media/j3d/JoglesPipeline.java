@@ -22,9 +22,7 @@ import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
-import com.jogamp.opengl.GL2GL3;
 import com.jogamp.opengl.GL3;
-import com.jogamp.opengl.GL3ES3;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawable;
@@ -284,7 +282,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//	if (buffersLoaded)
 			//		return;
 
-			setFFPAttributes(ctx, gl);
+			setFFPAttributes(ctx, gl, vdefined);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -438,12 +436,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			else
 			{
-				//must set ignoreVertexcolors now as the glColors is unbound
-				gl.glUniform1i(locs.ignoreVertexColors, 1);
-				outputErrors(ctx);
+				// ignoreVertexcolors will be set in FFP now as the glColors is unbound
 				if (locs.glColor != -1)
 				{
-					//gl.glDisableVertexAttribArray(locs.glColor);
+					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -483,7 +479,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				if (locs.glNormal != -1)
 				{
-					//gl.glDisableVertexAttribArray(locs.glNormal);
+					gl.glDisableVertexAttribArray(locs.glNormal);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -547,7 +543,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						if (locs.glMultiTexCoord[i] != -1)
 						{
-							//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.glDisableVertexAttribArray++;
 						}
@@ -632,7 +628,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						//gl.glDisableVertexAttribArray(attribLoc);
+						gl.glDisableVertexAttribArray(attribLoc);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -645,7 +641,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					if (locs.glMultiTexCoord[i] != -1)
 					{
-						//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+						gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -856,6 +852,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordSetCount, int[] texCoordSetMap, int numActiveTexUnitState,
 			int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
 	{
+		
+		//Ok new idea
+		// some objects have a pure white vertex color, so I can just mark them 
+		// as has vertex color no, and give the material of white (is it always white?)
+		// current vertex = 3f for coord 2f for texcoord 4f for color 3f for normal
+		// current  = 48 bytes
+		// can be 3hf coord, 2hf uv, 4b color, 3b normal (bi normal, tangent)
+		// new = 27 bytes (with a bunch of 4bytes saved)
+		
+		// and also why not lets interleave this mess together! the tex coords might be the only difficult part
+		// other wise woot
+		
+		//ok so now I'm using colors :( everything is slower, and my colors aren't right
+		
+		
 		JoglesContext ctx = (JoglesContext) absCtx;
 		if (ctx.getShaderProgram() != null)
 		{
@@ -874,7 +885,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// wild debug code, don't forget sop in swapBufers
 			//System.out.println("Geo drawing " + geo.source.getName());
 
-			setFFPAttributes(ctx, gl);
+			setFFPAttributes(ctx, gl, vdefined);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -1002,7 +1013,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							ctx.perFrameStats.glVertexAttribPointerColor++;
 					}
 
-				}
+				}				
 			}
 			else if (byteColorsDefined)
 			{
@@ -1021,12 +1032,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			else
 			{
-				//must set ignoreVertexcolors now as the glColors is unbound
-				gl.glUniform1i(locs.ignoreVertexColors, 1);
-				outputErrors(ctx);
+				// ignoreVertexcolors will be set in FFP now as the glColors is unbound
 				if (locs.glColor != -1)
 				{
-					//gl.glDisableVertexAttribArray(locs.glColor);
+					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -1065,7 +1074,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				if (locs.glNormal != -1)
 				{
-					//gl.glDisableVertexAttribArray(locs.glNormal);
+					gl.glDisableVertexAttribArray(locs.glNormal);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
@@ -1130,7 +1139,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						if (locs.glMultiTexCoord[i] != -1)
 						{
-							//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.glDisableVertexAttribArray++;
 						}
@@ -1350,7 +1359,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
-						//gl.glDisableVertexAttribArray(attribLoc);
+						gl.glDisableVertexAttribArray(attribLoc);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -1363,7 +1372,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					if (locs.glMultiTexCoord[i] != -1)
 					{
-						//gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
+						gl.glDisableVertexAttribArray(locs.glMultiTexCoord[i]);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
@@ -1748,14 +1757,27 @@ class JoglesPipeline extends JoglesDEPPipeline
 	 * Over time we have had things recorded and in FFP they are considered current state
 	 * in programmable we have to push them across manually each time recorded in JoglesContext
 	 * @param gl
+	 * @param vdefined 
 	 */
 
-	private static void setFFPAttributes(JoglesContext ctx, GL2ES2 gl)
+	private static void setFFPAttributes(JoglesContext ctx, GL2ES2 gl, int vdefined)
 	{
 		if (ctx.getShaderProgram() != null)
 		{
 			int shaderProgramId = ctx.getShaderProgram().getValue();
 			LocationData locs = getLocs(ctx, gl);
+			
+			//boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
+			//boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
+			boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
+			boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
+			//boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
+			//boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
+			//boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
+			
+			// vertex colors MUST be ignored if no glColors set
+			boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors;
+			
 
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.setFFPAttributes++;
@@ -1837,8 +1859,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 					if (locs.ignoreVertexColorsOffset != -1)
 					{
 						uboBB.position(locs.ignoreVertexColorsOffset);
-						uboBB.asIntBuffer().put(ctx.renderingData.ignoreVertexColors ? 1 : 0);
-					}
+						uboBB.asIntBuffer().put(ignoreVertexColors ? 1 : 0);// note local variable used
+					}					
+					
 					if (locs.glLightModelambientOffset != -1)
 					{
 						uboBB.position(locs.glLightModelambientOffset);
@@ -2054,7 +2077,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
 						|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
 				{
-					gl.glUniform1i(locs.ignoreVertexColors, ctx.renderingData.ignoreVertexColors ? 1 : 0);
+					gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
 
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
