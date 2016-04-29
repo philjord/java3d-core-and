@@ -538,4 +538,6 @@ class CapabilityBits extends Object {
 
     // NOTE: any further additional Geometry bits must come after the
     // last GeometryArray bit
+    
+    static final int GEOMETRY_ARRAY_ANIMATED_COORDS = 26;
 }

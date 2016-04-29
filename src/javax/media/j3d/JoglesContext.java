@@ -40,26 +40,32 @@ public class JoglesContext extends JoglContext
 	// all buffers created are recorded for each render pass, and for cleanup
 	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
 
-	public HashMap<GeometryArrayRetained, Integer> geoToIndBuf = new HashMap<GeometryArrayRetained, Integer>();
-	public HashMap<GeometryArrayRetained, Integer> geoToIndBufSize = new HashMap<GeometryArrayRetained, Integer>();
-	public HashMap<GeometryArrayRetained, int[]> geoToIndStripBuf = new HashMap<GeometryArrayRetained, int[]>();
-	public HashMap<GeometryArrayRetained, Integer> geoToIndStripSwappedSize = new HashMap<GeometryArrayRetained, Integer>();
+	public HashMap<GeometryArrayRetained, GeometryData> allGeometryData = new HashMap<GeometryArrayRetained, GeometryData>();
 
-	public HashMap<GeometryArrayRetained, Integer> geoToCoordBuf = new HashMap<GeometryArrayRetained, Integer>();
-	public HashMap<GeometryArrayRetained, Integer> geoToCoordBufSize = new HashMap<GeometryArrayRetained, Integer>();
+	public static class GeometryData
+	{
+		public int geoToIndBuf = -1;
+		public int geoToIndBufSize = -1;
+		public int[] geoToIndStripBuf = null;
+		public int geoToIndStripSwappedSize = -1;
+		public int geoToCoordBuf = -1;
+		public int geoToCoordBufSize = -1;
+		public int geoToColorBuf = -1;
+		public int geoToNormalBuf = -1;
+		public SparseArray<Integer> geoToTexCoordsBuf = new SparseArray<Integer>();
+		public SparseArray<Integer> geoToVertAttribBuf = new SparseArray<Integer>();
 
-	public HashMap<GeometryArrayRetained, Integer> geoToColorBuf = new HashMap<GeometryArrayRetained, Integer>();
-	public HashMap<GeometryArrayRetained, Integer> geoToNormalBuf = new HashMap<GeometryArrayRetained, Integer>();
+	}
 
-	public HashMap<GeometryArrayRetained, SparseArray<Integer>> geoToTexCoordsBuf = new HashMap<GeometryArrayRetained, SparseArray<Integer>>();
+	public SparseArray<ProgramData> allProgramData = new SparseArray<ProgramData>();
 
-	public SparseArray<LocationData> programToLocationData = new SparseArray<LocationData>();
-	public SparseArray<ByteBuffer> programToUBOBB = new SparseArray<ByteBuffer>();
-	public SparseArray<Integer> programToUBOBuf = new SparseArray<Integer>();
-
-	public HashMap<GeometryArrayRetained, SparseArray<Integer>> geoToVertAttribBuf = new HashMap<GeometryArrayRetained, SparseArray<Integer>>();
-
-	public SparseArray<HashMap<String, Integer>> progToGenVertAttNameToGenVertAttIndex = new SparseArray<HashMap<String, Integer>>();
+	public static class ProgramData
+	{
+		public HashMap<String, Integer> progToGenVertAttNameToGenVertAttIndex = new HashMap<String, Integer>();
+		public LocationData programToLocationData = null;// null to indicate need to load
+		public ByteBuffer programToUBOBB = null;
+		public int programToUBOBuf = -1;
+	}
 
 	//Light data recorded to be handed into shader as uniform on next update
 	//see https://www.opengl.org/sdk/docs/man2/ glLight
@@ -150,11 +156,11 @@ public class JoglesContext extends JoglContext
 	 *
 	 */
 	public int uboBufId = -1; // the one buffer is bound once then reused, dear god
-	
+
 	public static class LocationData
 	{
 		//UBO data
-		
+
 		public int blockIndex = -1;
 		public int blockSize = -1;
 		public int glProjectionMatrixOffset = -1;
@@ -207,7 +213,6 @@ public class JoglesContext extends JoglContext
 
 		public int[] glMultiTexCoord = new int[16];
 		public SparseArray<Integer> genAttIndexToLoc = new SparseArray<Integer>();
-		
 
 	}
 

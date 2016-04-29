@@ -225,6 +225,10 @@ public abstract class GeometryArray extends Geometry {
    */
   public static final int
     ALLOW_REF_DATA_WRITE = CapabilityBits.GEOMETRY_ARRAY_ALLOW_REF_DATA_WRITE;
+  
+  
+  public static final int
+  ANIMATED_COORDS = CapabilityBits.GEOMETRY_ARRAY_ANIMATED_COORDS;
 
   /**
    * Specifies that this GeometryArray contains an array of coordinates.
