@@ -98,13 +98,16 @@ public class JoglesPerFrameStats
 	public int glNormalMatrixSkipped;
 	public int glModelViewMatrixInverseSkipped;
 
+	public int interleavedBufferCreated;
+
+	public int glVertexAttribPointerInterleaved;
+
 	public void outputPerFrameData()
 	{
 		boolean highInterestOnly = true;
 
 		System.out.println("coordCount " + coordCount + " indexCount " + indexCount);
-		System.out
-				.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
+		System.out.println("glDrawStripArrays " + glDrawStripArrays + "\t made up of glDrawStripArraysStrips " + glDrawStripArraysStrips);
 		System.out.println("glDrawArrays " + glDrawArrays);
 		System.out.println(
 				"glDrawStripElements " + glDrawStripElements + "\t made up of glDrawStripElementsStrips " + glDrawStripElementsStrips);
@@ -115,20 +118,21 @@ public class JoglesPerFrameStats
 		System.out.println("glVertexAttribPointerUserAttribs " + glVertexAttribPointerUserAttribs);
 		System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
 		System.out.println("glBufferData " + glBufferData + " glBufferSubData " + glBufferSubData);
+		System.out.println("glVertexAttribPointerInterleaved " + glVertexAttribPointerInterleaved);
+		System.out.println("interleavedBufferCreated " + interleavedBufferCreated);		
 		System.out.println("---");
 		System.out.println("setModelViewMatrix " + setModelViewMatrix);
 		System.out.println("setFFPAttributes " + setFFPAttributes);
 		System.out.println("modelMatrixUpdated " + modelMatrixUpdated + " modelMatrixSkipped " + modelMatrixSkipped);
-		System.out.println(
-				"glModelViewMatrixUpdated " + glModelViewMatrixUpdated + " glModelViewMatrixSkipped " + glModelViewMatrixSkipped);
+		System.out
+				.println("glModelViewMatrixUpdated " + glModelViewMatrixUpdated + " glModelViewMatrixSkipped " + glModelViewMatrixSkipped);
 		System.out.println("glModelViewProjectionMatrixUpdated " + glModelViewProjectionMatrixUpdated
 				+ " glModelViewProjectionMatrixSkipped " + glModelViewProjectionMatrixSkipped);
 		System.out.println("glNormalMatrixUpdated " + glNormalMatrixUpdated + " glNormalMatrixSkipped " + glNormalMatrixSkipped);
 		System.out.println("---");
 		if (!highInterestOnly)
 		{
-			System.out.println(
-					"glDisableVertexAttribArray " + glDisableVertexAttribArray + " note native called commented out, trouble?");
+			System.out.println("glDisableVertexAttribArray " + glDisableVertexAttribArray + " note native called commented out, trouble?");
 			System.out.println("geoToClearBuffers " + geoToClearBuffers);
 			System.out.println("programToLocationData " + programToLocationData);
 			System.out.print("createGLSLShader " + createGLSLShader);

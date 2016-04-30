@@ -55,6 +55,9 @@ public class JoglesContext extends JoglContext
 		public SparseArray<Integer> geoToTexCoordsBuf = new SparseArray<Integer>();
 		public SparseArray<Integer> geoToVertAttribBuf = new SparseArray<Integer>();
 
+		public int interleavedBufId = -1;
+		public int interleavedStride = 0;;
+
 	}
 
 	public SparseArray<ProgramData> allProgramData = new SparseArray<ProgramData>();
@@ -155,12 +158,14 @@ public class JoglesContext extends JoglContext
 	 * @author phil
 	 *
 	 */
-	public int uboBufId = -1; // the one buffer is bound once then reused, dear god
+
+	//TODO: maybe many bufers allows buffersubdata to run faster 
+	public int globalUboBufId = -1; // the one buffer is bound once then reused, dear god
 
 	public static class LocationData
 	{
 		//UBO data
-
+		public int uboBufId = -1;
 		public int blockIndex = -1;
 		public int blockSize = -1;
 		public int glProjectionMatrixOffset = -1;
