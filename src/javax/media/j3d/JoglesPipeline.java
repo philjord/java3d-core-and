@@ -65,7 +65,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean PRESUME_INDICES = true;
 
 	// interleave and compressed to half floats and bytes
-	//Morrowind \a\aa_daedric_greaves_g tex coords bad
+
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
 	private static final boolean COMPRESS_OPTIMIZED_VERTICES = true;
 
@@ -284,6 +284,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (ctx.getShaderProgram() != null)
 		{
+
 			GL2ES2 gl = ctx.gl2es2();
 			JoglesContext joglesctx = ((JoglesContext) ctx);
 			LocationData locs = getLocs(ctx, gl);
@@ -1409,30 +1410,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 		boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
 				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 		if (morphable)
+		{
 			return false;
+		}
 
 		// Ok new idea
 		// current vertex = 3f for coord 4f for color 3f for normal 2f for texcoord (6f tan/bi)
 		// current  = 48 bytes (72)
-		// can be 3hf coord, 2hf uv, 4b color, 3b normal (6b tan/bi)
-		// new = 17 bytes (23)
-
-		// and also why not lets interleave this mess together! the tex coords might be the only difficult part
-		// other wise woot
-
-		//ok so sometimes I have colors and sometimes I don't but in fact the ignoreVertecColors tells me which in the 
-		// shader, but what of the stride? I guess I send that in? no each vertex recieves one set,s o if I 
-		// change stride it's fine?
-
-		//so first step is in fact to create a byte buffer with our data in it all nicely interleaved
-
-		// then just allocate and fill
-
-		// then draw with a stride?? marking and put the single (many?) value into the vertex shader
-
-		// I think I can leave the attribe perfectly alone and just interleave everything nicely with a single bufferId
-		// also the colors can be skipped by just disabling that index, so I won't save the space until I dump them properly
-		// the noramlized gear allows me to put byte colors and normals in as a byte across 1,-1, the half floats will be harder
+		// can be 3hf coord   =8, 2hf uv = 4, 4b color=4, 3b normal = 4 (3b tan/bi)=8
+		// new = 20 bytes (28)
+		// the normalized gear allows me to put byte colors and normals in as a byte across 1,-1, the half floats will be harder
 
 		JoglesContext ctx = (JoglesContext) absCtx;
 		if (ctx.getShaderProgram() != null)
@@ -1460,24 +1447,65 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (gd.interleavedBufId == -1)
 			{
+				//NOTE interleaving is only done on the data inside the geometry
+				// we don't consider the shader slots at all, as one geometry
+				// can be used with any shader, e.g. physics appearance with a NiTriShape as in morrowind
+				// notice also building the interleaved ignore numActiveTextureUnits
+
+				//NOTE WELL tex coords set are limited to 1!
+				
+				// TODO: make vattribs just byte floats
+
 				// how big are we going to require?
 				gd.interleavedStride = 0;
-				if (floatCoordDefined && locs.glVertex != -1)
+				int offset = 0;
+				if (floatCoordDefined)
 				{
-					gd.interleavedStride += 4 * 3;
+					gd.geoToCoordOffset = offset;
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						offset += 8;// 3 half float = 6 align on 4
+						gd.interleavedStride += 8;
+					}
+					else
+					{
+						offset += 4 * 3;
+						gd.interleavedStride += 4 * 3;
+					}
 					fverts.position(0);
 				}
 
-				if (floatColorsDefined && locs.glColor != -1)
+				if (floatColorsDefined)
 				{
+					gd.geoToColorsOffset = offset;
+
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					gd.interleavedStride += 4 * sz;
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						offset += 4;
+						gd.interleavedStride += 4;// minimum alignment
+					}
+					else
+					{
+						offset += 4 * sz;
+						gd.interleavedStride += 4 * sz;
+					}
 					fclrs.position(0);
 				}
 
-				if (normalsDefined && locs.glNormal != -1)
+				if (normalsDefined)
 				{
-					gd.interleavedStride += 4 * 3;
+					gd.geoToNormalsOffset = offset;
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						offset += 4;
+						gd.interleavedStride += 4;// minimum alignment
+					}
+					else
+					{
+						offset += 4 * 3;
+						gd.interleavedStride += 4 * 3;
+					}
 					norms.position(0);
 				}
 
@@ -1485,101 +1513,163 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					for (int index = 0; index < vertexAttrCount; index++)
 					{
-						Integer attribLoc = locs.genAttIndexToLoc.get(index);
-						if (attribLoc != null && attribLoc.intValue() != -1)
-						{
-							FloatBuffer vertexAttrs = vertexAttrBufs[index];
-							vertexAttrs.position(0);
-							int sz = vertexAttrSizes[index];
-							gd.interleavedStride += 4 * sz;
-						}
+						gd.geoToVattrOffset[index] = offset;
+
+						int sz = vertexAttrSizes[index];
+						offset += 4 * sz;
+						gd.interleavedStride += 4 * sz;
+
+						FloatBuffer vertexAttrs = vertexAttrBufs[index];
+						vertexAttrs.position(0);
+
 					}
 				}
 
 				if (textureDefined)
 				{
-					for (int i = 0; i < numActiveTexUnitState && i < texCoordSetCount; i++)
+					// hard code for now as it's a nightmare
+					for (int i = 0; i < 1; i++)
 					{
 						int texSet = texCoordSetMap[i];
-						if ((i < texCoordSetCount) && (texSet != -1) && locs.glMultiTexCoord[i] != -1)
+						if (texSet != -1)
 						{
-							gd.interleavedStride += 4 * texStride;
+							gd.geoToTexCoordOffset[texSet] = offset;
+							if (COMPRESS_OPTIMIZED_VERTICES)
+							{
+								// note half floats sized
+								int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
+								offset += stride;
+								gd.interleavedStride += stride;// minimum alignment
+							}
+							else
+							{
+								offset += 4 * texStride;
+								gd.interleavedStride += 4 * texStride;
+							}
 							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
 							buf.position(0);
 						}
 					}
 				}
+
 				ByteBuffer interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
 				interleavedBuffer.order(ByteOrder.nativeOrder());
 
 				for (int i = 0; i < vertexCount; i++)
 				{
 					interleavedBuffer.position(i * gd.interleavedStride);
-					if (floatCoordDefined && locs.glVertex != -1)
+					if (floatCoordDefined)
 					{
-						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-						fb.put(fverts.get());
-						fb.put(fverts.get());
-						fb.put(fverts.get());
-						interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int c = 0; c < 3; c++)
+							{
+								short hf = (short) JoglesMatrixUtil.halfFromFloat(fverts.get());
+								interleavedBuffer.putShort(hf);
+							}
+
+							interleavedBuffer.position(startPos + 8);// minimum alignment of 2*3 is 8
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int c = 0; c < 3; c++)
+								fb.put(fverts.get());
+
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						}
 					}
 
-					if (floatColorsDefined && locs.glColor != -1)
+					if (floatColorsDefined)
 					{
-						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int c = 0; c < sz; c++)
+								interleavedBuffer.put((byte) (fclrs.get() * 255));
 
-						for (int c = 0; c < sz; c++)
-							fb.put(fclrs.get());
+							interleavedBuffer.position(startPos + 4);// minimum alignment
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int c = 0; c < sz; c++)
+								fb.put(fclrs.get());
 
-						interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+						}
+
 					}
-					if (normalsDefined && locs.glNormal != -1)
+					if (normalsDefined)
 					{
-						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-						fb.put(norms.get());
-						fb.put(norms.get());
-						fb.put(norms.get());
-						interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int c = 0; c < 3; c++)
+								interleavedBuffer.put((byte) (((norms.get() * 255) - 1) / 2f));
+
+							interleavedBuffer.position(startPos + 4);// minimum alignment
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int c = 0; c < 3; c++)
+								fb.put(norms.get());
+
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						}
 					}
 
 					if (vattrDefined)
 					{
 						for (int index = 0; index < vertexAttrCount; index++)
 						{
-							Integer attribLoc = locs.genAttIndexToLoc.get(index);
-							if (attribLoc != null && attribLoc.intValue() != -1)
-							{
-								int sz = vertexAttrSizes[index];
-								FloatBuffer vertexAttrs = vertexAttrBufs[index];
-								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-								for (int va = 0; va < sz; va++)
-									fb.put(vertexAttrs.get());
+							int sz = vertexAttrSizes[index];
+							FloatBuffer vertexAttrs = vertexAttrBufs[index];
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int va = 0; va < sz; va++)
+								fb.put(vertexAttrs.get());
 
-								interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
-							}
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
 						}
 					}
 
 					if (textureDefined)
 					{
-						for (int t = 0; t < numActiveTexUnitState && t < texCoordSetCount; t++)
+						// hard code for now as it's a nightmare -texCoordSetCount=>1
+						for (int t = 0; t < 1; t++)
 						{
 							int texSet = texCoordSetMap[t];
-							if ((t < texCoordSetCount) && (texSet != -1) && locs.glMultiTexCoord[t] != -1)
+							if (texSet != -1)
 							{
 								FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
-								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-								for (int tc = 0; tc < texStride; tc++)
-									fb.put(tcBuf.get());
 
-								interleavedBuffer.position(interleavedBuffer.position() + (4 * texStride));
+								if (COMPRESS_OPTIMIZED_VERTICES)
+								{
+									int startPos = interleavedBuffer.position();
+									for (int c = 0; c < texStride; c++)
+									{
+										short hf = (short) JoglesMatrixUtil.halfFromFloat(tcBuf.get());
+										interleavedBuffer.putShort(hf);
+									}
+
+									interleavedBuffer.position(startPos + (texStride == 2 ? 4 : 8));// minimum alignment
+								}
+								else
+								{
+									FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+									for (int tc = 0; tc < texStride; tc++)
+										fb.put(tcBuf.get());
+
+									interleavedBuffer.position(interleavedBuffer.position() + (4 * texStride));
+								}
 							}
 						}
 					}
+
 				}
-				//TODO: I don't need to hold the buffer itself I think?
-				//gd.interleavedBuffer = interleavedBuffer;
 
 				interleavedBuffer.position(0);
 				int[] tmp = new int[1];
@@ -1592,18 +1682,24 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.interleavedBufferCreated++;
+
 			}
 
 			gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
 			outputErrors(ctx);
 
-			int offset = 0;
 			if (floatCoordDefined && locs.glVertex != -1)
 			{
-				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride, offset);
+				if (COMPRESS_OPTIMIZED_VERTICES)
+				{
+					gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
+				}
+				else
+				{
+					gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
+				}
 				gl.glEnableVertexAttribArray(locs.glVertex);
 				outputErrors(ctx);
-				offset += 4 * 3;
 			}
 			else if (doubleCoordDefined)
 			{
@@ -1617,11 +1713,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (floatColorsDefined && locs.glColor != -1)
 			{
 				int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+				if (COMPRESS_OPTIMIZED_VERTICES)
+				{
+					gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_UNSIGNED_BYTE, true, gd.interleavedStride, gd.geoToColorsOffset);
+				}
+				else
+				{
+					gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToColorsOffset);
 
-				gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, gd.interleavedStride, offset);
+				}
 				gl.glEnableVertexAttribArray(locs.glColor);
 				outputErrors(ctx);
-				offset += 4 * sz;
+
 			}
 			else if (byteColorsDefined)
 			{
@@ -1638,10 +1741,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (normalsDefined && locs.glNormal != -1)
 			{
-				gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride, offset);
+				if (COMPRESS_OPTIMIZED_VERTICES)
+				{
+					gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride, gd.geoToNormalsOffset);
+				}
+				else
+				{
+					gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToNormalsOffset);
+				}
 				gl.glEnableVertexAttribArray(locs.glNormal);
 				outputErrors(ctx);
-				offset += 4 * 3;
 			}
 			else
 			{
@@ -1660,10 +1769,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						int sz = vertexAttrSizes[index];
 
-						gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, gd.interleavedStride, offset);
+						// TODO: how do I indicate these are byte sized able?
+						gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
+								gd.geoToVattrOffset[index]);
+
 						gl.glEnableVertexAttribArray(attribLoc.intValue());
 						outputErrors(ctx);
-						offset += 4 * sz;
+
 					}
 
 				}
@@ -1671,21 +1783,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (textureDefined)
 			{
-				for (int t = 0; t < numActiveTexUnitState && t < texCoordSetCount; t++)
+				//for (int t = 0; t < numActiveTexUnitState && t < texCoordSetCount; t++)
+				for (int t = 0; t < 1; t++)
 				{
 					int texSet = texCoordSetMap[t];
-					if ((t < texCoordSetCount) && (texSet != -1) && locs.glMultiTexCoord[t] != -1)
+					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1)
 					{
-						gl.glVertexAttribPointer(locs.glMultiTexCoord[t], texStride, GL2ES2.GL_FLOAT, true, gd.interleavedStride, offset);
-						gl.glEnableVertexAttribArray(locs.glMultiTexCoord[t]);
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_HALF_FLOAT, true,
+									gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
+						}
+						else
+						{
+							gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
+									gd.geoToTexCoordOffset[texSet]);
+						}
+						gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texSet]);
 						outputErrors(ctx);
-						offset += 4 * texStride;
 					}
 					else
 					{
-						if (locs.glMultiTexCoord[t] != -1)
+						if (locs.glMultiTexCoord[texSet] != -1)
 						{
-							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[t]);
+							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[texSet]);
 						}
 					}
 				}
@@ -2409,7 +2530,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						uboBB.asFloatBuffer().put(ctx.materialData.shininess);
 					}
 					// if set one of the 2 colors below should be used by the shader (material for lighting)
-					//   old uniform system appears wrong?
+					//   old uniform system appears wrong?					
 					if (locs.ignoreVertexColorsOffset != -1)
 					{
 						uboBB.position(locs.ignoreVertexColorsOffset);
@@ -3597,6 +3718,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			gl.glUseProgram(unbox(shaderProgramId));
 			outputErrors(ctx);
+
 			joglesContext.setShaderProgram((JoglShaderObject) shaderProgramId);
 
 			if (MINIMISE_NATIVE_SHADER)

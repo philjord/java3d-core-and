@@ -55,8 +55,14 @@ public class JoglesContext extends JoglContext
 		public SparseArray<Integer> geoToTexCoordsBuf = new SparseArray<Integer>();
 		public SparseArray<Integer> geoToVertAttribBuf = new SparseArray<Integer>();
 
+		//Every thing below relates to interleaved data
 		public int interleavedBufId = -1;
-		public int interleavedStride = 0;;
+		public int interleavedStride = 0;
+		public int geoToCoordOffset = -1;
+		public int geoToColorsOffset = -1;
+		public int geoToNormalsOffset = -1;
+		public int[] geoToVattrOffset = new int[10];
+		public int[] geoToTexCoordOffset = new int[10];
 
 	}
 
