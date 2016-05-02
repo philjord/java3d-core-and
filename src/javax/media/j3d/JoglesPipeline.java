@@ -53,11 +53,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// ok with shader below false, my only current issues are the ignorevertexcolor ones from fallout 3 and 4
 	// but morrowind trees are disappearing leaves too now?
 
-	private static final boolean MINIMISE_NATIVE_CALLS_FFP = false;
+	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
 	// this one causes fallout4 load screen to look crazy
-	private static final boolean MINIMISE_NATIVE_SHADER = false;
+	private static final boolean MINIMISE_NATIVE_SHADER = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	//crazy new ffp buffer weird ness
@@ -1453,7 +1453,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				// notice also building the interleaved ignore numActiveTextureUnits
 
 				//NOTE WELL tex coords set are limited to 1!
-				
+
 				// TODO: make vattribs just byte floats
 
 				// how big are we going to require?
@@ -1516,8 +1516,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gd.geoToVattrOffset[index] = offset;
 
 						int sz = vertexAttrSizes[index];
-						offset += 4 * sz;
-						gd.interleavedStride += 4 * sz;
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							offset += (int) Math.ceil(sz / 4.0);
+							gd.interleavedStride += (int) Math.ceil(sz / 4.0);// minimum alignment
+						}
+						else
+						{
+							offset += 4 * sz;
+							gd.interleavedStride += 4 * sz;
+						}
 
 						FloatBuffer vertexAttrs = vertexAttrBufs[index];
 						vertexAttrs.position(0);
@@ -1628,11 +1636,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 						{
 							int sz = vertexAttrSizes[index];
 							FloatBuffer vertexAttrs = vertexAttrBufs[index];
-							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-							for (int va = 0; va < sz; va++)
-								fb.put(vertexAttrs.get());
+							if (COMPRESS_OPTIMIZED_VERTICES)
+							{
+								int startPos = interleavedBuffer.position();
+								for (int va = 0; va < sz; va++)
+									interleavedBuffer.put((byte) (((vertexAttrs.get() * 255) - 1) / 2f));
 
-							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+								interleavedBuffer.position(startPos + (int) Math.ceil(sz / 4.0));// minimum alignment
+							}
+							else
+							{
+								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+								for (int va = 0; va < sz; va++)
+									fb.put(vertexAttrs.get());
+
+								interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+							}
 						}
 					}
 
@@ -1769,9 +1788,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						int sz = vertexAttrSizes[index];
 
-						// TODO: how do I indicate these are byte sized able?
-						gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
-								gd.geoToVattrOffset[index]);
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true, gd.interleavedStride,
+									gd.geoToVattrOffset[index]);
+						}
+						else
+						{
+							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
+									gd.geoToVattrOffset[index]);
+						}
 
 						gl.glEnableVertexAttribArray(attribLoc.intValue());
 						outputErrors(ctx);
@@ -2751,13 +2777,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (locs.ignoreVertexColors != -1)
 			{
 				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
+						|| ctx.gl_state.ignoreVertexColors != ignoreVertexColors))
 				{
 					gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
 
 					outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.ignoreVertexColors = ctx.renderingData.ignoreVertexColors;
+						ctx.gl_state.ignoreVertexColors = ignoreVertexColors;
 				}
 			}
 
