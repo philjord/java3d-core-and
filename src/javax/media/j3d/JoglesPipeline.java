@@ -17,6 +17,7 @@ import javax.media.j3d.JoglesContext.GeometryData;
 import javax.media.j3d.JoglesContext.LightData;
 import javax.media.j3d.JoglesContext.LocationData;
 import javax.media.j3d.JoglesContext.ProgramData;
+import javax.vecmath.Matrix3d;
 import javax.vecmath.SingularMatrixException;
 import javax.vecmath.Vector4f;
 
@@ -61,7 +62,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	//crazy new ffp buffer weird ness
-	private static final boolean ATTEMPT_UBO = true;
+	private static boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
 	private static final boolean PRESUME_INDICES = true;
 
 	// interleave and compressed to half floats and bytes
@@ -1454,8 +1455,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				//NOTE WELL tex coords set are limited to 1!
 
-				// TODO: make vattribs just byte floats
-
 				// how big are we going to require?
 				gd.interleavedStride = 0;
 				int offset = 0;
@@ -2182,19 +2181,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 						pd.programToUBOBB = uboBB;
 
 						// set up single buffer for ffp data, jesus...
-						//if (ctx.globalUboBufId == -1)
-						if (locs.uboBufId == -1)
+						if (ctx.globalUboBufId == -1)
+						//if (locs.uboBufId == -1)
 						{
 							int[] tmp = new int[1];
 							gl.glGenBuffers(1, tmp, 0);
 							int uboBufId = tmp[0];
 
-							//ctx.globalUboBufId = uboBufId;
-							locs.uboBufId = uboBufId;
+							ctx.globalUboBufId = uboBufId;
+							//locs.uboBufId = uboBufId;
 
 							gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, uboBufId);
 							gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
-							// ok so let's assume block index is the same 0 in all cases?
 							gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, UBOBlockIndex, uboBufId);
 						}
 
@@ -2498,6 +2496,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					if (locs.glProjectionMatrixInverseOffset != -1)
 					{
+						// Expensive, only calc if required
+						ctx.currentProjMatInverse.set(ctx.currentProjMat);
+						ctx.matrixUtil.invert(ctx.currentProjMatInverse);
+
 						uboBB.position(locs.glProjectionMatrixInverseOffset);
 						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMatInverse));
 					}
@@ -2518,6 +2520,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					if (locs.glModelViewMatrixInverseOffset != -1)
 					{
+						// Expensive, only if required
+						ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
+						ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
+
 						uboBB.position(locs.glModelViewMatrixInverseOffset);
 						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse));
 					}
@@ -2625,13 +2631,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 					uboBB.position(0);// very important!
 
-					/*		Integer bufId =  ctx.programToUBOBuf.get(shaderProgramId);
-							gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, bufId.intValue());
-							gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
-							//Bind the buffer object to the uniform block.
-							gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, locs.blockIndex, bufId.intValue());
-					*/
-					gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, locs.uboBufId);
+					//gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, locs.uboBufId);
 					gl2es3.glBufferSubData(GL2ES3.GL_UNIFORM_BUFFER, 0, uboBB.limit(), uboBB);
 					outputErrors(ctx);
 					// we have done our ffp work don't fall through to normal system						
@@ -2655,6 +2655,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
 				{
+					//EXPENSIVE!!!!! only calc if asked for, and even then...
+					try
+					{
+						ctx.currentProjMatInverse.set(ctx.currentProjMat);
+						ctx.matrixUtil.invert(ctx.currentProjMatInverse);
+					}
+					catch (SingularMatrixException e)
+					{
+						System.err.println("" + e);
+					}
+
 					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.matrixUtil.toFB(ctx.currentProjMatInverse));
 					if (MINIMISE_NATIVE_CALLS_FFP)
 						ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
@@ -2716,6 +2727,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
 						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 				{
+					// Expensive, only calc if required
+					ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
+					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
+
 					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
 					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse),
 							0);
@@ -2776,8 +2791,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (locs.ignoreVertexColors != -1)
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| ctx.gl_state.ignoreVertexColors != ignoreVertexColors))
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ignoreVertexColors))
 				{
 					gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
 
@@ -5879,23 +5894,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnM, joglesctx.matrixUtil.deburnV);
 
-		joglesctx.currentModelViewMatInverse.set(joglesctx.currentModelViewMat);
-		joglesctx.matrixUtil.invert(joglesctx.currentModelViewMatInverse);
-
 		joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
 
 		// use only the upper left as it is a 3x3 rotation matrix
 		joglesctx.currentNormalMat.set(joglesctx.matrixUtil.toArray3x3(joglesctx.currentModelViewMat));
-		joglesctx.matrixUtil.invert(joglesctx.currentNormalMat);
-		joglesctx.currentNormalMat.transpose();
-
-		// with set ffp in modelview I get no savings on this ffp minimise, but I do get cock-ups
-		// so I think unnessasary calls to this method to reset teh view or something between geoms
-		//are casuing me trouble
-		//After this it's only ExecuteGeom so the FFP gear is done for now
-		//		GL2ES2 gl = joglesctx.gl2es2();
-		//		setFFPAttributes(joglesctx, gl);
-
+		joglesctx.matrixUtil.transposeInvert(joglesctx.currentNormalMat);
+		//joglesctx.matrixUtil.invert(joglesctx.currentNormalMat);//slloooowwwww!
+		//joglesctx.currentNormalMat.transpose();
 	}
 
 	private static String lineString(double[] da)
@@ -5936,22 +5941,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.currentProjMat.set(projMatrix);
 		joglesctx.currentProjMat.transpose();
 		joglesctx.gl_state.glProjectionMatrixLoc = -1;//indicate must be updated
+		joglesctx.gl_state.currentProjMatInverseLoc = -1;
 
-		try
-		{
-			joglesctx.currentProjMatInverse.set(joglesctx.currentProjMat);
-			joglesctx.currentProjMatInverse.invert();
-			joglesctx.gl_state.currentProjMatInverseLoc = -1;
-
-			projMatrix[8] *= -1.0;
-			projMatrix[9] *= -1.0;
-			projMatrix[10] *= -1.0;
-			projMatrix[11] *= -1.0;
-		}
-		catch (SingularMatrixException e)
-		{
-			System.err.println("" + e);
-		}
+		//reverse it back in case others use it
+		projMatrix[8] *= -1.0;
+		projMatrix[9] *= -1.0;
+		projMatrix[10] *= -1.0;
+		projMatrix[11] *= -1.0;
 
 	}
 
@@ -5963,6 +5959,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setViewport()");
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.setViewport++;
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).perFrameStats.setViewportTime = System.nanoTime();
 
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 
@@ -6563,6 +6561,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.syncRender()");
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).perFrameStats.syncRenderTime = System.nanoTime();
 
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
 

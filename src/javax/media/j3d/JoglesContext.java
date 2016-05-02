@@ -367,7 +367,7 @@ public class JoglesContext extends JoglContext
 		}
 		// clear for next frame
 		perFrameStats = new JoglesPerFrameStats();
-		perFrameStats.frameStartTime = System.nanoTime();
+		perFrameStats.endOfPrevFrameTime = System.nanoTime();
 	}
 
 	// just a singleton of the handy matrix/array operations

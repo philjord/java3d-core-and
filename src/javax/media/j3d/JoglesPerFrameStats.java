@@ -4,7 +4,7 @@ import java.util.HashSet;
 
 public class JoglesPerFrameStats
 {
-	public long frameStartTime;
+	public long endOfPrevFrameTime;
 
 	public HashSet<ShaderProgramId> usedPrograms = new HashSet<ShaderProgramId>();
 	//public ArrayList<ShaderProgramId> usedPrograms = new ArrayList<ShaderProgramId>();
@@ -102,6 +102,10 @@ public class JoglesPerFrameStats
 
 	public int glVertexAttribPointerInterleaved;
 
+	public long setViewportTime;
+
+	public long syncRenderTime;
+
 	public void outputPerFrameData()
 	{
 		boolean highInterestOnly = true;
@@ -119,7 +123,7 @@ public class JoglesPerFrameStats
 		System.out.println("enableTexCoordPointer " + enableTexCoordPointer);
 		System.out.println("glBufferData " + glBufferData + " glBufferSubData " + glBufferSubData);
 		System.out.println("glVertexAttribPointerInterleaved " + glVertexAttribPointerInterleaved);
-		System.out.println("interleavedBufferCreated " + interleavedBufferCreated);		
+		System.out.println("interleavedBufferCreated " + interleavedBufferCreated);
 		System.out.println("---");
 		System.out.println("setModelViewMatrix " + setModelViewMatrix);
 		System.out.println("setFFPAttributes " + setFFPAttributes);
@@ -189,8 +193,16 @@ public class JoglesPerFrameStats
 
 		//for (ShaderProgramId id : usedPrograms)
 		//	System.out.println("ShaderProgramId " + ((JoglShaderObject) id).getValue());
-
-		System.out.println("frameTime ns " + (System.nanoTime() - frameStartTime) + " = fps: "
-				+ (1000 / ((System.nanoTime() - frameStartTime) / 1000000L)));
+		if ((syncRenderTime - setViewportTime) != 0)
+		{
+			System.out.println("time in frame (not in glFinish) " + (syncRenderTime - setViewportTime) + //
+					" = (ms) " + ((syncRenderTime - setViewportTime) / 1000000L));// + //
+				//	" = fps: " + (1000 / ((syncRenderTime - setViewportTime) / 1000000L)));
+		}
+		
+		long now = System.nanoTime();
+		System.out.println("time since end of previous frame (ns) " + (now - endOfPrevFrameTime) + //
+				" = (ms) " + ((now - endOfPrevFrameTime) / 1000000L) + //
+				" = fps: " + (1000 / ((now - endOfPrevFrameTime) / 1000000L)));
 	}
 }

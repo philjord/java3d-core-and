@@ -15,6 +15,41 @@ import javax.vecmath.SingularMatrixException;
  */
 class JoglesMatrixUtil
 {
+
+	/**
+	 * Possibly faster
+	 * http://stackoverflow.com/questions/983999/simple-3x3-matrix-inverse-code-c
+	 */
+	private Matrix3d temp3d = new Matrix3d();
+
+	public void transposeInvert(Matrix3d m)
+	{
+		transposeInvert(m, temp3d);
+		m.set(temp3d);
+	}
+
+	public void transposeInvert(Matrix3d m, Matrix3d m1)
+	{
+		double determinant = m.determinant();
+		if (determinant > 0)
+		{
+			double invdet = 1 / determinant;
+			m1.m00 = (m.m11 * m.m22 - m.m21 * m.m12) * invdet;
+			m1.m10 = -(m.m01 * m.m22 - m.m02 * m.m21) * invdet;
+			m1.m20 = (m.m01 * m.m12 - m.m02 * m.m11) * invdet;
+			m1.m01 = -(m.m10 * m.m22 - m.m12 * m.m20) * invdet;
+			m1.m11 = (m.m00 * m.m22 - m.m02 * m.m20) * invdet;
+			m1.m21 = -(m.m00 * m.m12 - m.m10 * m.m02) * invdet;
+			m1.m02 = (m.m10 * m.m21 - m.m20 * m.m11) * invdet;
+			m1.m12 = -(m.m00 * m.m21 - m.m20 * m.m01) * invdet;
+			m1.m22 = (m.m00 * m.m11 - m.m10 * m.m01) * invdet;
+		}
+		else
+		{
+			m1.setIdentity();
+		}
+	}
+
 	double result3[] = new double[9];
 	int row_perm3[] = new int[3];
 	double[] tmp3 = new double[9]; // scratch matrix
