@@ -5329,7 +5329,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			///////////////////////////////////////////////////PJPJPJ////////////////////
 			//DXT   uncompressed D3DFMT_A8R8G8B8 indicator
 			case GL2.GL_RGBA_S3TC:
-				internalFormat = imageFormat;
+				internalFormat = GL2ES2.GL_RGBA;
 				format = GL2ES2.GL_RGBA;
 				break;
 			// notice fall through
@@ -5407,7 +5407,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
 							(Buffer) data);
 					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
+					{
+						int err = gl.glGetError();
+						if (err != GL2ES2.GL_NO_ERROR)
+						{
+							System.out.println("glTexImage2D Error " + err + " target " + target + " level " + level + " internalFormat "
+									+ internalFormat);
+							System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth + " format "
+									+ format + " bb.limit() " + ((Buffer) data).limit());
+							//https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
+						}
+					}
 				}
 
 			}
@@ -6813,7 +6823,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					err = gl.glGetError();
 					if (err != GL2ES2.GL_NO_ERROR)
 					{
-						System.err.println("woooh second error too! "+ err);
+						System.err.println("woooh third error too! "+ err);
 					}
 				}*/
 			}
