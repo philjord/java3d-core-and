@@ -420,10 +420,12 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 		}
 		
 		ctxExecutedOn.clear();
+		prevContext = null;
     }
     
     //FIXME: PJPJPJ big ugly hack for buffers
     protected HashSet<Context> ctxExecutedOn = new HashSet<Context>();
+    protected Context prevContext = null; // as I only expect one check versus prev to see if somethign news come along
 
     @Override
     void computeBoundingBox() {
@@ -2211,7 +2213,11 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
                  boolean ignoreVertexColors) {
 
     	//FIXME: PJPJPJ big ugly hack for buffers
-    	ctxExecutedOn.add(cv.ctx);
+    	if(cv.ctx != prevContext)
+    	{
+    		ctxExecutedOn.add(cv.ctx);
+    		prevContext = cv.ctx;
+    	}
     	
     	
 	int cdirty;

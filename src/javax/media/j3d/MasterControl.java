@@ -2287,7 +2287,7 @@ private static String getProperty(final String prop) {
      */
     RenderMethod getVertexArrayRenderMethod() {
 	if (vertexArrayRenderMethod == null) {
-	    vertexArrayRenderMethod = new VertexArrayRenderMethod();
+	    vertexArrayRenderMethod = new JoglesFastVertexArrayRenderMethod();
 	}
 	return vertexArrayRenderMethod;
     }

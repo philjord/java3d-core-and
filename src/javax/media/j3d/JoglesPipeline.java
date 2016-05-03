@@ -41,13 +41,13 @@ import utils.SparseArray;
  */
 class JoglesPipeline extends JoglesDEPPipeline
 {
-	private static final boolean DO_OUTPUT_ERRORS = true;
+	private static final boolean DO_OUTPUT_ERRORS = false;
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
 
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
-	private static final boolean MINIMISE_NATIVE_CALLS_FFP = false;// this may not help dues to equals and set calls being as costly
+	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;// this may not help dues to equals and set calls being as costly
 	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
 	// this one causes fallout4 load screen to look crazy
@@ -104,15 +104,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static void doClearBuffers(Context ctx)
 	{
 		JoglesContext joglesctx = (JoglesContext) ctx;
-		GL2ES2 gl = joglesctx.gl2es2();
+		GL2ES2 gl = joglesctx.gl2es2;
 		if (joglesctx.geoToClearBuffers.size() > 0)
 		{
 			synchronized (joglesctx.geoToClearBuffers)
 			{
-
 				for (GeometryArrayRetained geo : joglesctx.geoToClearBuffers)
 				{
-					GeometryData gd = joglesctx.allGeometryData.remove(geo);
+					GeometryData gd = joglesctx.allGeometryData.get(geo.nativeId);
+					joglesctx.allGeometryData.remove(geo.nativeId);
+
 					//TODO: why exactly is the same geo being removed twice?
 					if (gd != null)
 					{
@@ -276,22 +277,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int strip_len, int[] start_array)
 	{
 		JoglesContext ctx = (JoglesContext) absCtx;
+		int shaderProgramId = ctx.shaderProgramId;
 
-		if (ctx.getShaderProgram() != null)
+		if (shaderProgramId != -1)
 		{
-
-			GL2ES2 gl = ctx.gl2es2();
-			JoglesContext joglesctx = ((JoglesContext) ctx);
-
-			int shaderProgramId = ctx.getShaderProgram().getValue();
-			ProgramData pd = ctx.allProgramData.get(shaderProgramId);
-			if (pd == null)
-			{
-				pd = new ProgramData();
-				ctx.allProgramData.put(shaderProgramId, pd);
-			}
-
-			LocationData locs = getLocs(ctx, gl, shaderProgramId, pd);
+			GL2ES2 gl = ctx.gl2es2;
+			ProgramData pd = ctx.programData;
+			LocationData locs = pd.programToLocationData;
 
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
@@ -412,9 +404,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 							outputErrors(ctx);
 
 						if (OUTPUT_PER_FRAME_STATS)
-							joglesctx.perFrameStats.glVertexAttribPointerCoord++;
+							ctx.perFrameStats.glVertexAttribPointerCoord++;
 						if (OUTPUT_PER_FRAME_STATS)
-							joglesctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+							ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 					}
 				}
 
@@ -457,7 +449,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							outputErrors(ctx);
 
 						if (OUTPUT_PER_FRAME_STATS)
-							joglesctx.perFrameStats.glVertexAttribPointerColor++;
+							ctx.perFrameStats.glVertexAttribPointerColor++;
 					}
 				}
 				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
@@ -510,7 +502,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							outputErrors(ctx);
 
 						if (OUTPUT_PER_FRAME_STATS)
-							joglesctx.perFrameStats.glVertexAttribPointerNormals++;
+							ctx.perFrameStats.glVertexAttribPointerNormals++;
 					}
 				}
 				else
@@ -560,7 +552,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 									outputErrors(ctx);
 
 								if (OUTPUT_PER_FRAME_STATS)
-									joglesctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+									ctx.perFrameStats.glVertexAttribPointerUserAttribs++;
 							}
 						}
 					}
@@ -620,7 +612,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				// each pair, what I want is a line between each set of 3 (that are not jumpers)
 				// so H-Physics and Outlines look a bit rubbish
 
-				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
 
 				switch (geo_type)
@@ -644,19 +636,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						if (OUTPUT_PER_FRAME_STATS)
-							joglesctx.perFrameStats.glDrawStripArraysStrips++;
+							ctx.perFrameStats.glDrawStripArraysStrips++;
 					}
 				}
 				if (OUTPUT_PER_FRAME_STATS)
-					joglesctx.perFrameStats.glDrawStripArrays++;
+					ctx.perFrameStats.glDrawStripArrays++;
 			}
 			else
 			{
 				//need to override if polygonAttributes says so
 
-				if (joglesctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_SET;
-				else if (joglesctx.polygonMode == PolygonAttributes.POLYGON_POINT)
+				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
 					geo_type = GeometryRetained.GEO_TYPE_POINT_SET;
 
 				switch (geo_type)
@@ -678,16 +670,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 					outputErrors(ctx);
 
 				if (OUTPUT_PER_FRAME_STATS)
-					joglesctx.perFrameStats.glDrawArrays++;
+					ctx.perFrameStats.glDrawArrays++;
 			}
 
-			if (gl.isGL2ES3())
-			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
-				gl2es3.glBindVertexArray(0);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-			}
+			/*		unbound in setRenderMode now	
+			 			if (gl.isGL2ES3())
+						{
+							GL2ES3 gl2es3 = (GL2ES3) gl;
+							gl2es3.glBindVertexArray(0);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+						}*/
 
 			//TODO: do I need these?
 			/*
@@ -934,19 +927,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		JoglesContext ctx = (JoglesContext) absCtx;
-		if (ctx.getShaderProgram() != null)
+		int shaderProgramId = ctx.shaderProgramId;
+
+		if (shaderProgramId != -1)
 		{
-			GL2ES2 gl = ctx.gl2es2();
-
-			int shaderProgramId = ctx.getShaderProgram().getValue();
-			ProgramData pd = ctx.allProgramData.get(shaderProgramId);
-			if (pd == null)
-			{
-				pd = new ProgramData();
-				ctx.allProgramData.put(shaderProgramId, pd);
-			}
-
-			LocationData locs = getLocs(ctx, gl, shaderProgramId, pd);
+			GL2ES2 gl = ctx.gl2es2;
+			ProgramData pd = ctx.programData;
+			LocationData locs = pd.programToLocationData;
 
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
@@ -1441,13 +1428,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			}
 
+			/*		unbound in setRenderMode now	
 			if (gl.isGL2ES3())
 			{
 				GL2ES3 gl2es3 = (GL2ES3) gl;
 				gl2es3.glBindVertexArray(0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-			}
+			}*/
 
 			//TODO: are these needed?
 			/*
@@ -1531,19 +1519,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// the normalized gear allows me to put byte colors and normals in as a byte across 1,-1, the half floats will be harder
 
 		JoglesContext ctx = (JoglesContext) absCtx;
-		if (ctx.getShaderProgram() != null)
+		int shaderProgramId = ctx.shaderProgramId;
+
+		if (shaderProgramId != -1)
 		{
-			GL2ES2 gl = ctx.gl2es2();
-
-			int shaderProgramId = ctx.getShaderProgram().getValue();
-			ProgramData pd = ctx.allProgramData.get(shaderProgramId);
-			if (pd == null)
-			{
-				pd = new ProgramData();
-				ctx.allProgramData.put(shaderProgramId, pd);
-			}
-
-			LocationData locs = getLocs(ctx, gl, shaderProgramId, pd);
+			GL2ES2 gl = ctx.gl2es2;
+			ProgramData pd = ctx.programData;
+			LocationData locs = pd.programToLocationData;
 
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
@@ -1899,13 +1881,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			}
 
+			/*		unbound in setRenderMode now	
 			if (gl.isGL2ES3())
 			{
 				GL2ES3 gl2es3 = (GL2ES3) gl;
 				gl2es3.glBindVertexArray(0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-			}
+			}*/
 
 			//TODO: are these needed??
 			/*
@@ -1954,13 +1937,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
 	//
 
-	private static LocationData getLocs(JoglesContext ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd)
+	private static void loadLocs(JoglesContext ctx, GL2ES2 gl)
 	{
-
-		LocationData locs = pd.programToLocationData;
-		if (locs == null)
+		ProgramData pd = ctx.programData;
+		int shaderProgramId = ctx.shaderProgramId;
+		if (pd.programToLocationData == null)
 		{
-			locs = new LocationData();
+			LocationData locs = new LocationData();
 
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.programToLocationData++;
@@ -2254,8 +2237,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
-		return locs;
-
 	}
 
 	/**
@@ -2267,514 +2248,510 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static void setFFPAttributes(JoglesContext ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd, int vdefined)
 	{
-		if (ctx.getShaderProgram() != null)
+
+		LocationData locs = pd.programToLocationData;
+
+		//boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
+		//boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
+		boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
+		boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
+		//boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
+		//boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
+		//boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
+
+		// vertex colors MUST be ignored if no glColors set
+		boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors;
+
+		if (OUTPUT_PER_FRAME_STATS)
+			ctx.perFrameStats.setFFPAttributes++;
+
+		if (ATTEMPT_UBO && gl.isGL2ES3())
 		{
-			LocationData locs = pd.programToLocationData;
+			//TODO: p v m norm all needs to be transpose somehow?
+			GL2ES3 gl2es3 = (GL2ES3) gl;
 
-			//boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
-			//boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
-			boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
-			boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
-			//boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
-			//boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
-			//boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
-
-			// vertex colors MUST be ignored if no glColors set
-			boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors;
-
-			if (OUTPUT_PER_FRAME_STATS)
-				ctx.perFrameStats.setFFPAttributes++;
-
-			if (ATTEMPT_UBO && gl.isGL2ES3())
+			if (locs.blockIndex != -1)
 			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
+				ByteBuffer uboBB = pd.programToUBOBB;
 
-				if (locs.blockIndex != -1)
+				if (locs.glProjectionMatrixOffset != -1)
 				{
-					ByteBuffer uboBB = pd.programToUBOBB;
-
-					if (locs.glProjectionMatrixOffset != -1)
-					{
-						uboBB.position(locs.glProjectionMatrixOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMat));
-					}
-					if (locs.glProjectionMatrixInverseOffset != -1)
-					{
-						// Expensive, only calc if required
-						ctx.currentProjMatInverse.set(ctx.currentProjMat);
-						ctx.matrixUtil.invert(ctx.currentProjMatInverse);
-
-						uboBB.position(locs.glProjectionMatrixInverseOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMatInverse));
-					}
-					if (locs.glViewMatrixOffset != -1)
-					{
-						uboBB.position(locs.glViewMatrixOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentViewMat));
-					}
-					if (locs.glModelMatrixOffset != -1)
-					{
-						uboBB.position(locs.glModelMatrixOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelMat));
-					}
-					if (locs.glModelViewMatrixOffset != -1)
-					{
-						uboBB.position(locs.glModelViewMatrixOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMat));
-					}
-					if (locs.glModelViewMatrixInverseOffset != -1)
-					{
-						// Expensive, only if required
-						ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
-						ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
-
-						uboBB.position(locs.glModelViewMatrixInverseOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse));
-					}
-					if (locs.glModelViewProjectionMatrixOffset != -1)
-					{
-						uboBB.position(locs.glModelViewProjectionMatrixOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat));
-					}
-					//3x3 are stored as 3xvec4 (48 bytes before next offset) note use of toArray3x4
-					if (locs.glNormalMatrixOffset != -1)
-					{
-						uboBB.position(locs.glNormalMatrixOffset);
-						uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray3x4(ctx.currentNormalMat));
-					}
-					if (locs.glFrontMaterialdiffuseOffset != -1)
-					{
-						uboBB.position(locs.glFrontMaterialdiffuseOffset);
-						uboBB.asFloatBuffer().put(ctx.materialData.diffuse.x).put(ctx.materialData.diffuse.y)
-								.put(ctx.materialData.diffuse.z).put(ctx.materialData.diffuse.w);
-					}
-					if (locs.glFrontMaterialemissionOffset != -1)
-					{
-						uboBB.position(locs.glFrontMaterialemissionOffset);
-						uboBB.asFloatBuffer().put(ctx.materialData.emission.x).put(ctx.materialData.emission.y)
-								.put(ctx.materialData.emission.z).put(1f); //note extra alpha value to avoid errors
-					}
-					if (locs.glFrontMaterialspecularOffset != -1)
-					{
-						uboBB.position(locs.glFrontMaterialspecularOffset);
-						uboBB.asFloatBuffer().put(ctx.materialData.specular.x).put(ctx.materialData.specular.y)
-								.put(ctx.materialData.specular.z);
-					}
-					if (locs.glFrontMaterialshininessOffset != -1)
-					{
-						uboBB.position(locs.glFrontMaterialshininessOffset);
-						uboBB.asFloatBuffer().put(ctx.materialData.shininess);
-					}
-					// if set one of the 2 colors below should be used by the shader (material for lighting)
-					//   old uniform system appears wrong?					
-					if (locs.ignoreVertexColorsOffset != -1)
-					{
-						uboBB.position(locs.ignoreVertexColorsOffset);
-						uboBB.asIntBuffer().put(ignoreVertexColors ? 1 : 0);// note local variable used
-					}
-
-					if (locs.glLightModelambientOffset != -1)
-					{
-						uboBB.position(locs.glLightModelambientOffset);
-						uboBB.asFloatBuffer().put(ctx.currentAmbientColor.x).put(ctx.currentAmbientColor.y).put(ctx.currentAmbientColor.z)
-								.put(ctx.currentAmbientColor.w);
-					}
-					if (locs.objectColorOffset != -1)
-					{
-						uboBB.position(locs.objectColorOffset);
-						uboBB.asFloatBuffer().put(ctx.objectColor.x).put(ctx.objectColor.y).put(ctx.objectColor.z).put(ctx.objectColor.w);
-					}
-
-					//For now using first point light, but gonna need to put em all in
-					LightData l0 = null;
-					if (ctx.pointLight[0] != null)
-						l0 = ctx.pointLight[0];
-					else if (ctx.dirLight[0] != null)
-						l0 = ctx.dirLight[0];
-
-					if (l0 != null)
-					{
-						if (locs.glLightSource0positionOffset != -1)
-						{
-							uboBB.position(locs.glLightSource0positionOffset);
-							uboBB.asFloatBuffer().put(l0.pos.x).put(l0.pos.y).put(l0.pos.z).put(l0.pos.w);
-						}
-						if (locs.glLightSource0diffuseOffset != -1)
-						{
-							uboBB.position(locs.glLightSource0diffuseOffset);
-							uboBB.asFloatBuffer().put(l0.diffuse.x).put(l0.diffuse.y).put(l0.diffuse.z).put(l0.diffuse.w);
-						}
-					}
-
-					// TODO: test the transpose
-					if (locs.textureTransformOffset != -1)
-					{
-						uboBB.position(locs.textureTransformOffset);
-						uboBB.asFloatBuffer().put(JoglesMatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.textureTransform)));
-					}
-
-					if (locs.alphaTestEnabledOffset != -1)
-					{
-						uboBB.position(locs.alphaTestEnabledOffset);
-						uboBB.asIntBuffer().put(ctx.renderingData.alphaTestEnabled ? 1 : 0);
-
-						if (ctx.renderingData.alphaTestEnabled == true)
-						{
-							if (locs.alphaTestFunctionOffset != -1)
-							{
-								uboBB.position(locs.alphaTestFunctionOffset);
-								uboBB.asIntBuffer().put(ctx.renderingData.alphaTestFunction);
-							}
-							if (locs.alphaTestValueOffset != -1)
-							{
-								uboBB.position(locs.alphaTestValueOffset);
-								uboBB.asFloatBuffer().put(ctx.renderingData.alphaTestValue);
-							}
-						}
-					}
-
-					uboBB.position(0);// very important!
-
-					//gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, locs.uboBufId);
-					gl2es3.glBufferSubData(GL2ES3.GL_UNIFORM_BUFFER, 0, uboBB.limit(), uboBB);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					// we have done our ffp work don't fall through to normal system						
-					return;
+					uboBB.position(locs.glProjectionMatrixOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMat));
 				}
-
-			}
-
-			//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
-			if (locs.glProjectionMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc))
-				{
-					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-			}
-			if (locs.glProjectionMatrixInverse != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
-				{
-					//EXPENSIVE!!!!! only calc if asked for, and even then...
-					try
-					{
-						ctx.currentProjMatInverse.set(ctx.currentProjMat);
-						ctx.matrixUtil.invert(ctx.currentProjMatInverse);
-					}
-					catch (SingularMatrixException e)
-					{
-						System.err.println("" + e);
-					}
-
-					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false, ctx.matrixUtil.toFB(ctx.currentProjMatInverse));
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-			}
-			if (locs.glViewMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glViewMatrix != ctx.gl_state.currentViewMatLoc))
-				{
-					gl.glUniformMatrix4fv(locs.glViewMatrix, 1, false, ctx.matrixUtil.toFB(ctx.currentViewMat));
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.currentViewMatLoc = locs.glViewMatrix;
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-			}
-
-			if (locs.glModelMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
-				{
-					//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
-					gl.glUniformMatrix4fv(locs.glModelMatrix, 1, false, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
-
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.modelMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.modelMatrixSkipped++;
-				}
-			}
-
-			if (locs.glModelViewMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
-				{
-					//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
-					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glModelViewMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.glModelViewMatrixSkipped++;
-				}
-			}
-			if (locs.glModelViewMatrixInverse != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
+				if (locs.glProjectionMatrixInverseOffset != -1)
 				{
 					// Expensive, only calc if required
+					ctx.currentProjMatInverse.set(ctx.currentProjMat);
+					ctx.matrixUtil.invert(ctx.currentProjMatInverse);
+
+					uboBB.position(locs.glProjectionMatrixInverseOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMatInverse));
+				}
+				if (locs.glViewMatrixOffset != -1)
+				{
+					uboBB.position(locs.glViewMatrixOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentViewMat));
+				}
+				if (locs.glModelMatrixOffset != -1)
+				{
+					uboBB.position(locs.glModelMatrixOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelMat));
+				}
+				if (locs.glModelViewMatrixOffset != -1)
+				{
+					uboBB.position(locs.glModelViewMatrixOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMat));
+				}
+				if (locs.glModelViewMatrixInverseOffset != -1)
+				{
+					// Expensive, only if required
 					ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
 					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 
-					//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
-					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse),
-							0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
+					uboBB.position(locs.glModelViewMatrixInverseOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse));
 				}
-				else if (OUTPUT_PER_FRAME_STATS)
+				if (locs.glModelViewProjectionMatrixOffset != -1)
 				{
-					ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
+					uboBB.position(locs.glModelViewProjectionMatrixOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat));
 				}
+				//3x3 are stored as 3xvec4 (48 bytes before next offset) note use of toArray3x4
+				if (locs.glNormalMatrixOffset != -1)
+				{
+					uboBB.position(locs.glNormalMatrixOffset);
+					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray3x4(ctx.currentNormalMat));
+				}
+				if (locs.glFrontMaterialdiffuseOffset != -1)
+				{
+					uboBB.position(locs.glFrontMaterialdiffuseOffset);
+					uboBB.asFloatBuffer().put(ctx.materialData.diffuse.x).put(ctx.materialData.diffuse.y).put(ctx.materialData.diffuse.z)
+							.put(ctx.materialData.diffuse.w);
+				}
+				if (locs.glFrontMaterialemissionOffset != -1)
+				{
+					uboBB.position(locs.glFrontMaterialemissionOffset);
+					uboBB.asFloatBuffer().put(ctx.materialData.emission.x).put(ctx.materialData.emission.y).put(ctx.materialData.emission.z)
+							.put(1f); //note extra alpha value to avoid errors
+				}
+				if (locs.glFrontMaterialspecularOffset != -1)
+				{
+					uboBB.position(locs.glFrontMaterialspecularOffset);
+					uboBB.asFloatBuffer().put(ctx.materialData.specular.x).put(ctx.materialData.specular.y)
+							.put(ctx.materialData.specular.z);
+				}
+				if (locs.glFrontMaterialshininessOffset != -1)
+				{
+					uboBB.position(locs.glFrontMaterialshininessOffset);
+					uboBB.asFloatBuffer().put(ctx.materialData.shininess);
+				}
+				// if set one of the 2 colors below should be used by the shader (material for lighting)
+				//   old uniform system appears wrong?					
+				if (locs.ignoreVertexColorsOffset != -1)
+				{
+					uboBB.position(locs.ignoreVertexColorsOffset);
+					uboBB.asIntBuffer().put(ignoreVertexColors ? 1 : 0);// note local variable used
+				}
+
+				if (locs.glLightModelambientOffset != -1)
+				{
+					uboBB.position(locs.glLightModelambientOffset);
+					uboBB.asFloatBuffer().put(ctx.currentAmbientColor.x).put(ctx.currentAmbientColor.y).put(ctx.currentAmbientColor.z)
+							.put(ctx.currentAmbientColor.w);
+				}
+				if (locs.objectColorOffset != -1)
+				{
+					uboBB.position(locs.objectColorOffset);
+					uboBB.asFloatBuffer().put(ctx.objectColor.x).put(ctx.objectColor.y).put(ctx.objectColor.z).put(ctx.objectColor.w);
+				}
+
+				//For now using first point light, but gonna need to put em all in
+				LightData l0 = null;
+				if (ctx.pointLight[0] != null)
+					l0 = ctx.pointLight[0];
+				else if (ctx.dirLight[0] != null)
+					l0 = ctx.dirLight[0];
+
+				if (l0 != null)
+				{
+					if (locs.glLightSource0positionOffset != -1)
+					{
+						uboBB.position(locs.glLightSource0positionOffset);
+						uboBB.asFloatBuffer().put(l0.pos.x).put(l0.pos.y).put(l0.pos.z).put(l0.pos.w);
+					}
+					if (locs.glLightSource0diffuseOffset != -1)
+					{
+						uboBB.position(locs.glLightSource0diffuseOffset);
+						uboBB.asFloatBuffer().put(l0.diffuse.x).put(l0.diffuse.y).put(l0.diffuse.z).put(l0.diffuse.w);
+					}
+				}
+
+				// TODO: test the transpose
+				if (locs.textureTransformOffset != -1)
+				{
+					uboBB.position(locs.textureTransformOffset);
+					uboBB.asFloatBuffer().put(JoglesMatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.textureTransform)));
+				}
+
+				if (locs.alphaTestEnabledOffset != -1)
+				{
+					uboBB.position(locs.alphaTestEnabledOffset);
+					uboBB.asIntBuffer().put(ctx.renderingData.alphaTestEnabled ? 1 : 0);
+
+					if (ctx.renderingData.alphaTestEnabled == true)
+					{
+						if (locs.alphaTestFunctionOffset != -1)
+						{
+							uboBB.position(locs.alphaTestFunctionOffset);
+							uboBB.asIntBuffer().put(ctx.renderingData.alphaTestFunction);
+						}
+						if (locs.alphaTestValueOffset != -1)
+						{
+							uboBB.position(locs.alphaTestValueOffset);
+							uboBB.asFloatBuffer().put(ctx.renderingData.alphaTestValue);
+						}
+					}
+				}
+
+				uboBB.position(0);// very important!
+
+				//gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, locs.uboBufId);
+				gl2es3.glBufferSubData(GL2ES3.GL_UNIFORM_BUFFER, 0, uboBB.limit(), uboBB);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				// we have done our ffp work don't fall through to normal system						
+				return;
 			}
 
-			if (locs.glModelViewProjectionMatrix != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
-				{
-					//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
-					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat),
-							0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
+		}
 
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
-				}
-				else if (OUTPUT_PER_FRAME_STATS)
-				{
-					ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
-				}
+		//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
+		if (locs.glProjectionMatrix != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc))
+			{
+				gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
-
-			if (locs.glNormalMatrix != -1)
+		}
+		if (locs.glProjectionMatrixInverse != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
+				//EXPENSIVE!!!!! only calc if asked for, and even then...
+				try
 				{
-					//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
-					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glNormalMatrixUpdated++;
+					ctx.currentProjMatInverse.set(ctx.currentProjMat);
+					ctx.matrixUtil.invert(ctx.currentProjMatInverse);
 				}
-				else if (OUTPUT_PER_FRAME_STATS)
+				catch (SingularMatrixException e)
 				{
-					ctx.perFrameStats.glNormalMatrixSkipped++;
+					System.err.println("" + e);
 				}
+
+				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toFB(ctx.currentProjMatInverse));
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
-
-			// if set one of the 2 colors below should be used by the shader (material for lighting)
-
-			if (locs.ignoreVertexColors != -1)
+		}
+		if (locs.glViewMatrix != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glViewMatrix != ctx.gl_state.currentViewMatLoc))
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ignoreVertexColors))
-				{
-					gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
-
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.ignoreVertexColors = ignoreVertexColors;
-				}
+				gl.glUniformMatrix4fv(locs.glViewMatrix, 1, true, ctx.matrixUtil.toFB(ctx.currentViewMat));
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.currentViewMatLoc = locs.glViewMatrix;
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
+		}
 
-			//send material data through
-			if (locs.glFrontMaterialdiffuse != -1)
+		if (locs.glModelMatrix != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse)))
-				{
-					gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
-							ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialdiffuse.set(ctx.materialData.diffuse);
-				}
+				//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
+				gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.modelMatrixUpdated++;
 			}
-			if (locs.glFrontMaterialemission != -1)
+			else if (OUTPUT_PER_FRAME_STATS)
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission)))
-				{
-					gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
-							ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialemission.set(ctx.materialData.emission);
-				}
+				ctx.perFrameStats.modelMatrixSkipped++;
 			}
+		}
 
-			if (locs.glFrontMaterialspecular != -1)
+		if (locs.glModelViewMatrix != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular)))
-				{
-					gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
-							ctx.materialData.specular.z);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialspecular.set(ctx.materialData.specular);
-				}
-			}
-			if (locs.glFrontMaterialshininess != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-						|| ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess))
-				{
-					gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glFrontMaterialshininess = ctx.materialData.shininess;
-				}
-			}
-
-			//ambient does not come from material notice
-			if (locs.glLightModelambient != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor)))
-				{
-					gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y,
-							ctx.currentAmbientColor.z, ctx.currentAmbientColor.w);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glLightModelambient.set(ctx.currentAmbientColor);
-				}
-			}
-
-			// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
-			if (locs.objectColor != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor)))
-				{
-					gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.objectColor.set(ctx.objectColor);
-				}
-			}
-
-			/*dirLight
-			pointLight
-			spotLight*/
-			//currentEnabledLights
-
-			//For now using first point light, but gonna need to put em all in
-			LightData l0 = null;
-			if (ctx.pointLight[0] != null)
-				l0 = ctx.pointLight[0];
-			else if (ctx.dirLight[0] != null)
-				l0 = ctx.dirLight[0];
-
-			if (l0 != null)
-			{
-				if (locs.glLightSource0position != -1)
-				{
-					gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-				if (locs.glLightSource0diffuse != -1)
-				{
-					gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-			}
-
-			//TODO: particles and points etc
-			//currentPointSize needs to be handed into the particles shader
-
-			//TODO: look at walkway grill in diamond city looks like I've got these wrong
-			// but playing doesn't help
-			// also a plant in morrowind is not doing alpha testing properly
-			if (locs.alphaTestEnabled != -1)
-			{
-				gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
+				//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+				gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
-				if (ctx.renderingData.alphaTestEnabled == true)
-				{
-					gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glModelViewMatrixUpdated++;
 			}
-
-			if (locs.textureTransform != -1)
+			else if (OUTPUT_PER_FRAME_STATS)
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
-				{
-					//gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
-					gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.matrixUtil.toArray(ctx.textureTransform), 0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.textureTransform.set(ctx.textureTransform);
-				}
+				ctx.perFrameStats.glModelViewMatrixSkipped++;
 			}
+		}
+		if (locs.glModelViewMatrixInverse != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+					|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
+			{
+				// Expensive, only calc if required
+				ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
+				ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 
-			//TODO: needs to be handled ,
-			//ctx.fogData
+				//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+				gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 
-			//NOTE water app shows multiple light calculations
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
+			}
+			else if (OUTPUT_PER_FRAME_STATS)
+			{
+				ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
+			}
+		}
 
-			// record for the next loop through FFP
-			ctx.prevShaderProgram = shaderProgramId;
+		if (locs.glModelViewProjectionMatrix != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+					|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
+			{
+				//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+				gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
+			}
+			else if (OUTPUT_PER_FRAME_STATS)
+			{
+				ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
+			}
+		}
+
+		if (locs.glNormalMatrix != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
+			{
+				//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+				gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glNormalMatrixUpdated++;
+			}
+			else if (OUTPUT_PER_FRAME_STATS)
+			{
+				ctx.perFrameStats.glNormalMatrixSkipped++;
+			}
+		}
+
+		// if set one of the 2 colors below should be used by the shader (material for lighting)
+
+		if (locs.ignoreVertexColors != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ignoreVertexColors))
+			{
+				gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.ignoreVertexColors = ignoreVertexColors;
+			}
+		}
+
+		//send material data through
+		if (locs.glFrontMaterialdiffuse != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse)))
+			{
+				gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
+						ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glFrontMaterialdiffuse.set(ctx.materialData.diffuse);
+			}
+		}
+		if (locs.glFrontMaterialemission != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+					|| !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission)))
+			{
+				gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
+						ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glFrontMaterialemission.set(ctx.materialData.emission);
+			}
+		}
+
+		if (locs.glFrontMaterialspecular != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+					|| !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular)))
+			{
+				gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
+						ctx.materialData.specular.z);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glFrontMaterialspecular.set(ctx.materialData.specular);
+			}
+		}
+		if (locs.glFrontMaterialshininess != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess))
+			{
+				gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glFrontMaterialshininess = ctx.materialData.shininess;
+			}
+		}
+
+		//ambient does not come from material notice
+		if (locs.glLightModelambient != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor)))
+			{
+				gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y, ctx.currentAmbientColor.z,
+						ctx.currentAmbientColor.w);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glLightModelambient.set(ctx.currentAmbientColor);
+			}
+		}
+
+		// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
+		if (locs.objectColor != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor)))
+			{
+				gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.objectColor.set(ctx.objectColor);
+			}
+		}
+
+		/*dirLight
+		pointLight
+		spotLight*/
+		//currentEnabledLights
+
+		//For now using first point light, but gonna need to put em all in
+		LightData l0 = null;
+		if (ctx.pointLight[0] != null)
+			l0 = ctx.pointLight[0];
+		else if (ctx.dirLight[0] != null)
+			l0 = ctx.dirLight[0];
+
+		if (l0 != null)
+		{
+			if (locs.glLightSource0position != -1)
+			{
+				gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+			if (locs.glLightSource0diffuse != -1)
+			{
+				gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+		}
+
+		//TODO: particles and points etc
+		//currentPointSize needs to be handed into the particles shader
+
+		//TODO: look at walkway grill in diamond city looks like I've got these wrong
+		// but playing doesn't help
+		// also a plant in morrowind is not doing alpha testing properly
+		if (locs.alphaTestEnabled != -1)
+		{
+			gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 
+			if (ctx.renderingData.alphaTestEnabled == true)
+			{
+				gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
 		}
+
+		if (locs.textureTransform != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
+			{
+				//gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
+				gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.matrixUtil.toArray(ctx.textureTransform), 0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.textureTransform.set(ctx.textureTransform);
+			}
+		}
+
+		//TODO: needs to be handled ,
+		//ctx.fogData
+
+		//NOTE water app shows multiple light calculations
+
+		// record for the next loop through FFP
+		ctx.prevShaderProgram = shaderProgramId;
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
 
 		// happens on the first call sometimes, for background or clear or something
 
@@ -2790,11 +2767,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("private static GeometryData loadAllBuffers");
 
-		GeometryData gd = ctx.allGeometryData.get(geo);
+		GeometryData gd = ctx.allGeometryData.get(geo.nativeId);
 		if (gd == null)
 		{
 			gd = new GeometryData();
-			ctx.allGeometryData.put(geo, gd);
+			geo.nativeId = gd.nativeId;
+			ctx.allGeometryData.put(geo.nativeId, gd);
 		}
 
 		boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
@@ -2966,11 +2944,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("private static GeometryData loadInterleavedBuffer");
 
-		GeometryData gd = ctx.allGeometryData.get(geo);
+		GeometryData gd = ctx.allGeometryData.get(geo.nativeId);
 		if (gd == null)
 		{
 			gd = new GeometryData();
-			ctx.allGeometryData.put(geo, gd);
+			geo.nativeId = gd.nativeId;
+			ctx.allGeometryData.put(geo.nativeId, gd);
 		}
 
 		if (gd.interleavedBufId == -1)
@@ -3242,6 +3221,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		return gd;
+
 	}
 
 	//--Noop
@@ -3270,7 +3250,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					+ unbox(uniformLocation) + ",value=" + value + ")");
 
 		JoglesContext joglesctx = (JoglesContext) ctx;
-		GL2ES2 gl = joglesctx.gl2es2();
+		GL2ES2 gl = joglesctx.gl2es2;
 		int loc = unbox(uniformLocation);
 		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1i[loc] != value)
 		{
@@ -3291,7 +3271,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					+ unbox(uniformLocation) + ",value=" + value + ")");
 
 		JoglesContext joglesctx = (JoglesContext) ctx;
-		GL2ES2 gl = joglesctx.gl2es2();
+		GL2ES2 gl = joglesctx.gl2es2;
 		int loc = unbox(uniformLocation);
 		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1f[loc] != value)
 		{
@@ -3311,7 +3291,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform2i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
 					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform2i(unbox(uniformLocation), value[0], value[1]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3325,7 +3305,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform2f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
 					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform2f(unbox(uniformLocation), value[0], value[1]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3339,7 +3319,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform3i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
 					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform3i(unbox(uniformLocation), value[0], value[1], value[2]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3353,7 +3333,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform3f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
 					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform3f(unbox(uniformLocation), value[0], value[1], value[2]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3367,7 +3347,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform4i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
 					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform4i(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3381,7 +3361,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			System.err.println("JoglPipeline.setGLSLUniform4f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
 					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform4f(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3397,7 +3377,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniformMatrix3fv(unbox(uniformLocation), 1, false, ((JoglesContext) ctx).matrixUtil.toFB3(value));
 		//gl.glUniformMatrix3fv(unbox(uniformLocation), 1, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
@@ -3414,7 +3394,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniformMatrix4fv(unbox(uniformLocation), 1, false, ((JoglesContext) ctx).matrixUtil.toFB4(value));
 		//gl.glUniformMatrix4fv(unbox(uniformLocation), 1, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
@@ -3431,7 +3411,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform1iArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform1iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3445,7 +3425,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform1fArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform1fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3459,7 +3439,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform2iArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform2iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3473,7 +3453,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform2fArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform2fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3487,7 +3467,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform3iArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform3iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3501,7 +3481,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform3fArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform3fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3515,7 +3495,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform4iArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform4iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3529,7 +3509,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform4fArray()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniform4fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3545,7 +3525,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniformMatrix3fv(unbox(uniformLocation), numElements, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3561,7 +3541,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glUniformMatrix4fv(unbox(uniformLocation), numElements, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3577,7 +3557,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.createGLSLShader++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		int shaderHandle = 0;
 		if (shaderType == Shader.SHADER_TYPE_VERTEX)
@@ -3609,7 +3589,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.destroyGLSLShader++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glDeleteShader(unbox(shaderId));
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3636,7 +3616,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			throw new AssertionError("shader program string is null");
 		}
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		gl.glShaderSource(id, 1, new String[] { program }, null, 0);
 		if (DO_OUTPUT_ERRORS)
@@ -3662,7 +3642,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createGLSLShaderProgram()");
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.createGLSLShaderProgram++;
@@ -3688,7 +3668,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.destroyGLSLShaderProgram++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glDeleteShader(unbox(shaderProgramId));
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -3708,7 +3688,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.linkGLSLShaderProgram++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		int id = unbox(shaderProgramId);
 		for (int i = 0; i < shaderIds.length; i++)
 		{
@@ -3773,7 +3753,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.lookupGLSLShaderAttrNames++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		// set the loc, type, and size arrays to out-of-bound values
 		for (int i = 0; i < attrNames.length; i++)
@@ -3891,13 +3871,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 				USE_NULL_SHADER_WARNING_GIVEN = true;
 			}
 
-			GL2ES2 gl = joglesContext.gl2es2();
+			GL2ES2 gl = joglesContext.gl2es2;
 
 			gl.glUseProgram(unbox(shaderProgramId));
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 
 			joglesContext.setShaderProgram((JoglShaderObject) shaderProgramId);
+			loadLocs(joglesContext, gl);
 
 			if (MINIMISE_NATIVE_SHADER)
 				joglesContext.gl_state.currentProgramId = unbox(shaderProgramId);
@@ -4364,7 +4345,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updateLineAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glLineWidth(lineWidth);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4381,7 +4362,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.resetLineAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		gl.glLineWidth(1.0f);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4534,7 +4515,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updatePolygonAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (joglesctx.gl_state.cullFace != cullFace)
 		{
@@ -4593,7 +4574,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.resetPolygonAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (joglesctx.gl_state.cullFace != PolygonAttributes.CULL_BACK)
 		{
@@ -4638,7 +4619,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updateRenderingAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (joglesctx.gl_state.depthBufferEnableOverride != depthBufferEnable || joglesctx.gl_state.depthBufferEnable != depthBufferEnable
@@ -4757,7 +4738,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.resetRenderingAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (!depthBufferWriteEnableOverride)
 		{
@@ -4807,7 +4788,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updateTransparencyAttributes++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 
 		if ((transparencyMode < TransparencyAttributes.SCREEN_DOOR)
@@ -4857,7 +4838,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.resetTransparency++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
 				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
@@ -4955,7 +4936,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.updateTextureUnitState++;
 
 		JoglesContext joglesContext = (JoglesContext) ctx;
-		GL2ES2 gl = joglesContext.gl2es2();
+		GL2ES2 gl = joglesContext.gl2es2;
 
 		if (index >= 0)
 		{
@@ -4987,7 +4968,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.bindTexture2D++;
 
 		JoglesContext joglesContext = (JoglesContext) ctx;
-		GL2ES2 gl = joglesContext.gl2es2();
+		GL2ES2 gl = joglesContext.gl2es2;
 
 		if (enable)
 		{
@@ -5073,7 +5054,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static void updateTextureLodRange(Context ctx, int target, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		//I notice these 4 parameters don't appear under GL2ES2
 
@@ -5106,7 +5087,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static void updateTextureAnisotropicFilter(Context ctx, int target, float degree)
 	{
 		//FIXME: is this a true thing to send in?
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		//it appears GL_TEXTURE_MAX_ANISOTROPY_EXT is still part of ES2 
 		// but not allowed for glTexParameterf
@@ -5135,7 +5116,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.bindTextureCubeMap++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		// TextureCubeMap will take precedents over 3D Texture so
 		// there is no need to disable 3D Texture here.
@@ -5216,7 +5197,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private void updateTexture2DImage(Context ctx, int target, int numLevels, int level, int textureFormat, int imageFormat, int width,
 			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
 	{
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		// FIXME: there is a new call glGenerateMipmap() which is only in ES2 not GL2 so on pure ES2 
 		// add back in checking for mipmap support under properties, then add that call after bind texture
@@ -5490,7 +5471,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private void updateTexture2DSubImage(Context ctx, int target, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data)
 	{
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		if (imgXOffset > 0 || (width < tilew))
 		{
@@ -5667,7 +5648,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private static void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
 	{
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		// amazingly this should be fine unchanged 
 
@@ -5756,7 +5737,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	void updateTextureBoundary(Context ctx, int target, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
 			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
 	{
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		// except the R gear at bottom and boundary color
 		// but I'm dropping 3dtexture support so no probs and who cares about boundary color
@@ -5887,7 +5868,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.setBlendColor++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		if (isExtensionAvailable.GL_ARB_imaging(gl))
 		{
@@ -5908,7 +5889,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.setBlendFunc++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 
 		if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
@@ -6005,7 +5986,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.activeTextureUnit++;
 
 		JoglesContext joglesContext = (JoglesContext) ctx;
-		GL2ES2 gl = joglesContext.gl2es2();
+		GL2ES2 gl = joglesContext.gl2es2;
 
 		if (texUnitIndex >= 0)
 		{
@@ -6031,7 +6012,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.resetTextureNative++;
 
 		JoglesContext joglesContext = (JoglesContext) ctx;
-		GL2ES2 gl = joglesContext.gl2es2();
+		GL2ES2 gl = joglesContext.gl2es2;
 
 		if (texUnitIndex >= 0)
 		{
@@ -6068,20 +6049,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = (JoglesContext) ctx;
 
-		joglesctx.matrixUtil.deburnV.set(viewMatrix);
-		joglesctx.matrixUtil.deburnV.transpose();
-
-		joglesctx.currentViewMat.set(joglesctx.matrixUtil.deburnV);
+		
 		joglesctx.gl_state.currentViewMatLoc = -1;
+		
+		joglesctx.matrixUtil.deburnV.set(viewMatrix);
+		//joglesctx.matrixUtil.deburnV.transpose();
+		joglesctx.currentViewMat.set(joglesctx.matrixUtil.deburnV);
 
 		joglesctx.matrixUtil.deburnM.set(modelMatrix);
-		joglesctx.matrixUtil.deburnM.transpose();
-
+		//joglesctx.matrixUtil.deburnM.transpose();
 		joglesctx.currentModelMat.set(joglesctx.matrixUtil.deburnM);
 
-		joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnM, joglesctx.matrixUtil.deburnV);
+		//joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnM, joglesctx.matrixUtil.deburnV);
+		joglesctx.currentModelViewMat.mul( joglesctx.matrixUtil.deburnV, joglesctx.matrixUtil.deburnM);
 
-		joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
+		//joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
+		joglesctx.currentModelViewProjMat.mul(joglesctx.currentProjMat, joglesctx.currentModelViewMat);
 
 		// use only the upper left as it is a 3x3 rotation matrix
 		JoglesMatrixUtil.transposeInvert(joglesctx.currentModelViewMat, joglesctx.currentNormalMat);
@@ -6109,7 +6092,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		projMatrix[11] *= -1.0;
 
 		joglesctx.currentProjMat.set(projMatrix);
-		joglesctx.currentProjMat.transpose();
+		//joglesctx.currentProjMat.transpose();
 		joglesctx.gl_state.glProjectionMatrixLoc = -1;//indicate must be updated
 		joglesctx.gl_state.currentProjMatInverseLoc = -1;
 
@@ -6132,7 +6115,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.setViewportTime = System.nanoTime();
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		gl.glViewport(x, y, width, height);
 		if (DO_OUTPUT_ERRORS)
@@ -6163,7 +6146,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.freeTexture++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		if (id > 0)
 		{
@@ -6187,7 +6170,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.generateTexID++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		int[] tmp = new int[] { -1 };
 		gl.glGenTextures(1, tmp, 0);
@@ -6207,7 +6190,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.setDepthBufferWriteEnable++;
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		if (mode)
 		{
@@ -6232,12 +6215,23 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setRenderMode()");
 
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-			//no no drawBuffer, possibly just skip it for now
-			// ES2 is much more complex with buffers https://www.khronos.org/registry/gles/extensions/EXT/EXT_draw_buffers.txt
-		
-			int drawBuf = 0;
+		//UGLY HACK the render mode is set to Canvas3D.FIELD_ALL after all geoms are drawn
+		// so I take the opportunity to unbind the vertex array
+
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+		if (gl.isGL2ES3())
+		{
+			GL2ES3 gl2es3 = (GL2ES3) gl;
+			gl2es3.glBindVertexArray(0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+
+		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+		//no no drawBuffer, possibly just skip it for now
+		// ES2 is much more complex with buffers https://www.khronos.org/registry/gles/extensions/EXT/EXT_draw_buffers.txt
+
+		/*	int drawBuf = 0;
 			if (doubleBuffer)
 			{
 				drawBuf = GL2ES2.GL_BACK;
@@ -6727,7 +6721,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.clear++;
 
 		JoglesContext jctx = (JoglesContext) ctx;
-		GL2ES2 gl = jctx.gl2es2();
+		GL2ES2 gl = jctx.gl2es2;
 
 		// Mask of which buffers to clear, this always includes color & depth
 		int clearMask = GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT;
@@ -6754,7 +6748,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.syncRenderTime = System.nanoTime();
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
 		// clean up any buffers that need freeing
 		doClearBuffers(ctx);
@@ -6787,7 +6781,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		if (DO_OUTPUT_ERRORS)
 		{
-			GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+			GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 			int err = gl.glGetError();
 			if (err != GL2ES2.GL_NO_ERROR)
 			{
@@ -6920,7 +6914,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((JoglesContext) ctx).perFrameStats.setFullSceneAntialiasing++;
 
 		JoglContext joglctx = (JoglContext) ctx;
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2();
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		//PERF:GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// not supported in ES2, possibly just part of context generally
 		//http://stackoverflow.com/questions/27035893/antialiasing-in-opengl-es-2-0

@@ -616,6 +616,8 @@ class JoglesMatrixUtil
 
 	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
 
+	public double[] deburnV2 = null;//deburners 
+	
 	public Matrix4d deburnV = new Matrix4d();//deburners 
 	public Matrix4d deburnM = new Matrix4d();
 	public float[] tempMat9 = new float[9];

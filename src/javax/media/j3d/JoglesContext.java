@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.media.j3d.JoglesContext.ProgramData;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Vector3f;
@@ -17,6 +18,7 @@ import utils.SparseArray;
 public class JoglesContext extends JoglContext
 {
 	//TODO: heaps of lights appears to kill performance, why?
+
 	public GL2ES2 gl2es2;
 
 	public JoglesContext(GLContext context)
@@ -25,25 +27,33 @@ public class JoglesContext extends JoglContext
 		gl2es2 = context.getGL().getGL2ES2();
 	}
 
-	/**
-	 * This is for speed attempts, the getGL2ES2() checks instanceof so it's expensive
-	 * @return
-	 */
-	public GL2ES2 gl2es2()
+	public JoglShaderObject shaderProgram;
+	public int shaderProgramId = -1;
+	public ProgramData programData;
+
+	void setShaderProgram(JoglShaderObject object)
 	{
-		//if (context.getGL() == gl2es2)
-		return gl2es2;
-		//else
-		//	return context.getGL().getGL2ES2();
+		super.setShaderProgram(object);
+		shaderProgram = object;
+		shaderProgramId = object == null ? -1 : object.getValue();
+		programData = allProgramData.get(shaderProgramId);
+		if (programData == null)
+		{
+			programData = new ProgramData();
+			allProgramData.put(shaderProgramId, programData);
+		}
+
 	}
 
 	// all buffers created are recorded for each render pass, and for cleanup
 	public ArrayList<GeometryArrayRetained> geoToClearBuffers = new ArrayList<GeometryArrayRetained>();
 
-	public HashMap<GeometryArrayRetained, GeometryData> allGeometryData = new HashMap<GeometryArrayRetained, GeometryData>();
+	public SparseArray<GeometryData> allGeometryData = new SparseArray<GeometryData>();
 
 	public static class GeometryData
 	{
+		public int nativeId = -1;
+
 		public int geoToIndBuf = -1;
 		public int geoToIndBufSize = -1;
 		public int[] geoToIndStripBuf = null;
@@ -63,9 +73,18 @@ public class JoglesContext extends JoglContext
 		public int geoToNormalsOffset = -1;
 		public int[] geoToVattrOffset = new int[10];
 		public int[] geoToTexCoordOffset = new int[10];
-		
+
 		// vertex array object id for this geom
 		public int vaoId = -1;
+
+		//used to identify each geometry as we see it
+		private static int nextNativeId = 0;
+
+		public GeometryData()
+		{
+			nativeId = nextNativeId++;
+			nextNativeId = nextNativeId > Integer.MAX_VALUE - 10 ? 0 : nextNativeId;// desperate loop
+		}
 
 	}
 

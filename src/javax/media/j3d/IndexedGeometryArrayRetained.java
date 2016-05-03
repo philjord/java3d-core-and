@@ -1158,8 +1158,14 @@ abstract class IndexedGeometryArrayRetained extends GeometryArrayRetained {
     void execute(Canvas3D cv, RenderAtom ra, boolean isNonUniformScale,
 		 boolean updateAlpha, float alpha,
 		 int screen, boolean ignoreVertexColors) {
+    	
     	//FIXME: PJPJPJ big ugly hack for buffers
-    	ctxExecutedOn.add(cv.ctx);
+    	if(cv.ctx!= prevContext)
+    	{
+    		ctxExecutedOn.add(cv.ctx);
+    		prevContext = cv.ctx;
+    	}
+    	
 	int cdirty;
 	boolean useAlpha = false;
 	Object[] retVal;
