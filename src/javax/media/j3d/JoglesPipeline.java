@@ -41,29 +41,26 @@ import utils.SparseArray;
  */
 class JoglesPipeline extends JoglesDEPPipeline
 {
-	private static final boolean DO_OUTPUT_ERRORS = false;
+	private static final boolean DO_OUTPUT_ERRORS = true;
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = true;
+	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
-	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
+	private static final boolean MINIMISE_NATIVE_CALLS_FFP = false;// this may not help dues to equals and set calls being as costly
 	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
 	// this one causes fallout4 load screen to look crazy
 	private static final boolean MINIMISE_NATIVE_SHADER = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
-	//crazy new ffp buffer weird ness
+	//crazy new ffp buffer weird ness, online evidence suggest no benefit
 	private static boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
 	private static final boolean PRESUME_INDICES = true;
 
 	// interleave and compressed to half floats and bytes
-
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
 	private static final boolean COMPRESS_OPTIMIZED_VERTICES = true;
-
-	//private GLProfile profile;
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -161,6 +158,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						if (gd.interleavedBufId != -1)
 							gl.glDeleteBuffers(1, new int[] { gd.interleavedBufId }, 0);
+
+						if (gd.vaoId != -1)
+							((GL2ES3) gl).glDeleteVertexArrays(1, new int[] { gd.vaoId }, 0);
 					}
 
 				}
@@ -269,10 +269,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	private void executeGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean ignoreVertexColors, int vcount, int vformat, int vdefined, int initialCoordIndex, FloatBuffer fverts,
+			boolean ignoreVertexColors, int vertexCount, int vformat, int vdefined, int initialCoordIndex, FloatBuffer fverts,
 			DoubleBuffer dverts, int initialColorIndex, FloatBuffer fclrs, ByteBuffer bclrs, int initialNormalIndex, FloatBuffer norms,
 			int vertexAttrCount, int[] vertexAttrSizes, int[] vertexAttrIndices, FloatBuffer[] vertexAttrBufs, int texCoordMapLength,
-			int[] texCoordSetMap, int numActiveTexUnit, int[] texindices, int texStride, Object[] texCoords, int cDirty, int[] sarray,
+			int[] texCoordSetMap, int numActiveTexUnitState, int[] texindices, int texStride, Object[] texCoords, int cDirty, int[] sarray,
 			int strip_len, int[] start_array)
 	{
 		JoglesContext ctx = (JoglesContext) absCtx;
@@ -296,8 +296,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
 			//If any buffers need loading do that now and skip a render for this frame
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
-					vertexAttrSizes, vertexAttrBufs);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, dverts, fclrs, bclrs,
+					norms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, texStride, texCoords);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -307,64 +307,107 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-			// Define the data pointers
-			if (floatCoordDefined)
+			// not required second time around for VAO
+			boolean bindingRequired = true;
+			if (gl.isGL2ES3())
 			{
-				if (locs.glVertex != -1)
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+				if (gd.vaoId == -1)
 				{
-					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-							|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+					int[] tmp = new int[1];
+					gl2es3.glGenVertexArrays(1, tmp, 0);
+					gd.vaoId = tmp[0];
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else
+				{
+					bindingRequired = false;
+				}
+				gl2es3.glBindVertexArray(gd.vaoId);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
 
-					if (gd.geoToCoordBuf == -1)
+			// Define the data pointers
+			if (floatCoordDefined && locs.glVertex != -1)
+			{
+				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+						|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
+				if (gd.geoToCoordBuf == -1)
+				{
+					new Throwable("Buffer load issue!").printStackTrace();
+				}
+				else
+				{
+
+					//a good cDirty  
+					//if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+					if (morphable)
 					{
-						new Throwable("Buffer load issue!").printStackTrace();
+						int coordoff = 3 * initialCoordIndex;
+						fverts.position(coordoff);
+						//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
+						if (gd.geoToCoordBufSize != fverts.remaining())
+						{
+							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining());
+
+							int prevBufId = gd.geoToCoordBuf;//record to delete after re-bind								
+
+							int[] tmp = new int[1];
+							gl.glGenBuffers(1, tmp, 0);
+							gd.geoToCoordBuf = tmp[0];
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+
+							gd.geoToCoordBufSize = fverts.remaining();
+
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferData++;
+
+							//Notice no check for bindingRequired as we are altering the binding
+							//and previously used buffer is deleted AFTER re-bind
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(locs.glVertex);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
+							gl.glDeleteBuffers(1, new int[] { prevBufId }, 0);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+						}
+						else
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferSubData++;
+						}
 					}
-					else
+
+					if (bindingRequired)
 					{
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-						//a good cDirty  
-						//if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
-						if (morphable)
-						{
-							int coordoff = 3 * initialCoordIndex;
-							fverts.position(coordoff);
-							//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
-							if (gd.geoToCoordBufSize != fverts.remaining())
-							{
-								System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining());
-
-								gl.glDeleteBuffers(1, new int[] { gd.geoToCoordBuf }, 0);
-								if (DO_OUTPUT_ERRORS)
-									outputErrors(ctx);
-
-								int[] tmp = new int[1];
-								gl.glGenBuffers(1, tmp, 0);
-								gd.geoToCoordBuf = tmp[0];
-
-								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-								int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
-								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
-								if (DO_OUTPUT_ERRORS)
-									outputErrors(ctx);
-								gd.geoToCoordBufSize = fverts.remaining();
-
-								if (OUTPUT_PER_FRAME_STATS)
-									ctx.perFrameStats.glBufferData++;
-							}
-							else
-							{
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
-								if (DO_OUTPUT_ERRORS)
-									outputErrors(ctx);
-
-								if (OUTPUT_PER_FRAME_STATS)
-									ctx.perFrameStats.glBufferSubData++;
-							}
-						}
-
 						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(locs.glVertex);//must be called after Pointer above
+						gl.glEnableVertexAttribArray(locs.glVertex);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 
@@ -373,10 +416,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							joglesctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 					}
-				}
-				else
-				{
-					//System.err.println("glVertexLocation == -1!");			
 				}
 
 			}
@@ -389,9 +428,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 				throw new UnsupportedOperationException("No coords!");
 			}
 
-			if (floatColorsDefined)
+			if (bindingRequired)
 			{
-				if (locs.glColor != -1)
+				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
 					{
@@ -400,17 +439,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 					else
 					{
 						int coloroff;
-						int sz;
-						if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-						{
-							coloroff = 4 * initialColorIndex;
-							sz = 4;
-						}
-						else
-						{
-							coloroff = 3 * initialColorIndex;
-							sz = 3;
-						}
+						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+
+						coloroff = sz * initialColorIndex;
 						fclrs.position(coloroff);
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
@@ -428,44 +459,36 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							joglesctx.perFrameStats.glVertexAttribPointerColor++;
 					}
-
 				}
-			}
-			else if (byteColorsDefined)
-			{
-				//FIXME: byteColors not supported for now, but I want them a lot
-				throw new UnsupportedOperationException();
-				/*int coloroff;
-				int sz;
-				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
-					coloroff = 4 * initialColorIndex;
-					sz = 4;
+					//FIXME: byteColors not supported for now, but I want them a lot
+					throw new UnsupportedOperationException();
+					/*int coloroff;
+					int sz;
+					if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+					{
+						coloroff = 4 * initialColorIndex;
+						sz = 4;
+					}
+					else
+					{
+						coloroff = 3 * initialColorIndex;
+						sz = 3;
+					}
+					bclrs.position(coloroff);
+					gl.glColorPointer(sz, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);*/
 				}
-				else
+				else if (locs.glColor != -1)
 				{
-					coloroff = 3 * initialColorIndex;
-					sz = 3;
-				}
-				bclrs.position(coloroff);
-				gl.glColorPointer(sz, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);*/
-			}
-			else
-			{
-				// ignoreVertexcolors will be set in FFP now as the glColors is unbound
-				if (locs.glColor != -1)
-				{
+					// ignoreVertexcolors willhave been set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
-			}
 
-			if (normalsDefined)
-			{
-				if (locs.glNormal != -1)
+				if (normalsDefined && locs.glNormal != -1)
 				{
-
 					if (gd.geoToNormalBuf == -1)
 					{
 						new Throwable("Buffer load issue!").printStackTrace();
@@ -489,127 +512,104 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							joglesctx.perFrameStats.glVertexAttribPointerNormals++;
 					}
-
 				}
-			}
-			else
-			{
-				if (locs.glNormal != -1)
+				else
 				{
-					gl.glDisableVertexAttribArray(locs.glNormal);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glDisableVertexAttribArray++;
-				}
-			}
-
-			if (vattrDefined)
-			{
-				for (int index = 0; index < vertexAttrCount; index++)
-				{
-					Integer attribLoc = locs.genAttIndexToLoc.get(index);
-					if (attribLoc != null && attribLoc.intValue() != -1)
+					if (locs.glNormal != -1)
 					{
-						SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
-						if (bufIds == null)
-						{
-							new Throwable("Buffer load issue!").printStackTrace();
-						}
+						gl.glDisableVertexAttribArray(locs.glNormal);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
+				}
 
-						Integer bufId = bufIds.get(index);
-						if (bufId == null)
+				if (vattrDefined)
+				{
+					for (int index = 0; index < vertexAttrCount; index++)
+					{
+						Integer attribLoc = locs.genAttIndexToLoc.get(index);
+						if (attribLoc != null && attribLoc.intValue() != -1)
 						{
-							new Throwable("Buffer load issue!").printStackTrace();
-						}
-						else
-						{
-							int sz = vertexAttrSizes[index];
-
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							//a good cDirty and a DYNAMIC_DRAW call needed
-							/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
+							if (bufIds == null)
 							{
-								FloatBuffer vertexAttrs = vertexAttrBufs[index];
-								vertexAttrs.position(0);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
-							}*/
+								new Throwable("Buffer load issue!").printStackTrace();
+							}
 
-							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
-							gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
-							if (DO_OUTPUT_ERRORS)
-								outputErrors(ctx);
+							Integer bufId = bufIds.get(index);
+							if (bufId == null)
+							{
+								new Throwable("Buffer load issue!").printStackTrace();
+							}
+							else
+							{
+								int sz = vertexAttrSizes[index];
 
-							if (OUTPUT_PER_FRAME_STATS)
-								joglesctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+								//a good cDirty and a DYNAMIC_DRAW call needed
+								/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+								{
+									FloatBuffer vertexAttrs = vertexAttrBufs[index];
+									vertexAttrs.position(0);
+									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+								}*/
+
+								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
+								gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
+								if (DO_OUTPUT_ERRORS)
+									outputErrors(ctx);
+
+								if (OUTPUT_PER_FRAME_STATS)
+									joglesctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+							}
 						}
 					}
 				}
-			}
 
-			if (textureDefined)
-			{
-				int texSet = 0;
-				for (int texUnit = 0; texUnit < numActiveTexUnit && texUnit < texCoordMapLength; texUnit++)
+				if (textureDefined)
 				{
-					if (((texSet = texCoordSetMap[texUnit]) != -1))
+					boolean[] texSetsBound = new boolean[texCoords.length];
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
 					{
-						//must cast due to oddly set up pipeline interface that requires this come in as an Object[]
-						FloatBuffer buf = (FloatBuffer) texCoords[texSet];
-						buf.position(texStride * texindices[texSet]);
-
-						if (VERBOSE)
-							System.err.println("private enableTexCoordPointer(texUnit=" + texUnit + ")");
-
-						if (locs.glMultiTexCoord[texUnit] != -1)
+						int texSet = texCoordSetMap[texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
 						{
+							texSetsBound[texSet] = true;
+							//stupid interface...
+							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							buf.position(0);
+
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 							if (bufIds == null)
 							{
-								bufIds = new SparseArray<Integer>();
-								gd.geoToTexCoordsBuf = bufIds;
+								new Throwable("Buffer load issue!").printStackTrace();
 							}
-
 							Integer bufId = bufIds.get(texUnit);
 							if (bufId == null)
 							{
-								int[] tmp = new int[1];
-								gl.glGenBuffers(1, tmp, 0);
-								bufId = new Integer(tmp[0]);
+								new Throwable("Buffer load issue!").printStackTrace();
+							}
+							else
+							{
 
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, buf.remaining() * Float.SIZE / 8, buf, GL2ES2.GL_STATIC_DRAW);
+								gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
+								gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
 								if (DO_OUTPUT_ERRORS)
 									outputErrors(ctx);
-								bufIds.put(texUnit, bufId);
 
 								if (OUTPUT_PER_FRAME_STATS)
-									ctx.perFrameStats.glBufferData++;
+									ctx.perFrameStats.enableTexCoordPointer++;
+
 							}
-
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
-							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
-							if (DO_OUTPUT_ERRORS)
-								outputErrors(ctx);
-
-							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.enableTexCoordPointer++;
-
 						}
 					}
-					else
-					{
-						if (locs.glMultiTexCoord[texUnit] != -1)
-						{
-							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
-							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.glDisableVertexAttribArray++;
-						}
-					}
+
 				}
-
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
+
 			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
 					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
 			{
@@ -662,16 +662,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					//gl.glDrawArrays(GL2ES2.GL_QUADS, 0, vcount);
+					//gl.glDrawArrays(GL2ES2.GL_QUADS, 0, vertexCount);
 					break;
 				case GeometryRetained.GEO_TYPE_TRI_SET:
-					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
+					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
 					break;
 				case GeometryRetained.GEO_TYPE_POINT_SET:
-					gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vcount);
+					gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vertexCount);
 					break;
 				case GeometryRetained.GEO_TYPE_LINE_SET:
-					gl.glDrawArrays(GL2ES2.GL_LINES, 0, vcount);
+					gl.glDrawArrays(GL2ES2.GL_LINES, 0, vertexCount);
 					break;
 				}
 				if (DO_OUTPUT_ERRORS)
@@ -681,6 +681,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 					joglesctx.perFrameStats.glDrawArrays++;
 			}
 
+			if (gl.isGL2ES3())
+			{
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+				gl2es3.glBindVertexArray(0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			//TODO: do I need these?
+			/*
 			if (vattrDefined)
 			{
 				for (int i = 0; i < vertexAttrCount; i++)
@@ -694,7 +704,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 				}
 			}
-
+			
 			if (textureDefined)
 			{
 				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
@@ -706,7 +716,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
-			}
+			}*/
 		}
 		else
 		{
@@ -910,13 +920,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private void executeIndexedGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
 			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
-			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordSetCount, int[] texCoordSetMap, int numActiveTexUnitState,
+			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength, int[] texCoordSetMap, int numActiveTexUnitState,
 			int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
 	{
 
 		if (ATTEMPT_OPTIMIZED_VERTICES && executeIndexedGeometryOptimized(absCtx, geo, geo_type, isNonUniformScale, ignoreVertexColors,
 				initialIndexIndex, validIndexCount, vertexCount, vformat, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
-				vertexAttrSizes, vertexAttrBufs, texCoordSetCount, texCoordSetMap, numActiveTexUnitState, texStride, texCoords, cDirty,
+				vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, numActiveTexUnitState, texStride, texCoords, cDirty,
 				indexCoord, sarray, strip_len))
 		{
 			// on true execute has decided it is possible
@@ -941,8 +951,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
 			//If any buffers need loading do that now and skip a render for this frame
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, locs, vdefined, fverts, dverts, fclrs, bclrs, norms, vertexAttrCount,
-					vertexAttrSizes, vertexAttrBufs);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, dverts, fclrs, bclrs,
+					norms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, texStride, texCoords);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -952,80 +962,117 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-			// Define the data pointers
-			if (floatCoordDefined)
+			// not required second time around for VAO
+			boolean bindingRequired = true;
+			if (gl.isGL2ES3())
 			{
-				// See this discussion
-				//http://stackoverflow.com/questions/17149728/when-should-glvertexattribpointer-be-called
-				// apparently glGenVertexArrays is what I truly want not GenBuffer but ES2 no have them
-
-				//Building of buffers etc and index buffers should really take place not on the j3d thread if possible
-				if (locs.glVertex != -1)
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+				if (gd.vaoId == -1)
 				{
-					if (gd.geoToCoordBuf == -1)
-					{
-						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
-						//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-						boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-								|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-
-						if (morphable)
-						{
-							fverts.position(0);
-
-							//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
-							if (gd.geoToCoordBufSize != fverts.remaining())
-							{
-								System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining());
-								gl.glDeleteBuffers(1, new int[] { gd.geoToCoordBuf }, 0);
-
-								int[] tmp = new int[1];
-								gl.glGenBuffers(1, tmp, 0);
-								gd.geoToCoordBuf = tmp[0];
-
-								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-								int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
-								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
-								if (DO_OUTPUT_ERRORS)
-									outputErrors(ctx);
-
-								gd.geoToCoordBufSize = fverts.remaining();
-
-								if (OUTPUT_PER_FRAME_STATS)
-									ctx.perFrameStats.glBufferData++;
-							}
-							else
-							{
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
-								if (DO_OUTPUT_ERRORS)
-									outputErrors(ctx);
-
-								if (OUTPUT_PER_FRAME_STATS)
-									ctx.perFrameStats.glBufferSubData++;
-							}
-						}
-
-						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(locs.glVertex);//must be called after Pointer above
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-
-						if (OUTPUT_PER_FRAME_STATS)
-							ctx.perFrameStats.glVertexAttribPointerCoord++;
-
-						if (OUTPUT_PER_FRAME_STATS)
-							ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
-					}
-
+					int[] tmp = new int[1];
+					gl2es3.glGenVertexArrays(1, tmp, 0);
+					gd.vaoId = tmp[0];
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
 				}
 				else
 				{
-					//System.err.println("glVertexLocation == -1!");			
+					bindingRequired = false;
+				}
+				gl2es3.glBindVertexArray(gd.vaoId);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			// Define the data pointers
+			if (floatCoordDefined && locs.glVertex != -1)
+			{
+				//Building of buffers etc and index buffers should really take place not on the j3d thread if possible
+
+				if (gd.geoToCoordBuf == -1)
+				{
+					new Throwable("Buffer load issue!").printStackTrace();
+				}
+				else
+				{
+					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+							|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
+					if (morphable)
+					{
+						fverts.position(0);
+
+						//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
+						if (gd.geoToCoordBufSize != fverts.remaining())
+						{
+							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining());
+							int prevBufId = gd.geoToCoordBuf;//keep to delete below
+
+							int[] tmp = new int[1];
+							gl.glGenBuffers(1, tmp, 0);
+							gd.geoToCoordBuf = tmp[0];
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+
+							gd.geoToCoordBufSize = fverts.remaining();
+
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferData++;
+
+							//Notice no check for bindingRequired as we are altering the binding
+							//and previously used buffer is deleted AFTER re-bind
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(locs.glVertex);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
+							gl.glDeleteBuffers(1, new int[] { prevBufId }, 0);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+						}
+						else
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferSubData++;
+						}
+
+						//Does NOT like the delete buffer call above, can't enable until the size 
+						//change is nderstood
+						if (bindingRequired)
+						{
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(locs.glVertex);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+						}
+					}
+
 				}
 			}
 			else if (doubleCoordDefined)
@@ -1037,9 +1084,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 				throw new UnsupportedOperationException("No coords!");
 			}
 
-			if (floatColorsDefined)
+			if (bindingRequired)
 			{
-				if (locs.glColor != -1)
+				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
 					{
@@ -1047,11 +1094,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					else
 					{
-						int sz = 0;
-						if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-							sz = 4;
-						else
-							sz = 3;
+
+						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 
 						//a good cDirty and a DYNAMIC_DRAW call needed
@@ -1061,8 +1105,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
 							}*/
 
-						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(locs.glColor);//must be called after Pointer above
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, 0, 0);
+						gl.glEnableVertexAttribArray(locs.glColor);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 
@@ -1071,183 +1115,154 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 
 				}
-			}
-			else if (byteColorsDefined)
-			{
-				//FIXME: byteColors not supported for now
-				throw new UnsupportedOperationException();
+				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
+				{
+					//FIXME: byteColors not supported for now
+					throw new UnsupportedOperationException();
 
-				/*bclrs.position(0);
-				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-				{
-					gl.glColorPointer(4, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);
+					/*bclrs.position(0);
+					if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+					{
+						gl.glColorPointer(4, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);
+					}
+					else
+					{
+						gl.glColorPointer(3, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);
+					}*/
 				}
-				else
+				else if (locs.glColor != -1)
 				{
-					gl.glColorPointer(3, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);
-				}*/
-			}
-			else
-			{
-				// ignoreVertexcolors will be set in FFP now as the glColors is unbound
-				if (locs.glColor != -1)
-				{
+					// ignoreVertexcolors will be set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
-			}
 
-			if (normalsDefined)
-			{
-				if (locs.glNormal != -1)
+				if (normalsDefined)
 				{
-					if (gd.geoToNormalBuf == -1)
+					if (locs.glNormal != -1)
 					{
-						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
-						//a good cDirty and a DYNAMIC_DRAW call needed
-						/*if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
-						{	
-							norms.position(0);						
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
-						}*/
-
-						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-
-						if (OUTPUT_PER_FRAME_STATS)
-							ctx.perFrameStats.glVertexAttribPointerNormals++;
-					}
-
-				}
-			}
-			else
-			{
-				if (locs.glNormal != -1)
-				{
-					gl.glDisableVertexAttribArray(locs.glNormal);
-					if (OUTPUT_PER_FRAME_STATS)
-						ctx.perFrameStats.glDisableVertexAttribArray++;
-				}
-			}
-
-			if (vattrDefined)
-			{
-				for (int index = 0; index < vertexAttrCount; index++)
-				{
-					Integer attribLoc = locs.genAttIndexToLoc.get(index);
-					if (attribLoc != null && attribLoc.intValue() != -1)
-					{
-						SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
-						if (bufIds == null)
-						{
-							new Throwable("Buffer load issue!").printStackTrace();
-						}
-
-						Integer bufId = bufIds.get(index);
-						if (bufId == null)
+						if (gd.geoToNormalBuf == -1)
 						{
 							new Throwable("Buffer load issue!").printStackTrace();
 						}
 						else
 						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
 							//a good cDirty and a DYNAMIC_DRAW call needed
-							/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
-							{
-								FloatBuffer vertexAttrs = vertexAttrBufs[index];								
-								vertexAttrs.position(0);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+							/*if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
+							{	
+								norms.position(0);						
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
 							}*/
 
-							int sz = vertexAttrSizes[index];
-
-							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
-							gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
+							gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, 0, 0);
+							gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
 							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+								ctx.perFrameStats.glVertexAttribPointerNormals++;
+						}
+
+					}
+				}
+				else
+				{
+					if (locs.glNormal != -1)
+					{
+						gl.glDisableVertexAttribArray(locs.glNormal);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
+				}
+
+				if (vattrDefined)
+				{
+					for (int index = 0; index < vertexAttrCount; index++)
+					{
+						Integer attribLoc = locs.genAttIndexToLoc.get(index);
+						if (attribLoc != null && attribLoc.intValue() != -1)
+						{
+							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
+							if (bufIds == null)
+							{
+								new Throwable("Buffer load issue!").printStackTrace();
+							}
+
+							Integer bufId = bufIds.get(index);
+							if (bufId == null)
+							{
+								new Throwable("Buffer load issue!").printStackTrace();
+							}
+							else
+							{
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+								//a good cDirty and a DYNAMIC_DRAW call needed
+								/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+								{
+									FloatBuffer vertexAttrs = vertexAttrBufs[index];								
+									vertexAttrs.position(0);
+									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+								}*/
+
+								int sz = vertexAttrSizes[index];
+
+								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
+								gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
+								if (DO_OUTPUT_ERRORS)
+									outputErrors(ctx);
+
+								if (OUTPUT_PER_FRAME_STATS)
+									ctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+							}
 						}
 					}
 				}
-			}
 
-			if (textureDefined)
-			{
-				int texSet = 0;
-				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetCount; texUnit++)
+				if (textureDefined)
 				{
-					if (((texSet = texCoordSetMap[texUnit]) != -1))
+					boolean[] texSetsBound = new boolean[texCoords.length];
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
 					{
-						//stupid interface...
-						FloatBuffer buf = (FloatBuffer) texCoords[texSet];
-						buf.position(0);
-
-						if (VERBOSE)
-							System.err.println("private enableTexCoordPointer(texUnit=" + texUnit + ")");
-
-						if (locs.glMultiTexCoord[texUnit] != -1)
+						int texSet = texCoordSetMap[texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
 						{
+							texSetsBound[texSet] = true;
+							//stupid interface...
+							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							buf.position(0);
+
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 							if (bufIds == null)
 							{
-								bufIds = new SparseArray<Integer>();
-								gd.geoToTexCoordsBuf = bufIds;
+								new Throwable("Buffer load issue!").printStackTrace();
 							}
-
 							Integer bufId = bufIds.get(texUnit);
 							if (bufId == null)
 							{
-								int[] tmp = new int[1];
-								gl.glGenBuffers(1, tmp, 0);
-								bufId = new Integer(tmp[0]);
-
+								new Throwable("Buffer load issue!").printStackTrace();
+							}
+							else
+							{
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, buf.remaining() * Float.SIZE / 8, buf, GL2ES2.GL_STATIC_DRAW);
+								gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
+								gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);//must be called after Pointer above
 								if (DO_OUTPUT_ERRORS)
 									outputErrors(ctx);
-								bufIds.put(texUnit, bufId);
 
 								if (OUTPUT_PER_FRAME_STATS)
-									ctx.perFrameStats.glBufferData++;
+									ctx.perFrameStats.enableTexCoordPointer++;
 							}
-
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
-							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);//must be called after Pointer above
-							if (DO_OUTPUT_ERRORS)
-								outputErrors(ctx);
-
-							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.enableTexCoordPointer++;
-
-						}
-
-					}
-					else
-					{
-						if (locs.glMultiTexCoord[texUnit] != -1)
-						{
-							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
-							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.glDisableVertexAttribArray++;
 						}
 					}
+
 				}
 
+				//general catch all
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
-
-			//general catch all
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
 
 			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
 					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
@@ -1271,27 +1286,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					break;
 				}
 
-				//so currently morrowind land is happy with being stitched, but oblivions is madness!
-				// I'm sure it's the land cos you can see the underside
-				// I notice mention of degenerate triangles in the grid elevation builder
-				// so maybe time to step away from it?
-				boolean DO_STITCH = true;
 				int[] stripInd = gd.geoToIndStripBuf;
 				// if no index buffers build build them now
 				if (stripInd == null)
 				{
-					// are we stitching up?
-					if (strip_len > 1 && DO_STITCH)
-					{
-						ShortBuffer stitchedTriIndexes = stitchTriStrips(strip_len, sarray, initialIndexIndex, indexCoord);
-						//now set it up as a single tristrip
-						strip_len = 1;
-						sarray = new int[] { stitchedTriIndexes.capacity() - initialIndexIndex };
-						gd.geoToIndStripSwappedSize = stitchedTriIndexes.capacity() - initialIndexIndex;
-						//System.out.println("stitched and put " +sarray[0] + " "+geo);
-						gd.geoToIndBufSize = stitchedTriIndexes.capacity() - initialIndexIndex;
-					}
-
 					stripInd = new int[strip_len];
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
@@ -1337,14 +1335,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 							//gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 							offset += count;
 					}*/
-				}
-
-				// second time around we have unstitched values fix up!
-				if (strip_len > 1 && DO_STITCH)
-				{
-					strip_len = 1;
-					sarray = new int[] { gd.geoToIndStripSwappedSize };
-					//System.out.println("reseen stitched and got " +sarray[0] + " "+geo);
 				}
 
 				for (int i = 0; i < strip_len; i++)
@@ -1422,7 +1412,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
 
 				// Need to override if polygonAttributes says we should be drawing lines
-				// Note these are not poly line just contiguos lines between each pair of points
+				// Note these are not poly line just contiguous lines between each pair of points
 				// So it looks really rubbish
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_SET;
@@ -1451,12 +1441,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			}
 
+			if (gl.isGL2ES3())
+			{
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+				gl2es3.glBindVertexArray(0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			//TODO: are these needed?
+			/*
 			if (vattrDefined)
 			{
-				//resetVertexAttrs(gl, ctx, vertexAttrCount);
 				for (int i = 0; i < vertexAttrCount; i++)
 				{
-					//ctx.disableVertexAttrArray(gl, i);
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
@@ -1466,7 +1464,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 				}
 			}
-
+			
 			if (textureDefined)
 			{
 				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
@@ -1478,24 +1476,37 @@ class JoglesPipeline extends JoglesDEPPipeline
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
-			}
+			}*/
 
 		}
 		else
+
 		{
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
 		}
 		if (DO_OUTPUT_ERRORS)
+
 			outputErrors(ctx);
+	}
+
+	// used by GeometryArray by Reference in interleaved format with NIO buffer
+	// NOT USED BY MORROWIND
+	@Override
+	@Deprecated
+	void executeInterleavedBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
+			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
+	{
+		throw new UnsupportedOperationException();
 	}
 
 	//----------------------------------------------------------------------
 	private boolean executeIndexedGeometryOptimized(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
 			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
-			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordSetCount, int[] texCoordSetMap, int numActiveTexUnitState,
+			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength, int[] texCoordSetMap, int numActiveTexUnitState,
 			int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
 	{
 		//skip all morphables for now
@@ -1512,7 +1523,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			return false;
 		}
 
-		// Ok new idea
+		// Ok idea is:
 		// current vertex = 3f for coord 4f for color 3f for normal 2f for texcoord (6f tan/bi)
 		// current  = 48 bytes (72)
 		// can be 3hf coord   =8, 2hf uv = 4, 4b color=4, 3b normal = 4 (3b tan/bi)=8
@@ -1545,417 +1556,168 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
 			//NOTE here we are doing a virtual loadAllBuffers
-			GeometryData gd = ctx.allGeometryData.get(geo);
-			if (gd == null)
+			GeometryData gd = loadInterleavedBuffer(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, dverts, fclrs,
+					bclrs, norms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, texStride,
+					texCoords);
+
+			// not required second time around for VAO
+			boolean bindingRequired = true;
+			if (gl.isGL2ES3())
 			{
-				gd = new GeometryData();
-				ctx.allGeometryData.put(geo, gd);
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+				if (gd.vaoId == -1)
+				{
+					int[] tmp = new int[1];
+					gl2es3.glGenVertexArrays(1, tmp, 0);
+					gd.vaoId = tmp[0];
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else
+				{
+					bindingRequired = false;
+				}
+				gl2es3.glBindVertexArray(gd.vaoId);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
 
-			if (gd.interleavedBufId == -1)
+			if (bindingRequired)
 			{
-				//NOTE interleaving is only done on the data inside the geometry
-				// we don't consider the shader slots at all, as one geometry
-				// can be used with any shader, e.g. physics appearance with a NiTriShape as in morrowind
-				// notice also building the interleaved ignore numActiveTextureUnits
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 
-				//NOTE WELL tex coords set are limited to 1!
-
-				// how big are we going to require?
-				gd.interleavedStride = 0;
-				int offset = 0;
-				if (floatCoordDefined)
+				if (floatCoordDefined && locs.glVertex != -1)
 				{
-					gd.geoToCoordOffset = offset;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 8;// 3 half float = 6 align on 4
-						gd.interleavedStride += 8;
+						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
 					}
 					else
 					{
-						offset += 4 * 3;
-						gd.interleavedStride += 4 * 3;
+						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
 					}
-					fverts.position(0);
+					gl.glEnableVertexAttribArray(locs.glVertex);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else if (doubleCoordDefined && locs.glVertex != -1)
+				{
+					throw new UnsupportedOperationException();
+				}
+				else
+				{
+					throw new UnsupportedOperationException("No coords!");
 				}
 
-				if (floatColorsDefined)
+				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
-					gd.geoToColorsOffset = offset;
-
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 4;
-						gd.interleavedStride += 4;// minimum alignment
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_UNSIGNED_BYTE, true, gd.interleavedStride,
+								gd.geoToColorsOffset);
 					}
 					else
 					{
-						offset += 4 * sz;
-						gd.interleavedStride += 4 * sz;
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToColorsOffset);
+
 					}
-					fclrs.position(0);
+					gl.glEnableVertexAttribArray(locs.glColor);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+
+				}
+				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
+				{
+					throw new UnsupportedOperationException();
+				}
+				else if (locs.glColor != -1)
+				{
+					// ignoreVertexcolors will be set in FFP now as the glColors is unbound
+					gl.glDisableVertexAttribArray(locs.glColor);
 				}
 
-				if (normalsDefined)
+				if (normalsDefined && locs.glNormal != -1)
 				{
-					gd.geoToNormalsOffset = offset;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 4;
-						gd.interleavedStride += 4;// minimum alignment
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride, gd.geoToNormalsOffset);
 					}
 					else
 					{
-						offset += 4 * 3;
-						gd.interleavedStride += 4 * 3;
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToNormalsOffset);
 					}
-					norms.position(0);
+					gl.glEnableVertexAttribArray(locs.glNormal);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else if (locs.glNormal != -1)
+				{
+					gl.glDisableVertexAttribArray(locs.glNormal);
 				}
 
 				if (vattrDefined)
 				{
 					for (int index = 0; index < vertexAttrCount; index++)
 					{
-						gd.geoToVattrOffset[index] = offset;
-
-						int sz = vertexAttrSizes[index];
-						if (COMPRESS_OPTIMIZED_VERTICES)
+						Integer attribLoc = locs.genAttIndexToLoc.get(index);
+						if (attribLoc != null && attribLoc.intValue() != -1)
 						{
-							offset += (int) Math.ceil(sz / 4.0);
-							gd.interleavedStride += (int) Math.ceil(sz / 4.0);// minimum alignment
-						}
-						else
-						{
-							offset += 4 * sz;
-							gd.interleavedStride += 4 * sz;
-						}
+							int sz = vertexAttrSizes[index];
 
-						FloatBuffer vertexAttrs = vertexAttrBufs[index];
-						vertexAttrs.position(0);
+							if (COMPRESS_OPTIMIZED_VERTICES)
+							{
+								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true, gd.interleavedStride,
+										gd.geoToVattrOffset[index]);
+							}
+							else
+							{
+								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
+										gd.geoToVattrOffset[index]);
+							}
 
+							gl.glEnableVertexAttribArray(attribLoc.intValue());
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+						}
 					}
 				}
 
 				if (textureDefined)
 				{
-					// hard code for now as it's a nightmare
-					for (int i = 0; i < 1; i++)
+					boolean[] texSetsLoaded = new boolean[texCoords.length];
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
 					{
-						int texSet = texCoordSetMap[i];
-						if (texSet != -1)
+						int texSet = texCoordSetMap[texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsLoaded[texSet])
 						{
-							gd.geoToTexCoordOffset[texSet] = offset;
+							texSetsLoaded[texSet] = true;
 							if (COMPRESS_OPTIMIZED_VERTICES)
 							{
-								// note half floats sized
-								int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
-								offset += stride;
-								gd.interleavedStride += stride;// minimum alignment
+								gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_HALF_FLOAT, true,
+										gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
 							}
 							else
 							{
-								offset += 4 * texStride;
-								gd.interleavedStride += 4 * texStride;
+								gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_FLOAT, true,
+										gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
 							}
-							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
-							buf.position(0);
+							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texSet]);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
 						}
 					}
 				}
-
-				ByteBuffer interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
-				interleavedBuffer.order(ByteOrder.nativeOrder());
-
-				for (int i = 0; i < vertexCount; i++)
-				{
-					interleavedBuffer.position(i * gd.interleavedStride);
-					if (floatCoordDefined)
-					{
-						if (COMPRESS_OPTIMIZED_VERTICES)
-						{
-							int startPos = interleavedBuffer.position();
-							for (int c = 0; c < 3; c++)
-							{
-								short hf = (short) JoglesMatrixUtil.halfFromFloat(fverts.get());
-								interleavedBuffer.putShort(hf);
-							}
-
-							interleavedBuffer.position(startPos + 8);// minimum alignment of 2*3 is 8
-						}
-						else
-						{
-							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-							for (int c = 0; c < 3; c++)
-								fb.put(fverts.get());
-
-							interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
-						}
-					}
-
-					if (floatColorsDefined)
-					{
-						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-						if (COMPRESS_OPTIMIZED_VERTICES)
-						{
-							int startPos = interleavedBuffer.position();
-							for (int c = 0; c < sz; c++)
-								interleavedBuffer.put((byte) (fclrs.get() * 255));
-
-							interleavedBuffer.position(startPos + 4);// minimum alignment
-						}
-						else
-						{
-							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-							for (int c = 0; c < sz; c++)
-								fb.put(fclrs.get());
-
-							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
-						}
-
-					}
-					if (normalsDefined)
-					{
-						if (COMPRESS_OPTIMIZED_VERTICES)
-						{
-							int startPos = interleavedBuffer.position();
-							for (int c = 0; c < 3; c++)
-								interleavedBuffer.put((byte) (((norms.get() * 255) - 1) / 2f));
-
-							interleavedBuffer.position(startPos + 4);// minimum alignment
-						}
-						else
-						{
-							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-							for (int c = 0; c < 3; c++)
-								fb.put(norms.get());
-
-							interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
-						}
-					}
-
-					if (vattrDefined)
-					{
-						for (int index = 0; index < vertexAttrCount; index++)
-						{
-							int sz = vertexAttrSizes[index];
-							FloatBuffer vertexAttrs = vertexAttrBufs[index];
-							if (COMPRESS_OPTIMIZED_VERTICES)
-							{
-								int startPos = interleavedBuffer.position();
-								for (int va = 0; va < sz; va++)
-									interleavedBuffer.put((byte) (((vertexAttrs.get() * 255) - 1) / 2f));
-
-								interleavedBuffer.position(startPos + (int) Math.ceil(sz / 4.0));// minimum alignment
-							}
-							else
-							{
-								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-								for (int va = 0; va < sz; va++)
-									fb.put(vertexAttrs.get());
-
-								interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
-							}
-						}
-					}
-
-					if (textureDefined)
-					{
-						// hard code for now as it's a nightmare -texCoordSetCount=>1
-						for (int t = 0; t < 1; t++)
-						{
-							int texSet = texCoordSetMap[t];
-							if (texSet != -1)
-							{
-								FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
-
-								if (COMPRESS_OPTIMIZED_VERTICES)
-								{
-									int startPos = interleavedBuffer.position();
-									for (int c = 0; c < texStride; c++)
-									{
-										short hf = (short) JoglesMatrixUtil.halfFromFloat(tcBuf.get());
-										interleavedBuffer.putShort(hf);
-									}
-
-									interleavedBuffer.position(startPos + (texStride == 2 ? 4 : 8));// minimum alignment
-								}
-								else
-								{
-									FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-									for (int tc = 0; tc < texStride; tc++)
-										fb.put(tcBuf.get());
-
-									interleavedBuffer.position(interleavedBuffer.position() + (4 * texStride));
-								}
-							}
-						}
-					}
-
-				}
-
-				interleavedBuffer.position(0);
-				int[] tmp = new int[1];
-				gl.glGenBuffers(1, tmp, 0);
-				gd.interleavedBufId = tmp[0];
-
-				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
-				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, interleavedBuffer.remaining(), interleavedBuffer, GL2ES2.GL_STATIC_DRAW);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
 
 				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.interleavedBufferCreated++;
+					ctx.perFrameStats.glVertexAttribPointerInterleaved++;
 
-			}
-
-			gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
-
-			if (floatCoordDefined && locs.glVertex != -1)
-			{
-				if (COMPRESS_OPTIMIZED_VERTICES)
-				{
-					gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
-				}
-				else
-				{
-					gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
-				}
-				gl.glEnableVertexAttribArray(locs.glVertex);
+				//general catch all
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
-			else if (doubleCoordDefined)
-			{
-				throw new UnsupportedOperationException();
-			}
-			else
-			{
-				throw new UnsupportedOperationException("No coords!");
-			}
-
-			if (floatColorsDefined && locs.glColor != -1)
-			{
-				int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-				if (COMPRESS_OPTIMIZED_VERTICES)
-				{
-					gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_UNSIGNED_BYTE, true, gd.interleavedStride, gd.geoToColorsOffset);
-				}
-				else
-				{
-					gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToColorsOffset);
-
-				}
-				gl.glEnableVertexAttribArray(locs.glColor);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-
-			}
-			else if (byteColorsDefined)
-			{
-				throw new UnsupportedOperationException();
-			}
-			else
-			{
-				// ignoreVertexcolors will be set in FFP now as the glColors is unbound
-				if (locs.glColor != -1)
-				{
-					gl.glDisableVertexAttribArray(locs.glColor);
-				}
-			}
-
-			if (normalsDefined && locs.glNormal != -1)
-			{
-				if (COMPRESS_OPTIMIZED_VERTICES)
-				{
-					gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride, gd.geoToNormalsOffset);
-				}
-				else
-				{
-					gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToNormalsOffset);
-				}
-				gl.glEnableVertexAttribArray(locs.glNormal);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-			}
-			else
-			{
-				if (locs.glNormal != -1)
-				{
-					gl.glDisableVertexAttribArray(locs.glNormal);
-				}
-			}
-
-			if (vattrDefined)
-			{
-				for (int index = 0; index < vertexAttrCount; index++)
-				{
-					Integer attribLoc = locs.genAttIndexToLoc.get(index);
-					if (attribLoc != null && attribLoc.intValue() != -1)
-					{
-						int sz = vertexAttrSizes[index];
-
-						if (COMPRESS_OPTIMIZED_VERTICES)
-						{
-							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true, gd.interleavedStride,
-									gd.geoToVattrOffset[index]);
-						}
-						else
-						{
-							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
-									gd.geoToVattrOffset[index]);
-						}
-
-						gl.glEnableVertexAttribArray(attribLoc.intValue());
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-
-					}
-
-				}
-			}
-
-			if (textureDefined)
-			{
-				//for (int t = 0; t < numActiveTexUnitState && t < texCoordSetCount; t++)
-				for (int t = 0; t < 1; t++)
-				{
-					int texSet = texCoordSetMap[t];
-					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1)
-					{
-						if (COMPRESS_OPTIMIZED_VERTICES)
-						{
-							gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_HALF_FLOAT, true,
-									gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
-						}
-						else
-						{
-							gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
-									gd.geoToTexCoordOffset[texSet]);
-						}
-						gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texSet]);
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-					}
-					else
-					{
-						if (locs.glMultiTexCoord[texSet] != -1)
-						{
-							gl.glDisableVertexAttribArray(locs.glMultiTexCoord[texSet]);
-						}
-					}
-				}
-			}
-
-			if (OUTPUT_PER_FRAME_STATS)
-				ctx.perFrameStats.glVertexAttribPointerInterleaved++;
-
-			//general catch all
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
 
 			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
 					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
@@ -1979,26 +1741,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					break;
 				}
 
-				//so currently morrowind land is happy with being stitched, but oblivions is madness!
-				// I'm sure it's the land cos you can see the underside
-				// I notice mention of degenerate triangles in the grid elevation builder
-				// so maybe time to step away from it?
-				boolean DO_STITCH = true;
 				int[] stripInd = gd.geoToIndStripBuf;
 				// if no index buffers build build them now
 				if (stripInd == null)
 				{
-					// are we stitching up?
-					if (strip_len > 1 && DO_STITCH)
-					{
-						ShortBuffer stitchedTriIndexes = stitchTriStrips(strip_len, sarray, initialIndexIndex, indexCoord);
-						//now set it up as a single tristrip
-						strip_len = 1;
-						sarray = new int[] { stitchedTriIndexes.capacity() - initialIndexIndex };
-						gd.geoToIndStripSwappedSize = stitchedTriIndexes.capacity() - initialIndexIndex;
-						//System.out.println("stitched and put " +sarray[0] + " "+geo);
-						gd.geoToIndBufSize = stitchedTriIndexes.capacity() - initialIndexIndex;
-					}
 
 					stripInd = new int[strip_len];
 					gl.glGenBuffers(strip_len, stripInd, 0);
@@ -2047,14 +1793,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}*/
 				}
 
-				// second time around we have unstitched values fix up!
-				if (strip_len > 1 && DO_STITCH)
-				{
-					strip_len = 1;
-					sarray = new int[] { gd.geoToIndStripSwappedSize };
-					//System.out.println("reseen stitched and got " +sarray[0] + " "+geo);
-				}
-
 				for (int i = 0; i < strip_len; i++)
 				{
 					int count = sarray[i];
@@ -2121,13 +1859,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 						gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, indBuf.remaining() * Integer.SIZE / 8, indBuf);
 					}*/
 				}
+				if (bindingRequired)
+				{
+					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
 
-				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-
-				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
+				}
 
 				// Need to override if polygonAttributes says we should be drawing lines
 				// Note these are not poly line just contiguos lines between each pair of points
@@ -2159,12 +1899,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			}
 
+			if (gl.isGL2ES3())
+			{
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+				gl2es3.glBindVertexArray(0);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			//TODO: are these needed??
+			/*
 			if (vattrDefined)
 			{
-				//resetVertexAttrs(gl, ctx, vertexAttrCount);
 				for (int i = 0; i < vertexAttrCount; i++)
 				{
-					//ctx.disableVertexAttrArray(gl, i);
 					Integer attribLoc = locs.genAttIndexToLoc.get(i);
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
@@ -2174,7 +1922,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 				}
 			}
-
+			
 			if (textureDefined)
 			{
 				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
@@ -2186,11 +1934,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
-			}
+			}*/
 
 		}
 		else
-
 		{
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
@@ -2202,370 +1949,312 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		return true;
 	}
+
 	//----------------------------------------------------------------------
 	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
 	//
 
-	private static ShortBuffer stitchTriStrips(int strip_len, int[] sarray, int initialIndexIndex, int[] indexCoord)
-	{
-		//TODO: How to make degenerate tri strips joined up
-		//What do we need to put in between, in order to link up the triangles? 
-		//We’ll need an even number of new triangles in order to preserve the winding. 
-		//We can do this by repeating the last vertex of the first row, 
-		//and the first vertex of the second row. http://www.learnopengles.com/tag/degenerate-triangles/
-
-		// first how big = size0+1...1+sizeN+1...1+sizeLen
-		// equals sum strips + (numstrip*2)-2
-		int totalStitchedIndexSize = 0;
-		for (int i = 0; i < strip_len; i++)
-			totalStitchedIndexSize += sarray[i];
-
-		totalStitchedIndexSize += (strip_len * 2) - 2;
-
-		// now put the tristrip indexes into a  single fat buffer, with degenerates...
-		int dstOffset = initialIndexIndex;
-		int srcOffset = initialIndexIndex;
-		ByteBuffer bb = ByteBuffer.allocateDirect(totalStitchedIndexSize * 2);
-		bb.order(ByteOrder.nativeOrder());
-		ShortBuffer totalIndicesBuffer = bb.asShortBuffer();
-
-		for (int i = 0; i < strip_len; i++)
-		{
-			// first one no repeated first
-			if (i != 0)
-			{
-				//repeat first
-				totalIndicesBuffer.put(dstOffset, (short) indexCoord[srcOffset]);
-				dstOffset++;
-			}
-
-			int count = sarray[i];
-			totalIndicesBuffer.position(dstOffset);
-
-			for (int s = 0; s < count; s++)
-				totalIndicesBuffer.put(s, (short) indexCoord[srcOffset + s]);
-
-			dstOffset += count;
-			srcOffset += count;
-
-			//last one no repeat last
-			if (i != strip_len - 1)
-			{
-				//repeat last
-				totalIndicesBuffer.put(dstOffset, (short) indexCoord[srcOffset]);
-				dstOffset++;
-			}
-
-		}
-		return totalIndicesBuffer;
-
-	}
-
 	private static LocationData getLocs(JoglesContext ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd)
 	{
-		if (ctx.getShaderProgram() != null)
+
+		LocationData locs = pd.programToLocationData;
+		if (locs == null)
 		{
+			locs = new LocationData();
 
-			LocationData locs = pd.programToLocationData;
-			if (locs == null)
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.programToLocationData++;
+
+			if (ATTEMPT_UBO && gl.isGL2ES3())
 			{
-				locs = new LocationData();
+				GL2ES3 gl2es3 = (GL2ES3) gl;
 
-				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.programToLocationData++;
-
-				if (ATTEMPT_UBO && gl.isGL2ES3())
+				int UBOBlockIndex = gl2es3.glGetUniformBlockIndex(shaderProgramId, "FFP_Uniform_Block");
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (UBOBlockIndex != -1)
 				{
-					GL2ES3 gl2es3 = (GL2ES3) gl;
+					locs.blockIndex = UBOBlockIndex;
+					int[] blockSize = new int[1];
 
-					int UBOBlockIndex = gl2es3.glGetUniformBlockIndex(shaderProgramId, "FFP_Uniform_Block");
+					gl2es3.glGetActiveUniformBlockiv(shaderProgramId, UBOBlockIndex, GL2ES3.GL_UNIFORM_BLOCK_DATA_SIZE, blockSize, 0);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-					if (UBOBlockIndex != -1)
+					locs.blockSize = blockSize[0];
+
+					ByteBuffer uboBB = ByteBuffer.allocateDirect(blockSize[0]);
+					uboBB.order(ByteOrder.nativeOrder());
+					pd.programToUBOBB = uboBB;
+
+					// set up single buffer for ffp data, jesus...
+					if (ctx.globalUboBufId == -1)
+					//if (locs.uboBufId == -1)
 					{
-						locs.blockIndex = UBOBlockIndex;
-						int[] blockSize = new int[1];
+						int[] tmp = new int[1];
+						gl.glGenBuffers(1, tmp, 0);
+						int uboBufId = tmp[0];
 
-						gl2es3.glGetActiveUniformBlockiv(shaderProgramId, UBOBlockIndex, GL2ES3.GL_UNIFORM_BLOCK_DATA_SIZE, blockSize, 0);
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-						locs.blockSize = blockSize[0];
+						ctx.globalUboBufId = uboBufId;
+						//locs.uboBufId = uboBufId;
 
-						ByteBuffer uboBB = ByteBuffer.allocateDirect(blockSize[0]);
-						uboBB.order(ByteOrder.nativeOrder());
-						pd.programToUBOBB = uboBB;
+						gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, uboBufId);
+						gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
+						gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, UBOBlockIndex, uboBufId);
+					}
 
-						// set up single buffer for ffp data, jesus...
-						if (ctx.globalUboBufId == -1)
-						//if (locs.uboBufId == -1)
-						{
-							int[] tmp = new int[1];
-							gl.glGenBuffers(1, tmp, 0);
-							int uboBufId = tmp[0];
+					// Query for the offsets of each block variable
+					String[] names = { "glProjectionMatrix", "glProjectionMatrixInverse", //
+							"glViewMatrix", "glModelMatrix", //
+							"glModelViewMatrix", "glModelViewMatrixInverse", //
+							"glModelViewProjectionMatrix", "glNormalMatrix", //
+							"glFrontMaterialdiffuse", "glFrontMaterialemission", //
+							"glFrontMaterialspecular", "glFrontMaterialshininess", //
+							"ignoreVertexColors", "glLightModelambient", //
+							"objectColor", //
+							"glLightSource0position", "glLightSource0diffuse", //
+							"textureTransform", //
+							"alphaTestEnabled", "alphaTestFunction", "alphaTestValue" };
 
-							ctx.globalUboBufId = uboBufId;
-							//locs.uboBufId = uboBufId;
+					IntBuffer indices = IntBuffer.allocate(names.length);
 
-							gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, uboBufId);
-							gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
-							gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, UBOBlockIndex, uboBufId);
-						}
+					if (PRESUME_INDICES)
+					{
+						indices.put(0, 16);
+						indices.put(1, 17);
+						indices.put(2, 18);
+						indices.put(3, 11);
+						indices.put(4, 12);
+						indices.put(5, 13);
+						indices.put(6, 14);
+						indices.put(7, 15);
+						indices.put(8, 4);
+						indices.put(9, 5);
+						indices.put(10, 7);
+						indices.put(11, 6);
+						indices.put(12, 19);
+						indices.put(13, 8);
+						indices.put(14, 20);
+						indices.put(15, 10);
+						indices.put(16, 9);
+						indices.put(17, 21);
+						indices.put(18, 1);
+						indices.put(19, 2);
+						indices.put(20, 3);
 
-						// Query for the offsets of each block variable
-						String[] names = { "glProjectionMatrix", "glProjectionMatrixInverse", //
-								"glViewMatrix", "glModelMatrix", //
-								"glModelViewMatrix", "glModelViewMatrixInverse", //
-								"glModelViewProjectionMatrix", "glNormalMatrix", //
-								"glFrontMaterialdiffuse", "glFrontMaterialemission", //
-								"glFrontMaterialspecular", "glFrontMaterialshininess", //
-								"ignoreVertexColors", "glLightModelambient", //
-								"objectColor", //
-								"glLightSource0position", "glLightSource0diffuse", //
-								"textureTransform", //
-								"alphaTestEnabled", "alphaTestFunction", "alphaTestValue" };
-
-						IntBuffer indices = IntBuffer.allocate(names.length);
-
-						if (PRESUME_INDICES)
-						{
-							indices.put(0, 16);
-							indices.put(1, 17);
-							indices.put(2, 18);
-							indices.put(3, 11);
-							indices.put(4, 12);
-							indices.put(5, 13);
-							indices.put(6, 14);
-							indices.put(7, 15);
-							indices.put(8, 4);
-							indices.put(9, 5);
-							indices.put(10, 7);
-							indices.put(11, 6);
-							indices.put(12, 19);
-							indices.put(13, 8);
-							indices.put(14, 20);
-							indices.put(15, 10);
-							indices.put(16, 9);
-							indices.put(17, 21);
-							indices.put(18, 1);
-							indices.put(19, 2);
-							indices.put(20, 3);
-
-							locs.glProjectionMatrixOffset = 0;
-							locs.glProjectionMatrixInverseOffset = 64;
-							locs.glViewMatrixOffset = 128;
-							locs.glModelMatrixOffset = 192;
-							locs.glModelViewMatrixOffset = 256;
-							locs.glModelViewMatrixInverseOffset = 320;
-							locs.glModelViewProjectionMatrixOffset = 384;
-							locs.glNormalMatrixOffset = 448;
-							locs.glFrontMaterialdiffuseOffset = 496;
-							locs.glFrontMaterialemissionOffset = 512;
-							locs.glFrontMaterialspecularOffset = 528;
-							locs.glFrontMaterialshininessOffset = 540;
-							locs.ignoreVertexColorsOffset = 544;
-							locs.glLightModelambientOffset = 560;
-							locs.objectColorOffset = 576;
-							locs.glLightSource0positionOffset = 592;
-							locs.glLightSource0diffuseOffset = 608;
-							locs.textureTransformOffset = 624;
-							locs.alphaTestEnabledOffset = 688;
-							locs.alphaTestFunctionOffset = 692;
-							locs.alphaTestValueOffset = 696;
-						}
-						else
-						{
-							gl2es3.glGetUniformIndices(shaderProgramId, names.length, names, indices);
-
-							if (DO_OUTPUT_ERRORS)
-								outputErrors(ctx);
-							//ok so including a -1 in the indices cause everything to come back at 0 after it
-							// possibly android throws a fit if it's compiled away or something
-							IntBuffer offset = IntBuffer.allocate(1);
-							if (indices.get(0) != -1)
-							{
-								indices.position(0);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glProjectionMatrixOffset = offset.get(0);
-							}
-							if (indices.get(1) != -1)
-							{
-								indices.position(1);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glProjectionMatrixInverseOffset = offset.get(0);
-							}
-							if (indices.get(2) != -1)
-							{
-								indices.position(2);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glViewMatrixOffset = offset.get(0);
-							}
-							if (indices.get(3) != -1)
-							{
-								indices.position(3);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glModelMatrixOffset = offset.get(0);
-							}
-							if (indices.get(4) != -1)
-							{
-								indices.position(4);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glModelViewMatrixOffset = offset.get(0);
-							}
-							if (indices.get(5) != -1)
-							{
-								indices.position(5);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glModelViewMatrixInverseOffset = offset.get(0);
-							}
-							if (indices.get(6) != -1)
-							{
-								indices.position(6);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glModelViewProjectionMatrixOffset = offset.get(0);
-							}
-							if (indices.get(7) != -1)
-							{
-								indices.position(7);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glNormalMatrixOffset = offset.get(0);
-							}
-							if (indices.get(8) != -1)
-							{
-								indices.position(8);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glFrontMaterialdiffuseOffset = offset.get(0);
-							}
-							if (indices.get(9) != -1)
-							{
-								indices.position(9);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glFrontMaterialemissionOffset = offset.get(0);
-							}
-							if (indices.get(10) != -1)
-							{
-								indices.position(10);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glFrontMaterialspecularOffset = offset.get(0);
-							}
-							if (indices.get(11) != -1)
-							{
-								indices.position(11);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glFrontMaterialshininessOffset = offset.get(0);
-							}
-							if (indices.get(12) != -1)
-							{
-								indices.position(12);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.ignoreVertexColorsOffset = offset.get(0);
-							}
-							if (indices.get(13) != -1)
-							{
-								indices.position(13);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glLightModelambientOffset = offset.get(0);
-							}
-							if (indices.get(14) != -1)
-							{
-								indices.position(14);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.objectColorOffset = offset.get(0);
-							}
-							if (indices.get(15) != -1)
-							{
-								indices.position(15);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glLightSource0positionOffset = offset.get(0);
-							}
-							if (indices.get(16) != -1)
-							{
-								indices.position(16);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.glLightSource0diffuseOffset = offset.get(0);
-							}
-							if (indices.get(17) != -1)
-							{
-								indices.position(17);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.textureTransformOffset = offset.get(0);
-							}
-							if (indices.get(18) != -1)
-							{
-								indices.position(18);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.alphaTestEnabledOffset = offset.get(0);
-							}
-							if (indices.get(19) != -1)
-							{
-								indices.position(19);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.alphaTestFunctionOffset = offset.get(0);
-							}
-							if (indices.get(20) != -1)
-							{
-								indices.position(20);
-								gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-								locs.alphaTestValueOffset = offset.get(0);
-							}
-						}
+						locs.glProjectionMatrixOffset = 0;
+						locs.glProjectionMatrixInverseOffset = 64;
+						locs.glViewMatrixOffset = 128;
+						locs.glModelMatrixOffset = 192;
+						locs.glModelViewMatrixOffset = 256;
+						locs.glModelViewMatrixInverseOffset = 320;
+						locs.glModelViewProjectionMatrixOffset = 384;
+						locs.glNormalMatrixOffset = 448;
+						locs.glFrontMaterialdiffuseOffset = 496;
+						locs.glFrontMaterialemissionOffset = 512;
+						locs.glFrontMaterialspecularOffset = 528;
+						locs.glFrontMaterialshininessOffset = 540;
+						locs.ignoreVertexColorsOffset = 544;
+						locs.glLightModelambientOffset = 560;
+						locs.objectColorOffset = 576;
+						locs.glLightSource0positionOffset = 592;
+						locs.glLightSource0diffuseOffset = 608;
+						locs.textureTransformOffset = 624;
+						locs.alphaTestEnabledOffset = 688;
+						locs.alphaTestFunctionOffset = 692;
+						locs.alphaTestValueOffset = 696;
+					}
+					else
+					{
+						gl2es3.glGetUniformIndices(shaderProgramId, names.length, names, indices);
 
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
+						//ok so including a -1 in the indices cause everything to come back at 0 after it
+						// possibly android throws a fit if it's compiled away or something
+						IntBuffer offset = IntBuffer.allocate(1);
+						if (indices.get(0) != -1)
+						{
+							indices.position(0);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glProjectionMatrixOffset = offset.get(0);
+						}
+						if (indices.get(1) != -1)
+						{
+							indices.position(1);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glProjectionMatrixInverseOffset = offset.get(0);
+						}
+						if (indices.get(2) != -1)
+						{
+							indices.position(2);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glViewMatrixOffset = offset.get(0);
+						}
+						if (indices.get(3) != -1)
+						{
+							indices.position(3);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelMatrixOffset = offset.get(0);
+						}
+						if (indices.get(4) != -1)
+						{
+							indices.position(4);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelViewMatrixOffset = offset.get(0);
+						}
+						if (indices.get(5) != -1)
+						{
+							indices.position(5);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelViewMatrixInverseOffset = offset.get(0);
+						}
+						if (indices.get(6) != -1)
+						{
+							indices.position(6);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelViewProjectionMatrixOffset = offset.get(0);
+						}
+						if (indices.get(7) != -1)
+						{
+							indices.position(7);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glNormalMatrixOffset = offset.get(0);
+						}
+						if (indices.get(8) != -1)
+						{
+							indices.position(8);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialdiffuseOffset = offset.get(0);
+						}
+						if (indices.get(9) != -1)
+						{
+							indices.position(9);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialemissionOffset = offset.get(0);
+						}
+						if (indices.get(10) != -1)
+						{
+							indices.position(10);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialspecularOffset = offset.get(0);
+						}
+						if (indices.get(11) != -1)
+						{
+							indices.position(11);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialshininessOffset = offset.get(0);
+						}
+						if (indices.get(12) != -1)
+						{
+							indices.position(12);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.ignoreVertexColorsOffset = offset.get(0);
+						}
+						if (indices.get(13) != -1)
+						{
+							indices.position(13);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glLightModelambientOffset = offset.get(0);
+						}
+						if (indices.get(14) != -1)
+						{
+							indices.position(14);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.objectColorOffset = offset.get(0);
+						}
+						if (indices.get(15) != -1)
+						{
+							indices.position(15);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glLightSource0positionOffset = offset.get(0);
+						}
+						if (indices.get(16) != -1)
+						{
+							indices.position(16);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glLightSource0diffuseOffset = offset.get(0);
+						}
+						if (indices.get(17) != -1)
+						{
+							indices.position(17);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.textureTransformOffset = offset.get(0);
+						}
+						if (indices.get(18) != -1)
+						{
+							indices.position(18);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.alphaTestEnabledOffset = offset.get(0);
+						}
+						if (indices.get(19) != -1)
+						{
+							indices.position(19);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.alphaTestFunctionOffset = offset.get(0);
+						}
+						if (indices.get(20) != -1)
+						{
+							indices.position(20);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.alphaTestValueOffset = offset.get(0);
+						}
 					}
+
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
 				}
-
-				locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
-				locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
-				locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
-				locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
-				locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
-				locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
-				locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
-				locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
-				locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
-				locs.glFrontMaterialdiffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
-				locs.glFrontMaterialemission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
-				locs.glFrontMaterialspecular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
-				locs.glFrontMaterialshininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialshininess");
-				locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
-				locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
-				locs.glLightSource0position = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
-				locs.glLightSource0diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
-				locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
-				locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
-				locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
-				locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
-
-				//attributes
-				locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-				locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
-				locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
-
-				// tex coords, notice the vertex attribute is made of a string concat
-				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
-				{
-					locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
-				}
-
-				//generic attributes, notice allocated on a program basis not per geom				 
-				HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
-				if (attToIndex != null)
-				{
-					for (String attrib : attToIndex.keySet())
-					{
-						int index = attToIndex.get(attrib);
-						int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
-						locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
-					}
-				}
-
-				pd.programToLocationData = locs;
 			}
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
-			return locs;
+
+			locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
+			locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
+			locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
+			locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
+			locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
+			locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
+			locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
+			locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
+			locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
+			locs.glFrontMaterialdiffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
+			locs.glFrontMaterialemission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
+			locs.glFrontMaterialspecular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
+			locs.glFrontMaterialshininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialshininess");
+			locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
+			locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
+			locs.glLightSource0position = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
+			locs.glLightSource0diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
+			locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
+			locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
+			locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
+			locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
+
+			//attributes
+			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
+			locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
+			locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+
+			// tex coords, notice the vertex attribute is made of a string concat
+			for (int i = 0; i < locs.glMultiTexCoord.length; i++)
+			{
+				locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
+			}
+
+			//generic attributes, notice allocated on a program basis not per geom				 
+			HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
+			if (attToIndex != null)
+			{
+				for (String attrib : attToIndex.keySet())
+				{
+					int index = attToIndex.get(attrib);
+					int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
+					locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
+				}
+			}
+
+			pd.programToLocationData = locs;
 		}
-		return null;
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		return locs;
 
 	}
 
@@ -3093,10 +2782,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
 
-	private static GeometryData loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, LocationData locs, int vdefined,
-			FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs, FloatBuffer norms, int vertexAttrCount,
-			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs)
+	private static GeometryData loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
+			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs,
+			FloatBuffer norms, int vertexAttrCount, int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength,
+			int[] texCoordSetMap, int texStride, Object[] texCoords)
 	{
+		if (VERBOSE)
+			System.err.println("private static GeometryData loadAllBuffers");
+
 		GeometryData gd = ctx.allGeometryData.get(geo);
 		if (gd == null)
 		{
@@ -3110,8 +2803,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
 		boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
 		boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
+		boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-		if (floatCoordDefined && locs.glVertex != -1)
+		if (floatCoordDefined)
 		{
 			if (gd.geoToCoordBuf == -1)
 			{
@@ -3143,7 +2837,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		if (floatColorsDefined && locs.glColor != -1)
+		if (floatColorsDefined && !ignoreVertexColors)
 		{
 			if (gd.geoToColorBuf == -1)
 			{
@@ -3163,7 +2857,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		if (normalsDefined && locs.glNormal != -1)
+		if (normalsDefined)
 		{
 			if (gd.geoToNormalBuf == -1)
 			{
@@ -3188,45 +2882,364 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			for (int index = 0; index < vertexAttrCount; index++)
 			{
-				Integer attribLoc = locs.genAttIndexToLoc.get(index);
-				if (attribLoc != null && attribLoc.intValue() != -1)
+				FloatBuffer vertexAttrs = vertexAttrBufs[index];
+				vertexAttrs.position(0);
+
+				SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
+				if (bufIds == null)
 				{
-					FloatBuffer vertexAttrs = vertexAttrBufs[index];
+					bufIds = new SparseArray<Integer>();
+					gd.geoToVertAttribBuf = bufIds;
+				}
 
-					vertexAttrs.position(0);
+				Integer bufId = bufIds.get(index);
+				if (bufId == null)
+				{
+					int[] tmp2 = new int[1];
+					gl.glGenBuffers(1, tmp2, 0);
+					bufId = new Integer(tmp2[0]);
+					bufIds.put(index, bufId);
 
-					SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs, GL2ES2.GL_STATIC_DRAW);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glBufferData++;
+
+				}
+			}
+		}
+
+		if (textureDefined)
+		{
+			boolean[] texSetsLoaded = new boolean[texCoords.length];
+			for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
+			{
+				int texSet = texCoordSetMap[texUnit];
+				if (texSet != -1 && !texSetsLoaded[texSet])
+				{
+					texSetsLoaded[texSet] = true;
+					//stupid interface...
+					FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+					buf.position(0);
+
+					SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 					if (bufIds == null)
 					{
 						bufIds = new SparseArray<Integer>();
-						gd.geoToVertAttribBuf = bufIds;
+						gd.geoToTexCoordsBuf = bufIds;
 					}
 
-					Integer bufId = bufIds.get(index);
+					Integer bufId = bufIds.get(texUnit);
 					if (bufId == null)
 					{
-						int[] tmp2 = new int[1];
-						gl.glGenBuffers(1, tmp2, 0);
-						bufId = new Integer(tmp2[0]);
-						bufIds.put(index, bufId);
+						int[] tmp = new int[1];
+						gl.glGenBuffers(1, tmp, 0);
+						bufId = new Integer(tmp[0]);
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
-								GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, buf.remaining() * Float.SIZE / 8, buf, GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
+						bufIds.put(texUnit, bufId);
 
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glBufferData++;
-
 					}
-
 				}
 			}
 		}
 
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
+
+		return gd;
+	}
+
+	private static GeometryData loadInterleavedBuffer(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
+			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs,
+			FloatBuffer norms, int vertexAttrCount, int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength,
+			int[] texCoordSetMap, int texStride, Object[] texCoords)
+	{
+		if (VERBOSE)
+			System.err.println("private static GeometryData loadInterleavedBuffer");
+
+		GeometryData gd = ctx.allGeometryData.get(geo);
+		if (gd == null)
+		{
+			gd = new GeometryData();
+			ctx.allGeometryData.put(geo, gd);
+		}
+
+		if (gd.interleavedBufId == -1)
+		{
+			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
+			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
+			boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
+			boolean byteColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_BYTE) != 0);
+			boolean normalsDefined = ((vdefined & GeometryArrayRetained.NORMAL_FLOAT) != 0);
+			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
+			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
+
+			//NOTE interleaving is only done on the data inside the geometry
+			// we don't consider the shader slots at all, as one geometry
+			// can be used with any shader, e.g. physics appearance with a NiTriShape as in morrowind
+			// notice also building the interleaved ignore numActiveTextureUnits
+
+			//NOTE WELL tex coords set are limited to 1!
+
+			// how big are we going to require?
+			gd.interleavedStride = 0;
+			int offset = 0;
+			if (floatCoordDefined)
+			{
+				gd.geoToCoordOffset = offset;
+				if (COMPRESS_OPTIMIZED_VERTICES)
+				{
+					offset += 8;// 3 half float = 6 align on 4
+					gd.interleavedStride += 8;
+				}
+				else
+				{
+					offset += 4 * 3;
+					gd.interleavedStride += 4 * 3;
+				}
+				fverts.position(0);
+			}
+
+			if (floatColorsDefined && !ignoreVertexColors)
+			{
+				gd.geoToColorsOffset = offset;
+
+				int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+				if (COMPRESS_OPTIMIZED_VERTICES)
+				{
+					offset += 4;
+					gd.interleavedStride += 4;// minimum alignment
+				}
+				else
+				{
+					offset += 4 * sz;
+					gd.interleavedStride += 4 * sz;
+				}
+				fclrs.position(0);
+			}
+
+			if (normalsDefined)
+			{
+				gd.geoToNormalsOffset = offset;
+				if (COMPRESS_OPTIMIZED_VERTICES)
+				{
+					offset += 4;
+					gd.interleavedStride += 4;// minimum alignment
+				}
+				else
+				{
+					offset += 4 * 3;
+					gd.interleavedStride += 4 * 3;
+				}
+				norms.position(0);
+			}
+
+			if (vattrDefined)
+			{
+				for (int index = 0; index < vertexAttrCount; index++)
+				{
+					gd.geoToVattrOffset[index] = offset;
+
+					int sz = vertexAttrSizes[index];
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						offset += 4 * (int) Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
+						gd.interleavedStride += 4 * (int) Math.ceil(sz / 4.0);
+					}
+					else
+					{
+						offset += 4 * sz;
+						gd.interleavedStride += 4 * sz;
+					}
+
+					FloatBuffer vertexAttrs = vertexAttrBufs[index];
+					vertexAttrs.position(0);
+
+				}
+			}
+
+			if (textureDefined)
+			{
+				boolean[] texSetsLoaded = new boolean[texCoords.length];
+				for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
+				{
+					int texSet = texCoordSetMap[texUnit];
+					if (texSet != -1 && !texSetsLoaded[texSet])
+					{
+						texSetsLoaded[texSet] = true;
+						gd.geoToTexCoordOffset[texSet] = offset;
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							// note half floats sized
+							int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
+							offset += stride;
+							gd.interleavedStride += stride;
+						}
+						else
+						{
+							offset += 4 * texStride;
+							gd.interleavedStride += 4 * texStride;
+						}
+						FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+						buf.position(0);
+					}
+				}
+			}
+
+			ByteBuffer interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
+			interleavedBuffer.order(ByteOrder.nativeOrder());
+
+			for (int i = 0; i < vertexCount; i++)
+			{
+				interleavedBuffer.position(i * gd.interleavedStride);
+				if (floatCoordDefined)
+				{
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						int startPos = interleavedBuffer.position();
+						for (int c = 0; c < 3; c++)
+						{
+							short hf = (short) JoglesMatrixUtil.halfFromFloat(fverts.get());
+							interleavedBuffer.putShort(hf);
+						}
+
+						interleavedBuffer.position(startPos + 8);// minimum alignment of 2*3 is 8
+					}
+					else
+					{
+						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+						for (int c = 0; c < 3; c++)
+							fb.put(fverts.get());
+
+						interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+					}
+				}
+
+				if (floatColorsDefined && !ignoreVertexColors)
+				{
+					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						int startPos = interleavedBuffer.position();
+						for (int c = 0; c < sz; c++)
+							interleavedBuffer.put((byte) (fclrs.get() * 255));
+
+						interleavedBuffer.position(startPos + 4);// minimum alignment
+					}
+					else
+					{
+						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+						for (int c = 0; c < sz; c++)
+							fb.put(fclrs.get());
+
+						interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+					}
+
+				}
+				if (normalsDefined)
+				{
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						int startPos = interleavedBuffer.position();
+						for (int c = 0; c < 3; c++)
+							interleavedBuffer.put((byte) (((norms.get() * 255) - 1) / 2f));
+
+						interleavedBuffer.position(startPos + 4);// minimum alignment
+					}
+					else
+					{
+						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+						for (int c = 0; c < 3; c++)
+							fb.put(norms.get());
+
+						interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+					}
+				}
+
+				if (vattrDefined)
+				{
+					for (int index = 0; index < vertexAttrCount; index++)
+					{
+						int sz = vertexAttrSizes[index];
+						FloatBuffer vertexAttrs = vertexAttrBufs[index];
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int va = 0; va < sz; va++)
+								interleavedBuffer.put((byte) (((vertexAttrs.get() * 255) - 1) / 2f));
+
+							interleavedBuffer.position(startPos + (4 * (int) Math.ceil(sz / 4.0)));// minimum alignment
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int va = 0; va < sz; va++)
+								fb.put(vertexAttrs.get());
+
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+						}
+					}
+				}
+
+				if (textureDefined)
+				{
+					boolean[] texSetsLoaded = new boolean[texCoords.length];
+					for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
+					{
+						int texSet = texCoordSetMap[texUnit];
+						if (texSet != -1 && !texSetsLoaded[texSet])
+						{
+							texSetsLoaded[texSet] = true;
+							FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
+
+							if (COMPRESS_OPTIMIZED_VERTICES)
+							{
+								int startPos = interleavedBuffer.position();
+								for (int c = 0; c < texStride; c++)
+								{
+									short hf = (short) JoglesMatrixUtil.halfFromFloat(tcBuf.get());
+									interleavedBuffer.putShort(hf);
+								}
+
+								interleavedBuffer.position(startPos + (texStride == 2 ? 4 : 8));// minimum alignment
+							}
+							else
+							{
+								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+								for (int tc = 0; tc < texStride; tc++)
+									fb.put(tcBuf.get());
+
+								interleavedBuffer.position(interleavedBuffer.position() + (4 * texStride));
+							}
+						}
+					}
+				}
+
+			}
+
+			interleavedBuffer.position(0);
+			int[] tmp = new int[1];
+			gl.glGenBuffers(1, tmp, 0);
+			gd.interleavedBufId = tmp[0];
+
+			gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
+			gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, interleavedBuffer.remaining(), interleavedBuffer, GL2ES2.GL_STATIC_DRAW);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.interleavedBufferCreated++;
+
+		}
 
 		return gd;
 	}
@@ -6061,26 +6074,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
 
 		// use only the upper left as it is a 3x3 rotation matrix
-		joglesctx.currentNormalMat.set(joglesctx.matrixUtil.toArray3x3(joglesctx.currentModelViewMat));
-		joglesctx.matrixUtil.transposeInvert(joglesctx.currentNormalMat);
+		JoglesMatrixUtil.transposeInvert(joglesctx.currentModelViewMat, joglesctx.currentNormalMat);
 		//joglesctx.matrixUtil.invert(joglesctx.currentNormalMat);//sloooowwwww!
 		//joglesctx.currentNormalMat.transpose();
-	}
-
-	private static String lineString(double[] da)
-	{
-		String ret = "double[";
-		for (double d : da)
-			ret += " " + d;
-		return ret + "]";
-	}
-
-	private static String lineString(float[] fa)
-	{
-		String ret = "float[";
-		for (float f : fa)
-			ret += " " + f;
-		return ret + "]";
 	}
 
 	// The native method for setting the Projection matrix.
@@ -6131,6 +6127,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		gl.glViewport(x, y, width, height);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
+	}
+
+	private static String lineString(double[] da)
+	{
+		String ret = "double[";
+		for (double d : da)
+			ret += " " + d;
+		return ret + "]";
+	}
+
+	private static String lineString(float[] fa)
+	{
+		String ret = "float[";
+		for (float f : fa)
+			ret += " " + f;
+		return ret + "]";
 	}
 
 	@Override

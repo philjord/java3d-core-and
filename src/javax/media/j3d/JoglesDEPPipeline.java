@@ -51,16 +51,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	// used by GeometryArray by Reference in interleaved format with NIO buffer
-	// NOT USED BY MORROWIND
-	@Override
-	@Deprecated
-	void executeInterleavedBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
-			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
-	{
-		throw new UnsupportedOperationException();
-	}
+
 
 	// used for GeometryArrays
 	// NOT IN USE BY MORROWIND  

@@ -47,7 +47,7 @@ public class JoglesContext extends JoglContext
 		public int geoToIndBuf = -1;
 		public int geoToIndBufSize = -1;
 		public int[] geoToIndStripBuf = null;
-		public int geoToIndStripSwappedSize = -1;
+		//public int geoToIndStripSwappedSize = -1;// removed into j3dnotristrips
 		public int geoToCoordBuf = -1;
 		public int geoToCoordBufSize = -1;
 		public int geoToColorBuf = -1;
@@ -63,6 +63,9 @@ public class JoglesContext extends JoglContext
 		public int geoToNormalsOffset = -1;
 		public int[] geoToVattrOffset = new int[10];
 		public int[] geoToTexCoordOffset = new int[10];
+		
+		// vertex array object id for this geom
+		public int vaoId = -1;
 
 	}
 
