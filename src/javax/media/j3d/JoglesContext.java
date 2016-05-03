@@ -4,13 +4,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.media.j3d.JoglesContext.ProgramData;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GLContext;
 
 import utils.SparseArray;
@@ -19,12 +19,16 @@ public class JoglesContext extends JoglContext
 {
 	//TODO: heaps of lights appears to kill performance, why?
 
-	public GL2ES2 gl2es2;
+	//pre-casting for speed
+	public GL2ES2 gl2es2 = null;
+	public GL2ES3 gl2es3 = null;
 
 	public JoglesContext(GLContext context)
 	{
 		super(context);
 		gl2es2 = context.getGL().getGL2ES2();
+		if (context.getGL().isGL2ES3())
+			gl2es3 = (GL2ES3) context.getGL();
 	}
 
 	public JoglShaderObject shaderProgram;

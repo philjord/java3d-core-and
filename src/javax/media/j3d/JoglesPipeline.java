@@ -113,6 +113,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					GeometryData gd = joglesctx.allGeometryData.get(geo.nativeId);
 					joglesctx.allGeometryData.remove(geo.nativeId);
+					geo.nativeId = -1;
 
 					//TODO: why exactly is the same geo being removed twice?
 					if (gd != null)
@@ -162,6 +163,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						if (gd.vaoId != -1)
 							((GL2ES3) gl).glDeleteVertexArrays(1, new int[] { gd.vaoId }, 0);
+
 					}
 
 				}
@@ -301,13 +303,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			// not required second time around for VAO
 			boolean bindingRequired = true;
-			if (gl.isGL2ES3())
+			if (ctx.gl2es3 != null)
 			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
+					ctx.gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -316,7 +317,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					bindingRequired = false;
 				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				ctx.gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -951,13 +952,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			// not required second time around for VAO
 			boolean bindingRequired = true;
-			if (gl.isGL2ES3())
+			if (ctx.gl2es3 != null)
 			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
+					ctx.gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -966,7 +966,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					bindingRequired = false;
 				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				ctx.gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -1544,13 +1544,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			// not required second time around for VAO
 			boolean bindingRequired = true;
-			if (gl.isGL2ES3())
+			if (ctx.gl2es3 != null)
 			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
+					ctx.gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -1559,7 +1558,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					bindingRequired = false;
 				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				ctx.gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -4454,7 +4453,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	void resetColoringAttributes(Context ctx, float r, float g, float b, float a, boolean enableLight)
 	{
 		if (VERBOSE)
-			System.err.println("JoglPipeline.resetColoringAttributes()");
+			System.err.println("JoglPipeline.resetColoringAttributes() " + r + " " + g + " " + b + " " + a + " " + enableLight);
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.resetColoringAttributes++;
 
@@ -4784,7 +4783,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int transparencyMode, int srcBlendFunction, int dstBlendFunction)
 	{
 		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTransparencyAttributes()");
+			System.err.println("JoglPipeline.updateTransparencyAttributes() " + alpha + " " + geometryType + " " + polygonMode + " "
+					+ lineAA + " " + pointAA + " " + transparencyMode + " " + srcBlendFunction + " " + dstBlendFunction);
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.updateTransparencyAttributes++;
 
@@ -4803,8 +4803,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glBlendFunc(blendFunctionTable[srcBlendFunction], blendFunctionTable[dstBlendFunction]);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				//TODO: updateTransparencyAttributes MINIMISE_NATIVE_CALLS trouble in fallout 3 by megaton
-				//in fact nothing I do here fixes the fallout3 problem at all
+
 				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.glEnableGL_BLEND = true;
 				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
@@ -6049,9 +6048,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = (JoglesContext) ctx;
 
-		
 		joglesctx.gl_state.currentViewMatLoc = -1;
-		
+
 		joglesctx.matrixUtil.deburnV.set(viewMatrix);
 		//joglesctx.matrixUtil.deburnV.transpose();
 		joglesctx.currentViewMat.set(joglesctx.matrixUtil.deburnV);
@@ -6061,7 +6059,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.currentModelMat.set(joglesctx.matrixUtil.deburnM);
 
 		//joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnM, joglesctx.matrixUtil.deburnV);
-		joglesctx.currentModelViewMat.mul( joglesctx.matrixUtil.deburnV, joglesctx.matrixUtil.deburnM);
+		joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnV, joglesctx.matrixUtil.deburnM);
 
 		//joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
 		joglesctx.currentModelViewProjMat.mul(joglesctx.currentProjMat, joglesctx.currentModelViewMat);
@@ -6218,10 +6216,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//UGLY HACK the render mode is set to Canvas3D.FIELD_ALL after all geoms are drawn
 		// so I take the opportunity to unbind the vertex array
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
-		if (gl.isGL2ES3())
+		GL2ES3 gl2es3 = ((JoglesContext) ctx).gl2es3;
+		if (gl2es3 != null)
 		{
-			GL2ES3 gl2es3 = (GL2ES3) gl;
 			gl2es3.glBindVertexArray(0);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);

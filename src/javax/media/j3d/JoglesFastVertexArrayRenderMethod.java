@@ -7,17 +7,10 @@ package javax.media.j3d;
  */
 public class JoglesFastVertexArrayRenderMethod extends VertexArrayRenderMethod
 {
-	public static boolean ASSUME_A_LOT = true;
 
 	@Override
 	public boolean render(RenderMolecule rm, Canvas3D cv, RenderAtomListInfo ra, int dirtyBits)
 	{
-
-		if (!ASSUME_A_LOT)
-		{
-			return super.render(rm, cv, ra, dirtyBits);
-		}
-		
 		// a no op now
 		//GeometryArrayRetained geo = (GeometryArrayRetained) ra.geometry();
 		//		geo.setVertexFormat((rm.useAlpha && ((geo.vertexFormat & GeometryArray.COLOR) != 0)), rm.textureBin.attributeBin.ignoreVertexColors,
@@ -69,11 +62,7 @@ public class JoglesFastVertexArrayRenderMethod extends VertexArrayRenderMethod
 
 	void renderGeo(RenderAtomListInfo ra, RenderMolecule rm, Canvas3D cv)
 	{
-		if (!ASSUME_A_LOT)
-		{
-			super.renderGeo(ra, rm, cv);
-			return;
-		}
+
 		GeometryArrayRetained geo = (GeometryArrayRetained) ra.geometry();
 		boolean useAlpha = rm.useAlpha; 
 
