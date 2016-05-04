@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class JoglesIndexedTriangleArrayRetained extends IndexedTriangleArrayRetained
+public class JoglesIndexedTriangleStripArrayRetained extends IndexedTriangleStripArrayRetained
 {
 
 	private static FloatBuffer dummyBuffer = FloatBuffer.allocate(0);

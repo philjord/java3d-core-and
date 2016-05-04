@@ -1344,7 +1344,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glDrawStripElementsStrips++;
 
 				}
-				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+//				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
@@ -1543,8 +1543,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 					texCoords);
 
 			// if I'm handed a jogles geom then half floats and bytes are loaded waaaaaay back from disk
-			boolean optimizedGeo = (geo instanceof JoglesIndexedTriangleArrayRetained);
-
+			boolean optimizedGeo = (geo instanceof JoglesIndexedTriangleArrayRetained)
+					|| (geo instanceof JoglesIndexedTriangleStripArrayRetained);
+			
 			// not required second time around for VAO
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
@@ -1734,11 +1735,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int indexOffset = initialIndexIndex;
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-					bb.order(ByteOrder.nativeOrder());
-					ShortBuffer indicesBuffer = bb.asShortBuffer();
-					for (int s = 0; s < indexCoord.length; s++)
-						indicesBuffer.put(s, (short) indexCoord[s]);
+					ShortBuffer indicesBuffer = null;
+
+					if (geo instanceof JoglesIndexedTriangleStripArrayRetained)
+					{
+						indicesBuffer = ((JoglesIndexedTriangleStripArrayRetained) geo).indBuf;
+					}
+					else
+					{
+						ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
+						bb.order(ByteOrder.nativeOrder());
+						indicesBuffer = bb.asShortBuffer();
+						for (int s = 0; s < indexCoord.length; s++)
+							indicesBuffer.put(s, (short) indexCoord[s]);
+					}
+
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(indexOffset);
@@ -1797,7 +1808,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glDrawStripElementsStrips++;
 
 				}
-				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+//				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
@@ -2981,6 +2992,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (geo instanceof JoglesIndexedTriangleArrayRetained)
 			{
 				JoglesIndexedTriangleArrayRetained src = (JoglesIndexedTriangleArrayRetained) geo;
+				gd.interleavedStride = src.interleavedStride;
+				gd.geoToCoordOffset = src.geoToCoordOffset;
+				gd.geoToColorsOffset = src.geoToColorsOffset;
+				gd.geoToNormalsOffset = src.geoToNormalsOffset;
+				gd.geoToVattrOffset = src.geoToVattrOffset;
+				gd.geoToTexCoordOffset = src.geoToTexCoordOffset;
+				interleavedBuffer = src.interleavedBuffer;
+			}
+			else if (geo instanceof JoglesIndexedTriangleStripArrayRetained)
+			{
+				JoglesIndexedTriangleStripArrayRetained src = (JoglesIndexedTriangleStripArrayRetained) geo;
 				gd.interleavedStride = src.interleavedStride;
 				gd.geoToCoordOffset = src.geoToCoordOffset;
 				gd.geoToColorsOffset = src.geoToColorsOffset;
@@ -4723,7 +4745,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (stencilEnable)
 			{
 				//TODO: be more specific with native call pre-test here
-				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false)
+				//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false)
 				{
 					gl.glEnable(GL2ES2.GL_STENCIL_TEST);
 					gl.glStencilOp(getStencilOpValue(stencilFailOp), getStencilOpValue(stencilZFailOp), getStencilOpValue(stencilZPassOp));
@@ -4738,7 +4760,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			else
 			{
-				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
+				//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
 				{
 					gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 					if (DO_OUTPUT_ERRORS)
@@ -4756,6 +4778,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	void resetRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride)
 	{
+
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetRenderingAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
@@ -4765,7 +4788,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (!depthBufferWriteEnableOverride)
 		{
-			if (joglesctx.gl_state.glDepthMask != true)
+			//if (joglesctx.gl_state.glDepthMask != true)
 			{
 				gl.glDepthMask(true);
 				if (DO_OUTPUT_ERRORS)
@@ -4776,7 +4799,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		if (!depthBufferEnableOverride)
 		{
-			if (joglesctx.gl_state.depthBufferEnable != true)
+			//if (joglesctx.gl_state.depthBufferEnable != true)
 			{
 				gl.glEnable(GL2ES2.GL_DEPTH_TEST);
 				if (DO_OUTPUT_ERRORS)
@@ -4785,7 +4808,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					joglesctx.gl_state.depthBufferEnable = true;
 			}
 		}
-		if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL)
+		//if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL)
 		{
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			if (DO_OUTPUT_ERRORS)

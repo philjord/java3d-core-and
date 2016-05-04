@@ -3,18 +3,18 @@ package javax.media.j3d;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
-public class JoglesIndexedTriangleArray extends IndexedTriangleArray
+public class JoglesIndexedTriangleStripArray extends IndexedTriangleStripArray
 {
 
-	public JoglesIndexedTriangleArray(int numVertices, int format, int texCoordCount, int[] texMap, int numTrianglePoints)
+	public JoglesIndexedTriangleStripArray(int numVertices, int format, int texCoordCount, int[] texMap, int vertexAttrCount,
+			int[] vertexAttrSizes, int length, int[] stripLengths)
 	{
-		super(numVertices, format, texCoordCount, texMap, numTrianglePoints);
+		super(numVertices, format, texCoordCount, texMap, vertexAttrCount, vertexAttrSizes, length, stripLengths);
 	}
 
-	public JoglesIndexedTriangleArray(int numVertices, int format, int texCoordCount, int[] texMap, int vertexAttrCount,
-			int[] vertexAttrSizes, int numTrianglePoints)
+	public JoglesIndexedTriangleStripArray(int numVertices, int format, int texCoordCount, int[] texMap, int length, int[] stripLengths)
 	{
-		super(numVertices, format, texCoordCount, texMap, vertexAttrCount, vertexAttrSizes, numTrianglePoints);
+		super(numVertices, format, texCoordCount, texMap, length, stripLengths);
 	}
 
 	/**
@@ -24,7 +24,7 @@ public class JoglesIndexedTriangleArray extends IndexedTriangleArray
 	@Override
 	void createRetained()
 	{
-		this.retained = new JoglesIndexedTriangleArrayRetained();
+		this.retained = new JoglesIndexedTriangleStripArrayRetained();
 		this.retained.setSource(this);
 	}
 
@@ -38,13 +38,13 @@ public class JoglesIndexedTriangleArray extends IndexedTriangleArray
 		if ((format & BY_REFERENCE_INDICES) == 0)
 			throw new IllegalStateException(J3dI18N.getString("IndexedGeometryArray32"));
 
-		((JoglesIndexedTriangleArrayRetained) this.retained).setCoordIndicesRefBuffer(indBuf);
+		((JoglesIndexedTriangleStripArrayRetained) this.retained).setCoordIndicesRefBuffer(indBuf);
 	}
 
 	public void setInterleavedVertexBuffer(int interleavedStride, int geoToCoordOffset, int geoToColorsOffset, int geoToNormalsOffset,
 			int[] geoToTexCoordOffset, int[] geoToVattrOffset, ByteBuffer interleavedBuffer)
 	{
-		((JoglesIndexedTriangleArrayRetained) this.retained).setInterleavedVertexBuffer(interleavedStride, geoToCoordOffset,
+		((JoglesIndexedTriangleStripArrayRetained) this.retained).setInterleavedVertexBuffer(interleavedStride, geoToCoordOffset,
 				geoToColorsOffset, geoToNormalsOffset, geoToTexCoordOffset, geoToVattrOffset, interleavedBuffer);
 
 	}
@@ -53,8 +53,8 @@ public class JoglesIndexedTriangleArray extends IndexedTriangleArray
 	 * terrible convenience
 	 * @return
 	 */
-	public JoglesIndexedTriangleArrayRetained getRetained()
+	public JoglesIndexedTriangleStripArrayRetained getRetained()
 	{
-		return ((JoglesIndexedTriangleArrayRetained) this.retained);
+		return ((JoglesIndexedTriangleStripArrayRetained) this.retained);
 	}
 }
