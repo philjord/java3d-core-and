@@ -55,7 +55,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	//crazy new ffp buffer weird ness, online evidence suggest no benefit
-	private static boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
+	private static final boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
 	private static final boolean PRESUME_INDICES = true;
 
 	// interleave and compressed to half floats and bytes
@@ -1542,6 +1542,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 					bclrs, norms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, texStride,
 					texCoords);
 
+			// if I'm handed a jogles geom then half floats and bytes are loaded waaaaaay back from disk
+			boolean optimizedGeo = (geo instanceof JoglesIndexedTriangleArrayRetained);
+
 			// not required second time around for VAO
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
@@ -1571,7 +1574,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				if (floatCoordDefined && locs.glVertex != -1)
 				{
-					if (COMPRESS_OPTIMIZED_VERTICES)
+					if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
 					{
 						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
 					}
@@ -1595,7 +1598,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					if (COMPRESS_OPTIMIZED_VERTICES)
+					if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
 					{
 						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_UNSIGNED_BYTE, true, gd.interleavedStride,
 								gd.geoToColorsOffset);
@@ -1622,7 +1625,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				if (normalsDefined && locs.glNormal != -1)
 				{
-					if (COMPRESS_OPTIMIZED_VERTICES)
+					if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
 					{
 						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride, gd.geoToNormalsOffset);
 					}
@@ -1648,7 +1651,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						{
 							int sz = vertexAttrSizes[index];
 
-							if (COMPRESS_OPTIMIZED_VERTICES)
+							if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
 							{
 								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true, gd.interleavedStride,
 										gd.geoToVattrOffset[index]);
@@ -1675,7 +1678,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsLoaded[texSet])
 						{
 							texSetsLoaded[texSet] = true;
-							if (COMPRESS_OPTIMIZED_VERTICES)
+							if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
 							{
 								gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_HALF_FLOAT, true,
 										gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
@@ -1799,7 +1802,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
 
-				//note only the first count so multi strips is worng here, but...
+				//note only the first count so multi strips is wrong here, but...
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
 
@@ -1809,14 +1812,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 				// bind my indexes ready for the draw call
 				if (gd.geoToIndBuf == -1)
 				{
-					//create and fill index buffer
-					//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-					bb.order(ByteOrder.nativeOrder());
-					ShortBuffer indBuf = bb.asShortBuffer();
-					for (int s = 0; s < indexCoord.length; s++)
-						indBuf.put(s, (short) indexCoord[s]);
-					indBuf.position(initialIndexIndex);
+					ShortBuffer indBuf = null;
+					if (geo instanceof JoglesIndexedTriangleArrayRetained)
+					{
+						indBuf = ((JoglesIndexedTriangleArrayRetained) geo).indBuf;
+					}
+					else
+					{
+						//create and fill index buffer
+						//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
+						ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
+						bb.order(ByteOrder.nativeOrder());
+						indBuf = bb.asShortBuffer();
+						for (int s = 0; s < indexCoord.length; s++)
+							indBuf.put(s, (short) indexCoord[s]);
+						indBuf.position(initialIndexIndex);
+					}
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
@@ -1930,312 +1941,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			outputErrors(ctx);
 
 		return true;
-	}
-
-	//----------------------------------------------------------------------
-	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
-	//
-
-	private static void loadLocs(JoglesContext ctx, GL2ES2 gl)
-	{
-		ProgramData pd = ctx.programData;
-		int shaderProgramId = ctx.shaderProgramId;
-		if (pd.programToLocationData == null)
-		{
-			LocationData locs = new LocationData();
-
-			if (OUTPUT_PER_FRAME_STATS)
-				ctx.perFrameStats.programToLocationData++;
-
-			if (ATTEMPT_UBO && gl.isGL2ES3())
-			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
-
-				int UBOBlockIndex = gl2es3.glGetUniformBlockIndex(shaderProgramId, "FFP_Uniform_Block");
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (UBOBlockIndex != -1)
-				{
-					locs.blockIndex = UBOBlockIndex;
-					int[] blockSize = new int[1];
-
-					gl2es3.glGetActiveUniformBlockiv(shaderProgramId, UBOBlockIndex, GL2ES3.GL_UNIFORM_BLOCK_DATA_SIZE, blockSize, 0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					locs.blockSize = blockSize[0];
-
-					ByteBuffer uboBB = ByteBuffer.allocateDirect(blockSize[0]);
-					uboBB.order(ByteOrder.nativeOrder());
-					pd.programToUBOBB = uboBB;
-
-					// set up single buffer for ffp data, jesus...
-					if (ctx.globalUboBufId == -1)
-					//if (locs.uboBufId == -1)
-					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						int uboBufId = tmp[0];
-
-						ctx.globalUboBufId = uboBufId;
-						//locs.uboBufId = uboBufId;
-
-						gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, uboBufId);
-						gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
-						gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, UBOBlockIndex, uboBufId);
-					}
-
-					// Query for the offsets of each block variable
-					String[] names = { "glProjectionMatrix", "glProjectionMatrixInverse", //
-							"glViewMatrix", "glModelMatrix", //
-							"glModelViewMatrix", "glModelViewMatrixInverse", //
-							"glModelViewProjectionMatrix", "glNormalMatrix", //
-							"glFrontMaterialdiffuse", "glFrontMaterialemission", //
-							"glFrontMaterialspecular", "glFrontMaterialshininess", //
-							"ignoreVertexColors", "glLightModelambient", //
-							"objectColor", //
-							"glLightSource0position", "glLightSource0diffuse", //
-							"textureTransform", //
-							"alphaTestEnabled", "alphaTestFunction", "alphaTestValue" };
-
-					IntBuffer indices = IntBuffer.allocate(names.length);
-
-					if (PRESUME_INDICES)
-					{
-						indices.put(0, 16);
-						indices.put(1, 17);
-						indices.put(2, 18);
-						indices.put(3, 11);
-						indices.put(4, 12);
-						indices.put(5, 13);
-						indices.put(6, 14);
-						indices.put(7, 15);
-						indices.put(8, 4);
-						indices.put(9, 5);
-						indices.put(10, 7);
-						indices.put(11, 6);
-						indices.put(12, 19);
-						indices.put(13, 8);
-						indices.put(14, 20);
-						indices.put(15, 10);
-						indices.put(16, 9);
-						indices.put(17, 21);
-						indices.put(18, 1);
-						indices.put(19, 2);
-						indices.put(20, 3);
-
-						locs.glProjectionMatrixOffset = 0;
-						locs.glProjectionMatrixInverseOffset = 64;
-						locs.glViewMatrixOffset = 128;
-						locs.glModelMatrixOffset = 192;
-						locs.glModelViewMatrixOffset = 256;
-						locs.glModelViewMatrixInverseOffset = 320;
-						locs.glModelViewProjectionMatrixOffset = 384;
-						locs.glNormalMatrixOffset = 448;
-						locs.glFrontMaterialdiffuseOffset = 496;
-						locs.glFrontMaterialemissionOffset = 512;
-						locs.glFrontMaterialspecularOffset = 528;
-						locs.glFrontMaterialshininessOffset = 540;
-						locs.ignoreVertexColorsOffset = 544;
-						locs.glLightModelambientOffset = 560;
-						locs.objectColorOffset = 576;
-						locs.glLightSource0positionOffset = 592;
-						locs.glLightSource0diffuseOffset = 608;
-						locs.textureTransformOffset = 624;
-						locs.alphaTestEnabledOffset = 688;
-						locs.alphaTestFunctionOffset = 692;
-						locs.alphaTestValueOffset = 696;
-					}
-					else
-					{
-						gl2es3.glGetUniformIndices(shaderProgramId, names.length, names, indices);
-
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-						//ok so including a -1 in the indices cause everything to come back at 0 after it
-						// possibly android throws a fit if it's compiled away or something
-						IntBuffer offset = IntBuffer.allocate(1);
-						if (indices.get(0) != -1)
-						{
-							indices.position(0);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glProjectionMatrixOffset = offset.get(0);
-						}
-						if (indices.get(1) != -1)
-						{
-							indices.position(1);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glProjectionMatrixInverseOffset = offset.get(0);
-						}
-						if (indices.get(2) != -1)
-						{
-							indices.position(2);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glViewMatrixOffset = offset.get(0);
-						}
-						if (indices.get(3) != -1)
-						{
-							indices.position(3);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelMatrixOffset = offset.get(0);
-						}
-						if (indices.get(4) != -1)
-						{
-							indices.position(4);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelViewMatrixOffset = offset.get(0);
-						}
-						if (indices.get(5) != -1)
-						{
-							indices.position(5);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelViewMatrixInverseOffset = offset.get(0);
-						}
-						if (indices.get(6) != -1)
-						{
-							indices.position(6);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelViewProjectionMatrixOffset = offset.get(0);
-						}
-						if (indices.get(7) != -1)
-						{
-							indices.position(7);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glNormalMatrixOffset = offset.get(0);
-						}
-						if (indices.get(8) != -1)
-						{
-							indices.position(8);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialdiffuseOffset = offset.get(0);
-						}
-						if (indices.get(9) != -1)
-						{
-							indices.position(9);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialemissionOffset = offset.get(0);
-						}
-						if (indices.get(10) != -1)
-						{
-							indices.position(10);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialspecularOffset = offset.get(0);
-						}
-						if (indices.get(11) != -1)
-						{
-							indices.position(11);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialshininessOffset = offset.get(0);
-						}
-						if (indices.get(12) != -1)
-						{
-							indices.position(12);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.ignoreVertexColorsOffset = offset.get(0);
-						}
-						if (indices.get(13) != -1)
-						{
-							indices.position(13);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glLightModelambientOffset = offset.get(0);
-						}
-						if (indices.get(14) != -1)
-						{
-							indices.position(14);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.objectColorOffset = offset.get(0);
-						}
-						if (indices.get(15) != -1)
-						{
-							indices.position(15);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glLightSource0positionOffset = offset.get(0);
-						}
-						if (indices.get(16) != -1)
-						{
-							indices.position(16);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glLightSource0diffuseOffset = offset.get(0);
-						}
-						if (indices.get(17) != -1)
-						{
-							indices.position(17);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.textureTransformOffset = offset.get(0);
-						}
-						if (indices.get(18) != -1)
-						{
-							indices.position(18);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.alphaTestEnabledOffset = offset.get(0);
-						}
-						if (indices.get(19) != -1)
-						{
-							indices.position(19);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.alphaTestFunctionOffset = offset.get(0);
-						}
-						if (indices.get(20) != -1)
-						{
-							indices.position(20);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.alphaTestValueOffset = offset.get(0);
-						}
-					}
-
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-			}
-
-			locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
-			locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
-			locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
-			locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
-			locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
-			locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
-			locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
-			locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
-			locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
-			locs.glFrontMaterialdiffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
-			locs.glFrontMaterialemission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
-			locs.glFrontMaterialspecular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
-			locs.glFrontMaterialshininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialshininess");
-			locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
-			locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
-			locs.glLightSource0position = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
-			locs.glLightSource0diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
-			locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
-			locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
-			locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
-			locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
-
-			//attributes
-			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-			locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
-			locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
-
-			// tex coords, notice the vertex attribute is made of a string concat
-			for (int i = 0; i < locs.glMultiTexCoord.length; i++)
-			{
-				locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
-			}
-
-			//generic attributes, notice allocated on a program basis not per geom				 
-			HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
-			if (attToIndex != null)
-			{
-				for (String attrib : attToIndex.keySet())
-				{
-					int index = attToIndex.get(attrib);
-					int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
-					locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
-				}
-			}
-
-			pd.programToLocationData = locs;
-		}
-		if (DO_OUTPUT_ERRORS)
-			outputErrors(ctx);
 	}
 
 	/**
@@ -2758,6 +2463,312 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
 
+	//----------------------------------------------------------------------
+	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
+	//
+
+	private static void loadLocs(JoglesContext ctx, GL2ES2 gl)
+	{
+		ProgramData pd = ctx.programData;
+		int shaderProgramId = ctx.shaderProgramId;
+		if (pd.programToLocationData == null)
+		{
+			LocationData locs = new LocationData();
+
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.programToLocationData++;
+
+			if (ATTEMPT_UBO && gl.isGL2ES3())
+			{
+				GL2ES3 gl2es3 = (GL2ES3) gl;
+
+				int UBOBlockIndex = gl2es3.glGetUniformBlockIndex(shaderProgramId, "FFP_Uniform_Block");
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (UBOBlockIndex != -1)
+				{
+					locs.blockIndex = UBOBlockIndex;
+					int[] blockSize = new int[1];
+
+					gl2es3.glGetActiveUniformBlockiv(shaderProgramId, UBOBlockIndex, GL2ES3.GL_UNIFORM_BLOCK_DATA_SIZE, blockSize, 0);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+					locs.blockSize = blockSize[0];
+
+					ByteBuffer uboBB = ByteBuffer.allocateDirect(blockSize[0]);
+					uboBB.order(ByteOrder.nativeOrder());
+					pd.programToUBOBB = uboBB;
+
+					// set up single buffer for ffp data, jesus...
+					if (ctx.globalUboBufId == -1)
+					//if (locs.uboBufId == -1)
+					{
+						int[] tmp = new int[1];
+						gl.glGenBuffers(1, tmp, 0);
+						int uboBufId = tmp[0];
+
+						ctx.globalUboBufId = uboBufId;
+						//locs.uboBufId = uboBufId;
+
+						gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, uboBufId);
+						gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
+						gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, UBOBlockIndex, uboBufId);
+					}
+
+					// Query for the offsets of each block variable
+					String[] names = { "glProjectionMatrix", "glProjectionMatrixInverse", //
+							"glViewMatrix", "glModelMatrix", //
+							"glModelViewMatrix", "glModelViewMatrixInverse", //
+							"glModelViewProjectionMatrix", "glNormalMatrix", //
+							"glFrontMaterialdiffuse", "glFrontMaterialemission", //
+							"glFrontMaterialspecular", "glFrontMaterialshininess", //
+							"ignoreVertexColors", "glLightModelambient", //
+							"objectColor", //
+							"glLightSource0position", "glLightSource0diffuse", //
+							"textureTransform", //
+							"alphaTestEnabled", "alphaTestFunction", "alphaTestValue" };
+
+					IntBuffer indices = IntBuffer.allocate(names.length);
+
+					if (PRESUME_INDICES)
+					{
+						indices.put(0, 16);
+						indices.put(1, 17);
+						indices.put(2, 18);
+						indices.put(3, 11);
+						indices.put(4, 12);
+						indices.put(5, 13);
+						indices.put(6, 14);
+						indices.put(7, 15);
+						indices.put(8, 4);
+						indices.put(9, 5);
+						indices.put(10, 7);
+						indices.put(11, 6);
+						indices.put(12, 19);
+						indices.put(13, 8);
+						indices.put(14, 20);
+						indices.put(15, 10);
+						indices.put(16, 9);
+						indices.put(17, 21);
+						indices.put(18, 1);
+						indices.put(19, 2);
+						indices.put(20, 3);
+
+						locs.glProjectionMatrixOffset = 0;
+						locs.glProjectionMatrixInverseOffset = 64;
+						locs.glViewMatrixOffset = 128;
+						locs.glModelMatrixOffset = 192;
+						locs.glModelViewMatrixOffset = 256;
+						locs.glModelViewMatrixInverseOffset = 320;
+						locs.glModelViewProjectionMatrixOffset = 384;
+						locs.glNormalMatrixOffset = 448;
+						locs.glFrontMaterialdiffuseOffset = 496;
+						locs.glFrontMaterialemissionOffset = 512;
+						locs.glFrontMaterialspecularOffset = 528;
+						locs.glFrontMaterialshininessOffset = 540;
+						locs.ignoreVertexColorsOffset = 544;
+						locs.glLightModelambientOffset = 560;
+						locs.objectColorOffset = 576;
+						locs.glLightSource0positionOffset = 592;
+						locs.glLightSource0diffuseOffset = 608;
+						locs.textureTransformOffset = 624;
+						locs.alphaTestEnabledOffset = 688;
+						locs.alphaTestFunctionOffset = 692;
+						locs.alphaTestValueOffset = 696;
+					}
+					else
+					{
+						gl2es3.glGetUniformIndices(shaderProgramId, names.length, names, indices);
+
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+						//ok so including a -1 in the indices cause everything to come back at 0 after it
+						// possibly android throws a fit if it's compiled away or something
+						IntBuffer offset = IntBuffer.allocate(1);
+						if (indices.get(0) != -1)
+						{
+							indices.position(0);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glProjectionMatrixOffset = offset.get(0);
+						}
+						if (indices.get(1) != -1)
+						{
+							indices.position(1);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glProjectionMatrixInverseOffset = offset.get(0);
+						}
+						if (indices.get(2) != -1)
+						{
+							indices.position(2);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glViewMatrixOffset = offset.get(0);
+						}
+						if (indices.get(3) != -1)
+						{
+							indices.position(3);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelMatrixOffset = offset.get(0);
+						}
+						if (indices.get(4) != -1)
+						{
+							indices.position(4);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelViewMatrixOffset = offset.get(0);
+						}
+						if (indices.get(5) != -1)
+						{
+							indices.position(5);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelViewMatrixInverseOffset = offset.get(0);
+						}
+						if (indices.get(6) != -1)
+						{
+							indices.position(6);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glModelViewProjectionMatrixOffset = offset.get(0);
+						}
+						if (indices.get(7) != -1)
+						{
+							indices.position(7);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glNormalMatrixOffset = offset.get(0);
+						}
+						if (indices.get(8) != -1)
+						{
+							indices.position(8);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialdiffuseOffset = offset.get(0);
+						}
+						if (indices.get(9) != -1)
+						{
+							indices.position(9);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialemissionOffset = offset.get(0);
+						}
+						if (indices.get(10) != -1)
+						{
+							indices.position(10);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialspecularOffset = offset.get(0);
+						}
+						if (indices.get(11) != -1)
+						{
+							indices.position(11);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glFrontMaterialshininessOffset = offset.get(0);
+						}
+						if (indices.get(12) != -1)
+						{
+							indices.position(12);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.ignoreVertexColorsOffset = offset.get(0);
+						}
+						if (indices.get(13) != -1)
+						{
+							indices.position(13);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glLightModelambientOffset = offset.get(0);
+						}
+						if (indices.get(14) != -1)
+						{
+							indices.position(14);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.objectColorOffset = offset.get(0);
+						}
+						if (indices.get(15) != -1)
+						{
+							indices.position(15);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glLightSource0positionOffset = offset.get(0);
+						}
+						if (indices.get(16) != -1)
+						{
+							indices.position(16);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.glLightSource0diffuseOffset = offset.get(0);
+						}
+						if (indices.get(17) != -1)
+						{
+							indices.position(17);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.textureTransformOffset = offset.get(0);
+						}
+						if (indices.get(18) != -1)
+						{
+							indices.position(18);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.alphaTestEnabledOffset = offset.get(0);
+						}
+						if (indices.get(19) != -1)
+						{
+							indices.position(19);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.alphaTestFunctionOffset = offset.get(0);
+						}
+						if (indices.get(20) != -1)
+						{
+							indices.position(20);
+							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
+							locs.alphaTestValueOffset = offset.get(0);
+						}
+					}
+
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+			}
+
+			locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
+			locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
+			locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
+			locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
+			locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
+			locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
+			locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
+			locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
+			locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
+			locs.glFrontMaterialdiffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
+			locs.glFrontMaterialemission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
+			locs.glFrontMaterialspecular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
+			locs.glFrontMaterialshininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialshininess");
+			locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
+			locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
+			locs.glLightSource0position = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
+			locs.glLightSource0diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
+			locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
+			locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
+			locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
+			locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
+
+			//attributes
+			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
+			locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
+			locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+
+			// tex coords, notice the vertex attribute is made of a string concat
+			for (int i = 0; i < locs.glMultiTexCoord.length; i++)
+			{
+				locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
+			}
+
+			//generic attributes, notice allocated on a program basis not per geom				 
+			HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
+			if (attToIndex != null)
+			{
+				for (String attrib : attToIndex.keySet())
+				{
+					int index = attToIndex.get(attrib);
+					int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
+					locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
+				}
+			}
+
+			pd.programToLocationData = locs;
+		}
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+	}
+
 	private static GeometryData loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
 			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, DoubleBuffer dverts, FloatBuffer fclrs, ByteBuffer bclrs,
 			FloatBuffer norms, int vertexAttrCount, int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength,
@@ -2965,206 +2976,96 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// we don't consider the shader slots at all, as one geometry
 			// can be used with any shader, e.g. physics appearance with a NiTriShape as in morrowind
 			// notice also building the interleaved ignore numActiveTextureUnits
+			ByteBuffer interleavedBuffer = null;
 
-			//NOTE WELL tex coords set are limited to 1!
-
-			// how big are we going to require?
-			gd.interleavedStride = 0;
-			int offset = 0;
-			if (floatCoordDefined)
+			if (geo instanceof JoglesIndexedTriangleArrayRetained)
 			{
-				gd.geoToCoordOffset = offset;
-				if (COMPRESS_OPTIMIZED_VERTICES)
-				{
-					offset += 8;// 3 half float = 6 align on 4
-					gd.interleavedStride += 8;
-				}
-				else
-				{
-					offset += 4 * 3;
-					gd.interleavedStride += 4 * 3;
-				}
-				fverts.position(0);
+				JoglesIndexedTriangleArrayRetained src = (JoglesIndexedTriangleArrayRetained) geo;
+				gd.interleavedStride = src.interleavedStride;
+				gd.geoToCoordOffset = src.geoToCoordOffset;
+				gd.geoToColorsOffset = src.geoToColorsOffset;
+				gd.geoToNormalsOffset = src.geoToNormalsOffset;
+				gd.geoToVattrOffset = src.geoToVattrOffset;
+				gd.geoToTexCoordOffset = src.geoToTexCoordOffset;
+				interleavedBuffer = src.interleavedBuffer;
 			}
-
-			if (floatColorsDefined && !ignoreVertexColors)
+			else
 			{
-				gd.geoToColorsOffset = offset;
 
-				int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-				if (COMPRESS_OPTIMIZED_VERTICES)
+				// how big are we going to require?
+				gd.interleavedStride = 0;
+				int offset = 0;
+				if (floatCoordDefined)
 				{
-					offset += 4;
-					gd.interleavedStride += 4;// minimum alignment
-				}
-				else
-				{
-					offset += 4 * sz;
-					gd.interleavedStride += 4 * sz;
-				}
-				fclrs.position(0);
-			}
-
-			if (normalsDefined)
-			{
-				gd.geoToNormalsOffset = offset;
-				if (COMPRESS_OPTIMIZED_VERTICES)
-				{
-					offset += 4;
-					gd.interleavedStride += 4;// minimum alignment
-				}
-				else
-				{
-					offset += 4 * 3;
-					gd.interleavedStride += 4 * 3;
-				}
-				norms.position(0);
-			}
-
-			if (vattrDefined)
-			{
-				for (int index = 0; index < vertexAttrCount; index++)
-				{
-					gd.geoToVattrOffset[index] = offset;
-
-					int sz = vertexAttrSizes[index];
+					gd.geoToCoordOffset = offset;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 4 * (int) Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
-						gd.interleavedStride += 4 * (int) Math.ceil(sz / 4.0);
+						offset += 8;// 3 half float = 6 align on 4
+						gd.interleavedStride += 8;
+					}
+					else
+					{
+						offset += 4 * 3;
+						gd.interleavedStride += 4 * 3;
+					}
+					fverts.position(0);
+				}
+
+				if (floatColorsDefined && !ignoreVertexColors)
+				{
+					gd.geoToColorsOffset = offset;
+
+					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+					if (COMPRESS_OPTIMIZED_VERTICES)
+					{
+						offset += 4;
+						gd.interleavedStride += 4;// minimum alignment
 					}
 					else
 					{
 						offset += 4 * sz;
 						gd.interleavedStride += 4 * sz;
 					}
-
-					FloatBuffer vertexAttrs = vertexAttrBufs[index];
-					vertexAttrs.position(0);
-
-				}
-			}
-
-			if (textureDefined)
-			{
-				boolean[] texSetsLoaded = new boolean[texCoords.length];
-				for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
-				{
-					int texSet = texCoordSetMap[texUnit];
-					if (texSet != -1 && !texSetsLoaded[texSet])
-					{
-						texSetsLoaded[texSet] = true;
-						gd.geoToTexCoordOffset[texSet] = offset;
-						if (COMPRESS_OPTIMIZED_VERTICES)
-						{
-							// note half floats sized
-							int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
-							offset += stride;
-							gd.interleavedStride += stride;
-						}
-						else
-						{
-							offset += 4 * texStride;
-							gd.interleavedStride += 4 * texStride;
-						}
-						FloatBuffer buf = (FloatBuffer) texCoords[texSet];
-						buf.position(0);
-					}
-				}
-			}
-
-			ByteBuffer interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
-			interleavedBuffer.order(ByteOrder.nativeOrder());
-
-			for (int i = 0; i < vertexCount; i++)
-			{
-				interleavedBuffer.position(i * gd.interleavedStride);
-				if (floatCoordDefined)
-				{
-					if (COMPRESS_OPTIMIZED_VERTICES)
-					{
-						int startPos = interleavedBuffer.position();
-						for (int c = 0; c < 3; c++)
-						{
-							short hf = (short) JoglesMatrixUtil.halfFromFloat(fverts.get());
-							interleavedBuffer.putShort(hf);
-						}
-
-						interleavedBuffer.position(startPos + 8);// minimum alignment of 2*3 is 8
-					}
-					else
-					{
-						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-						for (int c = 0; c < 3; c++)
-							fb.put(fverts.get());
-
-						interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
-					}
+					fclrs.position(0);
 				}
 
-				if (floatColorsDefined && !ignoreVertexColors)
-				{
-					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					if (COMPRESS_OPTIMIZED_VERTICES)
-					{
-						int startPos = interleavedBuffer.position();
-						for (int c = 0; c < sz; c++)
-							interleavedBuffer.put((byte) (fclrs.get() * 255));
-
-						interleavedBuffer.position(startPos + 4);// minimum alignment
-					}
-					else
-					{
-						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-						for (int c = 0; c < sz; c++)
-							fb.put(fclrs.get());
-
-						interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
-					}
-
-				}
 				if (normalsDefined)
 				{
+					gd.geoToNormalsOffset = offset;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						int startPos = interleavedBuffer.position();
-						for (int c = 0; c < 3; c++)
-							interleavedBuffer.put((byte) (((norms.get() * 255) - 1) / 2f));
-
-						interleavedBuffer.position(startPos + 4);// minimum alignment
+						offset += 4;
+						gd.interleavedStride += 4;// minimum alignment
 					}
 					else
 					{
-						FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-						for (int c = 0; c < 3; c++)
-							fb.put(norms.get());
-
-						interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						offset += 4 * 3;
+						gd.interleavedStride += 4 * 3;
 					}
+					norms.position(0);
 				}
 
 				if (vattrDefined)
 				{
 					for (int index = 0; index < vertexAttrCount; index++)
 					{
+						gd.geoToVattrOffset[index] = offset;
+
 						int sz = vertexAttrSizes[index];
-						FloatBuffer vertexAttrs = vertexAttrBufs[index];
 						if (COMPRESS_OPTIMIZED_VERTICES)
 						{
-							int startPos = interleavedBuffer.position();
-							for (int va = 0; va < sz; va++)
-								interleavedBuffer.put((byte) (((vertexAttrs.get() * 255) - 1) / 2f));
-
-							interleavedBuffer.position(startPos + (4 * (int) Math.ceil(sz / 4.0)));// minimum alignment
+							offset += 4 * (int) Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
+							gd.interleavedStride += 4 * (int) Math.ceil(sz / 4.0);
 						}
 						else
 						{
-							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-							for (int va = 0; va < sz; va++)
-								fb.put(vertexAttrs.get());
-
-							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+							offset += 4 * sz;
+							gd.interleavedStride += 4 * sz;
 						}
+
+						FloatBuffer vertexAttrs = vertexAttrBufs[index];
+						vertexAttrs.position(0);
+
 					}
 				}
 
@@ -3177,33 +3078,156 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (texSet != -1 && !texSetsLoaded[texSet])
 						{
 							texSetsLoaded[texSet] = true;
-							FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
-
+							gd.geoToTexCoordOffset[texSet] = offset;
 							if (COMPRESS_OPTIMIZED_VERTICES)
 							{
-								int startPos = interleavedBuffer.position();
-								for (int c = 0; c < texStride; c++)
-								{
-									short hf = (short) JoglesMatrixUtil.halfFromFloat(tcBuf.get());
-									interleavedBuffer.putShort(hf);
-								}
-
-								interleavedBuffer.position(startPos + (texStride == 2 ? 4 : 8));// minimum alignment
+								// note half floats sized
+								int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
+								offset += stride;
+								gd.interleavedStride += stride;
 							}
 							else
 							{
-								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
-								for (int tc = 0; tc < texStride; tc++)
-									fb.put(tcBuf.get());
-
-								interleavedBuffer.position(interleavedBuffer.position() + (4 * texStride));
+								offset += 4 * texStride;
+								gd.interleavedStride += 4 * texStride;
 							}
+							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							buf.position(0);
 						}
 					}
 				}
 
-			}
+				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
+				interleavedBuffer.order(ByteOrder.nativeOrder());
 
+				for (int i = 0; i < vertexCount; i++)
+				{
+					interleavedBuffer.position(i * gd.interleavedStride);
+					if (floatCoordDefined)
+					{
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int c = 0; c < 3; c++)
+							{
+								short hf = (short) JoglesMatrixUtil.halfFromFloat(fverts.get());
+								interleavedBuffer.putShort(hf);
+							}
+
+							interleavedBuffer.position(startPos + 8);// minimum alignment of 2*3 is 8
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int c = 0; c < 3; c++)
+								fb.put(fverts.get());
+
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						}
+					}
+
+					if (floatColorsDefined && !ignoreVertexColors)
+					{
+						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int c = 0; c < sz; c++)
+								interleavedBuffer.put((byte) (fclrs.get() * 255));
+
+							interleavedBuffer.position(startPos + 4);// minimum alignment
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int c = 0; c < sz; c++)
+								fb.put(fclrs.get());
+
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+						}
+
+					}
+					if (normalsDefined)
+					{
+						if (COMPRESS_OPTIMIZED_VERTICES)
+						{
+							int startPos = interleavedBuffer.position();
+							for (int c = 0; c < 3; c++)
+								interleavedBuffer.put((byte) (((norms.get() * 255) - 1) / 2f));
+
+							interleavedBuffer.position(startPos + 4);// minimum alignment
+						}
+						else
+						{
+							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+							for (int c = 0; c < 3; c++)
+								fb.put(norms.get());
+
+							interleavedBuffer.position(interleavedBuffer.position() + (4 * 3));
+						}
+					}
+
+					if (vattrDefined)
+					{
+						for (int index = 0; index < vertexAttrCount; index++)
+						{
+							int sz = vertexAttrSizes[index];
+							FloatBuffer vertexAttrs = vertexAttrBufs[index];
+							if (COMPRESS_OPTIMIZED_VERTICES)
+							{
+								int startPos = interleavedBuffer.position();
+								for (int va = 0; va < sz; va++)
+									interleavedBuffer.put((byte) (((vertexAttrs.get() * 255) - 1) / 2f));
+
+								interleavedBuffer.position(startPos + (4 * (int) Math.ceil(sz / 4.0)));// minimum alignment
+							}
+							else
+							{
+								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+								for (int va = 0; va < sz; va++)
+									fb.put(vertexAttrs.get());
+
+								interleavedBuffer.position(interleavedBuffer.position() + (4 * sz));
+							}
+						}
+					}
+
+					if (textureDefined)
+					{
+						boolean[] texSetsLoaded = new boolean[texCoords.length];
+						for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
+						{
+							int texSet = texCoordSetMap[texUnit];
+							if (texSet != -1 && !texSetsLoaded[texSet])
+							{
+								texSetsLoaded[texSet] = true;
+								FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
+
+								if (COMPRESS_OPTIMIZED_VERTICES)
+								{
+									int startPos = interleavedBuffer.position();
+									for (int c = 0; c < texStride; c++)
+									{
+										short hf = (short) JoglesMatrixUtil.halfFromFloat(tcBuf.get());
+										interleavedBuffer.putShort(hf);
+									}
+
+									interleavedBuffer.position(startPos + (texStride == 2 ? 4 : 8));// minimum alignment
+								}
+								else
+								{
+									FloatBuffer fb = interleavedBuffer.asFloatBuffer();
+									for (int tc = 0; tc < texStride; tc++)
+										fb.put(tcBuf.get());
+
+									interleavedBuffer.position(interleavedBuffer.position() + (4 * texStride));
+								}
+							}
+						}
+					}
+
+				}
+			}
 			interleavedBuffer.position(0);
 			int[] tmp = new int[1];
 			gl.glGenBuffers(1, tmp, 0);
