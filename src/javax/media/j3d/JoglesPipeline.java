@@ -1344,7 +1344,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glDrawStripElementsStrips++;
 
 				}
-//				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+				//				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
@@ -1545,7 +1545,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// if I'm handed a jogles geom then half floats and bytes are loaded waaaaaay back from disk
 			boolean optimizedGeo = (geo instanceof JoglesIndexedTriangleArrayRetained)
 					|| (geo instanceof JoglesIndexedTriangleStripArrayRetained);
-			
+
 			// not required second time around for VAO
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
@@ -1569,7 +1569,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (bindingRequired)
 			{
-				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
+				if (gd.coordBufId != -1)
+				{
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.coordBufId);
+				}
+				else
+				{
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
+				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -1596,6 +1603,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 					throw new UnsupportedOperationException("No coords!");
 				}
 
+				// if we had bound for separate coords above, bind to normal interleave now
+				if (gd.coordBufId != -1)
+				{					
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
+				}
+				
+				
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
@@ -1808,7 +1822,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						ctx.perFrameStats.glDrawStripElementsStrips++;
 
 				}
-//				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+				//				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
@@ -2988,6 +3002,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// can be used with any shader, e.g. physics appearance with a NiTriShape as in morrowind
 			// notice also building the interleaved ignore numActiveTextureUnits
 			ByteBuffer interleavedBuffer = null;
+			ByteBuffer coordBuffer = null;
 
 			if (geo instanceof JoglesIndexedTriangleArrayRetained)
 			{
@@ -2999,6 +3014,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gd.geoToVattrOffset = src.geoToVattrOffset;
 				gd.geoToTexCoordOffset = src.geoToTexCoordOffset;
 				interleavedBuffer = src.interleavedBuffer;
+				coordBuffer = src.coordBuffer;
 			}
 			else if (geo instanceof JoglesIndexedTriangleStripArrayRetained)
 			{
@@ -3010,9 +3026,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gd.geoToVattrOffset = src.geoToVattrOffset;
 				gd.geoToTexCoordOffset = src.geoToTexCoordOffset;
 				interleavedBuffer = src.interleavedBuffer;
+				coordBuffer = src.coordBuffer;
 			}
 			else
 			{
+				//TODO: morphables can come in here too, just reduce stride and set up the coordBuffer  
 
 				// how big are we going to require?
 				gd.interleavedStride = 0;
@@ -3262,6 +3280,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.interleavedBufferCreated++;
+
+			if (coordBuffer != null)
+			{
+				coordBuffer.position(0);
+				int[] tmp2 = new int[1];
+				gl.glGenBuffers(1, tmp2, 0);
+				gd.coordBufId = tmp2[0];
+
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.coordBufId);
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, coordBuffer.remaining(), coordBuffer, GL2ES2.GL_DYNAMIC_DRAW);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
 
 		}
 

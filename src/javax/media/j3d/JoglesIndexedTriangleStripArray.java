@@ -42,10 +42,10 @@ public class JoglesIndexedTriangleStripArray extends IndexedTriangleStripArray
 	}
 
 	public void setInterleavedVertexBuffer(int interleavedStride, int geoToCoordOffset, int geoToColorsOffset, int geoToNormalsOffset,
-			int[] geoToTexCoordOffset, int[] geoToVattrOffset, ByteBuffer interleavedBuffer)
+			int[] geoToTexCoordOffset, int[] geoToVattrOffset, ByteBuffer interleavedBuffer, ByteBuffer coordBuffer)
 	{
 		((JoglesIndexedTriangleStripArrayRetained) this.retained).setInterleavedVertexBuffer(interleavedStride, geoToCoordOffset,
-				geoToColorsOffset, geoToNormalsOffset, geoToTexCoordOffset, geoToVattrOffset, interleavedBuffer);
+				geoToColorsOffset, geoToNormalsOffset, geoToTexCoordOffset, geoToVattrOffset, interleavedBuffer, coordBuffer);
 
 	}
 

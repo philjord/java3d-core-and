@@ -8,16 +8,17 @@ public class JoglesIndexedTriangleStripArrayRetained extends IndexedTriangleStri
 {
 
 	private static FloatBuffer dummyBuffer = FloatBuffer.allocate(0);
-	public ShortBuffer indBuf;
+	ShortBuffer indBuf;
 
-	public int interleavedStride = -1;
-	public int geoToCoordOffset = -1;
-	public int geoToColorsOffset = -1;
-	public int geoToNormalsOffset = -1;
-	public int[] geoToTexCoordOffset = new int[1];
-	public int[] geoToVattrOffset = new int[2];
+	int interleavedStride = -1;
+	int geoToCoordOffset = -1;
+	int geoToColorsOffset = -1;
+	int geoToNormalsOffset = -1;
+	int[] geoToTexCoordOffset = new int[1];
+	int[] geoToVattrOffset = new int[2];
 
-	public ByteBuffer interleavedBuffer;
+	ByteBuffer interleavedBuffer;
+	ByteBuffer coordBuffer;// if not null coords are separate, ready for animation
 
 	private int vdefined = 0;
 
@@ -94,9 +95,8 @@ public class JoglesIndexedTriangleStripArrayRetained extends IndexedTriangleStri
 	}
 
 	public void setInterleavedVertexBuffer(int interleavedStride, int geoToCoordOffset, int geoToColorsOffset, int geoToNormalsOffset,
-			int[] geoToTexCoordOffset, int[] geoToVattrOffset, ByteBuffer interleavedBuffer)
+			int[] geoToTexCoordOffset, int[] geoToVattrOffset, ByteBuffer interleavedBuffer, ByteBuffer coordBuffer)
 	{
-
 		this.interleavedStride = interleavedStride;
 		this.geoToCoordOffset = geoToCoordOffset;
 		this.geoToColorsOffset = geoToColorsOffset;
@@ -105,6 +105,7 @@ public class JoglesIndexedTriangleStripArrayRetained extends IndexedTriangleStri
 		this.geoToVattrOffset = geoToVattrOffset;
 
 		this.interleavedBuffer = interleavedBuffer;
+		this.coordBuffer = coordBuffer;
 
 		// could use vertex format here, but offsets are just as good
 

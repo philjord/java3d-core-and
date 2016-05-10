@@ -70,6 +70,7 @@ public class JoglesContext extends JoglContext
 		public SparseArray<Integer> geoToVertAttribBuf = new SparseArray<Integer>();
 
 		//Every thing below relates to interleaved data
+		public int coordBufId = -1; // if separate
 		public int interleavedBufId = -1;
 		public int interleavedStride = 0;
 		public int geoToCoordOffset = -1;
