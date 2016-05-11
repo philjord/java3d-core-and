@@ -308,7 +308,7 @@ public class JoglesContext extends JoglContext
 		{
 			depthBufferEnableOverride = false;
 			depthBufferEnable = false;
-			depthTestFunction = 0;
+			depthTestFunction = -1;
 			depthBufferWriteEnableOverride = false;
 			depthBufferWriteEnable = false;
 			userStencilAvailable = false;
@@ -318,17 +318,17 @@ public class JoglesContext extends JoglContext
 			System.arraycopy(clearer1, 0, setGLSLUniform1i, 0, setGLSLUniform1i.length);
 			System.arraycopy(clearer2, 0, setGLSLUniform1f, 0, setGLSLUniform1f.length);
 			glEnableGL_BLEND = false;
-			srcBlendFunction = 0;
-			dstBlendFunction = 0;
-			glProjectionMatrixLoc = 0;
-			currentProjMatInverseLoc = 0;
-			currentViewMatLoc = 0;
-			glActiveTexture = 0;
-			currentProgramId = 0;
+			srcBlendFunction = -1;
+			dstBlendFunction = -1;
+			glProjectionMatrixLoc = -1;
+			currentProjMatInverseLoc = -1;
+			currentViewMatLoc = -1;
+			glActiveTexture = -1;
+			currentProgramId = -1;
 			System.arraycopy(clearer3, 0, glBindTextureGL_TEXTURE_2D, 0, glBindTextureGL_TEXTURE_2D.length);
-			cullFace = 0;
-			polygonOffsetFactor = 0;
-			polygonOffset = 0;
+			cullFace = -1;
+			polygonOffsetFactor = -1;
+			polygonOffset = -1;
 			ignoreVertexColors = false;
 			glFrontMaterialdiffuse.set(0, 0, 0, 0);
 			glFrontMaterialemission.set(0, 0, 0);

@@ -3042,13 +3042,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gd.geoToCoordOffset = offset;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 8;// 3 half float = 6 align on 4
-						gd.interleavedStride += 8;
+						offset += 8;// 3 half float = 6 align on 4						
 					}
 					else
 					{
-						offset += 4 * 3;
-						gd.interleavedStride += 4 * 3;
+						offset += 4 * 3;					
 					}
 					fverts.position(0);
 				}
@@ -3060,13 +3058,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 4;
-						gd.interleavedStride += 4;// minimum alignment
+						offset += 4;// minimum alignment
 					}
 					else
 					{
 						offset += 4 * sz;
-						gd.interleavedStride += 4 * sz;
 					}
 					fclrs.position(0);
 				}
@@ -3076,13 +3072,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gd.geoToNormalsOffset = offset;
 					if (COMPRESS_OPTIMIZED_VERTICES)
 					{
-						offset += 4;
-						gd.interleavedStride += 4;// minimum alignment
+						offset += 4;// minimum alignment
 					}
 					else
 					{
 						offset += 4 * 3;
-						gd.interleavedStride += 4 * 3;
 					}
 					norms.position(0);
 				}
@@ -3097,12 +3091,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (COMPRESS_OPTIMIZED_VERTICES)
 						{
 							offset += 4 * (int) Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
-							gd.interleavedStride += 4 * (int) Math.ceil(sz / 4.0);
 						}
 						else
 						{
 							offset += 4 * sz;
-							gd.interleavedStride += 4 * sz;
 						}
 
 						FloatBuffer vertexAttrs = vertexAttrBufs[index];
@@ -3126,18 +3118,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 								// note half floats sized
 								int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
 								offset += stride;
-								gd.interleavedStride += stride;
 							}
 							else
 							{
 								offset += 4 * texStride;
-								gd.interleavedStride += 4 * texStride;
 							}
 							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
 							buf.position(0);
 						}
 					}
 				}
+				
+				gd.interleavedStride = offset;
 
 				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
 				interleavedBuffer.order(ByteOrder.nativeOrder());
