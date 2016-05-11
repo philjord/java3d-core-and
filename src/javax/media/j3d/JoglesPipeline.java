@@ -50,13 +50,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;// this may not help dues to equals and set calls being as costly
 	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
-	// this one causes fallout4 load screen to look crazy
+
 	private static final boolean MINIMISE_NATIVE_SHADER = true;
 	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	//crazy new ffp buffer weird ness, online evidence suggest no benefit
 	private static final boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
-	private static final boolean PRESUME_INDICES = true;
+	private static final boolean PRESUME_INDICES = true;// only relevant if UBO above true
 
 	// interleave and compressed to half floats and bytes
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
@@ -4770,6 +4770,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (stencilEnable)
 			{
 				//TODO: be more specific with native call pre-test here
+				// currently causes major trouble
 				//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false)
 				{
 					gl.glEnable(GL2ES2.GL_STENCIL_TEST);
@@ -4778,8 +4779,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glStencilMask(stencilWriteMask);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_OTHER)
-						joglesctx.gl_state.glEnableGL_STENCIL_TEST = true;
+					//if (MINIMISE_NATIVE_CALLS_OTHER)
+					//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = true;
 				}
 
 			}
@@ -4790,8 +4791,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_OTHER)
-						joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
+					//if (MINIMISE_NATIVE_CALLS_OTHER)
+					//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
 				}
 			}
 		}
@@ -4818,8 +4819,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glDepthMask(true);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_OTHER)
-					joglesctx.gl_state.glDepthMask = true;
+				//if (MINIMISE_NATIVE_CALLS_OTHER)
+				//	joglesctx.gl_state.glDepthMask = true;
 			}
 		}
 		if (!depthBufferEnableOverride)
@@ -4829,8 +4830,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				gl.glEnable(GL2ES2.GL_DEPTH_TEST);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_OTHER)
-					joglesctx.gl_state.depthBufferEnable = true;
+				//if (MINIMISE_NATIVE_CALLS_OTHER)
+				//	joglesctx.gl_state.depthBufferEnable = true;
 			}
 		}
 		//if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL)
@@ -4838,15 +4839,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS_OTHER)
-				joglesctx.gl_state.depthTestFunction = RenderingAttributes.LESS_OR_EQUAL;
+			//if (MINIMISE_NATIVE_CALLS_OTHER)
+			//	joglesctx.gl_state.depthTestFunction = RenderingAttributes.LESS_OR_EQUAL;
 		}
 
 		joglesctx.renderingData.alphaTestEnabled = false;
 		joglesctx.renderingData.alphaTestFunction = RenderingAttributes.ALWAYS;
 		joglesctx.renderingData.alphaTestValue = 0;
 		joglesctx.renderingData.ignoreVertexColors = false;
-
+		
+		//RAISE_BUG: yep only called on a null RenderingAttributes
+		//FIXME: this call does not set stencil test, so possibly this is why the rendering attributes 
+		//caused such a mess when not present??
+		 
+			 
+		//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
+		{
+			gl.glDisable(GL2ES2.GL_STENCIL_TEST);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+			//if (MINIMISE_NATIVE_CALLS_OTHER)
+			//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
+		}
+			 
+		 
 	}
 
 	@Override
