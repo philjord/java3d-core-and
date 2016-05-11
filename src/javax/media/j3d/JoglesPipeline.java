@@ -345,7 +345,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 						//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
 						if (gd.geoToCoordBufSize != fverts.remaining())
 						{
-							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining());
+							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
+							+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " " + geo.source);
 
 							int prevBufId = gd.geoToCoordBuf;//record to delete after re-bind								
 
@@ -993,7 +994,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 						//Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
 						if (gd.geoToCoordBufSize != fverts.remaining())
 						{
-							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining());
+							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
+									+ " ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " " + geo.source);
+
 							int prevBufId = gd.geoToCoordBuf;//keep to delete below
 
 							int[] tmp = new int[1];
@@ -1605,11 +1608,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				// if we had bound for separate coords above, bind to normal interleave now
 				if (gd.coordBufId != -1)
-				{					
+				{
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
 				}
-				
-				
+
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
