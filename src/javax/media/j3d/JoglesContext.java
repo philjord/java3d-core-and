@@ -278,10 +278,7 @@ public class JoglesContext extends JoglContext
 		public float[] clearer2 = new float[500];
 		public boolean glEnableGL_BLEND;
 		public int srcBlendFunction;
-		public int dstBlendFunction;
-		public int glProjectionMatrixLoc;
-		public int currentProjMatInverseLoc;
-		public int currentViewMatLoc;
+		public int dstBlendFunction;	
 		public int glActiveTexture;
 		public int currentProgramId;
 		public int[] glBindTextureGL_TEXTURE_2D = new int[35000];// indexed based on current glActiveTexture
@@ -303,6 +300,7 @@ public class JoglesContext extends JoglContext
 		public Matrix4d glModelViewMatrixInverse = new Matrix4d();
 		public Matrix4d glModelViewProjectionMatrix = new Matrix4d();
 		public Matrix3d glNormalMatrix = new Matrix3d();
+		
 
 		public void clear()
 		{
@@ -319,10 +317,7 @@ public class JoglesContext extends JoglContext
 			System.arraycopy(clearer2, 0, setGLSLUniform1f, 0, setGLSLUniform1f.length);
 			glEnableGL_BLEND = false;
 			srcBlendFunction = -1;
-			dstBlendFunction = -1;
-			glProjectionMatrixLoc = -1;
-			currentProjMatInverseLoc = -1;
-			currentViewMatLoc = -1;
+			dstBlendFunction = -1;			
 			glActiveTexture = -1;
 			currentProgramId = -1;
 			System.arraycopy(clearer3, 0, glBindTextureGL_TEXTURE_2D, 0, glBindTextureGL_TEXTURE_2D.length);

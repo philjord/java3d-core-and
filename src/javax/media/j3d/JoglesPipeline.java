@@ -2172,18 +2172,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
 		if (locs.glProjectionMatrix != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrix != ctx.gl_state.glProjectionMatrixLoc))
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
 			{
 				gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glProjectionMatrixLoc = locs.glProjectionMatrix;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 		}
 		if (locs.glProjectionMatrixInverse != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glProjectionMatrixInverse != ctx.gl_state.currentProjMatInverseLoc))
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
 			{
 				//EXPENSIVE!!!!! only calc if asked for, and even then...
 				try
@@ -2197,19 +2195,16 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 
 				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 		}
 		if (locs.glViewMatrix != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glViewMatrix != ctx.gl_state.currentViewMatLoc))
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
 			{
 				gl.glUniformMatrix4fv(locs.glViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentViewMat), 0);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.currentViewMatLoc = locs.glViewMatrix;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -2238,73 +2233,73 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (locs.glModelViewMatrix != -1)
 		{
 			// minimise not working due to late calc of matrix
-		//if (!MINIMISE_NATIVE_CALLS_FFP
-		//			|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
-		//	{
-				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+			//if (!MINIMISE_NATIVE_CALLS_FFP
+			//			|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
+			//	{
+			ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 
-				gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
+			gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
 
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
-				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.glModelViewMatrixUpdated++;
-		//	}
-		//	else if (OUTPUT_PER_FRAME_STATS)
-		//	{
-		//		ctx.perFrameStats.glModelViewMatrixSkipped++;
-		//	}
+			if (MINIMISE_NATIVE_CALLS_FFP)
+				ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.glModelViewMatrixUpdated++;
+			//	}
+			//	else if (OUTPUT_PER_FRAME_STATS)
+			//	{
+			//		ctx.perFrameStats.glModelViewMatrixSkipped++;
+			//	}
 		}
 		if (locs.glModelViewMatrixInverse != -1)
 		{// minimise not working due to late calc of matrix
 			//if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
 			//		|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 			//{
-				// Expensive, only calc if required
-				ctx.currentModelViewMatInverse.mul(ctx.currentViewMat, ctx.currentModelMat);
-				ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
+			// Expensive, only calc if required
+			ctx.currentModelViewMatInverse.mul(ctx.currentViewMat, ctx.currentModelMat);
+			ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 
-				//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
-				gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
+			//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
+			gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
 
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
-				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
-		//	}
-		//	else if (OUTPUT_PER_FRAME_STATS)
-		//	{
-		//		ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
-		//	}
+			if (MINIMISE_NATIVE_CALLS_FFP)
+				ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
+			//	}
+			//	else if (OUTPUT_PER_FRAME_STATS)
+			//	{
+			//		ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
+			//	}
 		}
 
 		if (locs.glModelViewProjectionMatrix != -1)
 		{
 			// minimise not working due to late calc of matrix
-		//	if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-		//			|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
-		//	{
-				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-				ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
+			//	if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+			//			|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
+			//	{
+			ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+			ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
 
-				//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
-				gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
+			//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
+			gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
 
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
-				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
-		//	}
-		//	else if (OUTPUT_PER_FRAME_STATS)
-		//	{
-		//		ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
-		//	}
+			if (MINIMISE_NATIVE_CALLS_FFP)
+				ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
+			//	}
+			//	else if (OUTPUT_PER_FRAME_STATS)
+			//	{
+			//		ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
+			//	}
 		}
 
 		if (locs.glNormalMatrix != -1)
@@ -2313,17 +2308,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//if (!MINIMISE_NATIVE_CALLS_FFP
 			//		|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 			//{
-				ctx.currentModelViewMat.mul(ctx.matrixUtil.deburnV, ctx.matrixUtil.deburnM);
-				JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
+			ctx.currentModelViewMat.mul(ctx.matrixUtil.deburnV, ctx.matrixUtil.deburnM);
+			JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
-				//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
-				gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
-				if (OUTPUT_PER_FRAME_STATS)
-					ctx.perFrameStats.glNormalMatrixUpdated++;
+			//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
+			gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+			if (MINIMISE_NATIVE_CALLS_FFP)
+				ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.glNormalMatrixUpdated++;
 			//}
 			//else if (OUTPUT_PER_FRAME_STATS)
 			//{
@@ -6155,8 +6150,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = (JoglesContext) ctx;
 
-		joglesctx.gl_state.currentViewMatLoc = -1;
-
 		//joglesctx.matrixUtil.deburnV.set(viewMatrix);
 		//joglesctx.matrixUtil.deburnV.transpose();// now done in ffp by call to native
 		joglesctx.currentViewMat.set(viewMatrix);
@@ -6199,9 +6192,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		projMatrix[11] *= -1.0;
 
 		joglesctx.currentProjMat.set(projMatrix);
-		//joglesctx.currentProjMat.transpose();
-		joglesctx.gl_state.glProjectionMatrixLoc = -1;//indicate must be updated
-		joglesctx.gl_state.currentProjMatInverseLoc = -1;
+		//joglesctx.currentProjMat.transpose(); // done in set ffp now
 
 		//reverse it back in case others use it
 		projMatrix[8] *= -1.0;
