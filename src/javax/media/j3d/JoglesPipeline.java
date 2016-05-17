@@ -62,6 +62,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
 	private static final boolean COMPRESS_OPTIMIZED_VERTICES = true;
 
+	private static final boolean NEVER_RELEASE_CONTEXT = true;
+
 	/**
 	 * Constructor for singleton JoglPipeline instance
 	 */
@@ -346,7 +348,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 						if (gd.geoToCoordBufSize != fverts.remaining())
 						{
 							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
-							+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " " + geo.source);
+									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
+									+ geo.source);
 
 							int prevBufId = gd.geoToCoordBuf;//record to delete after re-bind								
 
@@ -2031,12 +2034,15 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				if (locs.glModelViewMatrixOffset != -1)
 				{
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+
 					uboBB.position(locs.glModelViewMatrixOffset);
 					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMat));
 				}
 				if (locs.glModelViewMatrixInverseOffset != -1)
 				{
 					// Expensive, only if required
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 					ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
 					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 
@@ -2045,12 +2051,18 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				if (locs.glModelViewProjectionMatrixOffset != -1)
 				{
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+					ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
+
 					uboBB.position(locs.glModelViewProjectionMatrixOffset);
 					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat));
 				}
 				//3x3 are stored as 3xvec4 (48 bytes before next offset) note use of toArray3x4
 				if (locs.glNormalMatrixOffset != -1)
 				{
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+					JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
+
 					uboBB.position(locs.glNormalMatrixOffset);
 					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray3x4(ctx.currentNormalMat));
 				}
@@ -2184,7 +2196,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					System.err.println("" + e);
 				}
 
-				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toFB(ctx.currentProjMatInverse));
+				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
 				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.currentProjMatInverseLoc = locs.glProjectionMatrixInverse;
 				if (DO_OUTPUT_ERRORS)
@@ -2195,7 +2207,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP || (locs.glViewMatrix != ctx.gl_state.currentViewMatLoc))
 			{
-				gl.glUniformMatrix4fv(locs.glViewMatrix, 1, true, ctx.matrixUtil.toFB(ctx.currentViewMat));
+				gl.glUniformMatrix4fv(locs.glViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentViewMat), 0);
 				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.currentViewMatLoc = locs.glViewMatrix;
 				if (DO_OUTPUT_ERRORS)
@@ -2208,7 +2220,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (!MINIMISE_NATIVE_CALLS_FFP
 					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
 			{
-				//gl.glUniformMatrix4fv(locs.modelMatrix, 1, false, ctx.toFB(ctx.currentModelMat));
 				gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -2226,10 +2237,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (locs.glModelViewMatrix != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
-			{
-				//	gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false, ctx.toFB(ctx.currentModelViewMat));
+			// minimise not working due to late calc of matrix
+		//if (!MINIMISE_NATIVE_CALLS_FFP
+		//			|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
+		//	{
+				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+
 				gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -2238,19 +2251,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
-				ctx.perFrameStats.glModelViewMatrixSkipped++;
-			}
+		//	}
+		//	else if (OUTPUT_PER_FRAME_STATS)
+		//	{
+		//		ctx.perFrameStats.glModelViewMatrixSkipped++;
+		//	}
 		}
 		if (locs.glModelViewMatrixInverse != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
-			{
+		{// minimise not working due to late calc of matrix
+			//if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+			//		|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
+			//{
 				// Expensive, only calc if required
-				ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
+				ctx.currentModelViewMatInverse.mul(ctx.currentViewMat, ctx.currentModelMat);
 				ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 
 				//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
@@ -2262,18 +2275,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
-				ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
-			}
+		//	}
+		//	else if (OUTPUT_PER_FRAME_STATS)
+		//	{
+		//		ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
+		//	}
 		}
 
 		if (locs.glModelViewProjectionMatrix != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
-			{
+			// minimise not working due to late calc of matrix
+		//	if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+		//			|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
+		//	{
+				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+				ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
+
 				//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
 				gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
 				if (DO_OUTPUT_ERRORS)
@@ -2283,18 +2300,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
-				ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
-			}
+		//	}
+		//	else if (OUTPUT_PER_FRAME_STATS)
+		//	{
+		//		ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
+		//	}
 		}
 
 		if (locs.glNormalMatrix != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
-			{
+			// minimise not working due to late calc of matrix
+			//if (!MINIMISE_NATIVE_CALLS_FFP
+			//		|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
+			//{
+				ctx.currentModelViewMat.mul(ctx.matrixUtil.deburnV, ctx.matrixUtil.deburnM);
+				JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
+
 				//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
 				gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
 				if (DO_OUTPUT_ERRORS)
@@ -2303,11 +2324,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glNormalMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
-				ctx.perFrameStats.glNormalMatrixSkipped++;
-			}
+			//}
+			//else if (OUTPUT_PER_FRAME_STATS)
+			//{
+			//	ctx.perFrameStats.glNormalMatrixSkipped++;
+			//}
 		}
 
 		// if set one of the 2 colors below should be used by the shader (material for lighting)
@@ -3046,7 +3067,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					else
 					{
-						offset += 4 * 3;					
+						offset += 4 * 3;
 					}
 					fverts.position(0);
 				}
@@ -3128,7 +3149,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						}
 					}
 				}
-				
+
 				gd.interleavedStride = offset;
 
 				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
@@ -4847,12 +4868,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.renderingData.alphaTestFunction = RenderingAttributes.ALWAYS;
 		joglesctx.renderingData.alphaTestValue = 0;
 		joglesctx.renderingData.ignoreVertexColors = false;
-		
+
 		//RAISE_BUG: yep only called on a null RenderingAttributes
 		//FIXME: this call does not set stencil test, so possibly this is why the rendering attributes 
 		//caused such a mess when not present??
-		 
-			 
+
 		//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
 		{
 			gl.glDisable(GL2ES2.GL_STENCIL_TEST);
@@ -4861,8 +4881,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//if (MINIMISE_NATIVE_CALLS_OTHER)
 			//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
 		}
-			 
-		 
+
 	}
 
 	@Override
@@ -6138,24 +6157,26 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		joglesctx.gl_state.currentViewMatLoc = -1;
 
-		joglesctx.matrixUtil.deburnV.set(viewMatrix);
-		//joglesctx.matrixUtil.deburnV.transpose();
-		joglesctx.currentViewMat.set(joglesctx.matrixUtil.deburnV);
+		//joglesctx.matrixUtil.deburnV.set(viewMatrix);
+		//joglesctx.matrixUtil.deburnV.transpose();// now done in ffp by call to native
+		joglesctx.currentViewMat.set(viewMatrix);
 
-		joglesctx.matrixUtil.deburnM.set(modelMatrix);
-		//joglesctx.matrixUtil.deburnM.transpose();
-		joglesctx.currentModelMat.set(joglesctx.matrixUtil.deburnM);
+		//joglesctx.matrixUtil.deburnM.set(modelMatrix);
+		//joglesctx.matrixUtil.deburnM.transpose();// now done in ffp by call to native
+		joglesctx.currentModelMat.set(modelMatrix);
 
-		//joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnM, joglesctx.matrixUtil.deburnV);
-		joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnV, joglesctx.matrixUtil.deburnM);
+		//Moved up into setffp and only calc'ed if requested
+		/*
+		
+				joglesctx.currentModelViewMat.mul(joglesctx.matrixUtil.deburnV, joglesctx.matrixUtil.deburnM);
+		
+				
+				joglesctx.currentModelViewProjMat.mul(joglesctx.currentProjMat, joglesctx.currentModelViewMat);
+		
+				// use only the upper left as it is a 3x3 rotation matrix
+				JoglesMatrixUtil.transposeInvert(joglesctx.currentModelViewMat, joglesctx.currentNormalMat);				
+			*/
 
-		//joglesctx.currentModelViewProjMat.mul(joglesctx.currentModelViewMat, joglesctx.currentProjMat);
-		joglesctx.currentModelViewProjMat.mul(joglesctx.currentProjMat, joglesctx.currentModelViewMat);
-
-		// use only the upper left as it is a 3x3 rotation matrix
-		JoglesMatrixUtil.transposeInvert(joglesctx.currentModelViewMat, joglesctx.currentNormalMat);
-		//joglesctx.matrixUtil.invert(joglesctx.currentNormalMat);//sloooowwwww!
-		//joglesctx.currentNormalMat.transpose();
 	}
 
 	// The native method for setting the Projection matrix.
@@ -6828,24 +6849,26 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// render is it's own thread so finish stops nothing
 	void syncRender(Context ctx, boolean wait)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.syncRender()");
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.syncRenderTime = System.nanoTime();
+		if (!NEVER_RELEASE_CONTEXT)
+		{
+			if (VERBOSE)
+				System.err.println("JoglPipeline.syncRender()");
+			if (OUTPUT_PER_FRAME_STATS)
+				((JoglesContext) ctx).perFrameStats.syncRenderTime = System.nanoTime();
 
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+			GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 
-		// clean up any buffers that need freeing
-		doClearBuffers(ctx);
+			// clean up any buffers that need freeing
+			doClearBuffers(ctx);
 
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).outputPerFrameData();
+			if (OUTPUT_PER_FRAME_STATS)
+				((JoglesContext) ctx).outputPerFrameData();
 
-		//PERF:
-		//if (wait)
-		//	gl.glFinish();
-		//else
-		gl.glFlush();
+			//if (wait)
+			//	gl.glFinish();
+			//else
+			gl.glFlush();
+		}
 
 	}
 
@@ -6913,32 +6936,42 @@ class JoglesPipeline extends JoglesDEPPipeline
 	@Override
 	boolean useCtx(Context ctx, Drawable drawable)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.useCtx()**********************************");
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.useCtx++;
+		if (!NEVER_RELEASE_CONTEXT || !currently_current)
+		{
+			if (VERBOSE)
+				System.err.println("JoglPipeline.useCtx()**********************************");
+			if (OUTPUT_PER_FRAME_STATS)
+				((JoglesContext) ctx).perFrameStats.useCtx++;
 
-		GLContext context = context(ctx);
+			GLContext context = context(ctx);
 
-		if (context.getGLDrawable() == null)
-			System.out.println("context.getGLDrawable() == null!");
+			if (context.getGLDrawable() == null)
+				System.out.println("context.getGLDrawable() == null!");
 
-		int res = context.makeCurrent();
-		return (res != GLContext.CONTEXT_NOT_CURRENT);
+			currently_current = true;
+			int res = context.makeCurrent();
+			return (res != GLContext.CONTEXT_NOT_CURRENT);
+		}
+		return true;
 	}
+
+	public static boolean currently_current = false;
 
 	// Optionally release the context. Returns true if the context was released.
 	@Override
 	boolean releaseCtx(Context ctx)
 	{
-		if (VERBOSE)
-			System.err.println("JoglPipeline.releaseCtx()");
-		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.releaseCtx++;
-		GLContext context = context(ctx);
+		if (!NEVER_RELEASE_CONTEXT)
+		{
+			if (VERBOSE)
+				System.err.println("JoglPipeline.releaseCtx()");
+			if (OUTPUT_PER_FRAME_STATS)
+				((JoglesContext) ctx).perFrameStats.releaseCtx++;
+			GLContext context = context(ctx);
 
-		if (context.isCurrent())
-			context.release();
+			if (context.isCurrent())
+				context.release();
+		}
 		return true;
 	}
 

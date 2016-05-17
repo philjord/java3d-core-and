@@ -48,7 +48,7 @@ class JoglesMatrixUtil
 	 * @param m
 	 * @param out
 	 */
-	
+
 	public static void transposeInvert(Matrix4d m, Matrix3d out)
 	{
 		double determinant = m.determinant();
@@ -617,7 +617,7 @@ class JoglesMatrixUtil
 	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
 
 	public double[] deburnV2 = null;//deburners 
-	
+
 	public Matrix4d deburnV = new Matrix4d();//deburners 
 	public Matrix4d deburnM = new Matrix4d();
 	public float[] tempMat9 = new float[9];
@@ -627,7 +627,23 @@ class JoglesMatrixUtil
 
 	public float[] toArray(Matrix4d m)
 	{
-		return toArray(m, tempMat16);
+		tempMat16[0] = (float) m.m00;
+		tempMat16[1] = (float) m.m01;
+		tempMat16[2] = (float) m.m02;
+		tempMat16[3] = (float) m.m03;
+		tempMat16[4] = (float) m.m10;
+		tempMat16[5] = (float) m.m11;
+		tempMat16[6] = (float) m.m12;
+		tempMat16[7] = (float) m.m13;
+		tempMat16[8] = (float) m.m20;
+		tempMat16[9] = (float) m.m21;
+		tempMat16[10] = (float) m.m22;
+		tempMat16[11] = (float) m.m23;
+		tempMat16[12] = (float) m.m30;
+		tempMat16[13] = (float) m.m31;
+		tempMat16[14] = (float) m.m32;
+		tempMat16[15] = (float) m.m33;
+		return tempMat16;
 	}
 
 	public static float[] toArray(Matrix4d m, float[] a)
@@ -654,7 +670,17 @@ class JoglesMatrixUtil
 
 	public float[] toArray(Matrix3d m)
 	{
-		return toArray(m, tempMat9);
+		tempMat9[0] = (float) m.m00;
+		tempMat9[1] = (float) m.m01;
+		tempMat9[2] = (float) m.m02;
+		tempMat9[3] = (float) m.m10;
+		tempMat9[4] = (float) m.m11;
+		tempMat9[5] = (float) m.m12;
+		tempMat9[6] = (float) m.m20;
+		tempMat9[7] = (float) m.m21;
+		tempMat9[8] = (float) m.m22;
+		return tempMat9;
+
 	}
 
 	public static float[] toArray(Matrix3d m, float[] a)
