@@ -63,6 +63,9 @@ public class JoglesContext extends JoglContext
 		public int[] geoToIndStripBuf = null;
 		//public int geoToIndStripSwappedSize = -1;// removed into j3dnotristrips
 		public int geoToCoordBuf = -1;
+		public int geoToCoordBuf1 = -2;// double buffered for updates
+		public int geoToCoordBuf2 = -3;
+		public int geoToCoordBuf3 = -3;
 		public int geoToCoordBufSize = -1;
 		public int geoToColorBuf = -1;
 		public int geoToNormalBuf = -1;

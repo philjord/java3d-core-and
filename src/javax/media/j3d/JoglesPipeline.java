@@ -62,6 +62,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
 	private static final boolean COMPRESS_OPTIMIZED_VERTICES = true;
 
+	//This MUST be true on android fullscreen 
+	//setPostiion on NifDispaly locks up if true
+
 	private static final boolean NEVER_RELEASE_CONTEXT = true;
 
 	/**
@@ -351,15 +354,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
 									+ geo.source);
 
-							int prevBufId = gd.geoToCoordBuf;//record to delete after re-bind								
+							int prevBufId1 = gd.geoToCoordBuf1;//record to delete after re-bind		
+							int prevBufId2 = gd.geoToCoordBuf2;
 
-							int[] tmp = new int[1];
-							gl.glGenBuffers(1, tmp, 0);
+							int[] tmp = new int[2];
+							gl.glGenBuffers(2, tmp, 0);
 							gd.geoToCoordBuf = tmp[0];
+							gd.geoToCoordBuf1 = tmp[0];
+							gd.geoToCoordBuf2 = tmp[1];
 
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);							
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts,  GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, GL2ES2.GL_DYNAMIC_DRAW);
 
 							gd.geoToCoordBufSize = fverts.remaining();
 
@@ -384,14 +391,28 @@ class JoglesPipeline extends JoglesDEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-							gl.glDeleteBuffers(1, new int[] { prevBufId }, 0);
+							gl.glDeleteBuffers(1, new int[] { prevBufId1,prevBufId2 }, 0);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 						}
 						else
 						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fverts.remaining() * Float.SIZE / 8, fverts);
+							//work out the buffer to update and buffer to swap to
+							if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
+							{
+								// update 1 but set to draw 2
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf2;
+							}
+							else
+							{
+								// update 2 but set to draw 1
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf1;
+							}
+
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
@@ -1000,15 +1021,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
 									+ " ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " " + geo.source);
 
-							int prevBufId = gd.geoToCoordBuf;//keep to delete below
+							int prevBufId1 = gd.geoToCoordBuf1;//keep to delete below
+							int prevBufId2 = gd.geoToCoordBuf2;//keep to delete below
 
-							int[] tmp = new int[1];
-							gl.glGenBuffers(1, tmp, 0);
+							int[] tmp = new int[2];
+							gl.glGenBuffers(2, tmp, 0);
 							gd.geoToCoordBuf = tmp[0];
+							gd.geoToCoordBuf1 = tmp[0];
+							gd.geoToCoordBuf2 = tmp[1];
 
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, GL2ES2.GL_STATIC_DRAW);
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, GL2ES2.GL_STATIC_DRAW);
 
 							gd.geoToCoordBufSize = fverts.remaining();
 
@@ -1033,14 +1059,28 @@ class JoglesPipeline extends JoglesDEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-							gl.glDeleteBuffers(1, new int[] { prevBufId }, 0);
+							gl.glDeleteBuffers(1, new int[] { prevBufId1,prevBufId2 }, 0);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 						}
 						else
 						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+							//work out the buffer to update and buffer to swap to
+							if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
+							{
+								// update 1 but set to draw 2
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf2;
+							}
+							else
+							{
+								// update 2 but set to draw 1
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf1;
+							}
+
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
@@ -1048,8 +1088,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 								ctx.perFrameStats.glBufferSubData++;
 						}
 
-						//Does NOT like the delete buffer call above, can't enable until the size 
-						//change is nderstood
 						if (bindingRequired)
 						{
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
@@ -2845,13 +2883,31 @@ class JoglesPipeline extends JoglesDEPPipeline
 						|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 				fverts.position(0);
-				int[] tmp = new int[1];
-				gl.glGenBuffers(1, tmp, 0);
-				gd.geoToCoordBuf = tmp[0];
 
-				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-				int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
-				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+				if (morphable)
+				{
+					int[] tmp = new int[2];
+					gl.glGenBuffers(2, tmp, 0);
+					gd.geoToCoordBuf = tmp[0];
+					gd.geoToCoordBuf1 = tmp[0];
+					gd.geoToCoordBuf2 = tmp[1];
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+					int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+				}
+				else
+				{
+					int[] tmp = new int[1];
+					gl.glGenBuffers(1, tmp, 0);
+					gd.geoToCoordBuf = tmp[0];
+
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+					int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -6840,21 +6896,23 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// render is it's own thread so finish stops nothing
 	void syncRender(Context ctx, boolean wait)
 	{
+
+		if (VERBOSE)
+			System.err.println("JoglPipeline.syncRender()");
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).perFrameStats.syncRenderTime = System.nanoTime();
+
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+
+		// clean up any buffers that need freeing
+		doClearBuffers(ctx);
+
+		if (OUTPUT_PER_FRAME_STATS)
+			((JoglesContext) ctx).outputPerFrameData();
+
+		// also seems to be ok, just do it as well
 		if (!NEVER_RELEASE_CONTEXT)
 		{
-			if (VERBOSE)
-				System.err.println("JoglPipeline.syncRender()");
-			if (OUTPUT_PER_FRAME_STATS)
-				((JoglesContext) ctx).perFrameStats.syncRenderTime = System.nanoTime();
-
-			GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
-
-			// clean up any buffers that need freeing
-			doClearBuffers(ctx);
-
-			if (OUTPUT_PER_FRAME_STATS)
-				((JoglesContext) ctx).outputPerFrameData();
-
 			//if (wait)
 			//	gl.glFinish();
 			//else
