@@ -18,6 +18,7 @@ import javax.media.j3d.JoglesContext.LightData;
 import javax.media.j3d.JoglesContext.LocationData;
 import javax.media.j3d.JoglesContext.ProgramData;
 import javax.vecmath.SingularMatrixException;
+import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
@@ -363,8 +364,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 							gd.geoToCoordBuf1 = tmp[0];
 							gd.geoToCoordBuf2 = tmp[1];
 
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);							
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts,  GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, GL2ES2.GL_DYNAMIC_DRAW);
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
 							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, GL2ES2.GL_DYNAMIC_DRAW);
 
@@ -391,7 +392,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-							gl.glDeleteBuffers(1, new int[] { prevBufId1,prevBufId2 }, 0);
+							gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 						}
@@ -1059,7 +1060,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-							gl.glDeleteBuffers(1, new int[] { prevBufId1,prevBufId2 }, 0);
+							gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 						}
@@ -2491,12 +2492,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		//TODO: particles and points etc
-		//currentPointSize needs to be handed into the particles shader
-
-		//TODO: look at walkway grill in diamond city looks like I've got these wrong
-		// but playing doesn't help
-		// also a plant in morrowind is not doing alpha testing properly
 		if (locs.alphaTestEnabled != -1)
 		{
 			gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
@@ -2528,8 +2523,49 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		//TODO: needs to be handled ,
-		//ctx.fogData
+		//Fog
+		if (locs.fogEnabled != -1)
+		{
+			gl.glUniform1i(locs.fogEnabled, ctx.fogData.enable ? 1 : 0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+
+			if (ctx.fogData.enable == true)
+			{
+				gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
+
+				gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
+
+				if (locs.expColor != -1)
+				{
+					gl.glUniform4f(locs.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z, 1.0f);
+				}
+
+				if (locs.expDensity != -1)
+				{
+					gl.glUniform1f(locs.expDensity, ctx.fogData.expDensity);
+				}
+				if (locs.linearColor != -1)
+				{
+					gl.glUniform4f(locs.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y, ctx.fogData.linearColor.z, 1.0f);
+				}
+
+				if (locs.linearStart != -1)
+				{
+					gl.glUniform1f(locs.linearStart, ctx.fogData.linearStart);
+				}
+				if (locs.linearEnd != -1)
+				{
+					gl.glUniform1f(locs.linearEnd, ctx.fogData.linearEnd);
+				}
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+		}
+
+		//TODO: particles and points etc
+		//currentPointSize needs to be handed into the particles shader
 
 		//NOTE water app shows multiple light calculations
 
@@ -2820,6 +2856,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
 			locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
 			locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
+			locs.fogEnabled = gl.glGetUniformLocation(shaderProgramId, "fogEnabled");
+			locs.expColor = gl.glGetUniformLocation(shaderProgramId, "expColor");
+			locs.expDensity = gl.glGetUniformLocation(shaderProgramId, "expDensity");
+			locs.linearColor = gl.glGetUniformLocation(shaderProgramId, "linearColor");
+			locs.linearStart = gl.glGetUniformLocation(shaderProgramId, "linearStart");
+			locs.linearEnd = gl.glGetUniformLocation(shaderProgramId, "linearEnd");
+		 
 
 			//attributes
 			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");

@@ -248,6 +248,14 @@ public class JoglesContext extends JoglContext
 		public int alphaTestFunction = -1;
 		public int alphaTestValue = -1;
 		public int textureTransform = -1;
+		public int fogEnabled = -1;
+		public int expColor = -1;
+		public int expDensity = -1;
+		public int linearColor = -1;
+		public int linearStart = -1;
+		public int linearEnd = -1;
+		
+		
 		public int glVertex = -1;
 		public int glColor = -1;
 		public int glNormal = -1;
