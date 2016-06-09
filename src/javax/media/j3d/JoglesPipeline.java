@@ -18,11 +18,12 @@ import javax.media.j3d.JoglesContext.LightData;
 import javax.media.j3d.JoglesContext.LocationData;
 import javax.media.j3d.JoglesContext.ProgramData;
 import javax.vecmath.SingularMatrixException;
-import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL2ES1;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
@@ -2862,7 +2863,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			locs.linearColor = gl.glGetUniformLocation(shaderProgramId, "linearColor");
 			locs.linearStart = gl.glGetUniformLocation(shaderProgramId, "linearStart");
 			locs.linearEnd = gl.glGetUniformLocation(shaderProgramId, "linearEnd");
-		 
 
 			//attributes
 			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
@@ -4669,12 +4669,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.pointSize = pointSize;
-
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+		//bug in desktop requiring this to be set still
+		gl.glEnable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
+		gl.glEnable(34913);//GL.GL_POINT_SPRITE);
 	}
 
 	// native method for setting default PointAttributes
 	@Override
-
 	void resetPointAttributes(Context ctx)
 	{
 		if (VERBOSE)
@@ -4684,6 +4686,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.pointSize = 1.0f;
+		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+		//bug in desktop requiring this to be set still
+		gl.glDisable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
+		gl.glDisable(34913);//GL.GL_POINT_SPRITE);
 	}
 	// ---------------------------------------------------------------------
 
