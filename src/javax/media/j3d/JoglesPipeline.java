@@ -21,9 +21,7 @@ import javax.vecmath.SingularMatrixException;
 import javax.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.GL2ES1;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
@@ -423,19 +421,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 						}
 					}
 
-					if (bindingRequired)
-					{
-						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-						gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-						gl.glEnableVertexAttribArray(locs.glVertex);
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-
-						if (OUTPUT_PER_FRAME_STATS)
-							ctx.perFrameStats.glVertexAttribPointerCoord++;
-						if (OUTPUT_PER_FRAME_STATS)
-							ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
-					}
 				}
 
 			}
@@ -448,8 +433,88 @@ class JoglesPipeline extends JoglesDEPPipeline
 				throw new UnsupportedOperationException("No coords!");
 			}
 
+			// update other attributes if required
+			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
+			{
+				//if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COLOR_WRITE);
+				if (changable)
+				{
+					fclrs.position(0);
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+				}
+			}
+			if (normalsDefined && locs.glNormal != -1)
+			{
+				//if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)				
+				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
+				if (changable)
+				{
+					norms.position(0);
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
+					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
+				}
+			}
+
+			if (vattrDefined)
+			{
+				for (int index = 0; index < vertexAttrCount; index++)
+				{
+					Integer attribLoc = locs.genAttIndexToLoc.get(index);
+					if (attribLoc != null && attribLoc.intValue() != -1)
+					{
+						//if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE);
+						if (changable)
+						{
+							FloatBuffer vertexAttrs = vertexAttrBufs[index];
+							vertexAttrs.position(0);
+							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
+							Integer bufId = bufIds.get(index);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+						}
+					}
+				}
+			}
+
+			if (textureDefined)
+			{
+				boolean[] texSetsBound = new boolean[texCoords.length];
+				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
+				{
+					int texSet = texCoordSetMap[texUnit];
+					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
+					{
+						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+						if (changable)
+						{
+							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							buf.position(0);
+							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
+							Integer bufId = bufIds.get(texUnit);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, buf.remaining() * Float.SIZE / 8, buf);
+						}
+					}
+				}
+			}
+
 			if (bindingRequired)
 			{
+				// always do coords
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+				gl.glEnableVertexAttribArray(locs.glVertex);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glVertexAttribPointerCoord++;
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
@@ -465,12 +530,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 						fclrs.position(coloroff);
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
-						//a good cDirty and a DYNAMIC_DRAW call needed
-						/*if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
-						{							
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
-						}*/
-
 						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, 0, 0);
 						gl.glEnableVertexAttribArray(locs.glColor);//must be called after Pointer above
 						if (DO_OUTPUT_ERRORS)
@@ -516,14 +575,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 					else
 					{
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
-						//a good cDirty and a DYNAMIC_DRAW call needed
-						/*if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
-						{			
-							int normoff = 3 * initialNormalIndex;
-							norms.position(normoff);				
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
-						}*/
-
 						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
 						gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
 						if (DO_OUTPUT_ERRORS)
@@ -566,14 +617,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 								int sz = vertexAttrSizes[index];
 
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-								//a good cDirty and a DYNAMIC_DRAW call needed
-								/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
-								{
-									FloatBuffer vertexAttrs = vertexAttrBufs[index];
-									vertexAttrs.position(0);
-									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
-								}*/
-
 								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
 								gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
 								if (DO_OUTPUT_ERRORS)
@@ -611,7 +654,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 							}
 							else
 							{
-
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 								gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
 								gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
@@ -620,7 +662,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 								if (OUTPUT_PER_FRAME_STATS)
 									ctx.perFrameStats.enableTexCoordPointer++;
-
 							}
 						}
 					}
@@ -1089,21 +1130,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.glBufferSubData++;
 						}
-
-						if (bindingRequired)
-						{
-							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
-							gl.glEnableVertexAttribArray(locs.glVertex);
-							if (DO_OUTPUT_ERRORS)
-								outputErrors(ctx);
-
-							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.glVertexAttribPointerCoord++;
-
-							if (OUTPUT_PER_FRAME_STATS)
-								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
-						}
 					}
 
 				}
@@ -1117,8 +1143,89 @@ class JoglesPipeline extends JoglesDEPPipeline
 				throw new UnsupportedOperationException("No coords!");
 			}
 
+			// update other attributes if required
+			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
+			{
+				//if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COLOR_WRITE);
+				if (changable)
+				{
+					fclrs.position(0);
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
+				}
+			}
+			if (normalsDefined && locs.glNormal != -1)
+			{
+				//if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)				
+				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
+				if (changable)
+				{
+					norms.position(0);
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
+					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
+				}
+			}
+
+			if (vattrDefined)
+			{
+				for (int index = 0; index < vertexAttrCount; index++)
+				{
+					Integer attribLoc = locs.genAttIndexToLoc.get(index);
+					if (attribLoc != null && attribLoc.intValue() != -1)
+					{
+						//if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
+						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE);
+						if (changable)
+						{
+							FloatBuffer vertexAttrs = vertexAttrBufs[index];
+							vertexAttrs.position(0);
+							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
+							Integer bufId = bufIds.get(index);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+						}
+					}
+				}
+			}
+
+			if (textureDefined)
+			{
+				boolean[] texSetsBound = new boolean[texCoords.length];
+				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
+				{
+					int texSet = texCoordSetMap[texUnit];
+					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
+					{
+						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+						if (changable)
+						{
+							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							buf.position(0);
+							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
+							Integer bufId = bufIds.get(texUnit);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, buf.remaining() * Float.SIZE / 8, buf);
+						}
+					}
+				}
+			}
+
 			if (bindingRequired)
 			{
+				// always coords
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+				gl.glEnableVertexAttribArray(locs.glVertex);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
@@ -1130,13 +1237,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
-
-						//a good cDirty and a DYNAMIC_DRAW call needed
-						/*	if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
-							{
-								fclrs.position(0);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
-							}*/
 
 						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, 0, 0);
 						gl.glEnableVertexAttribArray(locs.glColor);
@@ -1182,12 +1282,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 						else
 						{
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
-							//a good cDirty and a DYNAMIC_DRAW call needed
-							/*if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
-							{	
-								norms.position(0);						
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
-							}*/
 
 							gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, 0, 0);
 							gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
@@ -1197,7 +1291,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.glVertexAttribPointerNormals++;
 						}
-
 					}
 				}
 				else
@@ -1231,13 +1324,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 							else
 							{
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-								//a good cDirty and a DYNAMIC_DRAW call needed
-								/*if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
-								{
-									FloatBuffer vertexAttrs = vertexAttrBufs[index];								
-									vertexAttrs.position(0);
-									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
-								}*/
 
 								int sz = vertexAttrSizes[index];
 
@@ -1543,15 +1629,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength, int[] texCoordSetMap, int numActiveTexUnitState,
 			int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
 	{
-		//skip all morphables for now
-
-		//TODO:Imagine! then attachments go back to being transforms??
-		//Another thing you can do is double buffered VBO. This means you make 2 VBOs. On frame N, you update VBO 2 and you render with VBO 1. On frame N+1,
-		//you update VBO 1 and you render from VBO 2. This also gives a nice boost in performance for nVidia and ATI/AMD.
-		///  a new geomtery cap of ANIMATED_COORDS
-
 		boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE)
+				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COLOR_WRITE)
+				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_NORMAL_WRITE)
+				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE)
+				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+
 		if (morphable)
 		{
 			return false;
