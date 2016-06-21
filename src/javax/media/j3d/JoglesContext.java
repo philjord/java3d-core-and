@@ -254,8 +254,7 @@ public class JoglesContext extends JoglContext
 		public int linearColor = -1;
 		public int linearStart = -1;
 		public int linearEnd = -1;
-		
-		
+
 		public int glVertex = -1;
 		public int glColor = -1;
 		public int glNormal = -1;
@@ -289,7 +288,7 @@ public class JoglesContext extends JoglContext
 		public float[] clearer2 = new float[500];
 		public boolean glEnableGL_BLEND;
 		public int srcBlendFunction;
-		public int dstBlendFunction;	
+		public int dstBlendFunction;
 		public int glActiveTexture;
 		public int currentProgramId;
 		public int[] glBindTextureGL_TEXTURE_2D = new int[35000];// indexed based on current glActiveTexture
@@ -311,7 +310,17 @@ public class JoglesContext extends JoglContext
 		public Matrix4d glModelViewMatrixInverse = new Matrix4d();
 		public Matrix4d glModelViewProjectionMatrix = new Matrix4d();
 		public Matrix3d glNormalMatrix = new Matrix3d();
-		
+		public Vector4f glLightSource0position = new Vector4f();
+		public Vector4f glLightSource0diffuse = new Vector4f();
+		public boolean alphaTestEnabled = false;
+		public int alphaTestFunction;
+		public float alphaTestValue;
+		public boolean fogEnabled = false;
+		public Vector3f expColor = new Vector3f();
+		public float expDensity;
+		public Vector3f linearColor = new Vector3f();
+		public float linearStart;
+		public float linearEnd;
 
 		public void clear()
 		{
@@ -328,7 +337,7 @@ public class JoglesContext extends JoglContext
 			System.arraycopy(clearer2, 0, setGLSLUniform1f, 0, setGLSLUniform1f.length);
 			glEnableGL_BLEND = false;
 			srcBlendFunction = -1;
-			dstBlendFunction = -1;			
+			dstBlendFunction = -1;
 			glActiveTexture = -1;
 			currentProgramId = -1;
 			System.arraycopy(clearer3, 0, glBindTextureGL_TEXTURE_2D, 0, glBindTextureGL_TEXTURE_2D.length);
@@ -336,18 +345,29 @@ public class JoglesContext extends JoglContext
 			polygonOffsetFactor = -1;
 			polygonOffset = -1;
 			ignoreVertexColors = false;
-			glFrontMaterialdiffuse.set(0, 0, 0, 0);
-			glFrontMaterialemission.set(0, 0, 0);
-			glFrontMaterialspecular.set(0, 0, 0);
-			glFrontMaterialshininess = 0;
-			glLightModelambient.set(0, 0, 0, 0);
-			objectColor.set(0, 0, 0, 0);
+			glFrontMaterialdiffuse.set(-999f, -999f, -999f, -999f);
+			glFrontMaterialemission.set(-999f, -999f, -999f);
+			glFrontMaterialspecular.set(-999f, -999f, -999f);
+			glFrontMaterialshininess = -99;
+			glLightModelambient.set(-999f, -999f, -999f, -999f);
+			objectColor.set(-999f, -999f, -999f, -999f);
 			textureTransform.setIdentity();
 			modelMatrix.setIdentity();
 			glModelViewMatrix.setIdentity();
 			glModelViewMatrixInverse.setIdentity();
 			glModelViewProjectionMatrix.setIdentity();
 			glNormalMatrix.setIdentity();
+			glLightSource0position.set(-999f, -999f, -999f, -999f);
+			glLightSource0diffuse.set(-999f, -999f, -999f, -999f);
+			alphaTestEnabled = false;
+			alphaTestFunction = -1;
+			alphaTestValue = -99f;
+			fogEnabled = false;
+			expColor.set(-999f, -999f, -999f);
+			expDensity = -99f;
+			linearColor.set(-999f, -999f, -999f);
+			linearStart = -99f;
+			linearEnd = -99f;
 		}
 	}
 

@@ -331,8 +331,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (floatCoordDefined && locs.glVertex != -1)
 			{
 				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-						|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+				boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+						|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
 
 				if (gd.geoToCoordBuf == -1)
 				{
@@ -437,7 +437,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 			{
 				//if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
-				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COLOR_WRITE);
+				boolean changable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COLOR_WRITE)) != 0L;
 				if (changable)
 				{
 					fclrs.position(0);
@@ -448,7 +448,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (normalsDefined && locs.glNormal != -1)
 			{
 				//if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)				
-				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
+				boolean changable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_NORMAL_WRITE)) != 0L;
 				if (changable)
 				{
 					norms.position(0);
@@ -465,7 +465,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
 						//if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
-						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE);
+						boolean changable = (((GeometryArray) geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_VERTEX_ATTR_WRITE)) != 0L;
 						if (changable)
 						{
 							FloatBuffer vertexAttrs = vertexAttrBufs[index];
@@ -487,7 +488,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					int texSet = texCoordSetMap[texUnit];
 					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
 					{
-						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+						boolean changable = (((GeometryArray) geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_TEXCOORD_WRITE)) != 0L;
 						if (changable)
 						{
 							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
@@ -1051,8 +1053,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				else
 				{
 					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-					boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-							|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+					boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+							|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
 
 					if (morphable)
 					{
@@ -1147,7 +1149,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 			{
 				//if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
-				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COLOR_WRITE);
+				boolean changable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COLOR_WRITE)) != 0L;
 				if (changable)
 				{
 					fclrs.position(0);
@@ -1158,7 +1160,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (normalsDefined && locs.glNormal != -1)
 			{
 				//if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)				
-				boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
+				boolean changable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_NORMAL_WRITE)) != 0L;
 				if (changable)
 				{
 					norms.position(0);
@@ -1175,7 +1177,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					if (attribLoc != null && attribLoc.intValue() != -1)
 					{
 						//if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
-						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE);
+						boolean changable = (((GeometryArray) geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_VERTEX_ATTR_WRITE)) != 0L;
 						if (changable)
 						{
 							FloatBuffer vertexAttrs = vertexAttrBufs[index];
@@ -1197,7 +1200,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					int texSet = texCoordSetMap[texUnit];
 					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
 					{
-						boolean changable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+						boolean changable = (((GeometryArray) geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_TEXCOORD_WRITE)) != 0L;
 						if (changable)
 						{
 							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
@@ -1629,12 +1633,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, int texCoordMapLength, int[] texCoordSetMap, int numActiveTexUnitState,
 			int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
 	{
-		boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE)
-				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COLOR_WRITE)
-				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_NORMAL_WRITE)
-				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE)
-				|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+		boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L
+				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COLOR_WRITE)) != 0L
+				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_NORMAL_WRITE)) != 0L
+				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_VERTEX_ATTR_WRITE)) != 0L
+				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_TEXCOORD_WRITE)) != 0L;
 
 		if (morphable)
 		{
@@ -2565,33 +2569,58 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			if (locs.glLightSource0position != -1)
 			{
-				gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource0position.equals(l0.pos)))
+				{
+					gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
+					if (MINIMISE_NATIVE_CALLS_FFP)
+						ctx.gl_state.glLightSource0position.set(l0.pos);
+				}
 			}
 			if (locs.glLightSource0diffuse != -1)
 			{
-				gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
+				if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource0diffuse.equals(l0.diffuse)))
+				{
+					gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
+					if (MINIMISE_NATIVE_CALLS_FFP)
+						ctx.gl_state.glLightSource0diffuse.set(l0.diffuse);
+				}
 			}
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
 		}
 
 		if (locs.alphaTestEnabled != -1)
 		{
-			gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.alphaTestEnabled != ctx.renderingData.alphaTestEnabled))
+			{
+				gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.alphaTestEnabled = ctx.renderingData.alphaTestEnabled;
+
+				if (ctx.renderingData.alphaTestEnabled == true)
+				{
+					if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+							|| ctx.gl_state.alphaTestFunction != ctx.renderingData.alphaTestFunction))
+					{
+						gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.alphaTestFunction = ctx.renderingData.alphaTestFunction;
+					}
+
+					if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+							|| ctx.gl_state.alphaTestValue != ctx.renderingData.alphaTestValue))
+					{
+						gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.alphaTestValue = ctx.renderingData.alphaTestValue;
+					}
+				}
+			}
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-
-			if (ctx.renderingData.alphaTestEnabled == true)
-			{
-				gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-			}
 		}
 
 		if (locs.textureTransform != -1)
@@ -2611,42 +2640,71 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//Fog
 		if (locs.fogEnabled != -1)
 		{
-			gl.glUniform1i(locs.fogEnabled, ctx.fogData.enable ? 1 : 0);
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.fogEnabled != ctx.fogData.enable))
+			{
+				gl.glUniform1i(locs.fogEnabled, ctx.fogData.enable ? 1 : 0);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.fogEnabled = ctx.fogData.enable;
+			}
 
 			if (ctx.fogData.enable == true)
 			{
-				gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
-
-				gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
-
 				if (locs.expColor != -1)
 				{
-					gl.glUniform4f(locs.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z, 1.0f);
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.expColor.equals(ctx.fogData.expColor)))
+					{
+						gl.glUniform4f(locs.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z, 1.0f);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.expColor.set(ctx.fogData.expColor);
+					}
 				}
 
 				if (locs.expDensity != -1)
 				{
-					gl.glUniform1f(locs.expDensity, ctx.fogData.expDensity);
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.expDensity != ctx.fogData.expDensity))
+					{
+						gl.glUniform1f(locs.expDensity, ctx.fogData.expDensity);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.expDensity = ctx.fogData.expDensity;
+					}
 				}
 				if (locs.linearColor != -1)
 				{
-					gl.glUniform4f(locs.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y, ctx.fogData.linearColor.z, 1.0f);
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.linearColor.equals(ctx.fogData.linearColor)))
+					{
+						gl.glUniform4f(locs.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y, ctx.fogData.linearColor.z,
+								1.0f);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.linearColor.set(ctx.fogData.linearColor);
+					}
 				}
 
 				if (locs.linearStart != -1)
 				{
-					gl.glUniform1f(locs.linearStart, ctx.fogData.linearStart);
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.linearStart != ctx.fogData.linearStart))
+					{
+						gl.glUniform1f(locs.linearStart, ctx.fogData.linearStart);						
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.linearStart = ctx.fogData.linearStart;
+					}
 				}
 				if (locs.linearEnd != -1)
 				{
-					gl.glUniform1f(locs.linearEnd, ctx.fogData.linearEnd);
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.linearEnd != ctx.fogData.linearEnd))
+					{
+						gl.glUniform1f(locs.linearEnd, ctx.fogData.linearEnd);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.linearEnd = ctx.fogData.linearEnd;
+					}
 				}
-
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
 			}
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
 		}
 
 		//TODO: particles and points etc
@@ -3006,8 +3064,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (gd.geoToCoordBuf == -1)
 			{
 				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-				boolean morphable = ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-						|| ((GeometryArray) geo.source).getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+				boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+						|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
 
 				fverts.position(0);
 
