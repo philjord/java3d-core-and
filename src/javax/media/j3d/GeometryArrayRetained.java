@@ -3463,9 +3463,9 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
     }
 
 
-
+    J3dMessage[] m;
     void sendDataChangedMessage(boolean coordinatesChanged) {
-	J3dMessage[] m;
+	
 	int i, j, k, numShapeMessages, numMorphMessages;
 
 	synchronized(liveStateLock) {
@@ -3483,6 +3483,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 
 		synchronized (universeList) {
 		    numShapeMessages = universeList.size();
+		    if(m==null||m.length<numShapeMessages)
 		    m = new J3dMessage[numShapeMessages];
 
 		    k = 0;
@@ -3514,6 +3515,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 			    gaList.add(Shape3DRetained.getGeomAtom(s));
 			}
 
+			if(m[k]==null)
 			m[k] = new J3dMessage();
 
 			m[k].type = J3dMessage.GEOMETRY_CHANGED;
