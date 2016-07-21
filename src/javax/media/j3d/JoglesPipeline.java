@@ -2687,7 +2687,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					if (!MINIMISE_NATIVE_CALLS_FFP
 							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.linearStart != ctx.fogData.linearStart))
 					{
-						gl.glUniform1f(locs.linearStart, ctx.fogData.linearStart);						
+						gl.glUniform1f(locs.linearStart, ctx.fogData.linearStart);
 						if (MINIMISE_NATIVE_CALLS_FFP)
 							ctx.gl_state.linearStart = ctx.fogData.linearStart;
 					}
@@ -4811,11 +4811,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.pointSize = pointSize;
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
-		//bug in desktop requiring this to be set still
-		gl.glEnable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
-		gl.glEnable(34913);//GL.GL_POINT_SPRITE);
+
+		//one time enable call
+		if (!pointsEnabled)
+		{
+			GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+			//bug in desktop requiring this to be set still
+			gl.glEnable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
+			gl.glEnable(34913);//GL.GL_POINT_SPRITE);
+			pointsEnabled = true;
+		}
 	}
+
+	private boolean pointsEnabled = false;
 
 	// native method for setting default PointAttributes
 	@Override
@@ -4828,10 +4836,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.pointSize = 1.0f;
-		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+		//		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		//bug in desktop requiring this to be set still
-		gl.glDisable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
-		gl.glDisable(34913);//GL.GL_POINT_SPRITE);
+		//		gl.glDisable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
+		//		gl.glDisable(34913);//GL.GL_POINT_SPRITE);
 	}
 	// ---------------------------------------------------------------------
 
@@ -5032,9 +5040,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		{
 			if (stencilEnable)
 			{
-				//TODO: be more specific with native call pre-test here
-				// currently causes major trouble
-				//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false)
+				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false || joglesctx.gl_state.stencilFailOp != stencilFailOp
+						|| joglesctx.gl_state.stencilZFailOp != stencilZFailOp || joglesctx.gl_state.stencilZPassOp != stencilZPassOp
+						|| joglesctx.gl_state.stencilFunction != stencilFunction
+						|| joglesctx.gl_state.stencilReferenceValue != stencilReferenceValue
+						|| joglesctx.gl_state.stencilCompareMask != stencilCompareMask
+						|| joglesctx.gl_state.stencilWriteMask != stencilWriteMask)
 				{
 					gl.glEnable(GL2ES2.GL_STENCIL_TEST);
 					gl.glStencilOp(getStencilOpValue(stencilFailOp), getStencilOpValue(stencilZFailOp), getStencilOpValue(stencilZPassOp));
@@ -5042,20 +5053,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glStencilMask(stencilWriteMask);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-					//if (MINIMISE_NATIVE_CALLS_OTHER)
-					//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = true;
+					if (MINIMISE_NATIVE_CALLS_OTHER)
+						joglesctx.gl_state.glEnableGL_STENCIL_TEST = true;
 				}
 
 			}
 			else
 			{
-				//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
+				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
 				{
 					gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-					//if (MINIMISE_NATIVE_CALLS_OTHER)
-					//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
+					if (MINIMISE_NATIVE_CALLS_OTHER)
+						joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
 				}
 			}
 		}
@@ -5077,33 +5088,33 @@ class JoglesPipeline extends JoglesDEPPipeline
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		if (!depthBufferWriteEnableOverride)
 		{
-			//if (joglesctx.gl_state.glDepthMask != true)
+			if (joglesctx.gl_state.glDepthMask != true)
 			{
 				gl.glDepthMask(true);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				//if (MINIMISE_NATIVE_CALLS_OTHER)
-				//	joglesctx.gl_state.glDepthMask = true;
+				if (MINIMISE_NATIVE_CALLS_OTHER)
+					joglesctx.gl_state.glDepthMask = true;
 			}
 		}
 		if (!depthBufferEnableOverride)
 		{
-			//if (joglesctx.gl_state.depthBufferEnable != true)
+			if (joglesctx.gl_state.depthBufferEnable != true)
 			{
 				gl.glEnable(GL2ES2.GL_DEPTH_TEST);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				//if (MINIMISE_NATIVE_CALLS_OTHER)
-				//	joglesctx.gl_state.depthBufferEnable = true;
+				if (MINIMISE_NATIVE_CALLS_OTHER)
+					joglesctx.gl_state.depthBufferEnable = true;
 			}
 		}
-		//if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL)
+		if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL)
 		{
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-			//if (MINIMISE_NATIVE_CALLS_OTHER)
-			//	joglesctx.gl_state.depthTestFunction = RenderingAttributes.LESS_OR_EQUAL;
+			if (MINIMISE_NATIVE_CALLS_OTHER)
+				joglesctx.gl_state.depthTestFunction = RenderingAttributes.LESS_OR_EQUAL;
 		}
 
 		joglesctx.renderingData.alphaTestEnabled = false;
@@ -5115,13 +5126,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//FIXME: this call does not set stencil test, so possibly this is why the rendering attributes 
 		//caused such a mess when not present??
 
-		//if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
+		if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
 		{
 			gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-			//if (MINIMISE_NATIVE_CALLS_OTHER)
-			//	joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
+			if (MINIMISE_NATIVE_CALLS_OTHER)
+				joglesctx.gl_state.glEnableGL_STENCIL_TEST = false;
 		}
 
 	}

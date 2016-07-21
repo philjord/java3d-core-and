@@ -35,6 +35,7 @@ public class JoglesContext extends JoglContext
 	public int shaderProgramId = -1;
 	public ProgramData programData;
 
+	@Override
 	void setShaderProgram(JoglShaderObject object)
 	{
 		super.setShaderProgram(object);
@@ -282,6 +283,13 @@ public class JoglesContext extends JoglContext
 		public boolean stencilEnable;
 		public boolean glDepthMask;
 		public boolean glEnableGL_STENCIL_TEST;
+		public int stencilFailOp;
+		public int stencilZFailOp;
+		public int stencilZPassOp;
+		public int stencilFunction;
+		public int stencilReferenceValue;
+		public int stencilCompareMask;
+		public int stencilWriteMask;
 		public int[] setGLSLUniform1i = new int[500];
 		public int[] clearer1 = new int[500];
 		public float[] setGLSLUniform1f = new float[500];
@@ -333,6 +341,13 @@ public class JoglesContext extends JoglContext
 			stencilEnable = false;
 			glDepthMask = false;
 			glEnableGL_STENCIL_TEST = false;
+			stencilFailOp = -1;
+			stencilZFailOp = -1;
+			stencilZPassOp = -1;
+			stencilFunction = -1;
+			stencilReferenceValue = -1;
+			stencilCompareMask = -1;
+			stencilWriteMask = -1;
 			System.arraycopy(clearer1, 0, setGLSLUniform1i, 0, setGLSLUniform1i.length);
 			System.arraycopy(clearer2, 0, setGLSLUniform1f, 0, setGLSLUniform1f.length);
 			glEnableGL_BLEND = false;
