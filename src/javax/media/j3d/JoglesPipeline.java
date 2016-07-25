@@ -306,7 +306,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-			// not required second time around for VAO
+			//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+			boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+					|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
+
+			// not required second time around for VAO (except morphable coords)			
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
 			{
@@ -330,9 +334,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			// Define the data pointers
 			if (floatCoordDefined && locs.glVertex != -1)
 			{
-				//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-				boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
-						|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
 
 				if (gd.geoToCoordBuf == -1)
 				{
@@ -503,7 +504,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 			}
 
-			if (bindingRequired)
+			// notice morphables must always rebind each frame as coord buffers are swapped
+			if (bindingRequired || morphable)
 			{
 				// always do coords
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
@@ -516,7 +518,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.perFrameStats.glVertexAttribPointerCoord++;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+			}
 
+			if (bindingRequired)
+			{
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
@@ -1020,7 +1025,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
+			//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
+			boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+					|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
+
 			// not required second time around for VAO
+			// however as morphables coords are swapped they always get rebound each draw
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
 			{
@@ -1052,10 +1062,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				else
 				{
-					//can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)			 
-					boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
-							|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L;
-
 					if (morphable)
 					{
 						fverts.position(0);
@@ -1117,6 +1123,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
 								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
 								gd.geoToCoordBuf = gd.geoToCoordBuf2;
+
 							}
 							else
 							{
@@ -1215,7 +1222,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 			}
 
-			if (bindingRequired)
+			//binding is required for morphables coords as always swappping buffers each second frame
+			if (bindingRequired || morphable)
 			{
 				// always coords
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
@@ -1230,6 +1238,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
+			}
+
+			if (bindingRequired)
+			{
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
