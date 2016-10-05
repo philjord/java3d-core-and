@@ -27,7 +27,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//
 
 	// used for GeometryArrays by Copy or interleaved
-	//NOT USED BY MORROWIND - but drawTrivial used it
 	@Override
 	@Deprecated
 	void execute(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
@@ -39,7 +38,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	}
 
 	// used by GeometryArray by Reference with java arrays
-	// NOT USED BY MORROWIND  
 	@Override
 	@Deprecated
 	void executeVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors, int vcount,
@@ -54,7 +52,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 
 	// used for GeometryArrays
-	// NOT IN USE BY MORROWIND  
 	@Override
 	@Deprecated
 	void buildGA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha, float alpha,
@@ -66,7 +63,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	}
 
 	// used to Build Dlist GeometryArray by Reference with java arrays
-	// NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void buildGAForByRef(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha, float alpha,
@@ -81,14 +77,14 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//----------------------------------------------------------------------
 	// Private helper methods for GeometryArrayRetained
 	//
-	//NOT IN USE BY MORROWIND - as interleaved support dropped
+	// interleaved support dropped
 	@Deprecated
 	private void testForInterleavedArrays(int vformat, boolean[] useInterleavedArrays, int[] iaFormat)
 	{
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND - odd name looks like it should be used?
+	//odd name looks like it should be used?
 	@Deprecated
 	private void executeTexture(int texCoordSetMapLen, int texSize, int bstride, int texCoordoff, int[] texCoordSetMapOffset,
 			int numActiveTexUnit, FloatBuffer verts, GL2 gl)
@@ -96,7 +92,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Deprecated
 	private void executeGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
 			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
@@ -106,14 +101,12 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Deprecated
 	private String getVertexDescription(int vformat)
 	{
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Deprecated
 	private String getGeometryDescription(int geo_type)
 	{
@@ -127,7 +120,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//
 
 	// by-copy or interleaved, by reference, Java arrays
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void executeIndexedGeometry(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
@@ -139,7 +131,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	}
 
 	// interleaved, by reference, nio buffer
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void executeIndexedGeometryBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
@@ -151,7 +142,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	}
 
 	// by-copy geometry
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void buildIndexedGeometry(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha,
@@ -166,7 +156,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//
 	// Helper routines for IndexedGeometryArrayRetained
 	//
-	//NOT IN USE BY MORROWIND
 	@Deprecated
 	private void executeIndexedGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat,
@@ -219,7 +208,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	 * trans contains eyeTovworld transform in d3d
 	 * trans contains vworldToEye transform in ogl
 	 */
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexCoordGeneration(Context ctx, boolean enable, int genMode, int format, float planeSx, float planeSy, float planeSz,
@@ -234,8 +222,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//
 	// TextureAttributesRetained methods
 	//
-
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateRegisterCombiners(Context absCtx, double[] transform, boolean isIdentity, int textureMode, int perspCorrectionMode,
@@ -246,7 +232,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTextureColorTable(Context ctx, int numComponents, int colorTableSize, int[] textureColorTable)
@@ -254,7 +239,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND 
 	@Override
 	@Deprecated
 	void updateCombiner(Context ctx, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc,
@@ -264,7 +248,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	}
 
 	// Helper routines for above
-	//IN USE BY MORROWIND 
 	@Deprecated
 	private void getGLCombineMode(GL gl, int combineRgbMode, int combineAlphaMode, int[] GLrgbMode, int[] GLalphaMode)
 	{
@@ -277,7 +260,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// TextureRetained methods
 	// Texture2DRetained methods
 
-	//IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture2DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
@@ -299,7 +281,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
+
 	@Deprecated
 	private void updateTextureLodOffset(Context ctx, int target, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
@@ -311,7 +293,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//
 	// Texture3DRetained methods
 	//
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void bindTexture3D(Context ctx, int objectId, boolean enable)
@@ -319,7 +300,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height, int depth,
@@ -328,7 +308,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DSubImage(Context ctx, int level, int xoffset, int yoffset, int zoffset, int textureFormat, int imageFormat,
@@ -338,7 +317,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
@@ -346,7 +324,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
@@ -354,7 +331,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
@@ -363,7 +339,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DFilterModes(Context ctx, int minFilter, int magFilter)
@@ -371,7 +346,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
@@ -379,7 +353,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
@@ -387,7 +360,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException();
 	}
 
-	//NOT IN USE BY MORROWIND
 	@Override
 	@Deprecated
 	void updateTexture3DAnisotropicFilter(Context ctx, float degree)
@@ -442,7 +414,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 	@Override
 	@Deprecated
-	//NOT IN USE BY MORROWIND
 	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
 	{
 		throw new UnsupportedOperationException();
@@ -451,7 +422,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// This is the native for creating an offscreen buffer
 	@Override
 	@Deprecated
-	//NOT IN USE BY MORROWIND
 	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
 	{
 		throw new UnsupportedOperationException();
@@ -460,7 +430,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// 'destroyContext' is called first if context exists
 	@Override
 	@Deprecated
-	//NOT IN USE BY MORROWIND
 	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
 	{
 		throw new UnsupportedOperationException();
@@ -469,14 +438,12 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// This is the native for reading the image from the offscreen buffer
 	@Override
 	@Deprecated
-	//NOT IN USE BY MORROWIND
 	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
 	{
 		throw new UnsupportedOperationException();
 	}
 
 	// This is the native method for doing accumulation.
-	//I BELIEVE THIS IS ABOUT FULL SCREEN AA
 	@Override
 	@Deprecated
 	void accum(Context ctx, float value)
@@ -551,7 +518,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// used for display Lists
 	@Override
 	@Deprecated
-	// GLES  NIO buffers prevent use (possibly by ref also)
 	void newDisplayList(Context ctx, int displayListId)
 	{
 		throw new UnsupportedOperationException();
@@ -559,7 +525,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 	@Override
 	@Deprecated
-	// GLES  NIO buffers prevent use
 	void endDisplayList(Context ctx)
 	{
 		throw new UnsupportedOperationException();
@@ -567,7 +532,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 	@Override
 	@Deprecated
-	// GLES  NIO buffers prevent use
 	void callDisplayList(Context ctx, int id, boolean isNonUniformScale)
 	{
 		throw new UnsupportedOperationException();
@@ -575,7 +539,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 	@Override
 	@Deprecated
-	// GLES  NIO buffers prevent use
 	void freeDisplayList(Context ctx, int id)
 	{
 		throw new UnsupportedOperationException();
@@ -583,7 +546,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 	@Override
 	@Deprecated
-	// GLES nothing seems to call this in Canvas3D either
+	// nothing seems to call this in Canvas3D either
 	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
 			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
 	{
@@ -592,20 +555,20 @@ abstract class JoglesDEPPipeline extends Pipeline
 
 	@Override
 	@Deprecated
-	// GLES and nothing seems to call this in Canvas3D either
+	// nothing seems to call this in Canvas3D either
 	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
 	{
 		throw new UnsupportedOperationException();
 	}
 
-	// GLES used by texturemapping which is dead code and textureFillBackground, which can be dropped
+	// used by texturemapping which is dead code and textureFillBackground, which can be dropped
 	@Deprecated
 	private void disableAttribFor2D(GL gl)
 	{
 		throw new UnsupportedOperationException();
 	}
 
-	// GLES only called by textureFillRaster which will be dropped 
+	// only called by textureFillRaster which will be dropped 
 	@Deprecated
 	private void disableAttribForRaster(GL gl)
 	{
