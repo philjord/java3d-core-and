@@ -226,7 +226,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		else if (doubleCoordDefined)
 		{
 			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Double coordinates in use. " + VALID_FORMAT_MESSAGE);
 			//dverts = (DoubleBuffer) vcoords;
 		}
 
@@ -246,7 +246,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		else if (byteColorsDefined)
 		{
 			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("byteColorsDefined. " + VALID_FORMAT_MESSAGE);
 			//if (cbdata != null)
 			//	bclrs = getColorArrayBuffer(cbdata);
 			//else
@@ -294,7 +294,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
-			//If any buffers need loading do that now and skip a render for this frame
+			//If any buffers need loading do that now 
 			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, dverts, fclrs, bclrs,
 					norms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, texStride, texCoords);
 
@@ -353,7 +353,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 						{
 							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
 									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
-									+ geo.source);
+									+ geo.source + ", this is not nessasarily a problem");
 
 							int prevBufId1 = gd.geoToCoordBuf1;//record to delete after re-bind		
 							int prevBufId2 = gd.geoToCoordBuf2;
@@ -427,11 +427,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			else if (doubleCoordDefined)
 			{
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("doubleCoordDefined " + VALID_FORMAT_MESSAGE);
 			}
 			else
 			{
-				throw new UnsupportedOperationException("No coords!");
+				throw new UnsupportedOperationException("No coords defined " + VALID_FORMAT_MESSAGE);
 			}
 
 			// update other attributes if required
@@ -549,7 +549,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					//FIXME: byteColors not supported for now, but I want them a lot
-					throw new UnsupportedOperationException();
+					throw new UnsupportedOperationException("byteColorsDefined. " + VALID_FORMAT_MESSAGE);
 					/*int coloroff;
 					int sz;
 					if ((vformat & GeometryArray.WITH_ALPHA) != 0)
@@ -567,7 +567,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 				else if (locs.glColor != -1)
 				{
-					// ignoreVertexcolors willhave been set in FFP now as the glColors is unbound
+					// ignoreVertexcolors will have been set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
@@ -683,10 +683,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				int primType = 0;
 
-				//<AND> need to override if polygonAttributes says so
 				//FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
 				// each pair, what I want is a line between each set of 3 (that are not jumpers)
-				// so H-Physics and Outlines look a bit rubbish
 
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
@@ -730,8 +728,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					//gl.glDrawArrays(GL2ES2.GL_QUADS, 0, vertexCount);
-					break;
+					throw new UnsupportedOperationException(VALID_FORMAT_MESSAGE);
 				case GeometryRetained.GEO_TYPE_TRI_SET:
 					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
 					break;
@@ -758,7 +755,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 								outputErrors(ctx);
 						}*/
 
-			//TODO: do I need these?
+			//TODO: do I need to unbind these things, it seems fine not to
 			/*
 			if (vattrDefined)
 			{
@@ -801,13 +798,26 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// ---------------------------------------------------------------------
 
+	// used by GeometryArray by Reference with java arrays
+	@Override
+	@Deprecated
+	void executeVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors, int vcount,
+			int vformat, int vdefined, int initialCoordIndex, float[] vfcoords, double[] vdcoords, int initialColorIndex, float[] cfdata,
+			byte[] cbdata, int initialNormalIndex, float[] ndata, int vertexAttrCount, int[] vertexAttrSizes, int[] vertexAttrIndices,
+			float[][] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState, int[] texIndex, int texstride,
+			Object[] texCoords, int cdirty)
+	{
+		//Copy indexed version below then put it up with the executeGeometryVABuffer above
+		throw new UnsupportedOperationException(
+				"Use of GeometryArrays (un-indexed) by Reference with java arrays./n" + VALID_FORMAT_MESSAGE);
+	}
+
 	//
 	// IndexedGeometryArrayRetained methods
 	//
 
 	// non interleaved, by reference, Java arrays
 
-	//Possibly not used anymore??
 	@Override
 	void executeIndexedGeometryVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
 			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
@@ -862,9 +872,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else if (doubleCoordDefined)
 		{
-			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
-			//dverts = getVertexArrayBuffer(vdcoords);
+			// FIXME: doubles not supported for now
+			throw new UnsupportedOperationException("doubleCoordDefined. " + VALID_FORMAT_MESSAGE);
+			// dverts = getVertexArrayBuffer(vdcoords);
 		}
 
 		// get color array
@@ -874,9 +884,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else if (byteColorsDefined)
 		{
-			//FIXME: byte colors not supported for now
-			throw new UnsupportedOperationException();
-			//bclrs = getColorArrayBuffer(cbdata);
+			// FIXME: byte colors not supported for now
+			throw new UnsupportedOperationException("byteColorsDefined. " + VALID_FORMAT_MESSAGE);
+			// bclrs = getColorArrayBuffer(cbdata);
 		}
 
 		// get normal array
@@ -932,7 +942,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		else if (doubleCoordDefined)
 		{
 			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("doubleCoordDefined. " + VALID_FORMAT_MESSAGE);
 			//dverts = (DoubleBuffer) vcoords;
 		}
 
@@ -961,8 +971,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		else if (byteColorsDefined)
 		{
-			//FIXME: doubles not supported for now
-			throw new UnsupportedOperationException();
+			//FIXME:  not supported for now
+			throw new UnsupportedOperationException("byteColorsDefined. " + VALID_FORMAT_MESSAGE);
 
 			//if (cbdata != null)
 			//	bclrs = getColorArrayBuffer(cbdata);
@@ -1013,7 +1023,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
 
-			//If any buffers need loading do that now and skip a render for this frame
+			//If any buffers need loading do that now 
 			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, dverts, fclrs, bclrs,
 					norms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, texCoordMapLength, texCoordSetMap, texStride, texCoords);
 
@@ -1145,11 +1155,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			else if (doubleCoordDefined)
 			{
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("doubleCoordDefined. " + VALID_FORMAT_MESSAGE);
 			}
 			else
 			{
-				throw new UnsupportedOperationException("No coords!");
+				throw new UnsupportedOperationException("No coords defined. " + VALID_FORMAT_MESSAGE);
 			}
 
 			// update other attributes if required
@@ -1250,7 +1260,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					else
 					{
-
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 
@@ -1267,7 +1276,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					//FIXME: byteColors not supported for now
-					throw new UnsupportedOperationException();
+					throw new UnsupportedOperationException("byteColorsDefined. " + VALID_FORMAT_MESSAGE);
 
 					/*bclrs.position(0);
 					if ((vformat & GeometryArray.WITH_ALPHA) != 0)
@@ -1476,6 +1485,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					int count = sarray[i];
 					int indBufId = stripInd[i];
+					//FIXME: SHORT indexes are ES3 only!
 					//type Specifies the type of the values in indices. Must be
 					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.    
 					// Apparently ES3 has included this guy now, so I'm a bit commited to it
@@ -1508,7 +1518,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (gd.geoToIndBuf == -1)
 				{
 					//create and fill index buffer
-					//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
 					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
 					bb.order(ByteOrder.nativeOrder());
 					ShortBuffer indBuf = bb.asShortBuffer();
@@ -1557,8 +1566,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					//gl.glDrawElements(GL2ES2.GL_QUADS, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
-					break;
+					throw new UnsupportedOperationException(VALID_FORMAT_MESSAGE);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
 					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
@@ -1585,7 +1593,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					outputErrors(ctx);
 			}*/
 
-			//TODO: are these needed?
+			//TODO: are these unbinds needed, seems fine without them
 			/*
 			if (vattrDefined)
 			{
@@ -2382,7 +2390,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//	}
 		}
 		if (locs.glModelViewMatrixInverse != -1)
-		{// minimise not working due to late calc of matrix
+		{
+			// minimise not working due to late calc of matrix
 			//if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
 			//		|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 			//{
@@ -2708,18 +2717,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 				outputErrors(ctx);
 		}
 
-		//TODO: particles and points etc
-		//currentPointSize needs to be handed into the particles shader
-
 		//NOTE water app shows multiple light calculations
 
 		// record for the next loop through FFP
 		ctx.prevShaderProgram = shaderProgramId;
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
-
-		// happens on the first call sometimes, for background or clear or something
-
 	}
 
 	private boolean NO_PROGRAM_WARNING_GIVEN = false;
@@ -4628,11 +4631,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.disableFog++;
 
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-			// bound to be not supported as definitely shader work now
-		
-			//gl.glDisable(GL2ES2.GL_FOG);*/
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.fogData.enable = false;
 	}
@@ -4647,13 +4645,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((JoglesContext) ctx).perFrameStats.setFogEnableFlag++;
 
-		/*GL2 gl = context(ctx).getGL().getGL2();
-		//fog gone from ES2, done by passng it in as values
-		
-		if (enable)
-			gl.glEnable(GL2ES2.GL_FOG);
-		else
-			gl.glDisable(GL2ES2.GL_FOG);*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.fogData.enable = enable;
@@ -4663,7 +4654,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// LineAttributesRetained methods
 	//
-	//  used by H physics
 	@Override
 	void updateLineAttributes(Context ctx, float lineWidth, int linePattern, int linePatternMask, int linePatternScaleFactor,
 			boolean lineAntialiasing)
@@ -4757,7 +4747,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	//
 	// ColoringAttributesRetained methods
-	//used by H physics
 	@Override
 	void updateColoringAttributes(Context ctx, float dRed, float dGreen, float dBlue, float red, float green, float blue, float alpha,
 			boolean lightEnable, int shadeModel)
@@ -4837,10 +4826,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
 		joglesctx.pointSize = 1.0f;
-		//		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
+		//GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
 		//bug in desktop requiring this to be set still
-		//		gl.glDisable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
-		//		gl.glDisable(34913);//GL.GL_POINT_SPRITE);
+		//gl.glDisable(0x8642);//GL_VERTEX_PROGRAM_POINT_SIZE
+		//gl.glDisable(34913);//GL.GL_POINT_SPRITE);
 	}
 	// ---------------------------------------------------------------------
 
@@ -5139,7 +5128,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	}
 
 	@Override
-
 	void updateTransparencyAttributes(Context ctx, float alpha, int geometryType, int polygonMode, boolean lineAA, boolean pointAA,
 			int transparencyMode, int srcBlendFunction, int dstBlendFunction)
 	{
@@ -5190,7 +5178,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// native method for setting default TransparencyAttributes
 	@Override
-
 	void resetTransparency(Context ctx, int geometryType, int polygonMode, boolean lineAA, boolean pointAA)
 	{
 		if (VERBOSE)
@@ -5615,7 +5602,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// see above glGenMipMap once on pure ES2 (if on pure ES2?)
 		if (useAutoMipMap)
 		{
-			throw new UnsupportedOperationException("Disable auto mip map generation!");
+			throw new UnsupportedOperationException("Disable auto mip map generation!" + VALID_FORMAT_MESSAGE);
 			//gl.glTexParameteri(target, GL2ES2.GL_GENERATE_MIPMAP, GL2ES2.GL_TRUE);
 		}
 		else
@@ -5827,7 +5814,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 			outputErrors(ctx);
 	}
 
-	// only used when I press escape twice
 	private void updateTexture2DSubImage(Context ctx, int target, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
 			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data)
 	{
@@ -6009,8 +5995,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
 	{
 		GL2ES2 gl = ((JoglesContext) ctx).gl2es2;
-
-		// amazingly this should be fine unchanged 
 
 		// FIXME: unclear whether we really need to set up the enum values
 		// in the JoglContext as is done in the native code depending on
@@ -6275,23 +6259,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setLightEnables()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((JoglesContext) ctx).perFrameStats.setLightEnables++;
-
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-			//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-			// bound to be not supported as definately shader work now		
-		
-			for (int i = 0; i < maxLights; i++)
-			{
-					if ((enableMask & (1 << i)) != 0)
-					{
-						gl.glEnable(GL2ES2.GL_LIGHT0 + i);
-					}
-					else
-					{
-						gl.glDisable(GL2ES2.GL_LIGHT0 + i);
-					}
-			}*/
+			((JoglesContext) ctx).perFrameStats.setLightEnables++;		
 
 		JoglesContext joglesctx = (JoglesContext) ctx;
 		for (int i = 0; i < maxLights; i++)
@@ -8365,7 +8333,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 			}*/
 
-		
 	}
 
 	// getBestConfiguration ONLY below here VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV

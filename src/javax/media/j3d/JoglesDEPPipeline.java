@@ -2,15 +2,21 @@ package javax.media.j3d;
 
 import java.nio.FloatBuffer;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
-
 /**
- * Concrete implementation of Pipeline class for the JOGL rendering
- * pipeline.
+ * Separated from the actual pipeline for clarity of features that are not supported from the 
+ * Pipeline class for the JOGL rendering pipeline.
  */
 abstract class JoglesDEPPipeline extends Pipeline
 {
+
+	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types. /n"//
+			+ "You can now only pass in a TriangleArray, TriangleStripArray, TriangleFanArray, /n"//
+			+ "LineArray, LineStripArray, PointArray and the 6 Indexed equivilents. /n "//
+			+ "Each Gemotry must be BY_REF = true, NIO = true, and INTERLEAVED = false. /n "//
+			+ "Texture Coordinate generation is not supported, Texture Filter, Sharpen and combine are not supported. /n"//
+			+ "Texture3D, TextureCubeMap are not supported.          /n"//
+			+ "Off screen buffers and decals are also not supported. /n"//
+			+ "Coordinates must be defind and float type, colors if defined must be float type ";
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -34,19 +40,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
 			float[] varray, float[] carray, int cDirty)
 	{
-		throw new UnsupportedOperationException();
-	}
-
-	// used by GeometryArray by Reference with java arrays
-	@Override
-	@Deprecated
-	void executeVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors, int vcount,
-			int vformat, int vdefined, int initialCoordIndex, float[] vfcoords, double[] vdcoords, int initialColorIndex, float[] cfdata,
-			byte[] cbdata, int initialNormalIndex, float[] ndata, int vertexAttrCount, int[] vertexAttrSizes, int[] vertexAttrIndices,
-			float[][] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState, int[] texIndex, int texstride,
-			Object[] texCoords, int cdirty)
-	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Use of GeometryArrays (un-indexed) by Copy or interleaved not allowed./n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// used by GeometryArray by Reference in interleaved format with NIO buffer
@@ -56,10 +50,11 @@ abstract class JoglesDEPPipeline extends Pipeline
 			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException(
+				"Use of GeometryArray (un-indexed) by Reference in interleaved format with NIO buffer./n" + VALID_FORMAT_MESSAGE);
 	}
 
-	// used for GeometryArrays
+	// used for GeometryArrays (PJ - I presume this means DList usage?)
 	@Override
 	@Deprecated
 	void buildGA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean updateAlpha, float alpha,
@@ -67,7 +62,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texCoordSetMapOffset, int vertexAttrCount, int[] vertexAttrSizes, double[] xform, double[] nxform,
 			float[] varray)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("DLists in use! " + VALID_FORMAT_MESSAGE);
 	}
 
 	// used to Build Dlist GeometryArray by Reference with java arrays
@@ -79,46 +74,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int[] vertexAttrSizes, int[] vertexAttrIndices, float[][] vertexAttrData, int texCoordMapLength, int[] tcoordsetmap,
 			int[] texIndices, int texStride, Object[] texCoords, double[] xform, double[] nxform)
 	{
-		throw new UnsupportedOperationException();
-	}
-
-	//----------------------------------------------------------------------
-	// Private helper methods for GeometryArrayRetained
-	//
-	// interleaved support dropped
-	@Deprecated
-	private void testForInterleavedArrays(int vformat, boolean[] useInterleavedArrays, int[] iaFormat)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	//odd name looks like it should be used?
-	@Deprecated
-	private void executeTexture(int texCoordSetMapLen, int texSize, int bstride, int texCoordoff, int[] texCoordSetMapOffset,
-			int numActiveTexUnit, FloatBuffer verts, GL2 gl)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Deprecated
-	private void executeGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
-			int texCoordSetMapLen, int[] texCoordSetMapOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
-			float[] varray, FloatBuffer varrayBuffer, float[] carray, int cDirty)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Deprecated
-	private String getVertexDescription(int vformat)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Deprecated
-	private String getGeometryDescription(int geo_type)
-	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("DLists in use! " + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -135,7 +91,8 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset,
 			int numActiveTexUnitState, float[] varray, float[] carray, int cdirty, int[] indexCoord)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException(
+				"Use of IndexedGeometry by-copy or interleaved, by reference, Java arrays./n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// interleaved, by reference, nio buffer
@@ -146,9 +103,10 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset, int numActiveTexUnitState, FloatBuffer vdata,
 			float[] carray, int cDirty, int[] indexCoord)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Use of IndexedGeometry interleaved, by reference, nio buffer./n" + VALID_FORMAT_MESSAGE);
 	}
 
+	//PJ presume the word build means a draw list?
 	// by-copy geometry
 	@Override
 	@Deprecated
@@ -157,21 +115,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
 			int[] texCoordSetMapOffset, double[] xform, double[] nxform, float[] varray, int[] indexCoord)
 	{
-		throw new UnsupportedOperationException();
-	}
-
-	//----------------------------------------------------------------------
-	//
-	// Helper routines for IndexedGeometryArrayRetained
-	//
-	@Deprecated
-	private void executeIndexedGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat,
-			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
-			int[] texCoordSetOffset, int numActiveTexUnitState, float[] varray, FloatBuffer vdata, float[] carray, int cDirty,
-			int[] indexCoord)
-	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("DLists in use! " + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -188,7 +132,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer)
 	{
 
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Read Raster call not support in the GL2ES2 pipeline");
 	}
 
 	// ---------------------------------------------------------------------
@@ -200,10 +144,8 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void updateModelClip(Context ctx, int planeNum, boolean enableFlag, double A, double B, double C, double D)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Model Clip call not supported in the GL2ES2 pipeline");
 	}
-
-	
 
 	// ---------------------------------------------------------------------
 
@@ -222,7 +164,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			float planeSw, float planeTx, float planeTy, float planeTz, float planeTw, float planeRx, float planeRy, float planeRz,
 			float planeRw, float planeQx, float planeQy, float planeQz, float planeQw, double[] vworldToEc)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Model Clip call not supported in the GL2ES2 pipeline");
 	}
 
 	// ---------------------------------------------------------------------
@@ -237,7 +179,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int textureFormat, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc, int[] combineRgbFcn,
 			int[] combineAlphaFcn, int combineRgbScale, int combineAlphaScale)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Texture Coordinate generation is not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -252,14 +194,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void updateCombiner(Context ctx, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc,
 			int[] combineRgbFcn, int[] combineAlphaFcn, int combineRgbScale, int combineAlphaScale)
 	{
-		throw new UnsupportedOperationException();
-	}
-
-	// Helper routines for above
-	@Deprecated
-	private void getGLCombineMode(GL gl, int combineRgbMode, int combineAlphaMode, int[] GLrgbMode, int[] GLalphaMode)
-	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("GL combine not supported in the GL2ES2 pipeline");
 	}
 
 	// ---------------------------------------------------------------------
@@ -272,28 +207,21 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void updateTexture2DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture2DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture2DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		throw new UnsupportedOperationException();
-	}
-
-
-	@Deprecated
-	private void updateTextureLodOffset(Context ctx, int target, float lodOffsetS, float lodOffsetT, float lodOffsetR)
-	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// ---------------------------------------------------------------------
@@ -305,7 +233,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void bindTexture3D(Context ctx, int objectId, boolean enable)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -313,7 +241,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void updateTexture3DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height, int depth,
 			int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -322,21 +250,21 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int imgXOffset, int imgYOffset, int imgZOffset, int tilew, int tileh, int width, int height, int depth, int dataType,
 			Object data, boolean useAutoMipMap)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -344,35 +272,35 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void updateTexture3DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
 			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DFilterModes(Context ctx, int minFilter, int magFilter)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DAnisotropicFilter(Context ctx, float degree)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// ---------------------------------------------------------------------
@@ -384,34 +312,21 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void updateTextureCubeMapLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTextureCubeMapSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void updateTextureCubeMapFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Deprecated
-	private void updateTextureSharpenFunc(Context ctx, int target, int numPts, float[] pts)
-	{
-		throw new UnsupportedOperationException();
-
-	}
-
-	@Deprecated
-	private void updateTextureFilter4Func(Context ctx, int target, int numPts, float[] pts)
-	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// ---------------------------------------------------------------------
@@ -424,7 +339,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// This is the native for creating an offscreen buffer
@@ -432,7 +347,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// 'destroyContext' is called first if context exists
@@ -440,7 +355,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// This is the native for reading the image from the offscreen buffer
@@ -448,7 +363,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// This is the native method for doing accumulation.
@@ -456,42 +371,42 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void accum(Context ctx, float value)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void accumReturn(Context ctx)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void clearAccum(Context ctx)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	boolean decal1stChildSetup(Context ctx)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void decalNthChildSetup(Context ctx)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void decalReset(Context ctx, boolean depthBufferEnable)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	// The following three methods are used in multi-pass case
@@ -501,7 +416,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
 			float mapMinY, float mapMaxY, boolean useBilinearFilter)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 
 	}
 
@@ -511,7 +426,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBilinearFilter)
 	{
 
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -519,7 +434,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
 			int rasterHeight, int depthWidth, int depthHeight, int depthFormat, Object depthData)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 
 	}
 
@@ -528,28 +443,28 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void newDisplayList(Context ctx, int displayListId)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void endDisplayList(Context ctx)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void callDisplayList(Context ctx, int id, boolean isNonUniformScale)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
 	@Deprecated
 	void freeDisplayList(Context ctx, int id)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -558,7 +473,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
 			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
 
 	@Override
@@ -566,23 +481,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// nothing seems to call this in Canvas3D either
 	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
 	}
-
-	// used by texturemapping which is dead code and textureFillBackground, which can be dropped
-	@Deprecated
-	private void disableAttribFor2D(GL gl)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	// only called by textureFillRaster which will be dropped 
-	@Deprecated
-	private void disableAttribForRaster(GL gl)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	// ---------------------------------------------------------------------
-
 }
