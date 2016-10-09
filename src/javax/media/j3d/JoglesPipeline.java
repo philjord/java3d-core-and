@@ -7974,7 +7974,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return bufs;
 	}
 
-	///PJPJPJPJ requesting caps is expensive caps are unlikely to change during live times
+	// PJ: requesting caps is expensive, caps are unlikely to change during live
+	// times, so we use a variable that is lazy initialized for each
 	private isExtensionAvailable isExtensionAvailable = new isExtensionAvailable();
 
 	private class isExtensionAvailable
@@ -8074,7 +8075,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 	}
 
-	// AWT AWT AWT AWT AWT AWT AWT AWT AWT
+	// AWT AWT AWT AWT AWT AWT AWT AWT AWT everything below here demands or is used by awt code, and so is
+	// disabled or dummied off
 	// ---------------------------------------------------------------------
 
 	// Determine whether specified graphics config is supported by pipeline
@@ -8113,7 +8115,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// This method must return a valid GraphicsConfig, or else it must throw
 	// an exception if one cannot be returned.
 	@Override
-	// during Canvas3D init
 	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
 	{
 		throw new UnsupportedOperationException();
@@ -8133,7 +8134,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Get best graphics config from pipeline
 	@Override
-	// during Canvas3D2D init
 	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc)
 	{
 		throw new UnsupportedOperationException();
@@ -8320,6 +8320,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// Notice this is using reflection on the GraphicsDevice!
 	int getScreen(final GraphicsDevice graphicsDevice)
 	{
+		return 0;
 		//FIXME: this should use the GLWindow business
 		/*	if (VERBOSE)
 				System.err.println("JoglPipeline.getScreen()");
@@ -8364,7 +8365,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 			}*/
 
-		return 0;
+		
 	}
 
 	// getBestConfiguration ONLY below here VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
