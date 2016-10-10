@@ -9,14 +9,14 @@ import java.nio.FloatBuffer;
 abstract class JoglesDEPPipeline extends Pipeline
 {
 
-	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types. /n"//
-			+ "You can now only pass in a TriangleArray, TriangleStripArray, TriangleFanArray, /n"//
-			+ "LineArray, LineStripArray, PointArray and the 6 Indexed equivilents. /n "//
-			+ "Each Gemotry must be BY_REF = true, NIO = true, and INTERLEAVED = false. /n "//
-			+ "Texture Coordinate generation is not supported, Texture Filter, Sharpen and combine are not supported. /n"//
-			+ "Texture3D, TextureCubeMap are not supported.          /n"//
-			+ "Off screen buffers and decals are also not supported. /n"//
-			+ "Coordinates must be defind and float type, colors if defined must be float type ";
+	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types. \n"//
+			+ "You can now only pass in a TriangleArray, TriangleStripArray, TriangleFanArray, \n"//
+			+ "LineArray, LineStripArray, PointArray and the 6 Indexed equivilents. \n"//
+			+ "Each Gemotry must be BY_REF = true, NIO = true, and INTERLEAVED = false. \n"//
+			+ "Texture Coordinate generation is not supported, Texture Filter, Sharpen and combine are not supported. \n"//
+			+ "Texture3D, TextureCubeMap are not supported. \n"//
+			+ "Off screen buffers and decals are also not supported. \n"//
+			+ "Coordinates must be defind and float type, colors if defined must be float type.";
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -40,7 +40,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
 			float[] varray, float[] carray, int cDirty)
 	{
-		throw new UnsupportedOperationException("Use of GeometryArrays (un-indexed) by Copy or interleaved not allowed./n" + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException("Use of GeometryArrays (un-indexed) by Copy or interleaved not allowed.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// used by GeometryArray by Reference in interleaved format with NIO buffer
@@ -51,7 +51,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
 	{
 		throw new UnsupportedOperationException(
-				"Use of GeometryArray (un-indexed) by Reference in interleaved format with NIO buffer./n" + VALID_FORMAT_MESSAGE);
+				"Use of GeometryArray (un-indexed) by Reference in interleaved format with NIO buffer.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// used for GeometryArrays (PJ - I presume this means DList usage?)
@@ -62,7 +62,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texCoordSetMapOffset, int vertexAttrCount, int[] vertexAttrSizes, double[] xform, double[] nxform,
 			float[] varray)
 	{
-		throw new UnsupportedOperationException("DLists in use! " + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException("DLists in use!.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// used to Build Dlist GeometryArray by Reference with java arrays
@@ -74,7 +74,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int[] vertexAttrSizes, int[] vertexAttrIndices, float[][] vertexAttrData, int texCoordMapLength, int[] tcoordsetmap,
 			int[] texIndices, int texStride, Object[] texCoords, double[] xform, double[] nxform)
 	{
-		throw new UnsupportedOperationException("DLists in use! " + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException("DLists in use!.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -92,7 +92,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int numActiveTexUnitState, float[] varray, float[] carray, int cdirty, int[] indexCoord)
 	{
 		throw new UnsupportedOperationException(
-				"Use of IndexedGeometry by-copy or interleaved, by reference, Java arrays./n" + VALID_FORMAT_MESSAGE);
+				"Use of IndexedGeometry by-copy or interleaved, by reference, Java arrays.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// interleaved, by reference, nio buffer
@@ -103,7 +103,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset, int numActiveTexUnitState, FloatBuffer vdata,
 			float[] carray, int cDirty, int[] indexCoord)
 	{
-		throw new UnsupportedOperationException("Use of IndexedGeometry interleaved, by reference, nio buffer./n" + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException("Use of IndexedGeometry interleaved, by reference, nio buffer.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	//PJ presume the word build means a draw list?
@@ -115,7 +115,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
 			int[] texCoordSetMapOffset, double[] xform, double[] nxform, float[] varray, int[] indexCoord)
 	{
-		throw new UnsupportedOperationException("DLists in use! " + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException("DLists in use!.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
