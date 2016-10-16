@@ -21,14 +21,25 @@ import javax.vecmath.SingularMatrixException;
 import javax.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.nativewindow.AbstractGraphicsDevice;
+import com.jogamp.nativewindow.NativeSurface;
+import com.jogamp.nativewindow.ProxySurface;
+import com.jogamp.nativewindow.UpstreamSurfaceHook;
+import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
+import com.jogamp.nativewindow.awt.JAWTWindow;
+import com.jogamp.opengl.FBObject;
+import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLCapabilitiesImmutable;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawable;
+import com.jogamp.opengl.GLDrawableFactory;
 import com.jogamp.opengl.GLFBODrawable;
+import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.Threading;
 
 import java2.awt.GraphicsConfiguration;
@@ -279,7 +290,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// used by GeometryArray by Reference with java arrays
 	//  non indexed
 	@Override
-	@Deprecated
 	void executeVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors, int vcount,
 			int vformat, int vdefined, int initialCoordIndex, float[] vfcoords, double[] vdcoords, int initialColorIndex, float[] cfdata,
 			byte[] cbdata, int initialNormalIndex, float[] ndata, int vertexAttrCount, int[] vertexAttrSizes, int[] vertexAttrIndices,
@@ -7344,33 +7354,388 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return 8;
 	}
 
-	//As offscreen is disable this should always return false
-	private static boolean isOffscreenLayerSurfaceEnabled(Canvas3D cv)
+	
+	
+	
+	//Offscreen rendering methods below -----------------------
+	static boolean isOffscreenLayerSurfaceEnabled(Canvas3D cv)
 	{
-		/*if (cv.drawable == null || cv.offScreen)
+		if (cv.drawable == null || cv.offScreen)
 			return false;
-		
+
 		JoglDrawable joglDrawble = (JoglDrawable) cv.drawable;
 		JAWTWindow jawtwindow = (JAWTWindow) joglDrawble.getNativeWindow();
 		if (jawtwindow == null)
 			return false;
-		
-		return jawtwindow.isOffscreenLayerSurfaceEnabled();*/
-		return false;
+
+		return jawtwindow.isOffscreenLayerSurfaceEnabled();
 	}
 
-	//Off screen usage only
-	/*	private static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
+	static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
+	{
+		if (!(jdraw.getGLDrawable() instanceof GLFBODrawable))
+			return false;
+
+		FBObject fboBack = ((GLFBODrawable) jdraw.getGLDrawable()).getFBObject(GL.GL_BACK);
+		if (fboBack == null)
+			return false;
+
+		return (width != fboBack.getWidth() || height != fboBack.getHeight());
+	}
+
+	// Mac/JRE 7; called from Renderer when resizing is detected
+	// Implementation follows the approach in
+	// jogamp.opengl.GLDrawableHelper.resizeOffscreenDrawable(..)
+	@Override
+	void resizeOffscreenLayer(Canvas3D cv, int cvWidth, int cvHeight)
+	{
+		if (!isOffscreenLayerSurfaceEnabled(cv))
+			return;
+
+		JoglDrawable joglDrawable = (JoglDrawable) cv.drawable;
+		if (!hasFBObjectSizeChanged(joglDrawable, cvWidth, cvHeight))
+			return;
+
+		int newWidth = Math.max(1, cvWidth);
+		int newHeight = Math.max(1, cvHeight);
+
+		GLDrawable glDrawble = joglDrawable.getGLDrawable();
+		GLContext glContext = context(cv.ctx);
+
+		// Assuming glContext != null
+
+		final NativeSurface surface = glDrawble.getNativeSurface();
+		final ProxySurface proxySurface = (surface instanceof ProxySurface) ? (ProxySurface) surface : null;
+
+		final int lockRes = surface.lockSurface();
+
+		try
 		{
-			if (!(jdraw.getGLDrawable() instanceof GLFBODrawable))
-				return false;
-	
-			FBObject fboBack = ((GLFBODrawable) jdraw.getGLDrawable()).getFBObject(GL2ES2.GL_BACK);
-			if (fboBack == null)
-				return false;
-	
-			return (width != fboBack.getWidth() || height != fboBack.getHeight());
-		}*/
+			// propagate new size - seems not relevant here
+			if (proxySurface != null)
+			{
+				final UpstreamSurfaceHook ush = proxySurface.getUpstreamSurfaceHook();
+				if (ush instanceof UpstreamSurfaceHook.MutableSize)
+				{
+					((UpstreamSurfaceHook.MutableSize) ush).setSurfaceSize(newWidth, newHeight);
+				}
+			}
+			/*
+			 else if(DEBUG) { 
+			 // we have to assume surface contains the new size already, hence size check @ bottom 
+			 System.err.println("GLDrawableHelper.resizeOffscreenDrawable: Drawable's offscreen surface n.a. ProxySurface, but "
+			 +ns.getClass().getName()+": "+ns); }
+			 */
+
+			GL2ES2 gl = glContext.getGL().getGL2ES2();
+
+			// FBO : should be the default case on Mac OS X
+			if (glDrawble instanceof GLFBODrawable)
+			{
+
+				// Resize GLFBODrawable
+				// TODO msaa gets lost
+				// ((GLFBODrawable)glDrawble).resetSize(gl);
+
+				// Alternative: resize GL_BACK FBObject directly,
+				// if multisampled the FBO sink (GL_FRONT) will be resized
+				// before the swap is executed
+				int numSamples = ((GLFBODrawable) glDrawble).getChosenGLCapabilities().getNumSamples();
+				FBObject fboObjectBack = ((GLFBODrawable) glDrawble).getFBObject(GL.GL_BACK);
+				fboObjectBack.reset(gl, newWidth, newHeight, numSamples/* , false */); // false = don't reset
+				// SamplingSinkFBO
+				// immediately
+				fboObjectBack.bind(gl);
+
+				// If double buffered without antialiasing the GL_FRONT FBObject
+				// will be resized by glDrawble after the next swap-call
+			}
+			// pbuffer - not tested because Mac OS X 10.7+ supports FBO
+			else
+			{
+				// Create new GLDrawable (pbuffer) and update the coresponding
+				// GLContext
+
+				final GLContext currentContext = GLContext.getCurrent();
+				final GLDrawableFactory factory = glDrawble.getFactory();
+
+				// Ensure to sync GL command stream
+				if (currentContext != glContext)
+				{
+					glContext.makeCurrent();
+				}
+				gl.glFinish();
+				glContext.release();
+
+				if (proxySurface != null)
+				{
+					proxySurface.enableUpstreamSurfaceHookLifecycle(false);
+				}
+
+				try
+				{
+					glDrawble.setRealized(false);
+					// New GLDrawable
+					glDrawble = factory.createGLDrawable(surface);
+					glDrawble.setRealized(true);
+
+					joglDrawable.setGLDrawable(glDrawble);
+				}
+				finally
+				{
+					if (proxySurface != null)
+					{
+						proxySurface.enableUpstreamSurfaceHookLifecycle(true);
+					}
+				}
+
+				glContext.setGLDrawable(glDrawble, true); // re-association
+
+				// make current last current context
+				if (currentContext != null)
+				{
+					currentContext.makeCurrent();
+				}
+			}
+		}
+		finally
+		{
+			surface.unlockSurface();
+		}
+	}
+	// This is the native for creating an offscreen buffer
+	@Override
+	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.createOffScreenBuffer()");
+
+		// ctx unused, doesn't exist yet
+
+		// Offscreen Canvas3D's JoglGraphicsConfiguration
+		JoglGraphicsConfiguration jgc = (JoglGraphicsConfiguration) cv.graphicsConfiguration;
+
+		// Retrieve the offscreen Canvas3D's GraphicsConfigInfo
+		GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(jgc);
+
+		// Offscreen Canvas3D's graphics configuration, determined in
+		// 'getBestConfiguration'
+		AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
+
+		// TODO Offscreen Canvas3D's graphics devise, determined in
+		// 'getBestConfiguration'
+		// AbstractGraphicsDevice device = awtConfig.getScreen().getDevice(); //
+		// throws exception
+		// Alternative: default graphics device
+		AbstractGraphicsDevice device = GLDrawableFactory.getDesktopFactory().getDefaultDevice();
+
+		// Offscreen Canvas3D's capabilites, determined in
+		// 'getBestConfiguration'
+		GLCapabilities canvasCaps = (GLCapabilities) awtConfig.getChosenCapabilities();
+
+		// For further investigations : the user's GraphicsConfigTemplate3D (not
+		// used yet)
+		GraphicsConfigTemplate3D gct3D = gcInf0.getGraphicsConfigTemplate3D();
+
+		// Assuming that the offscreen drawable will/can support the chosen
+		// GLCapabilities
+		// of the offscreen Canvas3D
+
+		final GLCapabilities offCaps = new GLCapabilities(GLProfile.get(GLProfile.GL2ES2));
+		offCaps.copyFrom(canvasCaps);
+
+		// double bufffering only if scene antialiasing is required/preferred
+		// and supported
+		if (offCaps.getSampleBuffers() == false)
+		{
+			offCaps.setDoubleBuffered(false);
+			offCaps.setNumSamples(0);
+		}
+
+		// Never stereo
+		offCaps.setStereo(false);
+
+		// Set preferred offscreen drawable : framebuffer object (FBO) or
+		// pbuffer
+		offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
+		// caps.setPBuffer(true);
+
+		// !! a 'null' capability chooser; JOGL doesn't call a chooser for
+		// offscreen drawable
+
+		// If FBO : 'offDrawable' is of type com.jogamp.opengl.GLFBODrawable
+		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).createOffscreenDrawable(device, offCaps, null, width, height);
+
+		// !! these chosen caps are not final as long as the corresponding
+		// context is made current
+		// System.out.println("createOffScreenBuffer chosenCaps = " +
+		// offDrawable.getChosenGLCapabilities());
+
+		return new JoglDrawable(offDrawable, null);
+	}
+
+	// 'destroyContext' is called first if context exists
+	@Override
+	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.destroyOffScreenBuffer()");
+
+		// it is done in 'destroyContext'
+	}
+
+	// This is the native for reading the image from the offscreen buffer
+	@Override
+	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.readOffScreenBuffer()");
+
+		GLDrawable glDrawable = ((JoglDrawable) cv.drawable).getGLDrawable();
+		GLCapabilitiesImmutable chosenCaps = glDrawable.getChosenGLCapabilities();
+		GLFBODrawable fboDrawable = null;
+
+		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
+
+		// If FBO
+		if (chosenCaps.isFBO())
+		{
+
+			fboDrawable = (GLFBODrawable) glDrawable;
+
+			if (chosenCaps.getDoubleBuffered())
+			{
+				// swap = resolve multisampling or flip back/front FBO
+				fboDrawable.swapBuffers();
+				// unbind texture render target, we read from FBO
+				gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
+			}
+
+			// bind FBO for reading pixel data
+			// GL_FRONT = SamplingSinkFBO if double buffered and multisampled
+			// GL_FRONT if double buffered ( = GL_BAck before swap was called)
+			// GL_FRONT = GL_BACK if single buffered (single FBO)
+
+			fboDrawable.getFBObject(GL.GL_FRONT).bind(gl);
+		}
+		// else pbuffer
+
+		//gl.glPixelStorei(GL2.GL_PACK_ROW_LENGTH, width);
+		//gl.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);
+
+		int type = 0;
+
+		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
+				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
+		{
+
+			switch (format)
+			{
+			// GL_BGR
+			case ImageComponentRetained.TYPE_BYTE_BGR:
+				type = GL2.GL_BGR;
+				break;
+			case ImageComponentRetained.TYPE_BYTE_RGB:
+				type = GL.GL_RGB;
+				break;
+			// GL_ABGR_EXT
+			case ImageComponentRetained.TYPE_BYTE_ABGR:
+				if (gl.isExtensionAvailable("GL_EXT_abgr"))
+				{ // If false,
+					// should never
+					// come here!
+					type = GL2.GL_ABGR_EXT;
+				}
+				else
+				{
+					assert false;
+					return;
+				}
+				break;
+			case ImageComponentRetained.TYPE_BYTE_RGBA:
+				type = GL.GL_RGBA;
+				break;
+
+			/*
+			 * This method only supports 3 and 4 components formats and BYTE
+			 * types.
+			 */
+			case ImageComponentRetained.TYPE_BYTE_LA:
+			case ImageComponentRetained.TYPE_BYTE_GRAY:
+			case ImageComponentRetained.TYPE_USHORT_GRAY:
+			case ImageComponentRetained.TYPE_INT_BGR:
+			case ImageComponentRetained.TYPE_INT_RGB:
+			case ImageComponentRetained.TYPE_INT_ARGB:
+			default:
+				throw new AssertionError("illegal format " + format);
+			}
+
+			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, ByteBuffer.wrap((byte[]) data));
+
+		}
+		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
+		{
+
+			int intType = GL2.GL_UNSIGNED_INT_8_8_8_8;
+			boolean forceAlphaToOne = false;
+
+			switch (format)
+			{
+			/* GL_BGR */
+			case ImageComponentRetained.TYPE_INT_BGR: /* Assume XBGR format */
+				type = GL.GL_RGBA;
+				intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+				forceAlphaToOne = true;
+				break;
+			case ImageComponentRetained.TYPE_INT_RGB: /* Assume XRGB format */
+				forceAlphaToOne = true;
+				/* Fall through to next case */
+			case ImageComponentRetained.TYPE_INT_ARGB:
+				type = GL2.GL_BGRA;
+				intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+				break;
+			/*
+			 * This method only supports 3 and 4 components formats and BYTE
+			 * types.
+			 */
+			case ImageComponentRetained.TYPE_BYTE_LA:
+			case ImageComponentRetained.TYPE_BYTE_GRAY:
+			case ImageComponentRetained.TYPE_USHORT_GRAY:
+			case ImageComponentRetained.TYPE_BYTE_BGR:
+			case ImageComponentRetained.TYPE_BYTE_RGB:
+			case ImageComponentRetained.TYPE_BYTE_RGBA:
+			case ImageComponentRetained.TYPE_BYTE_ABGR:
+			default:
+				throw new AssertionError("illegal format " + format);
+			}
+
+			/* Force Alpha to 1.0 if needed */
+			// if (forceAlphaToOne) {
+			// gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
+			// gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
+			// }
+
+			gl.glReadPixels(0, 0, width, height, type, intType, IntBuffer.wrap((int[]) data));
+
+			/* Restore Alpha scale and bias */
+			// if (forceAlphaToOne) {
+			// gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
+			// gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
+			// }
+		}
+		else
+		{
+			throw new AssertionError("illegal image data type " + dataType);
+		}
+
+		// If FBO
+		if (chosenCaps.isFBO())
+		{
+			// bind FBO for drawing
+			fboDrawable.getFBObject(GL.GL_BACK).bind(gl);
+		}
+	}
 
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
 	@Override
@@ -7431,123 +7796,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// Canvas3D methods - native wrappers
 	//
-
-	// Mac/JRE 7; called from Renderer when resizing is detected
-	// Implementation follows the approach in jogamp.opengl.GLDrawableHelper.resizeOffscreenDrawable(..)
-
-	//this is called by renderer doWork in the setViewPort call, as offscreen is disable I can dump??
-	@Override
-	void resizeOffscreenLayer(Canvas3D cv, int cvWidth, int cvHeight)
-	{
-		if (!isOffscreenLayerSurfaceEnabled(cv))
-			return;
-
-		throw new UnsupportedOperationException("Offscreen not supported");
-		/*
-		JoglDrawable joglDrawable = (JoglDrawable) cv.drawable;
-		if (!hasFBObjectSizeChanged(joglDrawable, cvWidth, cvHeight))
-			return;
-		
-		int newWidth = Math.max(1, cvWidth);
-		int newHeight = Math.max(1, cvHeight);
-		
-		GLDrawable glDrawble = joglDrawable.getGLDrawable();
-		GLContext glContext = context(cv.ctx);
-		
-		// Assuming glContext != null
-		
-		final NativeSurface surface = glDrawble.getNativeSurface();
-		final ProxySurface proxySurface = (surface instanceof ProxySurface) ? (ProxySurface) surface : null;
-		
-		final int lockRes = surface.lockSurface();
-		
-		try
-		{
-			// propagate new size - seems not relevant here
-			if (proxySurface != null)
-			{
-				final UpstreamSurfaceHook ush = proxySurface.getUpstreamSurfaceHook();
-				if (ush instanceof UpstreamSurfaceHook.MutableSize)
-				{
-					((UpstreamSurfaceHook.MutableSize) ush).setSurfaceSize(newWidth, newHeight);
-				}
-			}
-			//else if(DEBUG) { // we have to assume surface contains the new size already, hence size check @ bottom
-			 //     System.err.println("GLDrawableHelper.resizeOffscreenDrawable: Drawable's offscreen surface n.a. ProxySurface, but "+ns.getClass().getName()+": "+ns);
-			//}
-		
-			GL2ES2 gl = glContext.getGL().getGL2ES2();
-		
-			// FBO : should be the default case on Mac OS X
-			if (glDrawble instanceof GLFBODrawable)
-			{
-		
-				// Resize GLFBODrawable
-				// TODO msaa gets lost
-				//				((GLFBODrawable)glDrawble).resetSize(gl);
-		
-				// Alternative: resize GL_BACK FBObject directly,
-				// if multisampled the FBO sink (GL_FRONT) will be resized before the swap is executed
-				int numSamples = ((GLFBODrawable) glDrawble).getChosenGLCapabilities().getNumSamples();
-				FBObject fboObjectBack = ((GLFBODrawable) glDrawble).getFBObject(GL2ES2.GL_BACK);
-				fboObjectBack.reset(gl, newWidth, newHeight, numSamples);//, false); // false = don't reset SamplingSinkFBO immediately
-				fboObjectBack.bind(gl);
-		
-				// If double buffered without antialiasing the GL_FRONT FBObject
-				// will be resized by glDrawble after the next swap-call
-			}
-			// pbuffer - not tested because Mac OS X 10.7+ supports FBO
-			else
-			{
-				// Create new GLDrawable (pbuffer) and update the coresponding GLContext
-		
-				final GLContext currentContext = GLContext.getCurrent();
-				final GLDrawableFactory factory = glDrawble.getFactory();
-		
-				// Ensure to sync GL command stream
-				if (currentContext != glContext)
-				{
-					glContext.makeCurrent();
-				}
-				gl.glFinish();
-				glContext.release();
-		
-				if (proxySurface != null)
-				{
-					proxySurface.enableUpstreamSurfaceHookLifecycle(false);
-				}
-		
-				try
-				{
-					glDrawble.setRealized(false);
-					// New GLDrawable
-					glDrawble = factory.createGLDrawable(surface);
-					glDrawble.setRealized(true);
-		
-					joglDrawable.setGLDrawable(glDrawble);
-				}
-				finally
-				{
-					if (proxySurface != null)
-					{
-						proxySurface.enableUpstreamSurfaceHookLifecycle(true);
-					}
-				}
-		
-				glContext.setGLDrawable(glDrawble, true); // re-association
-		
-				// make current last current context
-				if (currentContext != null)
-				{
-					currentContext.makeCurrent();
-				}
-			}
-		}
-		finally
-		{
-			surface.unlockSurface();
-		}*/
-	}
 
 	/**
 	 * New method for preparing the pipeline with a context you prepared earlier
@@ -7702,6 +7950,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// This is the native method for creating the underlying graphics context.
 	//Once NewtWindow is working this becomes a simple unsupported operation
 	@Override
+	@Deprecated
 	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
 	{
 		throw new UnsupportedOperationException();
@@ -8214,6 +8463,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// This method must return a valid GraphicsConfig, or else it must throw
 	// an exception if one cannot be returned.
 	@Override
+	@Deprecated
 	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
 	{
 		throw new UnsupportedOperationException();
@@ -8233,6 +8483,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// Get best graphics config from pipeline
 	@Override
+	@Deprecated
 	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc)
 	{
 		throw new UnsupportedOperationException();
@@ -8695,5 +8946,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			r.run();
 		}
 	}*/
+
+	@Override
+	@Deprecated
+	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
+	{
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
+	}
+
 
 }

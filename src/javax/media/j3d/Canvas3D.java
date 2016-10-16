@@ -955,7 +955,7 @@ public class Canvas3D //extends Canvas
 		// allow no opts option
 		if (pro == null)
 		{
-			pro = GLProfile.get(GLProfile.GL2GL3);
+			pro = GLProfile.get(GLProfile.GL2ES2);
 			cap = new GLCapabilities(pro);
 
 			// improved values

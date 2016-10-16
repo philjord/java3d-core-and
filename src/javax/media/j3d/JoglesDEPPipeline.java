@@ -15,9 +15,11 @@ abstract class JoglesDEPPipeline extends Pipeline
 			+ "Each Geomtry must have a format of GeometryArray.BY_REFERENCE = true and GeometryArray.INTERLEAVED = false. \n"//					
 			+ "Texture Coordinate generation is not supported, Texture Filter, Sharpen and combine are not supported. \n"//
 			+ "Texture3D, TextureCubeMap are not supported. \n"//
-			+ "Off screen buffers and decals are also not supported. \n"//
-			+ "Coordinates must be defind and float type, colors if defined must be float type. \n"//
-			+ "It is strongly recomended that you use the format GeometryArray.USE_NIO_BUFFER = true.";//
+			+ "Accum style anti-aliasing, rasters and decals are also not supported. \n"//
+			+ "Coordinates must be defind and float type, colors must be float type, if defined. \n"//
+			+ "It is strongly recomended that you use the format GeometryArray.USE_NIO_BUFFER = true. \n"//
+			+ "Note LineArray and LineStripArray will not render as nicely as the fixed function pipeline. \n"//
+			+ "OffScreen rendering is disabled. ";//
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -337,37 +339,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	//
 	// Canvas3D methods - native wrappers
 	//
-
-	@Override
-	@Deprecated
-	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
-	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-	// This is the native for creating an offscreen buffer
-	@Override
-	@Deprecated
-	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
-	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-	// 'destroyContext' is called first if context exists
-	@Override
-	@Deprecated
-	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
-	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-	// This is the native for reading the image from the offscreen buffer
-	@Override
-	@Deprecated
-	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
-	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
 
 	// This is the native method for doing accumulation.
 	@Override
