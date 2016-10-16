@@ -2546,7 +2546,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//if (!MINIMISE_NATIVE_CALLS_FFP
 			//		|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 			//{
-			ctx.currentModelViewMat.mul(ctx.matrixUtil.deburnV, ctx.matrixUtil.deburnM);
+			ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 			JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
 			//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
