@@ -7,6 +7,8 @@ import java.nio.FloatBuffer;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.SingularMatrixException;
+import javax.vecmath.Tuple4f;
+import javax.vecmath.Vector4f;
 
 /** class that demands single threading and uses deburners, don't touch if you don't understand, it will be bad...
  * 
@@ -614,6 +616,19 @@ class JoglesMatrixUtil
 		}
 	}
 
+	public final void transform(Matrix4d m, Tuple4f vecOut)
+	{
+		float x, y, z;
+
+		x = (float) (m.m00 * vecOut.x + m.m01 * vecOut.y + m.m02 * vecOut.z + m.m03 * vecOut.w);
+		y = (float) (m.m10 * vecOut.x + m.m11 * vecOut.y + m.m12 * vecOut.z + m.m13 * vecOut.w);
+		z = (float) (m.m20 * vecOut.x + m.m21 * vecOut.y + m.m22 * vecOut.z + m.m23 * vecOut.w);
+		vecOut.w = (float) (m.m30 * vecOut.x + m.m31 * vecOut.y + m.m32 * vecOut.z + m.m33 * vecOut.w);
+		vecOut.x = x;
+		vecOut.y = y;
+		vecOut.z = z;
+	}
+
 	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
 
 	public double[] deburnV2 = null;//deburners 
@@ -768,6 +783,15 @@ class JoglesMatrixUtil
 	}
 
 	//More single threaded death-defying gear
+	private Vector4f tmpV4f = new Vector4f();;
+
+	public Vector4f transform(Matrix4d m1, Matrix4d m2, float tx, float ty, float tz, float tw)
+	{
+		tmpV4f.set(tx, ty, tz, tw);
+		transform(m1, tmpV4f);
+		transform(m2, tmpV4f);
+		return tmpV4f;
+	}
 
 	private FloatBuffer matFB4x4;
 

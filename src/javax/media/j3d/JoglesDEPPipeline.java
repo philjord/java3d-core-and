@@ -9,14 +9,15 @@ import java.nio.FloatBuffer;
 abstract class JoglesDEPPipeline extends Pipeline
 {
 
-	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types. \n"//
+	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types and formats. \n"//
 			+ "You can now only pass in a TriangleArray, TriangleStripArray, TriangleFanArray, \n"//
-			+ "LineArray, LineStripArray, PointArray and the 6 Indexed equivilents. \n"//
-			+ "Each Gemotry must be BY_REF = true, NIO = true, and INTERLEAVED = false. \n"//
+			+ "LineArray, LineStripArray, PointArray and the 6 Indexed equivilents (effectively QuadArray is removed). \n"//
+			+ "Each Geomtry must have a format of GeometryArray.BY_REFERENCE = true and GeometryArray.INTERLEAVED = false. \n"//					
 			+ "Texture Coordinate generation is not supported, Texture Filter, Sharpen and combine are not supported. \n"//
 			+ "Texture3D, TextureCubeMap are not supported. \n"//
 			+ "Off screen buffers and decals are also not supported. \n"//
-			+ "Coordinates must be defind and float type, colors if defined must be float type.";
+			+ "Coordinates must be defind and float type, colors if defined must be float type. \n"//
+			+ "It is strongly recomended that you use the format GeometryArray.USE_NIO_BUFFER = true.";//
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -40,7 +41,8 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
 			float[] varray, float[] carray, int cDirty)
 	{
-		throw new UnsupportedOperationException("Use of GeometryArrays (un-indexed) by Copy or interleaved not allowed.\n" + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException(
+				"Use of GeometryArrays (un-indexed) by Copy or interleaved not allowed.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// used by GeometryArray by Reference in interleaved format with NIO buffer
@@ -132,7 +134,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer)
 	{
 
-		throw new UnsupportedOperationException("Read Raster call not support in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Read Raster call not support in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -144,7 +146,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void updateModelClip(Context ctx, int planeNum, boolean enableFlag, double A, double B, double C, double D)
 	{
-		throw new UnsupportedOperationException("Model Clip call not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Model Clip call not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -164,7 +166,8 @@ abstract class JoglesDEPPipeline extends Pipeline
 			float planeSw, float planeTx, float planeTy, float planeTz, float planeTw, float planeRx, float planeRy, float planeRz,
 			float planeRw, float planeQx, float planeQy, float planeQz, float planeQw, double[] vworldToEc)
 	{
-		throw new UnsupportedOperationException("Model Clip call not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException(
+				"Texture Coordinate generation is not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -179,14 +182,14 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int textureFormat, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc, int[] combineRgbFcn,
 			int[] combineAlphaFcn, int combineRgbScale, int combineAlphaScale)
 	{
-		throw new UnsupportedOperationException("Texture Coordinate generation is not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("RegisterCombiners is not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTextureColorTable(Context ctx, int numComponents, int colorTableSize, int[] textureColorTable)
 	{
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("TextureColorTable is not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -194,7 +197,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void updateCombiner(Context ctx, int combineRgbMode, int combineAlphaMode, int[] combineRgbSrc, int[] combineAlphaSrc,
 			int[] combineRgbFcn, int[] combineAlphaFcn, int combineRgbScale, int combineAlphaScale)
 	{
-		throw new UnsupportedOperationException("GL combine not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("GL combine not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -207,21 +210,21 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void updateTexture2DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture2DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture2DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -233,7 +236,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void bindTexture3D(Context ctx, int objectId, boolean enable)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -241,7 +244,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void updateTexture3DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height, int depth,
 			int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -250,21 +253,21 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int imgXOffset, int imgYOffset, int imgZOffset, int tilew, int tileh, int width, int height, int depth, int dataType,
 			Object data, boolean useAutoMipMap)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -272,35 +275,35 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void updateTexture3DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
 			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DFilterModes(Context ctx, int minFilter, int magFilter)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTexture3DAnisotropicFilter(Context ctx, float degree)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -312,21 +315,21 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void updateTextureCubeMapLodOffset(Context ctx, float lodOffsetS, float lodOffsetT, float lodOffsetR)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTextureCubeMapSharpenFunc(Context ctx, int numSharpenTextureFuncPts, float[] sharpenTextureFuncPts)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void updateTextureCubeMapFilter4Func(Context ctx, int numFilter4FuncPts, float[] filter4FuncPts)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
@@ -339,7 +342,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// This is the native for creating an offscreen buffer
@@ -347,7 +350,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// 'destroyContext' is called first if context exists
@@ -355,7 +358,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// This is the native for reading the image from the offscreen buffer
@@ -363,7 +366,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// This is the native method for doing accumulation.
@@ -371,42 +374,42 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void accum(Context ctx, float value)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void accumReturn(Context ctx)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void clearAccum(Context ctx)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	boolean decal1stChildSetup(Context ctx)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void decalNthChildSetup(Context ctx)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void decalReset(Context ctx, boolean depthBufferEnable)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// The following three methods are used in multi-pass case
@@ -416,7 +419,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
 			float mapMinY, float mapMaxY, boolean useBilinearFilter)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 
 	}
 
@@ -426,7 +429,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBilinearFilter)
 	{
 
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -434,7 +437,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
 			int rasterHeight, int depthWidth, int depthHeight, int depthFormat, Object depthData)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 
 	}
 
@@ -443,28 +446,28 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void newDisplayList(Context ctx, int displayListId)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void endDisplayList(Context ctx)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void callDisplayList(Context ctx, int id, boolean isNonUniformScale)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
 	@Deprecated
 	void freeDisplayList(Context ctx, int id)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -473,7 +476,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
 			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	@Override
@@ -481,6 +484,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 	// nothing seems to call this in Canvas3D either
 	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
 	{
-		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline");
+		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 }

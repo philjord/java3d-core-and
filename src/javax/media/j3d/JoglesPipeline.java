@@ -320,8 +320,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		int[] sarray = null;
 		int[] start_array = null;
 		int strip_len = 0;
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
+		if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
 		{
 			sarray = ((GeometryStripArrayRetained) geo).stripVertexCounts;
 			strip_len = sarray.length;
@@ -1577,7 +1577,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				{
 					int count = sarray[i];
 					int indBufId = stripInd[i];
-					//FIXME: SHORT indexes are ES3 only!
 					//type Specifies the type of the values in indices. Must be
 					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.    
 					// Apparently ES3 has included this guy now, so I'm a bit commited to it
@@ -2581,7 +2580,20 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		//send material data through
+		//send material data through		
+		if (locs.glFrontMaterialambient != -1)
+		{
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialambient.equals(ctx.materialData.ambient)))
+			{
+				gl.glUniform4f(locs.glFrontMaterialambient, ctx.materialData.ambient.x, ctx.materialData.ambient.y,
+						ctx.materialData.ambient.z, 1f);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.glFrontMaterialambient.set(ctx.materialData.ambient);
+			}
+		}
 		if (locs.glFrontMaterialdiffuse != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
@@ -3092,6 +3104,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
 			locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
 			locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
+			locs.glFrontMaterialambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialambient");
 			locs.glFrontMaterialdiffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
 			locs.glFrontMaterialemission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
 			locs.glFrontMaterialspecular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
@@ -4484,6 +4497,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glLightf(lightNum, GL2ES2.GL_SPOT_CUTOFF, 180.0f);*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
+
+		// note can't use the modelview as it's  calced late
+		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, -dirx, -diry, -dirz, 0f);
+
 		if (joglesctx.dirLight[lightSlot] == null)
 			joglesctx.dirLight[lightSlot] = new LightData();
 
@@ -4495,10 +4512,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.dirLight[lightSlot].specular.y = green;
 		joglesctx.dirLight[lightSlot].specular.z = blue;
 		joglesctx.dirLight[lightSlot].specular.w = 1.0f;
-		joglesctx.dirLight[lightSlot].pos.x = -dirx;
-		joglesctx.dirLight[lightSlot].pos.y = -diry;
-		joglesctx.dirLight[lightSlot].pos.z = -dirz;
-		joglesctx.dirLight[lightSlot].pos.w = 0.0f;//0 means directional light
+		joglesctx.dirLight[lightSlot].pos.x = lightPos.x;
+		joglesctx.dirLight[lightSlot].pos.y = lightPos.y;
+		joglesctx.dirLight[lightSlot].pos.z = lightPos.z;
+		joglesctx.dirLight[lightSlot].pos.w = 0.0f;// 0 means directional light
 		joglesctx.dirLight[lightSlot].ambient = black;// odd		 
 		//joglesctx.dirLight[lightSlot].GL_POSITION = 1.0f; // what is this?
 		joglesctx.dirLight[lightSlot].GL_CONSTANT_ATTENUATION = 1.0f;
@@ -4549,6 +4566,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glLightf(lightNum, GL2ES2.GL_SPOT_CUTOFF, 180.0f);*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
+
+		// note the current state of MV MUST be used by the lights when setting position!
+		//https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
+
+		// note can't use the modelview as it's  calced late
+		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx, posy, posz, 1.0f);
+
 		if (joglesctx.pointLight[lightSlot] == null)
 			joglesctx.pointLight[lightSlot] = new LightData();
 
@@ -4560,9 +4584,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.pointLight[lightSlot].specular.y = green;
 		joglesctx.pointLight[lightSlot].specular.z = blue;
 		joglesctx.pointLight[lightSlot].specular.w = 1.0f;
-		joglesctx.pointLight[lightSlot].pos.x = posx;
-		joglesctx.pointLight[lightSlot].pos.y = posy;
-		joglesctx.pointLight[lightSlot].pos.z = posz;
+		joglesctx.pointLight[lightSlot].pos.x = lightPos.x;
+		joglesctx.pointLight[lightSlot].pos.y = lightPos.y;
+		joglesctx.pointLight[lightSlot].pos.z = lightPos.z;
 		joglesctx.pointLight[lightSlot].pos.w = 1.0f;// 1 mean pos not dir
 		joglesctx.pointLight[lightSlot].ambient = black;// odd				
 		joglesctx.pointLight[lightSlot].GL_CONSTANT_ATTENUATION = attenx;
@@ -4617,6 +4641,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 			gl.glLightf(lightNum, GL2ES2.GL_SPOT_CUTOFF, (float) (spreadAngle * 180.0f / Math.PI));*/
 
 		JoglesContext joglesctx = ((JoglesContext) ctx);
+
+		// note the current state of MV MUST be used by the lights when setting position!
+		//https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
+
+		// note can't use the modelview as it's  calced late
+		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx, posy, posz, 1.0f);
+
 		if (joglesctx.spotLight[lightSlot] == null)
 			joglesctx.spotLight[lightSlot] = new LightData();
 
@@ -4628,9 +4659,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.spotLight[lightSlot].specular.y = green;
 		joglesctx.spotLight[lightSlot].specular.z = blue;
 		joglesctx.spotLight[lightSlot].specular.w = 1.0f;
-		joglesctx.spotLight[lightSlot].pos.x = posx;
-		joglesctx.spotLight[lightSlot].pos.y = posy;
-		joglesctx.spotLight[lightSlot].pos.z = posz;
+		joglesctx.spotLight[lightSlot].pos.x = lightPos.x;
+		joglesctx.spotLight[lightSlot].pos.y = lightPos.y;
+		joglesctx.spotLight[lightSlot].pos.z = lightPos.z;
 		joglesctx.spotLight[lightSlot].pos.w = 1.0f;// 1 mean pos not dir
 		joglesctx.spotLight[lightSlot].ambient = black;// odd		 
 		joglesctx.spotLight[lightSlot].GL_CONSTANT_ATTENUATION = attenx;
