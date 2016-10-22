@@ -532,9 +532,14 @@ class MasterControl {
 					//   "display list");
 
 	implicitAntialiasing =
-	    getBooleanProperty("j3d.defaultReadCapability",
-	    		defaultReadCapability,
-			       "default read capability");
+	    getBooleanProperty("j3d.implicitAntialiasing",
+			       implicitAntialiasing,
+			       "implicit antialiasing");
+	
+	defaultReadCapability =
+		    getBooleanProperty("j3d.defaultReadCapability",
+		    		defaultReadCapability,
+				       "default read capability");
 
 	isCompiledVertexArray =
 	    getBooleanProperty("j3d.compiledVertexArray",

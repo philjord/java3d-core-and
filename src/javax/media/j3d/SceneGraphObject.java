@@ -132,19 +132,14 @@ public abstract class SceneGraphObject extends Object {
     /**
      * Method to set default read capability bits to true
      */
-    void setDefaultReadCapabilities(int[] bits) {
+    void setDefaultReadCapabilities(int[] bits) { 
         if ( VirtualUniverse.mc.defaultReadCapability ) {
             for (int i=0; i < bits.length; i++) {
-                setCapability(bits[i]);
+                setCapability(bits[i]); 
             }
         }
     }
     
-    public void clearCapabilities()
-    {
-    	 capabilityBits = 0L;
-    }
-
     /**
      * Retrieves the specified capability bit.  Note that only one capability
      * bit may be retrieved per method invocation--capability bits cannot
