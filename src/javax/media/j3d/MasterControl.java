@@ -399,6 +399,10 @@ class MasterControl {
     // True to disable all underlying multisampling API so it uses
     // the setting in the driver.
     boolean implicitAntialiasing = false;
+    
+    // If set to false default capabilities will not eb set, potentially allowing
+    // much more compilation of scene graphs
+    boolean defaultReadCapability = true;
 
     // False to disable compiled vertex array extensions if support
     boolean isCompiledVertexArray = true;
@@ -528,9 +532,9 @@ class MasterControl {
 					//   "display list");
 
 	implicitAntialiasing =
-	    getBooleanProperty("j3d.implicitAntialiasing",
-			       implicitAntialiasing,
-			       "implicit antialiasing");
+	    getBooleanProperty("j3d.defaultReadCapability",
+	    		defaultReadCapability,
+			       "default read capability");
 
 	isCompiledVertexArray =
 	    getBooleanProperty("j3d.compiledVertexArray",

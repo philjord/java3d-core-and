@@ -17,6 +17,26 @@ import utils.SparseArray;
 
 public class JoglesContext extends JoglContext
 {
+	
+	//NOTES to convert to core
+
+
+	// Step to convert
+	// 1. replace all SpareArray< with HashMap<Integer, JoglesContext and JoglesPipeline
+	// 2. GeometryArrayRetained must add context tracking for buffers
+	// 3. remove all blocks relating to ATTEMPT_UBO
+	// 4. remove all calls relating to ATTEMPT_OPTIMIZED_VERTICES
+	// 5. swap tcBufIds.keyAt(i) for a key foreach of hashmap vaBufIds 
+	// 6. JoglContext ctx = new JoglContext(glContext); in createNewContext becomes JoglesContext ctx = new JoglesContext(glContext);
+	// 7. and again for createQueryContext
+	// 8. rename jogles* to jogl2es2* and delete the optomized triangle array 
+	// 9. (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L becomes  geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+	// 10. update Pipeline to include the new type GL2ES2
+	// 11. update MasterControl to include jogl2es2 pipeline 
+	// 12. swap the use of teh gl2es2 and gl2es3 variables in context to getters and re-obtain each time
+	//
+	
+	
 	//TODO: heaps of lights appears to kill performance, why?
 
 	//pre-casting for speed

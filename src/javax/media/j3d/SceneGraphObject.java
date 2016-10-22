@@ -133,7 +133,7 @@ public abstract class SceneGraphObject extends Object {
      * Method to set default read capability bits to true
      */
     void setDefaultReadCapabilities(int[] bits) {
-        if (true /*VirtualUniverse.mc.defaultReadCapability*/) {
+        if ( VirtualUniverse.mc.defaultReadCapability ) {
             for (int i=0; i < bits.length; i++) {
                 setCapability(bits[i]);
             }

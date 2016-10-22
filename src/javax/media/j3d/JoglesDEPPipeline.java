@@ -12,7 +12,8 @@ abstract class JoglesDEPPipeline extends Pipeline
 	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types and formats. \n"//
 			+ "You can now only pass in a TriangleArray, TriangleStripArray, TriangleFanArray, \n"//
 			+ "LineArray, LineStripArray, PointArray and the 6 Indexed equivilents (effectively QuadArray is removed). \n"//
-			+ "Each Geomtry must have a format of GeometryArray.BY_REFERENCE = true and GeometryArray.INTERLEAVED = false. \n"//					
+			+ "Each Geometry must have a format of GeometryArray.BY_REFERENCE = true and GeometryArray.INTERLEAVED = false. \n"//		
+			+ "For non-indexed Geometry the format must also be GeometryArray.USE_NIO_BUFFER = true. \n"//	
 			+ "Texture Coordinate generation is not supported, Texture Filter, Sharpen and combine are not supported. \n"//
 			+ "Texture3D, TextureCubeMap are not supported. \n"//
 			+ "Accum style anti-aliasing, rasters and decals are also not supported. \n"//
