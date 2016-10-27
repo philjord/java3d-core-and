@@ -15,7 +15,7 @@ import com.jogamp.opengl.GLContext;
 
 import utils.SparseArray;
 
-public class JoglesContext extends JoglContext
+public class Jogl2es2Context extends JoglContext
 {
 	
 	//NOTES to convert to core
@@ -43,7 +43,7 @@ public class JoglesContext extends JoglContext
 	public GL2ES2 gl2es2 = null;
 	public GL2ES3 gl2es3 = null;
 
-	public JoglesContext(GLContext context)
+	public Jogl2es2Context(GLContext context)
 	{
 		super(context);
 		gl2es2 = context.getGL().getGL2ES2();
