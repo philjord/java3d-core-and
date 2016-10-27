@@ -1,10 +1,8 @@
-package java2.awt;
+package javaawt;
 
 import com.jogamp.newt.Screen;
 import com.jogamp.newt.Window;
 import com.jogamp.newt.opengl.GLWindow;
-
-import javaawt.Rectangle;
 
 public class GraphicsConfiguration
 {

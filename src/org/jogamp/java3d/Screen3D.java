@@ -29,9 +29,9 @@ package org.jogamp.java3d;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
 import javaawt.Dimension;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 import javaawt.Rectangle;
 
 /**

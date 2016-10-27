@@ -28,9 +28,9 @@ package org.jogamp.java3d;
 
 import com.jogamp.opengl.GLCapabilities;
 
-import java2.awt.DisplayMode;
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
+import javaawt.DisplayMode;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 import javaawt.Rectangle;
 
 /**

@@ -26,9 +26,9 @@
 
 package org.jogamp.java3d;
 
-import java2.awt.GraphicsConfigTemplate;
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
+import javaawt.GraphicsConfigTemplate;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 
 /**
  * This class is used to obtain a valid GraphicsConfiguration that can be used by Java 3D.

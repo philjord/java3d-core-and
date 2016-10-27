@@ -42,8 +42,8 @@ import com.jogamp.opengl.GLFBODrawable;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.Threading;
 
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 import utils.SparseArray;
 
 /**

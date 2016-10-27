@@ -29,8 +29,8 @@ package org.jogamp.java3d;
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
 
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 
 /**
  * Abstract pipeline class for rendering pipeline methods. All rendering

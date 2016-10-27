@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.logging.Level;
 
-import java2.awt.GraphicsConfiguration;
+import javaawt.GraphicsConfiguration;
 
 class Renderer extends J3dThread
 {

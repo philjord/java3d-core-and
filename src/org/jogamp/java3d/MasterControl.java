@@ -38,8 +38,8 @@ import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 
 class MasterControl {
 

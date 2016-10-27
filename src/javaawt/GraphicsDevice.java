@@ -1,4 +1,4 @@
-package java2.awt;
+package javaawt;
 
 import com.jogamp.newt.Screen;
 

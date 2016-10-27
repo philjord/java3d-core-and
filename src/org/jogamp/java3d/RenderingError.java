@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 import java.io.PrintStream;
 
-import java2.awt.GraphicsDevice;
+import javaawt.GraphicsDevice;
 
 /**
  * RenderingError is a container object that holds the details of

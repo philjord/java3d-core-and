@@ -1,4 +1,4 @@
-package java2.awt;
+package javaawt;
 
 public class GraphicsConfigTemplate
 {

@@ -46,9 +46,9 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.JoglVersion;
 
-import java2.awt.GraphicsConfiguration;
-import java2.awt.GraphicsDevice;
 import javaawt.Dimension;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
 import javaawt.Point;
 import jogamp.common.os.PlatformPropsImpl;
 
