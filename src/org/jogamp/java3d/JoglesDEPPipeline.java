@@ -32,7 +32,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int texCoordSetMapLen, int[] texCoordSetMapOffset, int vertexAttrCount, int[] vertexAttrSizes, double[] xform, double[] nxform,
 			float[] varray)
 	{
-		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you should can use \n"
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
 				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
@@ -46,7 +46,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int[] vertexAttrSizes, int[] vertexAttrIndices, float[][] vertexAttrData, int texCoordMapLength, int[] tcoordsetmap,
 			int[] texIndices, int texStride, Object[] texCoords, double[] xform, double[] nxform)
 	{
-		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you should can use \n"
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
 				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
@@ -60,8 +60,9 @@ abstract class JoglesDEPPipeline extends Pipeline
 			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
 			int[] texCoordSetMapOffset, double[] xform, double[] nxform, float[] varray, int[] indexCoord)
 	{
-		throw new UnsupportedOperationException("DLists in use!. When using the gl2es2pipeline you should also use \n"
-				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n" + VALID_FORMAT_MESSAGE);
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
+				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
+				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
 
 	// ---------------------------------------------------------------------
