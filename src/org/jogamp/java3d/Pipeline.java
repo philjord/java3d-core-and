@@ -74,11 +74,11 @@ public Pipeline run() {
 	try {
 		switch (pipeType) {
 		case JOGL:
-			return (Pipeline)Class.forName("javax.media.j3d.JoglPipeline").newInstance();
+			return (Pipeline)Class.forName("org.jogamp.java3d.JoglPipeline").newInstance();
 		case JOGLES:
-			return (Pipeline)Class.forName("javax.media.j3d.JoglesPipeline").newInstance();
+			return (Pipeline)Class.forName("org.jogamp.java3d.JoglesPipeline").newInstance();
 		case NOOP:
-			return (Pipeline)Class.forName("javax.media.j3d.NoopPipeline").newInstance();
+			return (Pipeline)Class.forName("org.jogamp.java3d.NoopPipeline").newInstance();
 		}
 	} catch (Exception e) {
 		throw new RuntimeException(e);
