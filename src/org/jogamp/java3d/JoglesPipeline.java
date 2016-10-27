@@ -55,6 +55,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean DO_OUTPUT_ERRORS = false;
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
+	// Prints extra debugging information
+	private static final boolean EXTRA_DEBUGGING = false;
 
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
@@ -192,6 +194,488 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
+		}
+	}
+
+	// ---------------------------------------------------------------------
+
+	//
+	// GeometryArrayRetained methods
+	//
+
+	// used for GeometryArrays by Copy or interleaved
+	@Override
+	void execute(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
+			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
+			float[] varray, float[] carray, int cDirty)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.execute()");
+
+		executeGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, startVIndex, vcount, vformat,
+				texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texUnitOffset, numActiveTexUnitState, vertexAttrCount, vertexAttrSizes,
+				varray, null, carray, cDirty);
+	}
+
+	// used by GeometryArray by Reference in interleaved format with NIO buffer
+	@Override
+	void executeInterleavedBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
+			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.executeInterleavedBuffer()");
+
+		executeGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, startVIndex, vcount, vformat,
+				texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texUnitOffset, numActiveTexUnit, 0, null, null, varray, cdata, cdirty);
+	}
+
+	private void executeGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
+			int texCoordSetMapLen, int[] texCoordSetMapOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
+			float[] varray, FloatBuffer varrayBuffer, float[] carray, int cDirty)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.executeGeometryArray()");
+
+		JoglesContext ctx = (JoglesContext) absCtx;
+		int shaderProgramId = ctx.shaderProgramId;
+
+		if (shaderProgramId != -1)
+		{
+			GL2ES2 gl = ctx.gl2es2;
+			ProgramData pd = ctx.programData;
+			LocationData locs = pd.programToLocationData;
+
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vformat);
+
+			int stride = 0, coordoff = 0, normoff = 0, coloroff = 0, texCoordoff = 0;
+			int texSize = 0, texStride = 0;
+			int vAttrOff = 0;
+			int vAttrStride = 0;
+			int bstride = 0, cbstride = 0;
+			FloatBuffer verts = null;
+			FloatBuffer clrs = null;
+			int[] sarray = null;
+			int[] start_array = null;
+
+			if (EXTRA_DEBUGGING)
+			{
+				System.err.println("Vertex format: " + getVertexDescription(vformat));
+				System.err.println("Geometry type: " + getGeometryDescription(geo_type));
+				if (carray != null)
+				{
+					System.err.println("  Separate color array");
+				}
+				else
+				{
+					System.err.println("  Colors (if any) interleaved");
+				}
+			}
+
+			if ((vformat & GeometryArray.COORDINATES) != 0)
+			{
+				stride += 3;
+			}
+			if ((vformat & GeometryArray.NORMALS) != 0)
+			{
+				stride += 3;
+				coordoff += 3;
+			}
+			if ((vformat & GeometryArray.COLOR) != 0)
+			{
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+				{
+					stride += 4;
+					normoff += 4;
+					coordoff += 4;
+				}
+				else
+				{ /* Handle the case of executeInterleaved 3f */
+					stride += 3;
+					normoff += 3;
+					coordoff += 3;
+				}
+			}
+			if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
+			{
+				if (EXTRA_DEBUGGING)
+				{
+					System.err.println("  Number of tex coord sets: " + texCoordSetCount);
+				}
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
+				{
+					texSize = 2;
+					texStride = 2 * texCoordSetCount;
+				}
+				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
+				{
+					texSize = 3;
+					texStride = 3 * texCoordSetCount;
+				}
+				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
+				{
+					texSize = 4;
+					texStride = 4 * texCoordSetCount;
+				}
+				stride += texStride;
+				normoff += texStride;
+				coloroff += texStride;
+				coordoff += texStride;
+			}
+			if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
+			{
+				for (int i = 0; i < vertexAttrCount; i++)
+				{
+					vAttrStride += vertexAttrSizes[i];
+				}
+				stride += vAttrStride;
+				normoff += vAttrStride;
+				coloroff += vAttrStride;
+				coordoff += vAttrStride;
+				texCoordoff += vAttrStride;
+			}
+
+			bstride = stride * Buffers.SIZEOF_FLOAT;
+
+			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
+					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
+			{
+				sarray = ((GeometryStripArrayRetained) geo).stripVertexCounts;
+				start_array = ((GeometryStripArrayRetained) geo).stripStartOffsetIndices;
+			}
+
+			// We have to copy if the data isn't specified using NIO
+			if (varray != null)
+			{
+				verts = getVertexArrayBuffer(varray);
+			}
+			else if (varrayBuffer != null)
+			{
+				verts = varrayBuffer;
+			}
+			else
+			{
+				// This should never happen
+				throw new AssertionError("Unable to get vertex pointer");
+			}
+
+			// using byRef interleaved array and has a separate pointer, then ..
+			int cstride = stride;
+			if (carray != null)
+			{
+				clrs = getColorArrayBuffer(carray);
+				cstride = 4;
+			}
+			else
+			{
+				// FIXME: need to "auto-slice" this buffer later
+				clrs = verts;
+			}
+
+			cbstride = cstride * Buffers.SIZEOF_FLOAT;
+
+			int startVertex = stride * startVIndex;
+			int startClrs = cstride * startVIndex;
+			if (clrs == verts)
+			{
+				startClrs += coloroff;
+			}
+
+			if (EXTRA_DEBUGGING)
+			{
+				System.err.println("  startVertex: " + startVertex);
+				System.err.println("  stride: " + stride);
+				System.err.println("  bstride: " + bstride);
+				System.err.println("  normoff: " + normoff);
+				System.err.println("  coloroff: " + coloroff);
+				System.err.println("  coordoff: " + coordoff);
+				System.err.println("  texCoordoff: " + texCoordoff);
+			}
+
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, verts, startVertex, clrs,
+					startClrs);
+
+			// not required second time around for VAO (except morphable coords)
+			boolean bindingRequired = true;
+			if (ctx.gl2es3 != null)
+			{
+				if (gd.vaoId == -1)
+				{
+					int[] tmp = new int[1];
+					ctx.gl2es3.glGenVertexArrays(1, tmp, 0);
+					gd.vaoId = tmp[0];
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else
+				{
+					bindingRequired = false;
+				}
+				ctx.gl2es3.glBindVertexArray(gd.vaoId);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			if (bindingRequired)
+			{
+				// always do coords 
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, bstride,
+						(startVertex + coordoff) * Buffers.SIZEOF_FLOAT);
+				gl.glEnableVertexAttribArray(locs.glVertex);
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glVertexAttribPointerCoord++;
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
+				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
+				{
+					if (gd.geoToColorBuf == -1)
+					{
+						new Throwable("Buffer load issue!").printStackTrace();
+					}
+					else
+					{
+						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, cbstride,
+								(startVertex + coloroff) * Buffers.SIZEOF_FLOAT);
+						gl.glEnableVertexAttribArray(locs.glColor);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glVertexAttribPointerColor++;
+					}
+				}
+				else if (locs.glColor != -1)
+				{
+					// ignoreVertexcolors will have been set in FFP now as the glColors is unbound
+					gl.glDisableVertexAttribArray(locs.glColor);
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDisableVertexAttribArray++;
+				}
+
+				if (((vformat & GeometryArray.NORMALS) != 0) && locs.glNormal != -1)
+				{
+					if (gd.geoToCoordBuf == -1)
+					{
+						new Throwable("Buffer load issue!").printStackTrace();
+					}
+					else
+					{
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, bstride,
+								(startVertex + normoff) * Buffers.SIZEOF_FLOAT);
+						gl.glEnableVertexAttribArray(locs.glNormal);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glVertexAttribPointerNormals++;
+					}
+				}
+				else
+				{
+					if (locs.glNormal != -1)
+					{
+						gl.glDisableVertexAttribArray(locs.glNormal);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
+				}
+
+				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
+				{
+
+					int vAttrOffset = startVertex + vAttrOff;
+					for (int index = 0; index < vertexAttrCount; index++)
+					{
+						Integer attribLoc = locs.genAttIndexToLoc.get(index);
+						if (attribLoc != null && attribLoc.intValue() != -1)
+						{
+							int sz = vertexAttrSizes[index];
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, bstride,
+									(startVertex + vAttrOffset) * Buffers.SIZEOF_FLOAT);
+							gl.glEnableVertexAttribArray(attribLoc.intValue());
+							vAttrOffset += vertexAttrSizes[index];
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+
+						}
+					}
+				}
+
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
+				{
+					boolean[] texSetsBound = new boolean[texCoordSetMapLen];
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetMapLen; texUnit++)
+					{
+						int texSet = texCoordSetMap[texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
+						{
+							texSetsBound[texSet] = true;
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texSize, GL2ES2.GL_FLOAT, true, bstride,
+									(startVertex + texCoordoff + texCoordSetMapOffset[texUnit]) * Buffers.SIZEOF_FLOAT);
+							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.enableTexCoordPointer++;
+
+						}
+					}
+
+				}
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			//////////////////////////////////////////////
+
+			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
+					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
+			{
+				int primType = 0;
+
+				//FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
+				// each pair, what I want is a line between each set of 3 (that are not jumpers)
+
+				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
+					primType = GL2ES2.GL_TRIANGLE_STRIP;
+					break;
+				case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
+					primType = GL2ES2.GL_TRIANGLE_FAN;
+					break;
+				case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
+					primType = GL2ES2.GL_LINE_LOOP;
+					break;
+				}
+
+				for (int i = 0; i < sarray.length; i++)
+				{
+					if (sarray[i] > 0)
+					{
+						gl.glDrawArrays(primType, start_array[i], sarray[i]);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDrawStripArraysStrips++;
+					}
+				}
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glDrawStripArrays++;
+			}
+			else
+			{
+				//need to override if polygonAttributes says so
+
+				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_LINE_SET;
+				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
+					geo_type = GeometryRetained.GEO_TYPE_POINT_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_QUAD_SET:
+					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+				case GeometryRetained.GEO_TYPE_TRI_SET:
+					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
+					break;
+				case GeometryRetained.GEO_TYPE_POINT_SET:
+					gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vcount);
+					break;
+				case GeometryRetained.GEO_TYPE_LINE_SET:
+					gl.glDrawArrays(GL2ES2.GL_LINES, 0, vcount);
+					break;
+				}
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glDrawArrays++;
+			}
+		}
+		else
+		{
+			if (!NO_PROGRAM_WARNING_GIVEN)
+				System.err.println("Execute called with no shader Program in use!");
+			NO_PROGRAM_WARNING_GIVEN = true;
+		}
+
+		if (DO_OUTPUT_ERRORS)
+
+			outputErrors(ctx);
+
+	}
+
+	//----------------------------------------------------------------------
+	// Private helper methods for GeometryArrayRetained
+	//
+
+	private static String getVertexDescription(int vformat)
+	{
+		String res = "";
+		if ((vformat & GeometryArray.COORDINATES) != 0)
+			res += "COORDINATES ";
+		if ((vformat & GeometryArray.NORMALS) != 0)
+			res += "NORMALS ";
+		if ((vformat & GeometryArray.COLOR) != 0)
+			res += "COLOR ";
+		if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+			res += "(WITH_ALPHA) ";
+		if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
+			res += "TEXTURE_COORDINATE ";
+		if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
+			res += "(2) ";
+		if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
+			res += "(3) ";
+		if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
+			res += "(4) ";
+		if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
+			res += "VERTEX_ATTRIBUTES ";
+		return res;
+	}
+
+	private static String getGeometryDescription(int geo_type)
+	{
+		switch (geo_type)
+		{
+		case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
+			return "GEO_TYPE_TRI_STRIP_SET";
+		case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
+			return "GEO_TYPE_TRI_FAN_SET";
+		case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
+			return "GEO_TYPE_LINE_STRIP_SET";
+		case GeometryRetained.GEO_TYPE_QUAD_SET:
+			return "GEO_TYPE_QUAD_SET";
+		case GeometryRetained.GEO_TYPE_TRI_SET:
+			return "GEO_TYPE_TRI_SET";
+		case GeometryRetained.GEO_TYPE_POINT_SET:
+			return "GEO_TYPE_POINT_SET";
+		case GeometryRetained.GEO_TYPE_LINE_SET:
+			return "GEO_TYPE_LINE_SET";
+		default:
+			return "(unknown " + geo_type + ")";
 		}
 	}
 
@@ -908,6 +1392,507 @@ class JoglesPipeline extends JoglesDEPPipeline
 	//
 	// IndexedGeometryArrayRetained methods
 	//
+
+	// by-copy or interleaved, by reference, Java arrays
+	@Override
+	void executeIndexedGeometry(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+			boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat, int vertexAttrCount,
+			int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset,
+			int numActiveTexUnitState, float[] varray, float[] carray, int cdirty, int[] indexCoord)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.executeIndexedGeometry()");
+
+		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, initialIndexIndex, indexCount,
+				vertexCount, vformat, vertexAttrCount, vertexAttrSizes, texCoordSetCount, texCoordSetMap, texCoordSetMapLen,
+				texCoordSetOffset, numActiveTexUnitState, varray, null, carray, cdirty, indexCoord);
+	}
+
+	// interleaved, by reference, nio buffer
+	@Override
+	void executeIndexedGeometryBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+			boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat, int texCoordSetCount,
+			int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset, int numActiveTexUnitState, FloatBuffer vdata,
+			float[] carray, int cDirty, int[] indexCoord)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.executeIndexedGeometryBuffer()");
+
+		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, initialIndexIndex, indexCount,
+				vertexCount, vformat, 0, null, texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texCoordSetOffset,
+				numActiveTexUnitState, null, vdata, carray, cDirty, indexCoord);
+	}
+
+	//----------------------------------------------------------------------
+	//
+	// Helper routines for IndexedGeometryArrayRetained
+	//
+
+	private void executeIndexedGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+			boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vcount, int vformat,
+			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
+			int[] texCoordSetOffset, int numActiveTexUnitState, float[] varray, FloatBuffer vdata, float[] carray, int cDirty,
+			int[] indexCoord)
+	{
+
+		if (VERBOSE)
+			System.err.println("JoglPipeline.executeIndexedGeometryArray()");
+
+		JoglesContext ctx = (JoglesContext) absCtx;
+		int shaderProgramId = ctx.shaderProgramId;
+
+		if (shaderProgramId != -1)
+		{
+			GL2ES2 gl = ctx.gl2es2;
+			ProgramData pd = ctx.programData;
+			LocationData locs = pd.programToLocationData;
+
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vformat);
+
+			int stride = 0, coordoff = 0, normoff = 0, coloroff = 0, texCoordoff = 0;
+			int texSize = 0, texStride = 0;
+			int vAttrOff = 0;
+			int vAttrStride = 0;
+			int bstride = 0, cbstride = 0;
+			FloatBuffer verts = null;
+			FloatBuffer clrs = null;
+			int[] sarray = null;
+			int strip_len = 0;
+
+			if (EXTRA_DEBUGGING)
+			{
+				System.err.println("Vertex format: " + getVertexDescription(vformat));
+				System.err.println("Geometry type: " + getGeometryDescription(geo_type));
+				if (carray != null)
+				{
+					System.err.println("  Separate color array");
+				}
+				else
+				{
+					System.err.println("  Colors (if any) interleaved");
+				}
+			}
+
+			if ((vformat & GeometryArray.COORDINATES) != 0)
+			{
+				stride += 3;
+			}
+			if ((vformat & GeometryArray.NORMALS) != 0)
+			{
+				stride += 3;
+				coordoff += 3;
+			}
+
+			if ((vformat & GeometryArray.COLOR) != 0)
+			{
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
+				{
+					stride += 4;
+					normoff += 4;
+					coordoff += 4;
+				}
+				else
+				{ // Handle the case of executeInterleaved 3f
+					stride += 3;
+					normoff += 3;
+					coordoff += 3;
+				}
+			}
+
+			if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
+			{
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
+				{
+					texSize = 2;
+					texStride = 2 * texCoordSetCount;
+				}
+				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
+				{
+					texSize = 3;
+					texStride = 3 * texCoordSetCount;
+				}
+				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
+				{
+					texSize = 4;
+					texStride = 4 * texCoordSetCount;
+				}
+				stride += texStride;
+				normoff += texStride;
+				coloroff += texStride;
+				coordoff += texStride;
+			}
+
+			if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
+			{
+				for (int i = 0; i < vertexAttrCount; i++)
+				{
+					vAttrStride += vertexAttrSizes[i];
+				}
+				stride += vAttrStride;
+				normoff += vAttrStride;
+				coloroff += vAttrStride;
+				coordoff += vAttrStride;
+				texCoordoff += vAttrStride;
+			}
+
+			bstride = stride * Buffers.SIZEOF_FLOAT;
+
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
+			{
+				sarray = ((IndexedGeometryStripArrayRetained) geo).stripIndexCounts;
+				strip_len = sarray.length;
+			}
+
+			// We have to copy if the data isn't specified using NIO
+			if (varray != null)
+			{
+				verts = getVertexArrayBuffer(varray);
+			}
+			else if (vdata != null)
+			{
+				verts = vdata;
+			}
+			else
+			{
+				// This should never happen
+				throw new AssertionError("Unable to get vertex pointer");
+			}
+
+			// using byRef interleaved array and has a separate pointer, then ..
+			int cstride = stride;
+			if (carray != null)
+			{
+				clrs = getColorArrayBuffer(carray);
+				cstride = 4;
+			}
+			else
+			{
+				// FIXME: need to "auto-slice" this buffer later
+				clrs = verts;
+			}
+
+			cbstride = cstride * Buffers.SIZEOF_FLOAT;
+
+			if (EXTRA_DEBUGGING)
+			{
+				System.err.println("  initialIndexIndex: " + initialIndexIndex);
+				System.err.println("  stride: " + stride);
+				System.err.println("  bstride: " + bstride);
+				System.err.println("  normoff: " + normoff);
+				System.err.println("  coloroff: " + coloroff);
+				System.err.println("  coordoff: " + coordoff);
+				System.err.println("  texCoordoff: " + texCoordoff);
+			}
+
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, verts, 0, clrs, 0);
+
+			// not required second time around for VAO (except morphable coords)
+			boolean bindingRequired = true;
+			if (ctx.gl2es3 != null)
+			{
+				if (gd.vaoId == -1)
+				{
+					int[] tmp = new int[1];
+					ctx.gl2es3.glGenVertexArrays(1, tmp, 0);
+					gd.vaoId = tmp[0];
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else
+				{
+					bindingRequired = false;
+				}
+				ctx.gl2es3.glBindVertexArray(gd.vaoId);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			if (bindingRequired)
+			{
+				// always do coords 
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, bstride, coordoff * Buffers.SIZEOF_FLOAT);
+				gl.glEnableVertexAttribArray(locs.glVertex);
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glVertexAttribPointerCoord++;
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
+				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
+				{
+					if (gd.geoToColorBuf == -1)
+					{
+						new Throwable("Buffer load issue!").printStackTrace();
+					}
+					else
+					{
+						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
+
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, cbstride, coloroff * Buffers.SIZEOF_FLOAT);
+						gl.glEnableVertexAttribArray(locs.glColor);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glVertexAttribPointerColor++;
+					}
+				}
+				else if (locs.glColor != -1)
+				{
+					// ignoreVertexcolors will have been set in FFP now as the glColors is unbound
+					gl.glDisableVertexAttribArray(locs.glColor);
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDisableVertexAttribArray++;
+				}
+
+				if (((vformat & GeometryArray.NORMALS) != 0) && locs.glNormal != -1)
+				{
+					if (gd.geoToCoordBuf == -1)
+					{
+						new Throwable("Buffer load issue!").printStackTrace();
+					}
+					else
+					{
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, bstride, normoff * Buffers.SIZEOF_FLOAT);
+						gl.glEnableVertexAttribArray(locs.glNormal);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glVertexAttribPointerNormals++;
+					}
+				}
+				else
+				{
+					if (locs.glNormal != -1)
+					{
+						gl.glDisableVertexAttribArray(locs.glNormal);
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glDisableVertexAttribArray++;
+					}
+				}
+
+				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
+				{
+
+					int vAttrOffset = vAttrOff;
+					for (int index = 0; index < vertexAttrCount; index++)
+					{
+						Integer attribLoc = locs.genAttIndexToLoc.get(index);
+						if (attribLoc != null && attribLoc.intValue() != -1)
+						{
+							int sz = vertexAttrSizes[index];
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, bstride,
+									vAttrOffset * Buffers.SIZEOF_FLOAT);
+							gl.glEnableVertexAttribArray(attribLoc.intValue());
+							vAttrOffset += vertexAttrSizes[index];
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerUserAttribs++;
+
+						}
+					}
+				}
+
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
+				{
+					boolean[] texSetsBound = new boolean[texCoordSetMapLen];
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetMapLen; texUnit++)
+					{
+						int texSet = texCoordSetMap[texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
+						{
+							texSetsBound[texSet] = true;
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texSize, GL2ES2.GL_FLOAT, true, bstride,
+									texCoordoff * Buffers.SIZEOF_FLOAT);
+							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.enableTexCoordPointer++;
+
+						}
+					}
+
+				}
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			//////////////////////////////////////////////
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
+			{
+				int primType = 0;
+
+				//FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
+				// each pair, what I want is a line between each set of 3 (that are not jumpers)
+
+				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
+					primType = GL2ES2.GL_TRIANGLE_STRIP;
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
+					primType = GL2ES2.GL_TRIANGLE_FAN;
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
+					primType = GL2ES2.GL_LINE_LOOP;
+					break;
+				}
+
+				int[] stripInd = gd.geoToIndStripBuf;
+				// if no index buffers build build them now
+				if (stripInd == null)
+				{
+					stripInd = new int[strip_len];
+					gl.glGenBuffers(strip_len, stripInd, 0);
+
+					int offset = initialIndexIndex;
+					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
+					bb.order(ByteOrder.nativeOrder());
+					ShortBuffer indicesBuffer = bb.asShortBuffer();
+					for (int s = 0; s < indexCoord.length; s++)
+						indicesBuffer.put(s, (short) indexCoord[s]);
+					for (int i = 0; i < strip_len; i++)
+					{
+						indicesBuffer.position(offset);
+						int count = sarray[i];
+						int indBufId = stripInd[i];
+
+						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+						offset += count;
+
+						if (OUTPUT_PER_FRAME_STATS)
+							ctx.perFrameStats.glBufferData++;
+					}
+
+					gd.geoToIndStripBuf = stripInd;
+				}
+
+				for (int i = 0; i < strip_len; i++)
+				{
+					int count = sarray[i];
+					int indBufId = stripInd[i];
+
+					//type Specifies the type of the values in indices. Must be
+					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.    
+					// Apparently ES3 has included this guy now, so I'm a bit commited to it
+					//https://www.khronos.org/opengles/sdk/docs/man/xhtml/glDrawElements.xml
+					//This restriction is relaxed when GL_OES_element_index_uint is supported. 
+					//GL_UNSIGNED_INT
+
+					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
+					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glDrawStripElementsStrips++;
+
+				}
+				// gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, 0);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glDrawStripElements++;
+
+				// note only the first count so multi strips is worng here,
+				// but...
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
+
+			}
+			else
+			{
+
+				// bind my indexes ready for the draw call
+				if (gd.geoToIndBuf == -1)
+				{
+					// create and fill index buffer
+					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
+					bb.order(ByteOrder.nativeOrder());
+					ShortBuffer indBuf = bb.asShortBuffer();
+					for (int s = 0; s < indexCoord.length; s++)
+						indBuf.put(s, (short) indexCoord[s]);
+					indBuf.position(initialIndexIndex);
+
+					int[] tmp = new int[1];
+					gl.glGenBuffers(1, tmp, 0);
+					gd.geoToIndBuf = tmp[0];// about to add to map below
+					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+
+					gd.geoToIndBufSize = indBuf.remaining();
+
+				}
+
+				gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
+
+				// Need to override if polygonAttributes says we should be drawing lines
+				// Note these are not poly line just contiguous lines between each pair of points
+				// So it looks really rubbish
+				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
+					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_SET;
+				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
+					geo_type = GeometryRetained.GEO_TYPE_INDEXED_POINT_SET;
+
+				switch (geo_type)
+				{
+				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
+					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
+					gl.glDrawElements(GL2ES2.GL_POINTS, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					break;
+				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
+					gl.glDrawElements(GL2ES2.GL_LINES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					break;
+				}
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (OUTPUT_PER_FRAME_STATS)
+					ctx.perFrameStats.glDrawElements++;
+			}
+		}
+		else
+		{
+			if (!NO_PROGRAM_WARNING_GIVEN)
+				System.err.println("Execute called with no shader Program in use!");
+			NO_PROGRAM_WARNING_GIVEN = true;
+		}
+
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+	}
 
 	// non interleaved, by reference, Java arrays
 
@@ -3161,6 +4146,105 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
+	}
+
+	private static GeometryData loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
+			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, int startVertex, FloatBuffer fclrs, int startClrs)
+	{
+		if (VERBOSE)
+			System.err.println("private static GeometryData loadAllBuffers");
+
+		GeometryData gd = ctx.allGeometryData.get(geo.nativeId);
+		if (gd == null)
+		{
+			gd = new GeometryData();
+			geo.nativeId = gd.nativeId;
+			ctx.allGeometryData.put(geo.nativeId, gd);
+		}
+
+		if (gd.geoToCoordBuf == -1)
+		{
+			// can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
+			fverts.position(startVertex);
+
+			if (morphable)
+			{
+				int[] tmp = new int[2];
+				gl.glGenBuffers(2, tmp, 0);
+				gd.geoToCoordBuf = tmp[0];
+				gd.geoToCoordBuf1 = tmp[0];
+				gd.geoToCoordBuf2 = tmp[1];
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+				int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+			}
+			else
+			{
+				int[] tmp = new int[1];
+				gl.glGenBuffers(1, tmp, 0);
+				gd.geoToCoordBuf = tmp[0];
+
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+				int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
+			}
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+
+			gd.geoToCoordBufSize = fverts.remaining();
+
+			if (ctx.allGeometryData.size() % 500 == 0)
+			{
+				System.out.println("Coord buffer count " + ctx.allGeometryData.size());
+			}
+
+			if (OUTPUT_PER_FRAME_STATS)
+				ctx.perFrameStats.glBufferData++;
+
+		}
+
+		if (!ignoreVertexColors)
+		{
+
+			if (gd.geoToColorBuf == -1)
+			{
+
+				if (fclrs != null)
+				{
+					if (fclrs != fverts)
+					{
+						fclrs.position(startClrs);
+						int[] tmp = new int[1];
+						gl.glGenBuffers(1, tmp, 0);
+						gd.geoToColorBuf = tmp[0];
+
+						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
+					}
+					else
+					{
+						gd.geoToColorBuf = gd.geoToCoordBuf;
+					}
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+
+					if (OUTPUT_PER_FRAME_STATS)
+						ctx.perFrameStats.glBufferData++;
+				}
+
+			}
+		}
+
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		return gd;
 	}
 
 	private static GeometryData loadAllBuffers(JoglesContext ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
@@ -7354,9 +8438,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		return 8;
 	}
 
-	
-	
-	
 	//Offscreen rendering methods below -----------------------
 	static boolean isOffscreenLayerSurfaceEnabled(Canvas3D cv)
 	{
@@ -7503,6 +8584,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			surface.unlockSurface();
 		}
 	}
+
 	// This is the native for creating an offscreen buffer
 	@Override
 	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
@@ -7564,7 +8646,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// offscreen drawable
 
 		// If FBO : 'offDrawable' is of type com.jogamp.opengl.GLFBODrawable
-		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).createOffscreenDrawable(device, offCaps, null, width, height);
+		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).createOffscreenDrawable(device, offCaps,
+				null, width, height);
 
 		// !! these chosen caps are not final as long as the corresponding
 		// context is made current
@@ -8953,6 +10036,5 @@ class JoglesPipeline extends JoglesDEPPipeline
 	{
 		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
-
 
 }
