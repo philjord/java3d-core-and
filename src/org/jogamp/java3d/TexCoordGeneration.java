@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Vector4f;
+import org.jogamp.vecmath.Vector4f;
 
 /**
  * The TexCoordGeneration object contains all parameters needed for

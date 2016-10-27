@@ -29,7 +29,7 @@ package org.jogamp.java3d;
 import java.util.ArrayList;
 import java.util.Vector;
 
-import javax.vecmath.Point4d;
+import org.jogamp.vecmath.Point4d;
 
 class BHTree  {
 

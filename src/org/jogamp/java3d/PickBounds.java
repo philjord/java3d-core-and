@@ -26,8 +26,8 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point4d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Point4d;
 
 /**
  * PickBounds is a finite pick shape defined with a Bounds object.  It can

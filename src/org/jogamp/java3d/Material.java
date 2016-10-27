@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Color3f;
+import org.jogamp.vecmath.Color3f;
 
 /**
  * The Material object defines the appearance of an object under

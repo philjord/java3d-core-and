@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Color3f;
+import org.jogamp.vecmath.Color3f;
 
 /**
  * The Background leaf node defines a solid background color

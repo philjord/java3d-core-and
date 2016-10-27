@@ -26,8 +26,8 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Point3d;
+import org.jogamp.vecmath.Matrix3d;
+import org.jogamp.vecmath.Point3d;
 
 /**
  * The Sensor Class encapsulates an object that provides real-time

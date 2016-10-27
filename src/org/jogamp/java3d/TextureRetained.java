@@ -29,10 +29,10 @@ package org.jogamp.java3d;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.vecmath.Color4f;
-import javax.vecmath.Point2f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Tuple3f;
+import org.jogamp.vecmath.Color4f;
+import org.jogamp.vecmath.Point2f;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Tuple3f;
 
 import javaawt.image.DataBufferByte;
 import javaawt.image.RenderedImage;

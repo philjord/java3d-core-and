@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3d;
 
 /**
  * The RenderMolecule manages a collection of RenderAtoms.

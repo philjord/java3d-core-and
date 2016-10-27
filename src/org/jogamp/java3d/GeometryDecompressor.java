@@ -25,9 +25,9 @@
  */
 
 package org.jogamp.java3d;
-import javax.vecmath.Color4f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3f;
+import org.jogamp.vecmath.Color4f;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Vector3f;
 
 /**
  * This abstract class provides the base methods needed to create a geometry

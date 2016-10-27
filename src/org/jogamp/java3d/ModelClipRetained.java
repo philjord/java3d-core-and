@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.vecmath.Vector4d;
+import org.jogamp.vecmath.Vector4d;
 
 /**
  * The ModelClip retained object.

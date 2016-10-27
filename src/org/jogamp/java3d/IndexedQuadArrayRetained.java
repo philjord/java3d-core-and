@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Point3d;
+import org.jogamp.vecmath.Point3d;
 
 /**
  * The IndexedQuadArray object draws the array of vertices as individual

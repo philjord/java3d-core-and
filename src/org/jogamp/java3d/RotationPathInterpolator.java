@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Quat4f;
+import org.jogamp.vecmath.Quat4f;
 
 
 /**

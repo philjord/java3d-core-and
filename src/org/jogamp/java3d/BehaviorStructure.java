@@ -33,8 +33,8 @@ package org.jogamp.java3d;
 //import java.awt.event.MouseEvent;</AND>
 import java.util.Arrays;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Vector3d;
 
 /**
  * A behavior structure is a object that organizes behaviors,

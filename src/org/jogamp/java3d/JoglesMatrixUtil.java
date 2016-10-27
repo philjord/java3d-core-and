@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Matrix4d;
-import javax.vecmath.SingularMatrixException;
-import javax.vecmath.Tuple4f;
-import javax.vecmath.Vector4f;
+import org.jogamp.vecmath.Matrix3d;
+import org.jogamp.vecmath.Matrix4d;
+import org.jogamp.vecmath.SingularMatrixException;
+import org.jogamp.vecmath.Tuple4f;
+import org.jogamp.vecmath.Vector4f;
 
 /** class that demands single threading and uses deburners, don't touch if you don't understand, it will be bad...
  * 

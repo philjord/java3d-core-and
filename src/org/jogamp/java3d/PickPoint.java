@@ -26,8 +26,8 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point4d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Point4d;
 
 /**
  * PickPoint is a pick shape defined as a single point.  It can

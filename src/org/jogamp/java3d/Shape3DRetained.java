@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.vecmath.Point3d;
+import org.jogamp.vecmath.Point3d;
 
 /**
  * A shape leaf node consisting of geometry and appearance properties.

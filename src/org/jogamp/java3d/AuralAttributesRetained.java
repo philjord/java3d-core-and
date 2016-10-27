@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Point2f;
+import org.jogamp.vecmath.Point2f;
 
 /**
  * The AuralAttributesRetained object defines all rendering state that can

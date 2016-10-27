@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Color3f;
+import org.jogamp.vecmath.Color3f;
 
 /**
  * The LightBin manages a collection of EnvironmentSet objects.

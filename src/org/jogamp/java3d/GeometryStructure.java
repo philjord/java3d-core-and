@@ -29,7 +29,7 @@ package org.jogamp.java3d;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3d;
 
 
 /**

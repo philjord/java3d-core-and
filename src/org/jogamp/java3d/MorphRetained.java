@@ -28,15 +28,15 @@ package org.jogamp.java3d;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Color3b;
-import javax.vecmath.Color3f;
-import javax.vecmath.Color4b;
-import javax.vecmath.Color4f;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.TexCoord2f;
-import javax.vecmath.TexCoord3f;
-import javax.vecmath.Vector3f;
+import org.jogamp.vecmath.Color3b;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Color4b;
+import org.jogamp.vecmath.Color4f;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.TexCoord2f;
+import org.jogamp.vecmath.TexCoord3f;
+import org.jogamp.vecmath.Vector3f;
 
 /**
  * A morph leaf node consisting of geometery and appearance properties.

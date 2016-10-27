@@ -26,8 +26,8 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Point3f;
 
 
 /**

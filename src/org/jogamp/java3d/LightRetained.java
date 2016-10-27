@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.vecmath.Color3f;
+import org.jogamp.vecmath.Color3f;
 
 /**
  * LightRetained is an abstract class that contains instance variable common to

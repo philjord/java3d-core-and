@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 import java.util.Enumeration;
 
-import javax.vecmath.Vector4d;
+import org.jogamp.vecmath.Vector4d;
 
 /**
  * The ModelClip leaf node defines a set of 6 arbitrary clipping

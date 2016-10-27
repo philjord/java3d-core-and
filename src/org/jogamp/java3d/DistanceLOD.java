@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 import java.util.Enumeration;
 
-import javax.vecmath.Point3f;
+import org.jogamp.vecmath.Point3f;
 
 /**
  * This class defines a distance-based LOD behavior node that operates on

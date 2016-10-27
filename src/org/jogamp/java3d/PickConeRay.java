@@ -26,9 +26,9 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point4d;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Point4d;
+import org.jogamp.vecmath.Vector3d;
 
 /**
  * PickConeRay is an infinite cone ray pick shape.  It can

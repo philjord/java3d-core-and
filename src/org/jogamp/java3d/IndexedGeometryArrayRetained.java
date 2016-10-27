@@ -30,8 +30,8 @@ import java.nio.Buffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
-import javax.vecmath.TexCoord2f;
-import javax.vecmath.TexCoord3f;
+import org.jogamp.vecmath.TexCoord2f;
+import org.jogamp.vecmath.TexCoord3f;
 
 /**
  * The IndexedGeometryArray object contains arrays of positional coordinates,

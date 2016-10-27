@@ -28,11 +28,11 @@ package org.jogamp.java3d;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Point2d;
-import javax.vecmath.Point2i;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Point4d;
+import org.jogamp.vecmath.Point2d;
+import org.jogamp.vecmath.Point2i;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Point4d;
 
 import javaawt.Dimension;
 import javaawt.Point;

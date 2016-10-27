@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 import java.util.Enumeration;
 
-import javax.vecmath.Color3f;
+import org.jogamp.vecmath.Color3f;
 
 /**
  * Color interpolation behavior.  This class defines a behavior that

@@ -26,8 +26,8 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Color3f;
-import javax.vecmath.Vector3f;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Vector3f;
 
 /**
  * A DirectionalLight node defines an oriented light with an origin at

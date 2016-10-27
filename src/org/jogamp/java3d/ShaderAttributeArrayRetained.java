@@ -26,20 +26,20 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Point2f;
-import javax.vecmath.Point2i;
-import javax.vecmath.Point3f;
-import javax.vecmath.Point3i;
-import javax.vecmath.Point4f;
-import javax.vecmath.Point4i;
-import javax.vecmath.Tuple2f;
-import javax.vecmath.Tuple2i;
-import javax.vecmath.Tuple3f;
-import javax.vecmath.Tuple3i;
-import javax.vecmath.Tuple4f;
-import javax.vecmath.Tuple4i;
+import org.jogamp.vecmath.Matrix3f;
+import org.jogamp.vecmath.Matrix4f;
+import org.jogamp.vecmath.Point2f;
+import org.jogamp.vecmath.Point2i;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Point3i;
+import org.jogamp.vecmath.Point4f;
+import org.jogamp.vecmath.Point4i;
+import org.jogamp.vecmath.Tuple2f;
+import org.jogamp.vecmath.Tuple2i;
+import org.jogamp.vecmath.Tuple3f;
+import org.jogamp.vecmath.Tuple3i;
+import org.jogamp.vecmath.Tuple4f;
+import org.jogamp.vecmath.Tuple4i;
 
 /**
  * The ShaderAttributeArray object encapsulates a uniform shader

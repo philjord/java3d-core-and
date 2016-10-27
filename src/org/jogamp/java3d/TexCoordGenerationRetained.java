@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 import java.util.ArrayList;
 
-import javax.vecmath.Vector4f;
+import org.jogamp.vecmath.Vector4f;
 
 /**
  * The TexCoordGeneration object contains all parameters needed for texture

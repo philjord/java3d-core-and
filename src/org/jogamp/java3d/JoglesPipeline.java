@@ -13,13 +13,12 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.vecmath.SingularMatrixException;
-import javax.vecmath.Vector4f;
-
 import org.jogamp.java3d.JoglesContext.GeometryData;
 import org.jogamp.java3d.JoglesContext.LightData;
 import org.jogamp.java3d.JoglesContext.LocationData;
 import org.jogamp.java3d.JoglesContext.ProgramData;
+import org.jogamp.vecmath.SingularMatrixException;
+import org.jogamp.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;

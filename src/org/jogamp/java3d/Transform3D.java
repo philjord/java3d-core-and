@@ -26,23 +26,23 @@
 
 package org.jogamp.java3d;
 
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.AxisAngle4f;
-import javax.vecmath.GMatrix;
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Point4d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Quat4f;
-import javax.vecmath.SingularMatrixException;
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
-import javax.vecmath.Vector4d;
-import javax.vecmath.Vector4f;
+import org.jogamp.vecmath.AxisAngle4d;
+import org.jogamp.vecmath.AxisAngle4f;
+import org.jogamp.vecmath.GMatrix;
+import org.jogamp.vecmath.Matrix3d;
+import org.jogamp.vecmath.Matrix3f;
+import org.jogamp.vecmath.Matrix4d;
+import org.jogamp.vecmath.Matrix4f;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Point4d;
+import org.jogamp.vecmath.Quat4d;
+import org.jogamp.vecmath.Quat4f;
+import org.jogamp.vecmath.SingularMatrixException;
+import org.jogamp.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3f;
+import org.jogamp.vecmath.Vector4d;
+import org.jogamp.vecmath.Vector4f;
 
 /**
  * A generalized transform object represented internally as a 4x4
