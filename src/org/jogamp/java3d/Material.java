@@ -628,7 +628,7 @@ public class Material extends NodeComponent {
 	@Override
 	public String toString() {
 		StringBuffer str = new StringBuffer(getNamePrefix());
-		str.append("javax.media.j3d.Material: ");
+		str.append("org.jogamp.java3d.Material: ");
 		Color3f color=new Color3f();
 		try {
 			getAmbientColor(color);

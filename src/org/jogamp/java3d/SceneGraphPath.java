@@ -448,7 +448,7 @@ public class SceneGraphPath {
 		str.append(", " + obj);
 
 	    try {
-		if (item.getClass().getName().equals("javax.media.j3d.Shape3D"))
+		if (item.getClass().getName().equals("org.jogamp.java3d.Shape3D"))
 		    str.append( ((Shape3D)item).getGeometry() );
 	    }
 	    catch( CapabilityNotSetException e) {}

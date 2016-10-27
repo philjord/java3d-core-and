@@ -348,7 +348,7 @@ public class ColoringAttributes extends NodeComponent {
     @Override
     public String toString() {
         StringBuffer str = new StringBuffer(getNamePrefix());
-        str.append("javax.media.j3d.ColoringAttributes: ");
+        str.append("org.jogamp.java3d.ColoringAttributes: ");
         String shadingModes[] = { "FASTEST", "NICEST", "SHADE_FLAT",
                                                      "SHADE_GOURAUD" };
 

@@ -114,7 +114,7 @@ public abstract class Shader extends NodeComponent {
 
     /**
      * Package scope constructor so it can't be subclassed by classes
-     * outside the javax.media.j3d package.
+     * outside the org.jogamp.java3d package.
      */
     Shader(int shadingLanguage, int shaderType) {
 	((ShaderRetained)this.retained).initializeShader(shadingLanguage, shaderType);

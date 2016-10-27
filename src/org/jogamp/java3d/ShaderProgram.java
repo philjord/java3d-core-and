@@ -75,7 +75,7 @@ public abstract class ShaderProgram extends NodeComponent {
 
     /**
      * Package scope constructor so it can't be subclassed by classes
-     * outside the javax.media.j3d package.
+     * outside the org.jogamp.java3d package.
      */
     ShaderProgram() {
         // set default read capabilities

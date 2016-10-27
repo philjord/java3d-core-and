@@ -242,7 +242,7 @@ public class BranchGroup extends Group {
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see Locale#pickAll(int,int,javax.media.j3d.PickShape)
+     * @see Locale#pickAll(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
@@ -347,7 +347,7 @@ public class BranchGroup extends Group {
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see Locale#pickAllSorted(int,int,javax.media.j3d.PickShape)
+     * @see Locale#pickAllSorted(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
@@ -445,7 +445,7 @@ public class BranchGroup extends Group {
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see Locale#pickClosest(int,int,javax.media.j3d.PickShape)
+     * @see Locale#pickClosest(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
@@ -541,7 +541,7 @@ public class BranchGroup extends Group {
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see Locale#pickAny(int,int,javax.media.j3d.PickShape)
+     * @see Locale#pickAny(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4

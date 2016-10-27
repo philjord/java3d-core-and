@@ -714,7 +714,7 @@ Vector<BranchGroup> branchGroups = new Vector<BranchGroup>();
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see BranchGroup#pickAll(int,int,javax.media.j3d.PickShape)
+     * @see BranchGroup#pickAll(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
@@ -831,7 +831,7 @@ Vector<BranchGroup> branchGroups = new Vector<BranchGroup>();
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see BranchGroup#pickAllSorted(int,int,javax.media.j3d.PickShape)
+     * @see BranchGroup#pickAllSorted(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
@@ -955,7 +955,7 @@ Vector<BranchGroup> branchGroups = new Vector<BranchGroup>();
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see BranchGroup#pickClosest(int,int,javax.media.j3d.PickShape)
+     * @see BranchGroup#pickClosest(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
@@ -1064,7 +1064,7 @@ Vector<BranchGroup> branchGroups = new Vector<BranchGroup>();
      * (in addition to one of the above)</li>
      * </ul>
      *
-     * @see BranchGroup#pickAny(int,int,javax.media.j3d.PickShape)
+     * @see BranchGroup#pickAny(int,int,org.jogamp.java3d.PickShape)
      * @see PickInfo
      *
      * @since Java 3D 1.4
