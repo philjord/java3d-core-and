@@ -21,6 +21,7 @@ import org.jogamp.vecmath.SingularMatrixException;
 import org.jogamp.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.common.os.Platform;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.NativeSurface;
 import com.jogamp.nativewindow.ProxySurface;
