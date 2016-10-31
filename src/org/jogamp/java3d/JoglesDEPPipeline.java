@@ -7,12 +7,15 @@ package org.jogamp.java3d;
 abstract class JoglesDEPPipeline extends Pipeline
 {
 	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types and formats. \n"//
-			+ "You cannot use QuadArray or IndexedQuadArray. \n"//
-			+ "Texture Coordinate generation is not supported. \n" //
-			+ "Texture Filter, Sharpen and combine are not supported. \n"//
-			+ "Texture3D is not supported. \n"//
-			+ "Accum style anti-aliasing, rasters and decals are also not supported. \n"//
 			+ "Coordinates must be defined and float type, colors must be float type, if defined. \n"//
+			+ "J3DGraphics2D of Canvas3D is not supported \n"//
+			+ "Rasters and Decaling is not supported. \n"//
+			+ "Model Clip is not supported and must be reimplemented in shaders \n"//
+			+ "QuadArray or IndexedQuadArray cannot be supported. \n"//
+			+ "Texture Coordinate generation cannot be supported. \n" //
+			+ "Texture Lod, Filter, Sharpen and Combine cannot be supported. \n"//
+			+ "Texture3D cannot be supported. \n"//
+			+ "Accum style anti-aliasing cannot be supported. \n"//
 			+ "It is strongly recomended that you use the format GeometryArray.USE_NIO_BUFFER = true. \n"//
 			+ "Note LineArray and LineStripArray will not render as nicely as the fixed function pipeline.";//
 
