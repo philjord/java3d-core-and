@@ -8119,6 +8119,45 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (major < 1 || (major == 1 && minor < 2))
 		{
+			
+			// In some double createNewContext uses or getPerferredConfiguration called before a Frame is constructed
+        	// the disabling of D3D can cause this issue
+        	// see Bug 1201 - Crash with option "sun.java2d.d3d=false"
+        	// https://jogamp.org/bugzilla/show_bug.cgi?id=1201
+        	
+        	// In the case of Java > 1.8u51 Win10  and an Intel HD2000/3000 driver, the driver will not load because 
+			// the java.exe manifest has a "supportedOS Id" that the drivers don't like (the drivers are too old)
+			// see  Bug 1278 - Windows 10 returns software Profile
+			// https://jogamp.org/bugzilla/show_bug.cgi?id=1278
+			// So we will detect Win10/Oracle Jre  u > 51 and offer advice to down grade jre
+
+			if (glVendor.equalsIgnoreCase("Microsoft Corporation") && //
+					glRenderer.equalsIgnoreCase("GDI Generic") && //
+					glVersion.equalsIgnoreCase("1.1.0"))
+			{
+				System.err.println("Java3D - GDI Generic Driver use detected.");
+				System.err.println("This may be caused by any of the following issues.");
+				
+				if (System.getProperty("sun.java2d.noddraw", "false").equals("true") || System.getProperty("sun.java2d.d3d", "true").equals("false"))
+				{
+					System.err.println("Issue: Use of System.setProperty(\"sun.java2d.noddraw\", \"true\");");
+					System.err.println("or System.setProperty(\"sun.java2d.d3d\", \"false\");");
+					System.err.println("If either of these are being used please try reversing or removing them.");
+				}
+				
+				if (Platform.getOSName().equalsIgnoreCase("Windows 10") && //win10
+						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version19) >= 0) || // 1.9 or 1.8 > 51
+						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) >= 0 && Platform.JAVA_VERSION_UPDATE > 51) && //
+								Platform.getJavaVMName().toLowerCase().startsWith("java hotspot(tm)"))// e.g. Java HotSpot(TM) 64-Bit Server VM ; OpenJDK would give OpenJDK 64-Bit Server VM
+				{					
+					System.err.println("Issue: The use of an Intel HD2000/3000 driver in combination with Windows 10 and");
+					System.err.println("a JRE greater than 1.8 update 51. Please downgrade the JRE in use to JRE 1.8u51 or lower.");
+					System.err.println("For more information please see https://jogamp.org/bugzilla/show_bug.cgi?id=1278.");
+				}
+				System.err.println("If this software has been supplied to you and you are unable to modify it's configuration");
+				System.err.println("please contact the suppler of this software with this entire message.");
+			}
+			
 			throw new IllegalRenderingStateException(
 					"Java 3D ERROR : OpenGL 1.2 or better is required (GL_VERSION=" + major + "." + minor + ")");
 		}
