@@ -50,6 +50,7 @@ class MasterControlThread extends Thread {
 
     MasterControlThread(ThreadGroup threadGroup) {
 	super(threadGroup, "");
+	setDaemon(true);
 	setName("J3D-MasterControl-" + getInstanceNum());
 	VirtualUniverse.mc.createMCThreads();
 	this.start();
