@@ -119,12 +119,12 @@ abstract class NodeRetained extends SceneGraphObjectRetained implements NnuId {
      * This indicates if the node is pickable. If this node is not
      * pickable then neither are any children
      */
-    boolean pickable = true;
+    boolean pickable = VirtualUniverse.mc.defaultNodePickable;
 
     /**
      * The collidable setting; see getCollidable and setCollidable.
      */
-    boolean collidable = true;
+    boolean collidable = VirtualUniverse.mc.defaultNodeCollidable;
 
     // A list of localToVworld transforms. If inSharedGroup is false,
     // then only localToVworld[0][] is valid.
