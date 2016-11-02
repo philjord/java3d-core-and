@@ -1115,7 +1115,7 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 					if (saRetained instanceof ShaderAttributeValueRetained)
 					{
 						ShaderAttributeValueRetained savRetained = (ShaderAttributeValueRetained) saRetained;
-						//PJPJPJJPJ -1 indicates compiled away
+						//-1 indicates compiled away
 						if (attrNameInfo.getType() != -1)
 						{
 							if (attrNameInfo.isArray() || (savRetained.getClassType() != attrNameInfo.getType()))
@@ -1144,14 +1144,29 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 					else if (saRetained instanceof ShaderAttributeArrayRetained)
 					{
 						ShaderAttributeArrayRetained saaRetained = (ShaderAttributeArrayRetained) saRetained;
-						if (!attrNameInfo.isArray() || (saaRetained.getClassType() != attrNameInfo.getType()))
+						//-1 indicates compiled away
+						if (attrNameInfo.getType() != -1)
 						{
-							String errMsg = "Attribute type mismatch: " + saaRetained.getAttributeName(); // TODO: I18N
-							err = new ShaderError(ShaderError.SHADER_ATTRIBUTE_TYPE_ERROR, errMsg);
+							if (!attrNameInfo.isArray() || (saaRetained.getClassType() != attrNameInfo.getType()))
+							{
+								String errMsg = "Attribute type mismatch: " + saaRetained.getAttributeName() + " attrNameInfo.isArray() "
+										+ attrNameInfo.isArray() + " " + saaRetained.getClassType() + " != " + attrNameInfo.getType();
+								// TODO: I18N
+								err = new ShaderError(ShaderError.SHADER_ATTRIBUTE_TYPE_ERROR, errMsg);
+							}
+							else
+							{
+								err = setUniformAttrArray(cv.ctx, shaderProgramId, loc, saaRetained);
+							}
 						}
 						else
 						{
-							err = setUniformAttrArray(cv.ctx, shaderProgramId, loc, saaRetained);
+							if (!warningsGiven.contains((ShaderProgram) this.source + " Attr: " + saaRetained.getAttributeName()))
+							{
+								System.out.println(
+										"" + (ShaderProgram) this.source + " Attr: " + saaRetained.getAttributeName() + " compiled away");
+								warningsGiven.add((ShaderProgram) this.source + " Attr: " + saaRetained.getAttributeName());
+							}
 						}
 					}
 					else if (saRetained instanceof ShaderAttributeBindingRetained)
