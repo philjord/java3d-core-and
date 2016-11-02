@@ -3227,9 +3227,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 		//boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-		// vertex colors MUST be ignored if no glColors set
-		boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors;
-
+		
 		if (OUTPUT_PER_FRAME_STATS)
 			ctx.perFrameStats.setFFPAttributes++;
 
@@ -3328,6 +3326,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (locs.ignoreVertexColorsOffset != -1)
 				{
 					uboBB.position(locs.ignoreVertexColorsOffset);
+					// vertex colors MUST be ignored if no glColors set
+					boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
 					uboBB.asIntBuffer().put(ignoreVertexColors ? 1 : 0);// note local variable used
 				}
 
@@ -3565,15 +3565,19 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (locs.ignoreVertexColors != -1)
 		{
+			// vertex colors MUST be ignored if no glColors set
+			boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
+
+			//note ctx.gl_state.ignoreVertexColors can be -1 for not set
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ignoreVertexColors))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
 			{
 				gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
 
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.ignoreVertexColors = ignoreVertexColors;
+					ctx.gl_state.ignoreVertexColors = ctx.renderingData.ignoreVertexColors;
 			}
 		}
 
@@ -6246,7 +6250,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			joglesctx.renderingData.alphaTestValue = alphaTestValue;
 		}
 
-		joglesctx.renderingData.ignoreVertexColors = ignoreVertexColors;
+		joglesctx.renderingData.ignoreVertexColors = ignoreVertexColors ? 1 : 0;;
 
 		if (rasterOpEnable)
 		{
@@ -6337,7 +6341,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.renderingData.alphaTestEnabled = false;
 		joglesctx.renderingData.alphaTestFunction = RenderingAttributes.ALWAYS;
 		joglesctx.renderingData.alphaTestValue = 0;
-		joglesctx.renderingData.ignoreVertexColors = false;
+		joglesctx.renderingData.ignoreVertexColors = 0;
 
 		// RAISE_BUG: yep only called on a null RenderingAttributes
 		// FIXME: this call does not set stencil test, so possibly this is why the rendering attributes

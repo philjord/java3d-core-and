@@ -189,7 +189,7 @@ public class Jogl2es2Context extends JoglContext
 		public boolean alphaTestEnabled = false;
 		public int alphaTestFunction = RenderingAttributes.ALWAYS;
 		public float alphaTestValue = 0;
-		public boolean ignoreVertexColors;
+		public int ignoreVertexColors; //-1 is not set 1,0 bool
 	}
 
 	public RenderingData renderingData = new RenderingData();
@@ -326,7 +326,7 @@ public class Jogl2es2Context extends JoglContext
 		public float polygonOffsetFactor;
 		public float polygonOffset;
 
-		public boolean ignoreVertexColors;
+		public int ignoreVertexColors; //-1 is not set 1,0 bool
 		public Vector4f glFrontMaterialambient= new Vector4f();
 		public Vector4f glFrontMaterialdiffuse = new Vector4f();
 		public Vector3f glFrontMaterialemission = new Vector3f();
@@ -381,7 +381,7 @@ public class Jogl2es2Context extends JoglContext
 			cullFace = -1;
 			polygonOffsetFactor = -1;
 			polygonOffset = -1;
-			ignoreVertexColors = false;
+			ignoreVertexColors = -1;
 			glFrontMaterialambient.set(-999f, -999f, -999f, -999f);
 			glFrontMaterialdiffuse.set(-999f, -999f, -999f, -999f);
 			glFrontMaterialemission.set(-999f, -999f, -999f);
