@@ -102,7 +102,7 @@ class VersionInfo extends Object {
      * This parameter is controlled by ant via the build.xml file. The
      * default value is true.
      */
-    static final boolean isDevPhase = true;
+    static final boolean isDevPhase = false;
 
     /**
      * This static final variable is used indicate a production
