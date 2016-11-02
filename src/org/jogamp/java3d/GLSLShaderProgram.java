@@ -26,6 +26,7 @@
 
 package org.jogamp.java3d;
 
+
 /**
  * The GLSLShaderProgram object is a concrete implementation of a
  * ShaderProgram node component for the OpenGL GLSL shading language.
@@ -35,145 +36,247 @@ package org.jogamp.java3d;
  * @since Java 3D 1.4
  */
 
-public class GLSLShaderProgram extends ShaderProgram {
+public class GLSLShaderProgram extends ShaderProgram
+{
 
-    /**
-     * Constructs a GLSL shader program node component.
-     *
-     * <br>
-     * TODO: ADD MORE DOCUMENTATION HERE.
-     */
-    public GLSLShaderProgram() {
-    }
-
-    // Implement abstract setVertexAttrNames method (inherit javadoc from parent class)
-    @Override
-    public void setVertexAttrNames(String[] vertexAttrNames) {
-	checkForLiveOrCompiled();
-
-        if (vertexAttrNames != null) {
-            for (int i = 0; i < vertexAttrNames.length; i++) {
-                if (vertexAttrNames[i] == null) {
-                    throw new NullPointerException();
-                }
-            }
-        }
-
-        ((GLSLShaderProgramRetained)this.retained).setVertexAttrNames(vertexAttrNames);
-    }
-
-    // Implement abstract getVertexAttrNames method (inherit javadoc from parent class)
-    @Override
-    public String[] getVertexAttrNames() {
-
-	if (isLiveOrCompiled()) {
-	    if(!this.getCapability(ALLOW_NAMES_READ)) {
-		throw new CapabilityNotSetException(J3dI18N.getString("GLSLShaderProgram0"));
-	    }
+	/**
+	 * Constructs a GLSL shader program node component.
+	 *
+	 * <br>
+	 * TODO: ADD MORE DOCUMENTATION HERE.
+	 */
+	public GLSLShaderProgram()
+	{
 	}
 
- 	return ((GLSLShaderProgramRetained)this.retained).getVertexAttrNames();
+	// Implement abstract setVertexAttrNames method (inherit javadoc from parent class)
+	@Override
+	public void setVertexAttrNames(String[] vertexAttrNames)
+	{
+		checkForLiveOrCompiled();
 
-    }
+		if (vertexAttrNames != null)
+		{
+			for (int i = 0; i < vertexAttrNames.length; i++)
+			{
+				if (vertexAttrNames[i] == null)
+				{
+					throw new NullPointerException();
+				}
+			}
+		}
 
-    // Implement abstract setShaderAttrNames method (inherit javadoc from parent class)
-    @Override
-    public void setShaderAttrNames(String[] shaderAttrNames) {
-	checkForLiveOrCompiled();
-
-        if (shaderAttrNames != null) {
-            for (int i = 0; i < shaderAttrNames.length; i++) {
-                if (shaderAttrNames[i] == null) {
-                    throw new NullPointerException();
-                }
-            }
-        }
-
-        ((GLSLShaderProgramRetained)this.retained).setShaderAttrNames(shaderAttrNames);
-    }
-
-    // Implement abstract getShaderAttrNames method (inherit javadoc from parent class)
-    @Override
-    public String[] getShaderAttrNames() {
-
-	if (isLiveOrCompiled()) {
-	    if(!this.getCapability(ALLOW_NAMES_READ)) {
-		throw new CapabilityNotSetException(J3dI18N.getString("GLSLShaderProgram0"));
-	    }
+		((GLSLShaderProgramRetained) this.retained).setVertexAttrNames(vertexAttrNames);
 	}
 
- 	return ((GLSLShaderProgramRetained)this.retained).getShaderAttrNames();
+	// Implement abstract getVertexAttrNames method (inherit javadoc from parent class)
+	@Override
+	public String[] getVertexAttrNames()
+	{
 
-    }
+		if (isLiveOrCompiled())
+		{
+			if (!this.getCapability(ALLOW_NAMES_READ))
+			{
+				throw new CapabilityNotSetException(J3dI18N.getString("GLSLShaderProgram0"));
+			}
+		}
 
-    /**
-     * Copies the specified array of shaders into this shader
-     * program. This method makes a shallow copy of the array. The
-     * array of shaders may be null or empty (0 length), but the
-     * elements of the array must be non-null. The shading language of
-     * each shader in the array must be
-     * <code>SHADING_LANGUAGE_GLSL</code>. Each shader in the array must
-     * be a SourceCodeShader.
-     *
-     * @param shaders array of Shader objects to be copied into this
-     * ShaderProgram
-     *
-     * @exception CapabilityNotSetException if appropriate capability is
-     * not set and this object is part of live or compiled scene graph
-     *
-     * @exception IllegalArgumentException if the shading language of
-     * any shader in the shaders array is <em>not</em>
-     * <code>SHADING_LANGUAGE_GLSL</code>.
-     *
-     * @exception ClassCastException if any shader in the shaders
-     * array is <em>not</em> a SourceCodeShader.
-     *
-     * @exception NullPointerException if any element in the
-     * shaders array is null.
-     */
-    @Override
-    public void setShaders(Shader[] shaders) {
-	checkForLiveOrCompiled();
+		return ((GLSLShaderProgramRetained) this.retained).getVertexAttrNames();
 
-        if(shaders != null) {
-            // Check shaders for valid shading language and class type
-            for (int i = 0; i < shaders.length; i++) {
-                if (shaders[i].getShadingLanguage() != Shader.SHADING_LANGUAGE_GLSL) {
-                    throw new IllegalArgumentException(J3dI18N.getString("GLSLShaderProgram2"));
-                }
-
-                // Try to cast shader to SourceCodeShader; it will throw
-                // ClassCastException if it isn't.
-                SourceCodeShader shad = (SourceCodeShader)shaders[i];
-            }
-
-        }
-
- 	((GLSLShaderProgramRetained)this.retained).setShaders(shaders);
-    }
-
-    // Implement abstract getShaders method (inherit javadoc from parent class)
-    @Override
-    public Shader[] getShaders() {
-
-	if (isLiveOrCompiled()) {
-	    if(!this.getCapability(ALLOW_SHADERS_READ)) {
-		throw new CapabilityNotSetException(J3dI18N.getString("GLSLShaderProgram1"));
-	    }
 	}
 
- 	return ((GLSLShaderProgramRetained)this.retained).getShaders();
-    }
+	// Implement abstract setShaderAttrNames method (inherit javadoc from parent class)
+	@Override
+	public void setShaderAttrNames(String[] shaderAttrNames)
+	{
+		checkForLiveOrCompiled();
 
-    /**
-     * Creates a retained mode GLSLShaderProgramRetained object that this
-     * GLSLShaderProgram component object will point to.
-     */
-    @Override
-    void createRetained() {
-	this.retained = new GLSLShaderProgramRetained();
-	this.retained.setSource(this);
-    }
+		if (shaderAttrNames != null)
+		{
+			for (int i = 0; i < shaderAttrNames.length; i++)
+			{
+				if (shaderAttrNames[i] == null)
+				{
+					throw new NullPointerException();
+				}
+			}
+		}
 
+		((GLSLShaderProgramRetained) this.retained).setShaderAttrNames(shaderAttrNames);
+	}
 
+	// Implement abstract getShaderAttrNames method (inherit javadoc from parent class)
+	@Override
+	public String[] getShaderAttrNames()
+	{
+
+		if (isLiveOrCompiled())
+		{
+			if (!this.getCapability(ALLOW_NAMES_READ))
+			{
+				throw new CapabilityNotSetException(J3dI18N.getString("GLSLShaderProgram0"));
+			}
+		}
+
+		return ((GLSLShaderProgramRetained) this.retained).getShaderAttrNames();
+
+	}
+
+	/**
+	 * Copies the specified array of shaders into this shader
+	 * program. This method makes a shallow copy of the array. The
+	 * array of shaders may be null or empty (0 length), but the
+	 * elements of the array must be non-null. The shading language of
+	 * each shader in the array must be
+	 * <code>SHADING_LANGUAGE_GLSL</code>. Each shader in the array must
+	 * be a SourceCodeShader.
+	 *
+	 * @param shaders array of Shader objects to be copied into this
+	 * ShaderProgram
+	 *
+	 * @exception CapabilityNotSetException if appropriate capability is
+	 * not set and this object is part of live or compiled scene graph
+	 *
+	 * @exception IllegalArgumentException if the shading language of
+	 * any shader in the shaders array is <em>not</em>
+	 * <code>SHADING_LANGUAGE_GLSL</code>.
+	 *
+	 * @exception ClassCastException if any shader in the shaders
+	 * array is <em>not</em> a SourceCodeShader.
+	 *
+	 * @exception NullPointerException if any element in the
+	 * shaders array is null.
+	 */
+	@Override
+	public void setShaders(Shader[] shaders)
+	{
+		checkForLiveOrCompiled();
+
+		if (shaders != null)
+		{
+			// Check shaders for valid shading language and class type
+			for (int i = 0; i < shaders.length; i++)
+			{
+				if (shaders[i].getShadingLanguage() != Shader.SHADING_LANGUAGE_GLSL)
+				{
+					throw new IllegalArgumentException(J3dI18N.getString("GLSLShaderProgram2"));
+				}
+
+				// Try to cast shader to SourceCodeShader; it will throw
+				// ClassCastException if it isn't.
+				SourceCodeShader shad = (SourceCodeShader) shaders[i];
+			}
+
+		}
+
+		((GLSLShaderProgramRetained) this.retained).setShaders(shaders);
+	}
+
+	// Implement abstract getShaders method (inherit javadoc from parent class)
+	@Override
+	public Shader[] getShaders()
+	{
+
+		if (isLiveOrCompiled())
+		{
+			if (!this.getCapability(ALLOW_SHADERS_READ))
+			{
+				throw new CapabilityNotSetException(J3dI18N.getString("GLSLShaderProgram1"));
+			}
+		}
+
+		return ((GLSLShaderProgramRetained) this.retained).getShaders();
+	}
+
+	/**
+	 * Creates a retained mode GLSLShaderProgramRetained object that this
+	 * GLSLShaderProgram component object will point to.
+	 */
+	@Override
+	void createRetained()
+	{
+		this.retained = new GLSLShaderProgramRetained();
+		this.retained.setSource(this);
+	}
+
+	/**
+	 * @deprecated replaced with cloneNodeComponent(boolean forceDuplicate)
+	 */
+	@Override
+	public NodeComponent cloneNodeComponent()
+	{
+		GLSLShaderProgram a = new GLSLShaderProgram();
+		a.duplicateNodeComponent(this);
+		return a;
+	}
+
+	/**
+	 * NOTE: Applications should <i>not</i> call this method directly.
+	 * It should only be called by the cloneNode method.
+	 *
+	 * @deprecated replaced with duplicateNodeComponent(
+	 *  NodeComponent originalNodeComponent, boolean forceDuplicate)
+	 */
+	@Override
+	public void duplicateNodeComponent(NodeComponent originalNodeComponent)
+	{
+		checkDuplicateNodeComponent(originalNodeComponent);
+	}
+
+	/**
+	 * Copies all ShaderAppearance information from
+	 * <code>originalNodeComponent</code> into
+	 * the current node.  This method is called from the
+	 * <code>cloneNode</code> method which is, in turn, called by the
+	 * <code>cloneTree</code> method.<P>
+	 *
+	 * @param originalNodeComponent the original node to duplicate.
+	 * @param forceDuplicate when set to <code>true</code>, causes the
+	 *  <code>duplicateOnCloneTree</code> flag to be ignored.  When
+	 *  <code>false</code>, the value of each node's
+	 *  <code>duplicateOnCloneTree</code> variable determines whether
+	 *  NodeComponent data is duplicated or copied.
+	 *
+	 * @exception RestrictedAccessException if this object is part of a live
+	 *  or compiled scenegraph.
+	 *
+	 * @see Node#cloneTree
+	 * @see NodeComponent#setDuplicateOnCloneTree
+	 */
+	@Override
+	void duplicateAttributes(NodeComponent originalNodeComponent, boolean forceDuplicate)
+	{
+		super.duplicateAttributes(originalNodeComponent, forceDuplicate);
+
+		//Hashtable hashtable = originalNodeComponent.nodeHashtable;
+
+		GLSLShaderProgramRetained orig = (GLSLShaderProgramRetained) originalNodeComponent.retained;
+
+		GLSLShaderProgramRetained rt = (GLSLShaderProgramRetained) retained;
+
+		rt.setVertexAttrNames(orig.getVertexAttrNames());
+		rt.setShaderAttrNames(orig.getShaderAttrNames());
+		rt.setShaders(orig.getShaders());
+	}
+
+	/**
+	 *  This function is called from getNodeComponent() to see if any of
+	 *  the sub-NodeComponents  duplicateOnCloneTree flag is true.
+	 *  If it is the case, current NodeComponent needs to
+	 *  duplicate also even though current duplicateOnCloneTree flag is false.
+	 *  This should be overwrite by NodeComponent which contains sub-NodeComponent.
+	 */
+	@Override
+	boolean duplicateChild()
+	{
+		if (super.duplicateChild())
+			return true;
+
+		if (getDuplicateOnCloneTree())
+			return true;
+
+		// we have no node components 
+		return false;
+	}
 }
