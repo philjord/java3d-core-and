@@ -145,7 +145,7 @@ public class Jogl2es2Context extends JoglContext
 	}
 
 	// should use getMaximumLights() in pipeline? though it's up to the shader
-	public static int MAX_LIGHTS = 8;
+	public static int MAX_LIGHTS = 32;
 	public LightData[] dirLight = new LightData[MAX_LIGHTS];
 	public LightData[] pointLight = new LightData[MAX_LIGHTS];
 	public LightData[] spotLight = new LightData[MAX_LIGHTS];
