@@ -92,6 +92,7 @@ class TransparencyAttributesRetained extends NodeComponentRetained {
      * fully opaque and 1.0 being fully transparent
      */
     final void initTransparency(float transparency) {
+    	transparency = Math.max(0, Math.min(1, transparency));
 	this.transparency = transparency;
     }
 
@@ -103,6 +104,7 @@ class TransparencyAttributesRetained extends NodeComponentRetained {
      * fully opaque and 1.0 being fully transparent
      */
     final void setTransparency(float transparency) {
+    	transparency = Math.max(0, Math.min(1, transparency));
 	initTransparency(transparency);
 	sendMessage(VALUE_CHANGED, new Float(transparency));
     }
