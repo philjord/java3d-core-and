@@ -16,6 +16,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			+ "Texture Lod, Filter, Sharpen and Combine cannot be supported. \n"//
 			+ "Texture3D cannot be supported. \n"//
 			+ "Accum style anti-aliasing cannot be supported. \n"//
+			+ "RasterOps from RenderingAttributes cannot be used. \n"//
 			+ "It is strongly recomended that you use the format GeometryArray.USE_NIO_BUFFER = true. \n"//
 			+ "Note LineArray and LineStripArray will not render as nicely as the fixed function pipeline.";//
 
