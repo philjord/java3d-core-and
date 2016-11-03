@@ -79,7 +79,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
 	private static final boolean COMPRESS_OPTIMIZED_VERTICES = true;
 
-	
 	/**
 	 * Constructor for singleton JoglPipeline instance
 	 */
@@ -397,6 +396,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, verts, startVertex, clrs,
 					startClrs);
 
+			// can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
@@ -418,7 +421,120 @@ class JoglesPipeline extends JoglesDEPPipeline
 					outputErrors(ctx);
 			}
 
-			if (bindingRequired)
+			// refill the buffers in case of writeable data
+			if (locs.glVertex != -1)
+			{
+
+				if (gd.geoToCoordBuf == -1)
+				{
+					new Throwable("Buffer load issue!").printStackTrace();
+				}
+				else
+				{
+
+					// a good cDirty
+					// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+					if (morphable)
+					{
+
+						verts.position(startVertex);
+						// Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
+						if (gd.geoToCoordBufSize != verts.remaining())
+						{
+							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + verts.remaining()
+									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
+									+ geo.source + ", this is not nessasarily a problem");
+
+							int prevBufId1 = gd.geoToCoordBuf1;// record to delete after re-bind
+							int prevBufId2 = gd.geoToCoordBuf2;
+
+							int[] tmp = new int[2];
+							gl.glGenBuffers(2, tmp, 0);
+							gd.geoToCoordBuf = tmp[0];
+							gd.geoToCoordBuf1 = tmp[0];
+							gd.geoToCoordBuf2 = tmp[1];
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+
+							gd.geoToCoordBufSize = verts.remaining();
+
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferData++;
+
+							//Notice no check for bindingRequired as we are altering the binding
+							//and previously used buffer is deleted AFTER re-bind
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(locs.glVertex);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
+							gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+						}
+						else
+						{
+							// work out the buffer to update and buffer to swap to
+							if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
+							{
+								// update 1 but set to draw 2
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf2;
+							}
+							else
+							{
+								// update 2 but set to draw 1
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf1;
+							}
+
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferSubData++;
+						}
+					}
+
+				}
+
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
+			}
+
+			// update other attributes if required
+			if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
+			{
+				// if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
+				if (changable)
+				{
+					clrs.position(0);
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, clrs.remaining() * Float.SIZE / 8, clrs);
+				}
+			}
+
+			// notice morphables must always rebind each frame as coord buffers are swapped
+			if (bindingRequired || morphable)
 			{
 				// always do coords 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
@@ -433,7 +549,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.perFrameStats.glVertexAttribPointerCoord++;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+			}
 
+			if (bindingRequired)
+			{
 				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
@@ -1588,6 +1707,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, verts, 0, clrs, 0);
 
+			// can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
+			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
+					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			if (ctx.gl2es3 != null)
@@ -1608,8 +1731,120 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
+			// refill the buffers in case of writeable data
+			if (locs.glVertex != -1)
+			{
 
-			if (bindingRequired)
+				if (gd.geoToCoordBuf == -1)
+				{
+					new Throwable("Buffer load issue!").printStackTrace();
+				}
+				else
+				{
+
+					// a good cDirty
+					// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
+					if (morphable)
+					{
+
+						verts.position(0);
+						// Sometime the FloatBuffer is swapped out for bigger or smaller! or is that ok?
+						if (gd.geoToCoordBufSize != verts.remaining())
+						{
+							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + verts.remaining()
+									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
+									+ geo.source + ", this is not nessasarily a problem");
+
+							int prevBufId1 = gd.geoToCoordBuf1;// record to delete after re-bind
+							int prevBufId2 = gd.geoToCoordBuf2;
+
+							int[] tmp = new int[2];
+							gl.glGenBuffers(2, tmp, 0);
+							gd.geoToCoordBuf = tmp[0];
+							gd.geoToCoordBuf1 = tmp[0];
+							gd.geoToCoordBuf2 = tmp[1];
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+
+							gd.geoToCoordBufSize = verts.remaining();
+
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferData++;
+
+							//Notice no check for bindingRequired as we are altering the binding
+							//and previously used buffer is deleted AFTER re-bind
+
+							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+							gl.glEnableVertexAttribArray(locs.glVertex);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glVertexAttribPointerCoord++;
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+
+							gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+						}
+						else
+						{
+							// work out the buffer to update and buffer to swap to
+							if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
+							{
+								// update 1 but set to draw 2
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf2;
+							}
+							else
+							{
+								// update 2 but set to draw 1
+								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gd.geoToCoordBuf = gd.geoToCoordBuf1;
+							}
+
+							if (DO_OUTPUT_ERRORS)
+								outputErrors(ctx);
+
+							if (OUTPUT_PER_FRAME_STATS)
+								ctx.perFrameStats.glBufferSubData++;
+						}
+					}
+
+				}
+
+			}
+			else
+			{
+				throw new UnsupportedOperationException("Shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
+			}
+
+			// update other attributes if required
+			if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
+			{
+				// if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
+				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
+				if (changable)
+				{
+					clrs.position(0);
+					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
+					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, clrs.remaining() * Float.SIZE / 8, clrs);
+				}
+			}
+
+			// notice morphables must always rebind each frame as coord buffers are swapped
+			if (bindingRequired || morphable)
 			{
 				// always do coords 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
@@ -1623,7 +1858,10 @@ class JoglesPipeline extends JoglesDEPPipeline
 					ctx.perFrameStats.glVertexAttribPointerCoord++;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
+			}
 
+			if (bindingRequired)
+			{
 				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					if (gd.geoToColorBuf == -1)
@@ -3227,7 +3465,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 		//boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-		
 		if (OUTPUT_PER_FRAME_STATS)
 			ctx.perFrameStats.setFFPAttributes++;
 
@@ -3569,8 +3806,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
 
 			//note ctx.gl_state.ignoreVertexColors can be -1 for not set
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
 			{
 				gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
 
@@ -6250,7 +6487,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			joglesctx.renderingData.alphaTestValue = alphaTestValue;
 		}
 
-		joglesctx.renderingData.ignoreVertexColors = ignoreVertexColors ? 1 : 0;;
+		joglesctx.renderingData.ignoreVertexColors = ignoreVertexColors ? 1 : 0;
+		;
 
 		if (rasterOpEnable)
 		{
@@ -8124,13 +8362,13 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (major < 1 || (major == 1 && minor < 2))
 		{
-			
+
 			// In some double createNewContext uses or getPerferredConfiguration called before a Frame is constructed
-        	// the disabling of D3D can cause this issue
-        	// see Bug 1201 - Crash with option "sun.java2d.d3d=false"
-        	// https://jogamp.org/bugzilla/show_bug.cgi?id=1201
-        	
-        	// In the case of Java > 1.8u51 Win10  and an Intel HD2000/3000 driver, the driver will not load because 
+			// the disabling of D3D can cause this issue
+			// see Bug 1201 - Crash with option "sun.java2d.d3d=false"
+			// https://jogamp.org/bugzilla/show_bug.cgi?id=1201
+
+			// In the case of Java > 1.8u51 Win10  and an Intel HD2000/3000 driver, the driver will not load because 
 			// the java.exe manifest has a "supportedOS Id" that the drivers don't like (the drivers are too old)
 			// see  Bug 1278 - Windows 10 returns software Profile
 			// https://jogamp.org/bugzilla/show_bug.cgi?id=1278
@@ -8142,20 +8380,21 @@ class JoglesPipeline extends JoglesDEPPipeline
 			{
 				System.err.println("Java3D - GDI Generic Driver use detected.");
 				System.err.println("This may be caused by any of the following issues.");
-				
-				if (System.getProperty("sun.java2d.noddraw", "false").equals("true") || System.getProperty("sun.java2d.d3d", "true").equals("false"))
+
+				if (System.getProperty("sun.java2d.noddraw", "false").equals("true")
+						|| System.getProperty("sun.java2d.d3d", "true").equals("false"))
 				{
 					System.err.println("Issue: Use of System.setProperty(\"sun.java2d.noddraw\", \"true\");");
 					System.err.println("or System.setProperty(\"sun.java2d.d3d\", \"false\");");
 					System.err.println("If either of these are being used please try either reversing or removing them,");
 					System.err.println("or if they are required else where try adding System.setProperty(\"sun.awt.nopixfmt\", \"true\");");
 				}
-				
+
 				if (Platform.getOSName().equalsIgnoreCase("Windows 10") && //win10
 						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version19) >= 0) || // 1.9 or 1.8 > 51
 						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) >= 0 && Platform.JAVA_VERSION_UPDATE > 51) && //
 								Platform.getJavaVMName().toLowerCase().startsWith("java hotspot(tm)"))// e.g. Java HotSpot(TM) 64-Bit Server VM ; OpenJDK would give OpenJDK 64-Bit Server VM
-				{					
+				{
 					System.err.println("Issue: The use of an Intel HD2000/3000 driver in combination with Windows 10 and");
 					System.err.println("a JRE greater than 1.8 update 51. Please downgrade the JRE in use to JRE 1.8u51 or lower.");
 					System.err.println("For more information please see https://jogamp.org/bugzilla/show_bug.cgi?id=1278.");
@@ -8163,7 +8402,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				System.err.println("If this software has been supplied to you and you are unable to modify it's configuration");
 				System.err.println("please contact the suppler of this software with this entire message.");
 			}
-			
+
 			throw new IllegalRenderingStateException(
 					"Java 3D ERROR : OpenGL 1.2 or better is required (GL_VERSION=" + major + "." + minor + ")");
 		}
@@ -8692,7 +8931,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// offscreen drawable
 
 		// If FBO : 'offDrawable' is of type com.jogamp.opengl.GLFBODrawable
-		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).createOffscreenDrawable(device, offCaps, null, width, height);
+		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).createOffscreenDrawable(device, offCaps,
+				null, width, height);
 
 		// !! these chosen caps are not final as long as the corresponding
 		// context is made current
@@ -9600,7 +9840,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		throw new UnsupportedOperationException();
 		/*if (VERBOSE)
 			System.err.println("JoglPipeline.getGraphicsConfig()");
-
+		
 		GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(gconfig);
 		AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
 		
@@ -9962,22 +10202,22 @@ class JoglesPipeline extends JoglesDEPPipeline
 		private boolean done;
 		private GLCapabilities capabilities;
 		private int chosenIndex = -1;
-
+	
 		public boolean done()
 		{
 			return done;
 		}
-
+	
 		public GLCapabilities getCapabilities()
 		{
 			return capabilities;
 		}
-
+	
 		public int getChosenIndex()
 		{
 			return chosenIndex;
 		}
-
+	
 		public int chooseCapabilities(GLCapabilities desired, GLCapabilities[] available, int windowSystemRecommendedChoice)
 		{
 			int res = super.chooseCapabilities(desired, Arrays.asList(available), windowSystemRecommendedChoice);
@@ -9986,14 +10226,14 @@ class JoglesPipeline extends JoglesDEPPipeline
 			markDone();
 			return res;
 		}
-
+	
 		@Override
 		public void init(GLContext context)
 		{
 			// Avoid hanging things up for several seconds
 			kick();
 		}
-
+	
 		private void markDone()
 		{
 			synchronized (this)
@@ -10002,7 +10242,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				notifyAll();
 			}
 		}
-
+	
 		private void kick()
 		{
 			synchronized (this)
@@ -10047,7 +10287,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 			markDone();
 		}
-
+	
 		private void markDone()
 		{
 			synchronized (this)
