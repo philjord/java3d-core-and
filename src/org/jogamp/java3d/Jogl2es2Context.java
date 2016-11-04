@@ -360,7 +360,7 @@ public class Jogl2es2Context extends JoglContext
 	// 	int lightEnabled;
 	// 	vec4 ambient;
 	// 	vec4 diffuse;
-	// 	vec4 emission;// note vec4 extra 1.0 sent through for ease
+	// 	vec4 emission;
 	// 	vec3 specular;
 	// 	float shininess;
 	// };
@@ -522,16 +522,16 @@ public class Jogl2es2Context extends JoglContext
 	}
 
 	// in the shader as follows
-	// struct fogData
+	// struct fogDataStruct
 	// {
-	// int fogEnabled = -1;
-	// vec3 expColor = new Vector3f();
+	// int fogEnabled;
+	// vec4 expColor;
 	// float expDensity;
-	// vec3 linearColor = new Vector3f();
+	// vec4 linearColor;
 	// float linearStart;
 	// float linearEnd;
 	// };
-	// uniform fogData fogData;
+	// uniform fogDataStruct fogData;
 	public static class fogData
 	{
 		public int fogEnabled = -1;
