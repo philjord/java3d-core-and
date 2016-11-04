@@ -291,7 +291,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					coordoff += 4;
 				}
 				else
-				{ /* Handle the case of executeInterleaved 3f */
+				{
+					// Handle the case of executeInterleaved 3f 
 					stride += 3;
 					normoff += 3;
 					coordoff += 3;
@@ -2558,7 +2559,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				}
 			}
 
-			//binding is required for morphables coords as always swappping buffers each second frame
+			// binding is required for morphables coords as always swappping buffers each second frame
 			if (bindingRequired || morphable)
 			{
 				// always coords
@@ -3468,177 +3469,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			ctx.perFrameStats.setFFPAttributes++;
 
-		if (ATTEMPT_UBO && gl.isGL2ES3())
-		{
-			//TODO: p v m norm all needs to be transpose somehow?
-			GL2ES3 gl2es3 = (GL2ES3) gl;
-
-			if (locs.blockIndex != -1)
-			{
-				ByteBuffer uboBB = pd.programToUBOBB;
-
-				if (locs.glProjectionMatrixOffset != -1)
-				{
-					uboBB.position(locs.glProjectionMatrixOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMat));
-				}
-				if (locs.glProjectionMatrixInverseOffset != -1)
-				{
-					// Expensive, only calc if required
-					ctx.currentProjMatInverse.set(ctx.currentProjMat);
-					ctx.matrixUtil.invert(ctx.currentProjMatInverse);
-
-					uboBB.position(locs.glProjectionMatrixInverseOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentProjMatInverse));
-				}
-				if (locs.glViewMatrixOffset != -1)
-				{
-					uboBB.position(locs.glViewMatrixOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentViewMat));
-				}
-				if (locs.glModelMatrixOffset != -1)
-				{
-					uboBB.position(locs.glModelMatrixOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelMat));
-				}
-				if (locs.glModelViewMatrixOffset != -1)
-				{
-					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-
-					uboBB.position(locs.glModelViewMatrixOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMat));
-				}
-				if (locs.glModelViewMatrixInverseOffset != -1)
-				{
-					// Expensive, only if required
-					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-					ctx.currentModelViewMatInverse.set(ctx.currentModelViewMat);
-					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
-
-					uboBB.position(locs.glModelViewMatrixInverseOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse));
-				}
-				if (locs.glModelViewProjectionMatrixOffset != -1)
-				{
-					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-					ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
-
-					uboBB.position(locs.glModelViewProjectionMatrixOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat));
-				}
-				//3x3 are stored as 3xvec4 (48 bytes before next offset) note use of toArray3x4
-				if (locs.glNormalMatrixOffset != -1)
-				{
-					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-					JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
-
-					uboBB.position(locs.glNormalMatrixOffset);
-					uboBB.asFloatBuffer().put(ctx.matrixUtil.toArray3x4(ctx.currentNormalMat));
-				}
-				if (locs.glFrontMaterialdiffuseOffset != -1)
-				{
-					uboBB.position(locs.glFrontMaterialdiffuseOffset);
-					uboBB.asFloatBuffer().put(ctx.materialData.diffuse.x).put(ctx.materialData.diffuse.y).put(ctx.materialData.diffuse.z)
-							.put(ctx.materialData.diffuse.w);
-				}
-				if (locs.glFrontMaterialemissionOffset != -1)
-				{
-					uboBB.position(locs.glFrontMaterialemissionOffset);
-					uboBB.asFloatBuffer().put(ctx.materialData.emission.x).put(ctx.materialData.emission.y).put(ctx.materialData.emission.z)
-							.put(1f); //note extra alpha value to avoid errors
-				}
-				if (locs.glFrontMaterialspecularOffset != -1)
-				{
-					uboBB.position(locs.glFrontMaterialspecularOffset);
-					uboBB.asFloatBuffer().put(ctx.materialData.specular.x).put(ctx.materialData.specular.y)
-							.put(ctx.materialData.specular.z);
-				}
-				if (locs.glFrontMaterialshininessOffset != -1)
-				{
-					uboBB.position(locs.glFrontMaterialshininessOffset);
-					uboBB.asFloatBuffer().put(ctx.materialData.shininess);
-				}
-				// if set one of the 2 colors below should be used by the shader (material for lighting)
-				//   old uniform system appears wrong?					
-				if (locs.ignoreVertexColorsOffset != -1)
-				{
-					uboBB.position(locs.ignoreVertexColorsOffset);
-					// vertex colors MUST be ignored if no glColors set
-					boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
-					uboBB.asIntBuffer().put(ignoreVertexColors ? 1 : 0);// note local variable used
-				}
-
-				if (locs.glLightModelambientOffset != -1)
-				{
-					uboBB.position(locs.glLightModelambientOffset);
-					uboBB.asFloatBuffer().put(ctx.currentAmbientColor.x).put(ctx.currentAmbientColor.y).put(ctx.currentAmbientColor.z)
-							.put(ctx.currentAmbientColor.w);
-				}
-				if (locs.objectColorOffset != -1)
-				{
-					uboBB.position(locs.objectColorOffset);
-					uboBB.asFloatBuffer().put(ctx.objectColor.x).put(ctx.objectColor.y).put(ctx.objectColor.z).put(ctx.objectColor.w);
-				}
-
-				//For now using first point light, but gonna need to put em all in
-				LightData l0 = null;
-				if (ctx.pointLight[0] != null)
-					l0 = ctx.pointLight[0];
-				else if (ctx.dirLight[0] != null)
-					l0 = ctx.dirLight[0];
-
-				if (l0 != null)
-				{
-					if (locs.glLightSource0positionOffset != -1)
-					{
-						uboBB.position(locs.glLightSource0positionOffset);
-						uboBB.asFloatBuffer().put(l0.pos.x).put(l0.pos.y).put(l0.pos.z).put(l0.pos.w);
-					}
-					if (locs.glLightSource0diffuseOffset != -1)
-					{
-						uboBB.position(locs.glLightSource0diffuseOffset);
-						uboBB.asFloatBuffer().put(l0.diffuse.x).put(l0.diffuse.y).put(l0.diffuse.z).put(l0.diffuse.w);
-					}
-				}
-
-				// TODO: test the transpose
-				if (locs.textureTransformOffset != -1)
-				{
-					uboBB.position(locs.textureTransformOffset);
-					uboBB.asFloatBuffer().put(JoglesMatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.textureTransform)));
-				}
-
-				if (locs.alphaTestEnabledOffset != -1)
-				{
-					uboBB.position(locs.alphaTestEnabledOffset);
-					uboBB.asIntBuffer().put(ctx.renderingData.alphaTestEnabled ? 1 : 0);
-
-					if (ctx.renderingData.alphaTestEnabled == true)
-					{
-						if (locs.alphaTestFunctionOffset != -1)
-						{
-							uboBB.position(locs.alphaTestFunctionOffset);
-							uboBB.asIntBuffer().put(ctx.renderingData.alphaTestFunction);
-						}
-						if (locs.alphaTestValueOffset != -1)
-						{
-							uboBB.position(locs.alphaTestValueOffset);
-							uboBB.asFloatBuffer().put(ctx.renderingData.alphaTestValue);
-						}
-					}
-				}
-
-				uboBB.position(0);// very important!
-
-				//gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, locs.uboBufId);
-				gl2es3.glBufferSubData(GL2ES3.GL_UNIFORM_BUFFER, 0, uboBB.limit(), uboBB);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				// we have done our ffp work don't fall through to normal system						
-				return;
-			}
-
-		}
+		// removed if (ATTEMPT_UBO && gl.isGL2ES3())...
 
 		//if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
 		if (locs.glProjectionMatrix != -1)
@@ -3818,70 +3649,33 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		// send material data through		
-		if (locs.glFrontMaterialambient != -1)
+		// the front material structure
+		if (locs.glFrontMaterial.present())
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialambient.equals(ctx.materialData.ambient)))
+					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterial.equals(ctx.materialData)))
 			{
-				gl.glUniform4f(locs.glFrontMaterialambient, ctx.materialData.ambient.x, ctx.materialData.ambient.y,
-						ctx.materialData.ambient.z, 1f);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterialambient.set(ctx.materialData.ambient);
-			}
-		}
-		if (locs.glFrontMaterialdiffuse != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterialdiffuse.equals(ctx.materialData.diffuse)))
-			{
-				gl.glUniform4f(locs.glFrontMaterialdiffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
-						ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterialdiffuse.set(ctx.materialData.diffuse);
-			}
-		}
-		if (locs.glFrontMaterialemission != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| !ctx.gl_state.glFrontMaterialemission.equals(ctx.materialData.emission)))
-			{
-				gl.glUniform4f(locs.glFrontMaterialemission, ctx.materialData.emission.x, ctx.materialData.emission.y,
-						ctx.materialData.emission.z, 1f); //note extra alpha value to avoid errors
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterialemission.set(ctx.materialData.emission);
-			}
-		}
+				if (locs.glFrontMaterial.lightEnabled != -1)
+					gl.glUniform1i(locs.glFrontMaterial.lightEnabled, ctx.materialData.lightEnabled);
+				if (locs.glFrontMaterial.ambient != -1)
+					gl.glUniform4f(locs.glFrontMaterial.ambient, ctx.materialData.ambient.x, ctx.materialData.ambient.y,
+							ctx.materialData.ambient.z, 1f);
+				if (locs.glFrontMaterial.diffuse != -1)
+					gl.glUniform4f(locs.glFrontMaterial.diffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
+							ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
+				if (locs.glFrontMaterial.emission != -1)
+					gl.glUniform4f(locs.glFrontMaterial.emission, ctx.materialData.emission.x, ctx.materialData.emission.y,
+							ctx.materialData.emission.z, 1f); // note extra alpha value for ease
+				if (locs.glFrontMaterial.specular != -1)
+					gl.glUniform3f(locs.glFrontMaterial.specular, ctx.materialData.specular.x, ctx.materialData.specular.y,
+							ctx.materialData.specular.z);
+				if (locs.glFrontMaterial.shininess != -1)
+					gl.glUniform1f(locs.glFrontMaterial.shininess, ctx.materialData.shininess);
 
-		if (locs.glFrontMaterialspecular != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| !ctx.gl_state.glFrontMaterialspecular.equals(ctx.materialData.specular)))
-			{
-				gl.glUniform3f(locs.glFrontMaterialspecular, ctx.materialData.specular.x, ctx.materialData.specular.y,
-						ctx.materialData.specular.z);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterialspecular.set(ctx.materialData.specular);
-			}
-		}
-		if (locs.glFrontMaterialshininess != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterialshininess != ctx.materialData.shininess))
-			{
-				gl.glUniform1f(locs.glFrontMaterialshininess, ctx.materialData.shininess);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterialshininess = ctx.materialData.shininess;
+					ctx.gl_state.glFrontMaterial.set(ctx.materialData);
 			}
 		}
 
@@ -3914,42 +3708,64 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 		}
 
-		// currentEnabledLights
-
-		// TODO: add the other attributes of spot and point light in
-		// For now using first point light, but gonna need to put em all in
-		LightData l0 = null;
-		if (ctx.pointLight[0] != null)
-			l0 = ctx.pointLight[0];
-		else if (ctx.dirLight[0] != null)
-			l0 = ctx.dirLight[0];
-		else if (ctx.spotLight[0] != null)
-			l0 = ctx.spotLight[0];
-
-		if (l0 != null)
+		// count of enabled lights currentEnabledLights
+		if (locs.numberOfLights != -1)
 		{
-			if (locs.glLightSource0position != -1)
+			//note ctx.gl_state.numberOfLights can be -1 for not set
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.numberOfLights != ctx.numberOfLights))
+			{
+				gl.glUniform1i(locs.numberOfLights, ctx.numberOfLights);
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+				if (MINIMISE_NATIVE_CALLS_FFP)
+					ctx.gl_state.numberOfLights = ctx.numberOfLights;
+			}
+		}
+
+		// the lighting structures 
+		for (int i = 0; i < ctx.numberOfLights; i++)
+		{
+			if (locs.glLightSource[i].present())
 			{
 				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource0position.equals(l0.pos)))
+						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource[i].equals(ctx.glLightSource[i])))
 				{
-					gl.glUniform4f(locs.glLightSource0position, l0.pos.x, l0.pos.y, l0.pos.z, l0.pos.w);
+					if (locs.glLightSource[i].enabled != -1)
+						gl.glUniform1i(locs.glLightSource[i].enabled, ctx.glLightSource[i].enabled);
+					if (ctx.glLightSource[i].enabled == 1)
+					{
+						if (locs.glLightSource[i].position != -1)
+							gl.glUniform4f(locs.glLightSource[i].position, ctx.glLightSource[i].position.x, ctx.glLightSource[i].position.y,
+									ctx.glLightSource[i].position.z, ctx.glLightSource[i].position.w);
+						if (locs.glLightSource[i].diffuse != -1)
+							gl.glUniform4f(locs.glLightSource[i].diffuse, ctx.glLightSource[i].diffuse.x, ctx.glLightSource[i].diffuse.y,
+									ctx.glLightSource[i].diffuse.z, ctx.glLightSource[i].diffuse.w);
+						if (locs.glLightSource[i].specular != -1)
+							gl.glUniform4f(locs.glLightSource[i].specular, ctx.glLightSource[i].specular.x, ctx.glLightSource[i].specular.y,
+									ctx.glLightSource[i].specular.z, ctx.glLightSource[i].specular.w);
+						if (locs.glLightSource[i].constantAttenuation != -1)
+							gl.glUniform1f(locs.glLightSource[i].constantAttenuation, ctx.glLightSource[i].constantAttenuation);
+						if (locs.glLightSource[i].linearAttenuation != -1)
+							gl.glUniform1f(locs.glLightSource[i].linearAttenuation, ctx.glLightSource[i].linearAttenuation);
+						if (locs.glLightSource[i].quadraticAttenuation != -1)
+							gl.glUniform1f(locs.glLightSource[i].quadraticAttenuation, ctx.glLightSource[i].quadraticAttenuation);
+						if (locs.glLightSource[i].spotCutoff != -1)
+							gl.glUniform1f(locs.glLightSource[i].spotCutoff, ctx.glLightSource[i].spotCutoff);
+						if (locs.glLightSource[i].spotExponent != -1)
+							gl.glUniform1f(locs.glLightSource[i].spotExponent, ctx.glLightSource[i].spotExponent);
+						if (locs.glLightSource[i].spotDirection != -1)
+							gl.glUniform3f(locs.glLightSource[i].spotDirection, ctx.glLightSource[i].spotDirection.x,
+									ctx.glLightSource[i].spotDirection.y, ctx.glLightSource[i].spotDirection.z);
+					}
+
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glLightSource0position.set(l0.pos);
+						ctx.gl_state.glLightSource[i].set(ctx.glLightSource[i]);
 				}
 			}
-			if (locs.glLightSource0diffuse != -1)
-			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource0diffuse.equals(l0.diffuse)))
-				{
-					gl.glUniform4f(locs.glLightSource0diffuse, l0.diffuse.x, l0.diffuse.y, l0.diffuse.z, l0.diffuse.w);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glLightSource0diffuse.set(l0.diffuse);
-				}
-			}
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
 		}
 
 		if (locs.alphaTestEnabled != -1)
@@ -3999,73 +3815,29 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		// Fog
-		if (locs.fogEnabled != -1)
+		if (locs.fogData.present())
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.fogEnabled != ctx.fogData.enable))
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.fogData.equals(ctx.fogData)))
 			{
-				gl.glUniform1i(locs.fogEnabled, ctx.fogData.enable ? 1 : 0);
+				if (locs.fogData.fogEnabled != -1)
+					gl.glUniform1i(locs.fogData.fogEnabled, ctx.fogData.fogEnabled);
+				if (locs.fogData.expColor != -1)
+					gl.glUniform4f(locs.fogData.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z, 1.0f);
+				if (locs.fogData.expDensity != -1)
+					gl.glUniform1f(locs.fogData.expDensity, ctx.fogData.expDensity);
+				if (locs.fogData.linearColor != -1)
+					gl.glUniform4f(locs.fogData.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y,
+							ctx.fogData.linearColor.z, 1.0f);
+				if (locs.fogData.linearStart != -1)
+					gl.glUniform1f(locs.fogData.linearStart, ctx.fogData.linearStart);
+				if (locs.fogData.linearEnd != -1)
+					gl.glUniform1f(locs.fogData.linearEnd, ctx.fogData.linearEnd);
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.fogEnabled = ctx.fogData.enable;
+					ctx.gl_state.fogData.set(ctx.fogData);
 			}
-
-			if (ctx.fogData.enable == true)
-			{
-				if (locs.expColor != -1)
-				{
-					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.expColor.equals(ctx.fogData.expColor)))
-					{
-						gl.glUniform4f(locs.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z, 1.0f);
-						if (MINIMISE_NATIVE_CALLS_FFP)
-							ctx.gl_state.expColor.set(ctx.fogData.expColor);
-					}
-				}
-
-				if (locs.expDensity != -1)
-				{
-					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.expDensity != ctx.fogData.expDensity))
-					{
-						gl.glUniform1f(locs.expDensity, ctx.fogData.expDensity);
-						if (MINIMISE_NATIVE_CALLS_FFP)
-							ctx.gl_state.expDensity = ctx.fogData.expDensity;
-					}
-				}
-				if (locs.linearColor != -1)
-				{
-					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.linearColor.equals(ctx.fogData.linearColor)))
-					{
-						gl.glUniform4f(locs.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y, ctx.fogData.linearColor.z,
-								1.0f);
-						if (MINIMISE_NATIVE_CALLS_FFP)
-							ctx.gl_state.linearColor.set(ctx.fogData.linearColor);
-					}
-				}
-
-				if (locs.linearStart != -1)
-				{
-					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.linearStart != ctx.fogData.linearStart))
-					{
-						gl.glUniform1f(locs.linearStart, ctx.fogData.linearStart);
-						if (MINIMISE_NATIVE_CALLS_FFP)
-							ctx.gl_state.linearStart = ctx.fogData.linearStart;
-					}
-				}
-				if (locs.linearEnd != -1)
-				{
-					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.linearEnd != ctx.fogData.linearEnd))
-					{
-						gl.glUniform1f(locs.linearEnd, ctx.fogData.linearEnd);
-						if (MINIMISE_NATIVE_CALLS_FFP)
-							ctx.gl_state.linearEnd = ctx.fogData.linearEnd;
-					}
-				}
-			}
-			if (DO_OUTPUT_ERRORS)
-				outputErrors(ctx);
 		}
 
 		// NOTE water app shows multiple light calculations
@@ -4094,245 +3866,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.programToLocationData++;
 
-			if (ATTEMPT_UBO && gl.isGL2ES3())
-			{
-				GL2ES3 gl2es3 = (GL2ES3) gl;
-
-				int UBOBlockIndex = gl2es3.glGetUniformBlockIndex(shaderProgramId, "FFP_Uniform_Block");
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (UBOBlockIndex != -1)
-				{
-					locs.blockIndex = UBOBlockIndex;
-					int[] blockSize = new int[1];
-
-					gl2es3.glGetActiveUniformBlockiv(shaderProgramId, UBOBlockIndex, GL2ES3.GL_UNIFORM_BLOCK_DATA_SIZE, blockSize, 0);
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					locs.blockSize = blockSize[0];
-
-					ByteBuffer uboBB = ByteBuffer.allocateDirect(blockSize[0]);
-					uboBB.order(ByteOrder.nativeOrder());
-					pd.programToUBOBB = uboBB;
-
-					// set up single buffer for ffp data, jesus...
-					if (ctx.globalUboBufId == -1)
-					//if (locs.uboBufId == -1)
-					{
-						int[] tmp = new int[1];
-						gl.glGenBuffers(1, tmp, 0);
-						int uboBufId = tmp[0];
-
-						ctx.globalUboBufId = uboBufId;
-						//locs.uboBufId = uboBufId;
-
-						gl2es3.glBindBuffer(GL2ES3.GL_UNIFORM_BUFFER, uboBufId);
-						gl2es3.glBufferData(GL2ES3.GL_UNIFORM_BUFFER, uboBB.limit(), uboBB, GL2ES3.GL_DYNAMIC_DRAW);
-						gl2es3.glBindBufferBase(GL2ES3.GL_UNIFORM_BUFFER, UBOBlockIndex, uboBufId);
-					}
-
-					// Query for the offsets of each block variable
-					String[] names = { "glProjectionMatrix", "glProjectionMatrixInverse", //
-							"glViewMatrix", "glModelMatrix", //
-							"glModelViewMatrix", "glModelViewMatrixInverse", //
-							"glModelViewProjectionMatrix", "glNormalMatrix", //
-							"glFrontMaterialdiffuse", "glFrontMaterialemission", //
-							"glFrontMaterialspecular", "glFrontMaterialshininess", //
-							"ignoreVertexColors", "glLightModelambient", //
-							"objectColor", //
-							"glLightSource0position", "glLightSource0diffuse", //
-							"textureTransform", //
-							"alphaTestEnabled", "alphaTestFunction", "alphaTestValue" };
-
-					IntBuffer indices = IntBuffer.allocate(names.length);
-
-					if (PRESUME_INDICES)
-					{
-						indices.put(0, 16);
-						indices.put(1, 17);
-						indices.put(2, 18);
-						indices.put(3, 11);
-						indices.put(4, 12);
-						indices.put(5, 13);
-						indices.put(6, 14);
-						indices.put(7, 15);
-						indices.put(8, 4);
-						indices.put(9, 5);
-						indices.put(10, 7);
-						indices.put(11, 6);
-						indices.put(12, 19);
-						indices.put(13, 8);
-						indices.put(14, 20);
-						indices.put(15, 10);
-						indices.put(16, 9);
-						indices.put(17, 21);
-						indices.put(18, 1);
-						indices.put(19, 2);
-						indices.put(20, 3);
-
-						locs.glProjectionMatrixOffset = 0;
-						locs.glProjectionMatrixInverseOffset = 64;
-						locs.glViewMatrixOffset = 128;
-						locs.glModelMatrixOffset = 192;
-						locs.glModelViewMatrixOffset = 256;
-						locs.glModelViewMatrixInverseOffset = 320;
-						locs.glModelViewProjectionMatrixOffset = 384;
-						locs.glNormalMatrixOffset = 448;
-						locs.glFrontMaterialdiffuseOffset = 496;
-						locs.glFrontMaterialemissionOffset = 512;
-						locs.glFrontMaterialspecularOffset = 528;
-						locs.glFrontMaterialshininessOffset = 540;
-						locs.ignoreVertexColorsOffset = 544;
-						locs.glLightModelambientOffset = 560;
-						locs.objectColorOffset = 576;
-						locs.glLightSource0positionOffset = 592;
-						locs.glLightSource0diffuseOffset = 608;
-						locs.textureTransformOffset = 624;
-						locs.alphaTestEnabledOffset = 688;
-						locs.alphaTestFunctionOffset = 692;
-						locs.alphaTestValueOffset = 696;
-					}
-					else
-					{
-						gl2es3.glGetUniformIndices(shaderProgramId, names.length, names, indices);
-
-						if (DO_OUTPUT_ERRORS)
-							outputErrors(ctx);
-						//ok so including a -1 in the indices cause everything to come back at 0 after it
-						// possibly android throws a fit if it's compiled away or something
-						IntBuffer offset = IntBuffer.allocate(1);
-						if (indices.get(0) != -1)
-						{
-							indices.position(0);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glProjectionMatrixOffset = offset.get(0);
-						}
-						if (indices.get(1) != -1)
-						{
-							indices.position(1);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glProjectionMatrixInverseOffset = offset.get(0);
-						}
-						if (indices.get(2) != -1)
-						{
-							indices.position(2);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glViewMatrixOffset = offset.get(0);
-						}
-						if (indices.get(3) != -1)
-						{
-							indices.position(3);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelMatrixOffset = offset.get(0);
-						}
-						if (indices.get(4) != -1)
-						{
-							indices.position(4);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelViewMatrixOffset = offset.get(0);
-						}
-						if (indices.get(5) != -1)
-						{
-							indices.position(5);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelViewMatrixInverseOffset = offset.get(0);
-						}
-						if (indices.get(6) != -1)
-						{
-							indices.position(6);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glModelViewProjectionMatrixOffset = offset.get(0);
-						}
-						if (indices.get(7) != -1)
-						{
-							indices.position(7);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glNormalMatrixOffset = offset.get(0);
-						}
-						if (indices.get(8) != -1)
-						{
-							indices.position(8);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialdiffuseOffset = offset.get(0);
-						}
-						if (indices.get(9) != -1)
-						{
-							indices.position(9);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialemissionOffset = offset.get(0);
-						}
-						if (indices.get(10) != -1)
-						{
-							indices.position(10);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialspecularOffset = offset.get(0);
-						}
-						if (indices.get(11) != -1)
-						{
-							indices.position(11);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glFrontMaterialshininessOffset = offset.get(0);
-						}
-						if (indices.get(12) != -1)
-						{
-							indices.position(12);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.ignoreVertexColorsOffset = offset.get(0);
-						}
-						if (indices.get(13) != -1)
-						{
-							indices.position(13);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glLightModelambientOffset = offset.get(0);
-						}
-						if (indices.get(14) != -1)
-						{
-							indices.position(14);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.objectColorOffset = offset.get(0);
-						}
-						if (indices.get(15) != -1)
-						{
-							indices.position(15);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glLightSource0positionOffset = offset.get(0);
-						}
-						if (indices.get(16) != -1)
-						{
-							indices.position(16);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.glLightSource0diffuseOffset = offset.get(0);
-						}
-						if (indices.get(17) != -1)
-						{
-							indices.position(17);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.textureTransformOffset = offset.get(0);
-						}
-						if (indices.get(18) != -1)
-						{
-							indices.position(18);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.alphaTestEnabledOffset = offset.get(0);
-						}
-						if (indices.get(19) != -1)
-						{
-							indices.position(19);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.alphaTestFunctionOffset = offset.get(0);
-						}
-						if (indices.get(20) != -1)
-						{
-							indices.position(20);
-							gl2es3.glGetActiveUniformsiv(shaderProgramId, 1, indices, GL2ES3.GL_UNIFORM_OFFSET, offset);
-							locs.alphaTestValueOffset = offset.get(0);
-						}
-					}
-
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-				}
-			}
+			// Removed if(ATTEMPT_UBO && gl.isGL2ES3())...
 
 			locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
 			locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
@@ -4343,27 +3877,50 @@ class JoglesPipeline extends JoglesDEPPipeline
 			locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
 			locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
 			locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
-			locs.glFrontMaterialambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialambient");
-			locs.glFrontMaterialdiffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialdiffuse");
-			locs.glFrontMaterialemission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialemission");
-			locs.glFrontMaterialspecular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialspecular");
-			locs.glFrontMaterialshininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterialshininess");
 			locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
 			locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
-			locs.glLightSource0position = gl.glGetUniformLocation(shaderProgramId, "glLightSource0position");
-			locs.glLightSource0diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource0diffuse");
 			locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
 			locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
 			locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
 			locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
-			locs.fogEnabled = gl.glGetUniformLocation(shaderProgramId, "fogEnabled");
-			locs.expColor = gl.glGetUniformLocation(shaderProgramId, "expColor");
-			locs.expDensity = gl.glGetUniformLocation(shaderProgramId, "expDensity");
-			locs.linearColor = gl.glGetUniformLocation(shaderProgramId, "linearColor");
-			locs.linearStart = gl.glGetUniformLocation(shaderProgramId, "linearStart");
-			locs.linearEnd = gl.glGetUniformLocation(shaderProgramId, "linearEnd");
 
-			// attributes
+			locs.fogData.fogEnabled = gl.glGetUniformLocation(shaderProgramId, "fogData.fogEnabled");
+			locs.fogData.expColor = gl.glGetUniformLocation(shaderProgramId, "fogData.expColor");
+			locs.fogData.expDensity = gl.glGetUniformLocation(shaderProgramId, "fogData.expDensity");
+			locs.fogData.linearColor = gl.glGetUniformLocation(shaderProgramId, "fogData.linearColor");
+			locs.fogData.linearStart = gl.glGetUniformLocation(shaderProgramId, "fogData.linearStart");
+			locs.fogData.linearEnd = gl.glGetUniformLocation(shaderProgramId, "fogData.linearEnd");
+
+			locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.lightEnabled");
+			locs.glFrontMaterial.ambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.ambient");
+			locs.glFrontMaterial.diffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.diffuse");
+			locs.glFrontMaterial.emission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.emission");
+			locs.glFrontMaterial.specular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.specular");
+			locs.glFrontMaterial.shininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.shininess");
+
+			locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
+
+			//lights, notice the vertex attribute is made of a string concat
+			// possibly in es you can't use an array of struct to get locs?
+			for (int i = 0; i < locs.glLightSource.length; i++)
+			{
+				locs.glLightSource[i] = new glLightSourceLocs();
+				locs.glLightSource[i].enabled = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].enabled");
+				locs.glLightSource[i].position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
+				locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
+				locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
+				locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
+						"glLightSource[" + i + "].constantAttenuation");
+				locs.glLightSource[i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
+						"glLightSource[" + i + "].linearAttenuation");
+				locs.glLightSource[i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
+						"glLightSource[" + i + "].quadraticAttenuation");
+				locs.glLightSource[i].spotCutoff = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotCutoff");
+				locs.glLightSource[i].spotExponent = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotExponent");
+				locs.glLightSource[i].spotDirection = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotDirection");
+			}
+
+			///////ATTRIBUTES!!!!!!!!///////////////////
 			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
 			locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
 			locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
@@ -5842,28 +5399,31 @@ class JoglesPipeline extends JoglesDEPPipeline
 		//TODO:? possibly directional should only take the view mat, but surely I'd get a blank model??
 		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, -dirx, -diry, -dirz, 0f);
 
-		if (joglesctx.dirLight[lightSlot] == null)
-			joglesctx.dirLight[lightSlot] = new LightData();
+		if (joglesctx.glLightSource[lightSlot] == null)
+		{
+			joglesctx.glLightSource[lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource[lightSlot] = new glLightSource();
+		}
 
-		joglesctx.dirLight[lightSlot].diffuse.x = red;
-		joglesctx.dirLight[lightSlot].diffuse.y = green;
-		joglesctx.dirLight[lightSlot].diffuse.z = blue;
-		joglesctx.dirLight[lightSlot].diffuse.w = 1.0f;
-		joglesctx.dirLight[lightSlot].specular.x = red;
-		joglesctx.dirLight[lightSlot].specular.y = green;
-		joglesctx.dirLight[lightSlot].specular.z = blue;
-		joglesctx.dirLight[lightSlot].specular.w = 1.0f;
-		joglesctx.dirLight[lightSlot].pos.x = lightPos.x;
-		joglesctx.dirLight[lightSlot].pos.y = lightPos.y;
-		joglesctx.dirLight[lightSlot].pos.z = lightPos.z;
-		joglesctx.dirLight[lightSlot].pos.w = 0.0f;// 0 means directional light
-		joglesctx.dirLight[lightSlot].ambient = black;// odd
-		// joglesctx.dirLight[lightSlot].GL_POSITION = 1.0f; // what is this?
-		joglesctx.dirLight[lightSlot].GL_CONSTANT_ATTENUATION = 1.0f;
-		joglesctx.dirLight[lightSlot].GL_LINEAR_ATTENUATION = 0.0f;
-		joglesctx.dirLight[lightSlot].GL_QUADRATIC_ATTENUATION = 0.0f;
-		joglesctx.dirLight[lightSlot].GL_SPOT_EXPONENT = 0.0f;
-		joglesctx.dirLight[lightSlot].GL_SPOT_CUTOFF = 180.0f;
+		joglesctx.glLightSource[lightSlot].diffuse.x = red;
+		joglesctx.glLightSource[lightSlot].diffuse.y = green;
+		joglesctx.glLightSource[lightSlot].diffuse.z = blue;
+		joglesctx.glLightSource[lightSlot].diffuse.w = 1.0f;
+		joglesctx.glLightSource[lightSlot].specular.x = red;
+		joglesctx.glLightSource[lightSlot].specular.y = green;
+		joglesctx.glLightSource[lightSlot].specular.z = blue;
+		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
+		joglesctx.glLightSource[lightSlot].position.x = lightPos.x;
+		joglesctx.glLightSource[lightSlot].position.y = lightPos.y;
+		joglesctx.glLightSource[lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource[lightSlot].position.w = 0.0f;// 0 means directional light
+		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
+		// joglesctx.glLightSource[lightSlot].GL_POSITION = 1.0f; // what is this?
+		joglesctx.glLightSource[lightSlot].constantAttenuation = 1.0f;
+		joglesctx.glLightSource[lightSlot].linearAttenuation = 0.0f;
+		joglesctx.glLightSource[lightSlot].quadraticAttenuation = 0.0f;
+		joglesctx.glLightSource[lightSlot].spotExponent = 0.0f;
+		joglesctx.glLightSource[lightSlot].spotCutoff = 180.0f;
 	}
 
 	// ---------------------------------------------------------------------
@@ -5881,29 +5441,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((Jogl2es2Context) ctx).perFrameStats.updatePointLight++;
 
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		
-		int lightNum = GL2ES2.GL_LIGHT0 + lightSlot;
-		float[] values = new float[4];
-		
-		values[0] = red;
-		values[1] = green;
-		values[2] = blue;
-		values[3] = 1.0f;
-		gl.glLightfv(lightNum, GL2ES2.GL_DIFFUSE, values, 0);
-		gl.glLightfv(lightNum, GL2ES2.GL_SPECULAR, values, 0);
-		gl.glLightfv(lightNum, GL2ES2.GL_AMBIENT, black, 0);
-		values[0] = posx;
-		values[1] = posy;
-		values[2] = posz;
-		gl.glLightfv(lightNum, GL2ES2.GL_POSITION, values, 0);
-		gl.glLightf(lightNum, GL2ES2.GL_CONSTANT_ATTENUATION, attenx);
-		gl.glLightf(lightNum, GL2ES2.GL_LINEAR_ATTENUATION, atteny);
-		gl.glLightf(lightNum, GL2ES2.GL_QUADRATIC_ATTENUATION, attenz);
-		gl.glLightf(lightNum, GL2ES2.GL_SPOT_EXPONENT, 0.0f);
-		gl.glLightf(lightNum, GL2ES2.GL_SPOT_CUTOFF, 180.0f);*/
-
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
 
 		// note the current state of MV MUST be used by the lights when setting position!
@@ -5912,27 +5449,30 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// note can't use the modelview as it's calced late		
 		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx, posy, posz, 1.0f);
 
-		if (joglesctx.pointLight[lightSlot] == null)
-			joglesctx.pointLight[lightSlot] = new LightData();
+		if (joglesctx.glLightSource[lightSlot] == null)
+		{
+			joglesctx.glLightSource[lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource[lightSlot] = new glLightSource();
+		}
 
-		joglesctx.pointLight[lightSlot].diffuse.x = red;
-		joglesctx.pointLight[lightSlot].diffuse.y = green;
-		joglesctx.pointLight[lightSlot].diffuse.z = blue;
-		joglesctx.pointLight[lightSlot].diffuse.w = 1.0f;
-		joglesctx.pointLight[lightSlot].specular.x = red;
-		joglesctx.pointLight[lightSlot].specular.y = green;
-		joglesctx.pointLight[lightSlot].specular.z = blue;
-		joglesctx.pointLight[lightSlot].specular.w = 1.0f;
-		joglesctx.pointLight[lightSlot].pos.x = lightPos.x;
-		joglesctx.pointLight[lightSlot].pos.y = lightPos.y;
-		joglesctx.pointLight[lightSlot].pos.z = lightPos.z;
-		joglesctx.pointLight[lightSlot].pos.w = 1.0f;// 1 mean pos not dir
-		joglesctx.pointLight[lightSlot].ambient = black;// odd
-		joglesctx.pointLight[lightSlot].GL_CONSTANT_ATTENUATION = attenx;
-		joglesctx.pointLight[lightSlot].GL_LINEAR_ATTENUATION = atteny;
-		joglesctx.pointLight[lightSlot].GL_QUADRATIC_ATTENUATION = attenz;
-		joglesctx.pointLight[lightSlot].GL_SPOT_EXPONENT = 0.0f;
-		joglesctx.pointLight[lightSlot].GL_SPOT_CUTOFF = 180.0f;
+		joglesctx.glLightSource[lightSlot].diffuse.x = red;
+		joglesctx.glLightSource[lightSlot].diffuse.y = green;
+		joglesctx.glLightSource[lightSlot].diffuse.z = blue;
+		joglesctx.glLightSource[lightSlot].diffuse.w = 1.0f;
+		joglesctx.glLightSource[lightSlot].specular.x = red;
+		joglesctx.glLightSource[lightSlot].specular.y = green;
+		joglesctx.glLightSource[lightSlot].specular.z = blue;
+		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
+		joglesctx.glLightSource[lightSlot].position.x = lightPos.x;
+		joglesctx.glLightSource[lightSlot].position.y = lightPos.y;
+		joglesctx.glLightSource[lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
+		//joglesctx.pointLight[lightSlot].ambient = black;// odd
+		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
+		joglesctx.glLightSource[lightSlot].linearAttenuation = atteny;
+		joglesctx.glLightSource[lightSlot].quadraticAttenuation = attenz;
+		joglesctx.glLightSource[lightSlot].spotExponent = 0.0f;
+		joglesctx.glLightSource[lightSlot].spotCutoff = 180.0f;
 	}
 
 	// ---------------------------------------------------------------------
@@ -5950,33 +5490,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((Jogl2es2Context) ctx).perFrameStats.updateSpotLight++;
 
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		
-		int lightNum = GL2ES2.GL_LIGHT0 + lightSlot;
-		float[] values = new float[4];
-		
-		values[0] = red;
-		values[1] = green;
-		values[2] = blue;
-		values[3] = 1.0f;
-		gl.glLightfv(lightNum, GL2ES2.GL_DIFFUSE, values, 0);
-		gl.glLightfv(lightNum, GL2ES2.GL_SPECULAR, values, 0);
-		gl.glLightfv(lightNum, GL2ES2.GL_AMBIENT, black, 0);
-		values[0] = posx;
-		values[1] = posy;
-		values[2] = posz;
-		gl.glLightfv(lightNum, GL2ES2.GL_POSITION, values, 0);
-		gl.glLightf(lightNum, GL2ES2.GL_CONSTANT_ATTENUATION, attenx);
-		gl.glLightf(lightNum, GL2ES2.GL_LINEAR_ATTENUATION, atteny);
-		gl.glLightf(lightNum, GL2ES2.GL_QUADRATIC_ATTENUATION, attenz);
-		values[0] = dirx;
-		values[1] = diry;
-		values[2] = dirz;
-		gl.glLightfv(lightNum, GL2ES2.GL_SPOT_DIRECTION, values, 0);
-		gl.glLightf(lightNum, GL2ES2.GL_SPOT_EXPONENT, concentration);
-		gl.glLightf(lightNum, GL2ES2.GL_SPOT_CUTOFF, (float) (spreadAngle * 180.0f / Math.PI));*/
-
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
 
 		// note the current state of MV MUST be used by the lights when setting position!
@@ -5985,31 +5498,33 @@ class JoglesPipeline extends JoglesDEPPipeline
 		// note can't use the modelview as it's  calced late
 		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx, posy, posz, 1.0f);
 
-		if (joglesctx.spotLight[lightSlot] == null)
-			joglesctx.spotLight[lightSlot] = new LightData();
+		if (joglesctx.glLightSource[lightSlot] == null)
+		{
+			joglesctx.glLightSource[lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource[lightSlot] = new glLightSource();
+		}
 
-		joglesctx.spotLight[lightSlot].diffuse.x = red;
-		joglesctx.spotLight[lightSlot].diffuse.y = green;
-		joglesctx.spotLight[lightSlot].diffuse.z = blue;
-		joglesctx.spotLight[lightSlot].diffuse.w = 1.0f;
-		joglesctx.spotLight[lightSlot].specular.x = red;
-		joglesctx.spotLight[lightSlot].specular.y = green;
-		joglesctx.spotLight[lightSlot].specular.z = blue;
-		joglesctx.spotLight[lightSlot].specular.w = 1.0f;
-		joglesctx.spotLight[lightSlot].pos.x = lightPos.x;
-		joglesctx.spotLight[lightSlot].pos.y = lightPos.y;
-		joglesctx.spotLight[lightSlot].pos.z = lightPos.z;
-		joglesctx.spotLight[lightSlot].pos.w = 1.0f;// 1 mean pos not dir
-		joglesctx.spotLight[lightSlot].ambient = black;// odd
-		joglesctx.spotLight[lightSlot].GL_CONSTANT_ATTENUATION = attenx;
-		joglesctx.spotLight[lightSlot].GL_LINEAR_ATTENUATION = atteny;
-		joglesctx.spotLight[lightSlot].GL_QUADRATIC_ATTENUATION = attenz;
-		joglesctx.spotLight[lightSlot].spotDir.x = dirx;
-		joglesctx.spotLight[lightSlot].spotDir.y = diry;
-		joglesctx.spotLight[lightSlot].spotDir.z = dirz;
-		joglesctx.spotLight[lightSlot].spotDir.w = 1.0f;
-		joglesctx.spotLight[lightSlot].GL_SPOT_EXPONENT = concentration;
-		joglesctx.spotLight[lightSlot].GL_SPOT_CUTOFF = (float) (spreadAngle * 180.0f / Math.PI);
+		joglesctx.glLightSource[lightSlot].diffuse.x = red;
+		joglesctx.glLightSource[lightSlot].diffuse.y = green;
+		joglesctx.glLightSource[lightSlot].diffuse.z = blue;
+		joglesctx.glLightSource[lightSlot].diffuse.w = 1.0f;
+		joglesctx.glLightSource[lightSlot].specular.x = red;
+		joglesctx.glLightSource[lightSlot].specular.y = green;
+		joglesctx.glLightSource[lightSlot].specular.z = blue;
+		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
+		joglesctx.glLightSource[lightSlot].position.x = lightPos.x;
+		joglesctx.glLightSource[lightSlot].position.y = lightPos.y;
+		joglesctx.glLightSource[lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
+		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
+		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
+		joglesctx.glLightSource[lightSlot].linearAttenuation = atteny;
+		joglesctx.glLightSource[lightSlot].quadraticAttenuation = attenz;
+		joglesctx.glLightSource[lightSlot].spotDirection.x = dirx;
+		joglesctx.glLightSource[lightSlot].spotDirection.y = diry;
+		joglesctx.glLightSource[lightSlot].spotDirection.z = dirz;
+		joglesctx.glLightSource[lightSlot].spotExponent = concentration;
+		joglesctx.glLightSource[lightSlot].spotCutoff = (float) (spreadAngle * 180.0f / Math.PI);
 
 	}
 
@@ -6027,27 +5542,12 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((Jogl2es2Context) ctx).perFrameStats.updateExponentialFog++;
 
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		
-		// apparently also lost... I don't know...
-		//https://www.opengl.org/discussion_boards/showthread.php/178629-How-to-create-fog-using-Open-GL-ES-2-0-or-WebGL
-		
-		float[] color = new float[3];
-		color[0] = red;
-		color[1] = green;
-		color[2] = blue;
-		gl.glFogi(GL2ES2.GL_FOG_MODE, GL2ES2.GL_EXP);
-		gl.glFogfv(GL2ES2.GL_FOG_COLOR, color, 0);
-		gl.glFogf(GL2ES2.GL_FOG_DENSITY, density);
-		gl.glEnable(GL2ES2.GL_FOG);*/
-
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
 		joglesctx.fogData.expColor.x = red;
 		joglesctx.fogData.expColor.y = green;
 		joglesctx.fogData.expColor.z = blue;
 		joglesctx.fogData.expDensity = density;
-		joglesctx.fogData.enable = true;
+		joglesctx.fogData.fogEnabled = 1;
 	}
 
 	// ---------------------------------------------------------------------
@@ -6064,20 +5564,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((Jogl2es2Context) ctx).perFrameStats.updateLinearFog++;
 
-		/*	GL2 gl = context(ctx).getGL().getGL2();
-		//GL2ES2 gl = context(ctx).getGL().getGL2ES2();
-		//gone
-		
-		float[] color = new float[3];
-		color[0] = red;
-		color[1] = green;
-		color[2] = blue;
-		gl.glFogi(GL2ES2.GL_FOG_MODE, GL2ES2.GL_LINEAR);
-		gl.glFogfv(GL2ES2.GL_FOG_COLOR, color, 0);
-		gl.glFogf(GL2ES2.GL_FOG_START, (float) fdist);
-		gl.glFogf(GL2ES2.GL_FOG_END, (float) bdist);
-		gl.glEnable(GL2ES2.GL_FOG);*/
-
 		// see
 		// https://www.opengl.org/discussion_boards/showthread.php/151415-Fog-with-pixel-shader-%28arb_fragment_program%29
 
@@ -6087,7 +5573,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.fogData.linearColor.z = blue;
 		joglesctx.fogData.linearStart = (float) fdist;
 		joglesctx.fogData.linearEnd = (float) bdist;
-		joglesctx.fogData.enable = true;
+		joglesctx.fogData.fogEnabled = 1;
 	}
 
 	// native method for disabling fog
@@ -6101,7 +5587,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.disableFog++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		joglesctx.fogData.enable = false;
+		joglesctx.fogData.fogEnabled = 0;
 	}
 
 	// native method for setting fog enable flag
@@ -6115,7 +5601,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.setFogEnableFlag++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		joglesctx.fogData.enable = enable;
+		joglesctx.fogData.fogEnabled = enable ? 1 : 0;
 	}
 	// ---------------------------------------------------------------------
 
@@ -6175,7 +5661,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.objectColor.y = green;
 		joglesctx.objectColor.z = blue;
 		joglesctx.objectColor.w = alpha;
-		joglesctx.materialData.lightEnabled = lightEnable;
+		joglesctx.materialData.lightEnabled = lightEnable ? 1 : 0;
 		joglesctx.materialData.shininess = shininess;
 		joglesctx.materialData.emission.x = eRed;
 		joglesctx.materialData.emission.y = eGreen;
@@ -6488,7 +5974,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		joglesctx.renderingData.ignoreVertexColors = ignoreVertexColors ? 1 : 0;
-		;
 
 		if (rasterOpEnable)
 		{
@@ -6580,10 +6065,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 		joglesctx.renderingData.alphaTestFunction = RenderingAttributes.ALWAYS;
 		joglesctx.renderingData.alphaTestValue = 0;
 		joglesctx.renderingData.ignoreVertexColors = 0;
-
-		// RAISE_BUG: yep only called on a null RenderingAttributes
-		// FIXME: this call does not set stencil test, so possibly this is why the rendering attributes
-		// caused such a mess when not present??
 
 		if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
 		{
@@ -8216,7 +7697,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 		if (gl13)
 		{
 
-			//FIXME: setting this to cv.maxTexCoordSets = 8; and cutting the rest out doesn't work!
+			// FIXME: setting this to cv.maxTexCoordSets = 8; and cutting the rest out doesn't work!
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_MULTI_TEXTURE;
 			cv.multiTexAccelerated = true;
 			int[] tmp = new int[1];
@@ -8362,7 +7843,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (major < 1 || (major == 1 && minor < 2))
 		{
-
 			// In some double createNewContext uses or getPerferredConfiguration called before a Frame is constructed
 			// the disabling of D3D can cause this issue
 			// see Bug 1201 - Crash with option "sun.java2d.d3d=false"

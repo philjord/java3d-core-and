@@ -127,52 +127,16 @@ public class Jogl2es2Context extends JoglContext
 		public int programToUBOBuf = -1;
 	}
 
-	//Light data recorded to be handed into shader as uniform on next update
-	//see https://www.opengl.org/sdk/docs/man2/ glLight
-	// for usage details
-	public static class LightData
-	{
-		public Vector4f ambient = new Vector4f();
-		public Vector4f diffuse = new Vector4f();
-		public Vector4f specular = new Vector4f();
-		public Vector4f pos = new Vector4f();
-		public Vector4f spotDir = new Vector4f();
-		public float GL_CONSTANT_ATTENUATION;
-		public float GL_LINEAR_ATTENUATION;
-		public float GL_QUADRATIC_ATTENUATION;
-		public float GL_SPOT_EXPONENT;
-		public float GL_SPOT_CUTOFF;
-	}
+	
+	public fogData fogData = new fogData();
 
+	public glFrontMaterial materialData = new glFrontMaterial();
 	// should use getMaximumLights() in pipeline? though it's up to the shader
 	public static int MAX_LIGHTS = 32;
-	public LightData[] dirLight = new LightData[MAX_LIGHTS];
-	public LightData[] pointLight = new LightData[MAX_LIGHTS];
-	public LightData[] spotLight = new LightData[MAX_LIGHTS];
+	public int numberOfLights;
+	public glLightSource[] glLightSource = new glLightSource[MAX_LIGHTS];	 
 
-	public static class FogData
-	{
-		public boolean enable = false;
-		public Vector3f expColor = new Vector3f();
-		public float expDensity = 0;
-		public Vector3f linearColor = new Vector3f();
-		public float linearStart = 0;
-		public float linearEnd = 0;
-	}
-
-	public FogData fogData = new FogData();
-
-	public static class MaterialData
-	{
-		public boolean lightEnabled = true;
-		public Vector3f emission = new Vector3f();
-		public Vector3f ambient = new Vector3f();
-		public Vector3f specular = new Vector3f();
-		public Vector4f diffuse = new Vector4f();
-		public float shininess;
-	}
-
-	public MaterialData materialData = new MaterialData();
+	
 
 	//See here http://download.java.net/media/java3d/javadoc/1.3.2/javax/media/j3d/RenderingAttributes.html
 	// For coloring implementation details
@@ -194,8 +158,6 @@ public class Jogl2es2Context extends JoglContext
 
 	public RenderingData renderingData = new RenderingData();
 
-	public boolean[] enabledLights = new boolean[MAX_LIGHTS];
-
 	public Vector4f currentAmbientColor = new Vector4f();
 
 	public Matrix4d textureTransform = new Matrix4d();
@@ -215,38 +177,8 @@ public class Jogl2es2Context extends JoglContext
 	 * @author phil
 	 *
 	 */
-
-	//TODO: maybe many bufers allows buffersubdata to run faster 
-	public int globalUboBufId = -1; // the one buffer is bound once then reused, dear god
-
 	public static class LocationData
 	{
-		//UBO data
-		public int uboBufId = -1;
-		public int blockIndex = -1;
-		public int blockSize = -1;
-		public int glProjectionMatrixOffset = -1;
-		public int glProjectionMatrixInverseOffset = -1;
-		public int glViewMatrixOffset = -1;
-		public int glModelMatrixOffset = -1;
-		public int glModelViewMatrixOffset = -1;
-		public int glModelViewMatrixInverseOffset = -1;
-		public int glModelViewProjectionMatrixOffset = -1;
-		public int glNormalMatrixOffset = -1;
-		public int glFrontMaterialdiffuseOffset = -1;
-		public int glFrontMaterialemissionOffset = -1;
-		public int glFrontMaterialspecularOffset = -1;
-		public int glFrontMaterialshininessOffset = -1;
-		public int ignoreVertexColorsOffset = -1;
-		public int glLightModelambientOffset = -1;
-		public int objectColorOffset = -1;
-		public int glLightSource0positionOffset = -1;
-		public int glLightSource0diffuseOffset = -1;
-		public int textureTransformOffset = -1;
-		public int alphaTestEnabledOffset = -1;
-		public int alphaTestFunctionOffset = -1;
-		public int alphaTestValueOffset = -1;
-
 		//normal uniform data
 		public int glProjectionMatrix = -1;
 		public int glProjectionMatrixInverse = -1;
@@ -257,25 +189,18 @@ public class Jogl2es2Context extends JoglContext
 		public int glModelViewProjectionMatrix = -1;
 		public int glNormalMatrix = -1;
 		public int ignoreVertexColors = -1;
-		public int glFrontMaterialambient = -1;
-		public int glFrontMaterialdiffuse = -1;
-		public int glFrontMaterialemission = -1;
-		public int glFrontMaterialspecular = -1;
-		public int glFrontMaterialshininess = -1;
 		public int glLightModelambient = -1;
 		public int objectColor = -1;
-		public int glLightSource0position = -1;
-		public int glLightSource0diffuse = -1;
 		public int alphaTestEnabled = -1;
 		public int alphaTestFunction = -1;
 		public int alphaTestValue = -1;
 		public int textureTransform = -1;
-		public int fogEnabled = -1;
-		public int expColor = -1;
-		public int expDensity = -1;
-		public int linearColor = -1;
-		public int linearStart = -1;
-		public int linearEnd = -1;
+
+		public fogDataLocs fogData = new fogDataLocs();
+
+		public glFrontMaterialLocs glFrontMaterial = new glFrontMaterialLocs();
+		public int numberOfLights = -1;
+		public glLightSourceLocs[] glLightSource = new glLightSourceLocs[MAX_LIGHTS];
 
 		public int glVertex = -1;
 		public int glColor = -1;
@@ -326,12 +251,7 @@ public class Jogl2es2Context extends JoglContext
 		public float polygonOffsetFactor;
 		public float polygonOffset;
 
-		public int ignoreVertexColors; //-1 is not set 1,0 bool
-		public Vector4f glFrontMaterialambient= new Vector4f();
-		public Vector4f glFrontMaterialdiffuse = new Vector4f();
-		public Vector3f glFrontMaterialemission = new Vector3f();
-		public Vector3f glFrontMaterialspecular = new Vector3f();
-		public float glFrontMaterialshininess;
+		public int ignoreVertexColors; //-1 indicates not set yet, always set
 		public Vector4f glLightModelambient = new Vector4f();
 		public Vector4f objectColor = new Vector4f();
 		public Matrix4d textureTransform = new Matrix4d();
@@ -340,17 +260,14 @@ public class Jogl2es2Context extends JoglContext
 		public Matrix4d glModelViewMatrixInverse = new Matrix4d();
 		public Matrix4d glModelViewProjectionMatrix = new Matrix4d();
 		public Matrix3d glNormalMatrix = new Matrix3d();
-		public Vector4f glLightSource0position = new Vector4f();
-		public Vector4f glLightSource0diffuse = new Vector4f();
 		public boolean alphaTestEnabled = false;
 		public int alphaTestFunction;
 		public float alphaTestValue;
-		public boolean fogEnabled = false;
-		public Vector3f expColor = new Vector3f();
-		public float expDensity;
-		public Vector3f linearColor = new Vector3f();
-		public float linearStart;
-		public float linearEnd;
+
+		public fogData fogData = new fogData();
+		public glFrontMaterial glFrontMaterial = new glFrontMaterial();
+		public int numberOfLights = -1;
+		public glLightSource[] glLightSource = new glLightSource[MAX_LIGHTS];
 
 		public void clear()
 		{
@@ -382,11 +299,6 @@ public class Jogl2es2Context extends JoglContext
 			polygonOffsetFactor = -1;
 			polygonOffset = -1;
 			ignoreVertexColors = -1;
-			glFrontMaterialambient.set(-999f, -999f, -999f, -999f);
-			glFrontMaterialdiffuse.set(-999f, -999f, -999f, -999f);
-			glFrontMaterialemission.set(-999f, -999f, -999f);
-			glFrontMaterialspecular.set(-999f, -999f, -999f);
-			glFrontMaterialshininess = -99;
 			glLightModelambient.set(-999f, -999f, -999f, -999f);
 			objectColor.set(-999f, -999f, -999f, -999f);
 			textureTransform.setIdentity();
@@ -395,17 +307,17 @@ public class Jogl2es2Context extends JoglContext
 			glModelViewMatrixInverse.setIdentity();
 			glModelViewProjectionMatrix.setIdentity();
 			glNormalMatrix.setIdentity();
-			glLightSource0position.set(-999f, -999f, -999f, -999f);
-			glLightSource0diffuse.set(-999f, -999f, -999f, -999f);
 			alphaTestEnabled = false;
 			alphaTestFunction = -1;
 			alphaTestValue = -99f;
-			fogEnabled = false;
-			expColor.set(-999f, -999f, -999f);
-			expDensity = -99f;
-			linearColor.set(-999f, -999f, -999f);
-			linearStart = -99f;
-			linearEnd = -99f;
+			
+			fogData.clear();
+			glFrontMaterial.clear();
+			for (int i = 0; i < MAX_LIGHTS; i++)
+			{
+				if (glLightSource[i] != null)
+					glLightSource[i].clear();
+			}
 		}
 	}
 
@@ -416,30 +328,6 @@ public class Jogl2es2Context extends JoglContext
 	 *  to see if the uniform locations have changed even if a new shader is being used
 	 */
 	public int prevShaderProgram;
-
-	public static class ShaderFFPLocations
-	{
-		public int glProjectionMatrix;
-		public int glProjectionMatrixInverse;
-		public int modelMatrix;
-		public int viewMatrix;
-		public int glModelViewMatrix;
-		public int glModelViewMatrixInverse;
-		public int glModelViewProjectionMatrix;
-		public int glNormalMatrix;
-		public int glFrontMaterialdiffuse;
-		public int glFrontMaterialemission;
-		public int glFrontMaterialspecular;
-		public int glFrontMaterialshininess;
-		public int ignoreVertexColors;
-		public int glLightModelambient;
-		public int glLightSource0position;
-		public int glLightSource0diffuse;
-		public int textureTransform;
-	}
-
-	//a plce to put teh previous shader locations for FFP minimize calls
-	public ShaderFFPLocations[] shaderFFPLocations = new ShaderFFPLocations[100];
 
 	// The per frame stats
 	public JoglesPerFrameStats perFrameStats = new JoglesPerFrameStats();
@@ -462,6 +350,245 @@ public class Jogl2es2Context extends JoglContext
 	}
 
 	// just a singleton of the handy matrix/array operations
-	public JoglesMatrixUtil matrixUtil = new JoglesMatrixUtil();
+	public Jogl2es2MatrixUtil matrixUtil = new Jogl2es2MatrixUtil();
 
+	/////////////////////////////////////S H A D E R   S T R U C T S /////////////////////////////////////////////////////
+
+	// in the shader as follows
+	// struct material
+	// {
+	// 	int lightEnabled;
+	// 	vec4 ambient;
+	// 	vec4 diffuse;
+	// 	vec4 emission;// note vec4 extra 1.0 sent through for ease
+	// 	vec3 specular;
+	// 	float shininess;
+	// };
+	// uniform material glFrontMaterial;
+	public static class glFrontMaterial
+	{
+		public int lightEnabled = -1;
+		public Vector4f ambient = new Vector4f();
+		public Vector4f diffuse = new Vector4f();
+		public Vector3f emission = new Vector3f();
+		public Vector3f specular = new Vector3f();
+		public float shininess;
+
+		public void clear()
+		{
+			lightEnabled = -1;
+			ambient.set(-999f, -999f, -999f, -999f);
+			diffuse.set(-999f, -999f, -999f, -999f);
+			emission.set(-999f, -999f, -999f);
+			specular.set(-999f, -999f, -999f);
+			shininess = -99;
+		}
+
+		public void set(glFrontMaterial ogfm)
+		{
+			lightEnabled = ogfm.lightEnabled;
+			ambient.set(ogfm.ambient);
+			diffuse.set(ogfm.diffuse);
+			emission.set(ogfm.emission);
+			specular.set(ogfm.specular);
+			shininess = ogfm.shininess;
+		}
+
+		@Override
+		public boolean equals(Object o)
+		{
+			if (o instanceof glFrontMaterial)
+			{
+				glFrontMaterial ogfm = (glFrontMaterial) o;
+				return ogfm.lightEnabled == lightEnabled && ogfm.ambient.equals(ambient) && ogfm.diffuse.equals(diffuse)
+						&& ogfm.emission.equals(emission) && ogfm.specular.equals(specular) && ogfm.shininess == shininess;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	public static class glFrontMaterialLocs
+	{
+		public int lightEnabled = -1;
+		public int ambient = -1;
+		public int diffuse = -1;
+		public int emission = -1;
+		public int specular = -1;
+		public int shininess = -1;
+
+		public boolean present()
+		{
+			return lightEnabled != -1 || ambient != -1 || diffuse != -1 || emission != -1 || specular != -1 || shininess != -1;
+		}
+	}
+	//	struct lightSource
+	//	{
+	//	  int enabled;
+	//	  vec4 position;
+	//	  vec4 diffuse;
+	//	  vec4 specular;
+	//	  float constantAttenuation, linearAttenuation, quadraticAttenuation;
+	//	  float spotCutoff, spotExponent;
+	//	  vec3 spotDirection;
+	//	};
+	//
+	//	uniform int numberOfLights;
+	//	const int maxLights = 2;
+	//	uniform lightSource glLightSource[maxLights];
+
+	//see https://en.wikibooks.org/wiki/GLSL_Programming/GLUT/Multiple_Lights
+	public static class glLightSource
+	{
+		public int enabled = -1;
+		public Vector4f position = new Vector4f();
+		//public Vector4f ambient = new Vector4f();//removed as an oddity
+		public Vector4f diffuse = new Vector4f();
+		public Vector4f specular = new Vector4f();
+		public float constantAttenuation;
+		public float linearAttenuation;
+		public float quadraticAttenuation;
+		public float spotCutoff;
+		public float spotExponent;
+		public Vector3f spotDirection = new Vector3f();
+
+		public void clear()
+		{
+			enabled = -1;
+			position.set(-999f, -999f, -999f, -999f);
+			diffuse.set(-999f, -999f, -999f, -999f);
+			specular.set(-999f, -999f, -999f, -999f);
+			constantAttenuation = -99;
+			linearAttenuation = -99;
+			quadraticAttenuation = -99;
+			spotCutoff = -99;
+			spotExponent = -99;
+			spotDirection.set(-999f, -999f, -999f);
+		}
+
+		public void set(glLightSource ogfm)
+		{
+			enabled = ogfm.enabled;
+			position.set(ogfm.position);
+			diffuse.set(ogfm.diffuse);
+			specular.set(ogfm.specular);
+			constantAttenuation = ogfm.constantAttenuation;
+			linearAttenuation = ogfm.linearAttenuation;
+			quadraticAttenuation = ogfm.quadraticAttenuation;
+			spotCutoff = ogfm.spotCutoff;
+			spotExponent = ogfm.spotExponent;
+			spotDirection.set(ogfm.spotDirection);
+		}
+
+		@Override
+		public boolean equals(Object o)
+		{
+			if (o instanceof glLightSource)
+			{
+				glLightSource ogfm = (glLightSource) o;
+				return enabled == ogfm.enabled && ogfm.position.equals(position) && ogfm.diffuse.equals(diffuse)
+						&& ogfm.specular.equals(specular) && ogfm.constantAttenuation == constantAttenuation
+						&& ogfm.linearAttenuation == linearAttenuation && ogfm.quadraticAttenuation == quadraticAttenuation
+						&& ogfm.spotCutoff == spotCutoff && ogfm.spotExponent == spotExponent && ogfm.spotDirection.equals(spotDirection);
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	public static class glLightSourceLocs
+	{
+		public int enabled = -1;
+		public int position = -1;
+		public int diffuse = -1;
+		public int specular = -1;
+		public int constantAttenuation = -1;
+		public int linearAttenuation = -1;
+		public int quadraticAttenuation = -1;
+		public int spotCutoff = -1;
+		public int spotExponent = -1;
+		public int spotDirection = -1;
+
+		public boolean present()
+		{
+			return enabled != -1 || position != -1 || diffuse != -1 || specular != -1 || constantAttenuation != -1
+					|| linearAttenuation != -1 || quadraticAttenuation != -1 || spotCutoff != -1 || spotExponent != -1
+					|| spotDirection != -1;
+		}
+	}
+
+	// in the shader as follows
+	// struct fogData
+	// {
+	// int fogEnabled = -1;
+	// vec3 expColor = new Vector3f();
+	// float expDensity;
+	// vec3 linearColor = new Vector3f();
+	// float linearStart;
+	// float linearEnd;
+	// };
+	// uniform fogData fogData;
+	public static class fogData
+	{
+		public int fogEnabled = -1;
+		public Vector3f expColor = new Vector3f();
+		public float expDensity;
+		public Vector3f linearColor = new Vector3f();
+		public float linearStart;
+		public float linearEnd;
+
+		public void clear()
+		{
+			fogEnabled = -1;
+			expColor.set(-999f, -999f, -999f);
+			expDensity = -99;
+			linearColor.set(-999f, -999f, -999f);
+			linearStart = -99;
+			linearEnd = -99;
+		}
+
+		public void set(fogData ogfm)
+		{
+			fogEnabled = ogfm.fogEnabled;
+			expColor.set(ogfm.expColor);
+			expDensity = ogfm.expDensity;
+			linearColor.set(ogfm.linearColor);
+			linearStart = ogfm.linearStart;
+			linearEnd = ogfm.linearEnd;
+		}
+
+		@Override
+		public boolean equals(Object o)
+		{
+			if (o instanceof fogData)
+			{
+				fogData ogfm = (fogData) o;
+				return ogfm.fogEnabled == fogEnabled && ogfm.expColor.equals(expColor) && ogfm.expDensity == expDensity
+						&& ogfm.linearColor.equals(linearColor) && ogfm.linearStart == linearStart && ogfm.linearEnd == linearEnd;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	public static class fogDataLocs
+	{
+		public int fogEnabled = -1;
+		public int expColor = -1;
+		public int expDensity = -1;
+		public int linearColor = -1;
+		public int linearStart = -1;
+		public int linearEnd = -1;
+
+		public boolean present()
+		{
+			return fogEnabled != -1 || expColor != -1 || expDensity != -1 || linearColor != -1 || linearStart != -1 || linearEnd != -1;
+		}
+	}
 }
