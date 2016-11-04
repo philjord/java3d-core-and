@@ -15,7 +15,7 @@ import org.jogamp.vecmath.Vector4f;
  * @author phil
  *
  */
-class JoglesMatrixUtil
+class Jogl2es2MatrixUtil
 {
 
 	/**

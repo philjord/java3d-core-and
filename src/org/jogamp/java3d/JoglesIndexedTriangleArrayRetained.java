@@ -190,9 +190,9 @@ public class JoglesIndexedTriangleArrayRetained extends IndexedTriangleArrayReta
 				interleavedBuffer.position(i);
 				ShortBuffer sb = interleavedBuffer.asShortBuffer();
 
-				float xf = JoglesMatrixUtil.halfToFloat(sb.get(0));
-				float yf = JoglesMatrixUtil.halfToFloat(sb.get(1));
-				float zf = JoglesMatrixUtil.halfToFloat(sb.get(2));
+				float xf = Jogl2es2MatrixUtil.halfToFloat(sb.get(0));
+				float yf = Jogl2es2MatrixUtil.halfToFloat(sb.get(1));
+				float zf = Jogl2es2MatrixUtil.halfToFloat(sb.get(2));
 
 				if (xf > xmax)
 					xmax = xf;

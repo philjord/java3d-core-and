@@ -14,9 +14,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jogamp.java3d.Jogl2es2Context.GeometryData;
-import org.jogamp.java3d.Jogl2es2Context.LightData;
 import org.jogamp.java3d.Jogl2es2Context.LocationData;
 import org.jogamp.java3d.Jogl2es2Context.ProgramData;
+import org.jogamp.java3d.Jogl2es2Context.glLightSource;
+import org.jogamp.java3d.Jogl2es2Context.glLightSourceLocs;
 import org.jogamp.vecmath.SingularMatrixException;
 import org.jogamp.vecmath.Vector4f;
 
@@ -3612,7 +3613,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			//		|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 			//{
 			ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-			JoglesMatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
+			Jogl2es2MatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
 			//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
 			gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
@@ -4414,7 +4415,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 							int startPos = interleavedBuffer.position();
 							for (int c = 0; c < 3; c++)
 							{
-								short hf = (short) JoglesMatrixUtil.halfFromFloat(fverts.get());
+								short hf = (short) Jogl2es2MatrixUtil.halfFromFloat(fverts.get());
 								interleavedBuffer.putShort(hf);
 							}
 
@@ -4512,7 +4513,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 									int startPos = interleavedBuffer.position();
 									for (int c = 0; c < texStride; c++)
 									{
-										short hf = (short) JoglesMatrixUtil.halfFromFloat(tcBuf.get());
+										short hf = (short) Jogl2es2MatrixUtil.halfFromFloat(tcBuf.get());
 										interleavedBuffer.putShort(hf);
 									}
 
@@ -7210,9 +7211,17 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.setLightEnables++;
 
 		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		joglesctx.numberOfLights = maxLights;
 		for (int i = 0; i < maxLights; i++)
 		{
-			joglesctx.enabledLights[i] = ((enableMask & (1 << i)) != 0);
+			boolean enable = ((enableMask << i) != 0);
+			if (joglesctx.glLightSource[i] == null)
+			{
+				joglesctx.glLightSource[i] = new glLightSource();
+				joglesctx.gl_state.glLightSource[i] = new glLightSource();
+			}
+
+			joglesctx.glLightSource[i].enabled = enable ? 1 : 0;
 		}
 	}
 
