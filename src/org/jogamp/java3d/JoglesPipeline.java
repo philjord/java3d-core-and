@@ -3726,40 +3726,43 @@ class JoglesPipeline extends JoglesDEPPipeline
 		}
 
 		// the lighting structures 
-		for (int i = 0; i < ctx.numberOfLights; i++)
+		int lightSlotToUse = 0;
+		for (int i = 0; i < ctx.maxLights; i++)
 		{
-			if (locs.glLightSource[i].present())
+			if (locs.glLightSource[lightSlotToUse].present())
 			{
-				if (!MINIMISE_NATIVE_CALLS_FFP
-						|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource[i].equals(ctx.glLightSource[i])))
+				if (ctx.glLightSource[i].enabled == 1)
 				{
-					if (locs.glLightSource[i].enabled != -1)
-						gl.glUniform1i(locs.glLightSource[i].enabled, ctx.glLightSource[i].enabled);
-					if (ctx.glLightSource[i].enabled == 1)
+					if (!MINIMISE_NATIVE_CALLS_FFP
+							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource[i].equals(ctx.glLightSource[i])))
 					{
-						if (locs.glLightSource[i].position != -1)
-							gl.glUniform4f(locs.glLightSource[i].position, ctx.glLightSource[i].position.x, ctx.glLightSource[i].position.y,
-									ctx.glLightSource[i].position.z, ctx.glLightSource[i].position.w);
-						if (locs.glLightSource[i].diffuse != -1)
-							gl.glUniform4f(locs.glLightSource[i].diffuse, ctx.glLightSource[i].diffuse.x, ctx.glLightSource[i].diffuse.y,
-									ctx.glLightSource[i].diffuse.z, ctx.glLightSource[i].diffuse.w);
-						if (locs.glLightSource[i].specular != -1)
-							gl.glUniform4f(locs.glLightSource[i].specular, ctx.glLightSource[i].specular.x, ctx.glLightSource[i].specular.y,
-									ctx.glLightSource[i].specular.z, ctx.glLightSource[i].specular.w);
-						if (locs.glLightSource[i].constantAttenuation != -1)
-							gl.glUniform1f(locs.glLightSource[i].constantAttenuation, ctx.glLightSource[i].constantAttenuation);
-						if (locs.glLightSource[i].linearAttenuation != -1)
-							gl.glUniform1f(locs.glLightSource[i].linearAttenuation, ctx.glLightSource[i].linearAttenuation);
-						if (locs.glLightSource[i].quadraticAttenuation != -1)
-							gl.glUniform1f(locs.glLightSource[i].quadraticAttenuation, ctx.glLightSource[i].quadraticAttenuation);
-						if (locs.glLightSource[i].spotCutoff != -1)
-							gl.glUniform1f(locs.glLightSource[i].spotCutoff, ctx.glLightSource[i].spotCutoff);
-						if (locs.glLightSource[i].spotExponent != -1)
-							gl.glUniform1f(locs.glLightSource[i].spotExponent, ctx.glLightSource[i].spotExponent);
-						if (locs.glLightSource[i].spotDirection != -1)
-							gl.glUniform3f(locs.glLightSource[i].spotDirection, ctx.glLightSource[i].spotDirection.x,
+						ctx.glLightSource[i].prevLightSlot = lightSlotToUse;// record for the equals check
+						if (locs.glLightSource[lightSlotToUse].position != -1)
+							gl.glUniform4f(locs.glLightSource[lightSlotToUse].position, ctx.glLightSource[i].position.x,
+									ctx.glLightSource[i].position.y, ctx.glLightSource[i].position.z, ctx.glLightSource[i].position.w);
+						if (locs.glLightSource[lightSlotToUse].diffuse != -1)
+							gl.glUniform4f(locs.glLightSource[lightSlotToUse].diffuse, ctx.glLightSource[i].diffuse.x,
+									ctx.glLightSource[i].diffuse.y, ctx.glLightSource[i].diffuse.z, ctx.glLightSource[i].diffuse.w);
+						if (locs.glLightSource[lightSlotToUse].specular != -1)
+							gl.glUniform4f(locs.glLightSource[lightSlotToUse].specular, ctx.glLightSource[i].specular.x,
+									ctx.glLightSource[i].specular.y, ctx.glLightSource[i].specular.z, ctx.glLightSource[i].specular.w);
+						if (locs.glLightSource[lightSlotToUse].constantAttenuation != -1)
+							gl.glUniform1f(locs.glLightSource[lightSlotToUse].constantAttenuation,
+									ctx.glLightSource[i].constantAttenuation);
+						if (locs.glLightSource[lightSlotToUse].linearAttenuation != -1)
+							gl.glUniform1f(locs.glLightSource[lightSlotToUse].linearAttenuation, ctx.glLightSource[i].linearAttenuation);
+						if (locs.glLightSource[lightSlotToUse].quadraticAttenuation != -1)
+							gl.glUniform1f(locs.glLightSource[lightSlotToUse].quadraticAttenuation,
+									ctx.glLightSource[i].quadraticAttenuation);
+						if (locs.glLightSource[lightSlotToUse].spotCutoff != -1)
+							gl.glUniform1f(locs.glLightSource[lightSlotToUse].spotCutoff, ctx.glLightSource[i].spotCutoff);
+						if (locs.glLightSource[lightSlotToUse].spotExponent != -1)
+							gl.glUniform1f(locs.glLightSource[lightSlotToUse].spotExponent, ctx.glLightSource[i].spotExponent);
+						if (locs.glLightSource[lightSlotToUse].spotDirection != -1)
+							gl.glUniform3f(locs.glLightSource[lightSlotToUse].spotDirection, ctx.glLightSource[i].spotDirection.x,
 									ctx.glLightSource[i].spotDirection.y, ctx.glLightSource[i].spotDirection.z);
 					}
+					lightSlotToUse++;
 
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -3901,12 +3904,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
 
-			//lights, notice the vertex attribute is made of a string concat
-			// possibly in es you can't use an array of struct to get locs?
+			// lights, notice the vertex attribute is made of a string concat
+			// possibly in es you can't use an array of struct to get locs? TODO: check this
 			for (int i = 0; i < locs.glLightSource.length; i++)
 			{
 				locs.glLightSource[i] = new glLightSourceLocs();
-				locs.glLightSource[i].enabled = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].enabled");
 				locs.glLightSource[i].position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
 				locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
 				locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
@@ -7211,10 +7213,11 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.setLightEnables++;
 
 		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
-		joglesctx.numberOfLights = maxLights;
+		joglesctx.maxLights = maxLights;
+		joglesctx.numberOfLights = 0;
 		for (int i = 0; i < maxLights; i++)
 		{
-			boolean enable = ((enableMask << i) != 0);
+			boolean enable = (enableMask & (1 << i)) >> i != 0;
 			if (joglesctx.glLightSource[i] == null)
 			{
 				joglesctx.glLightSource[i] = new glLightSource();
@@ -7222,6 +7225,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 			}
 
 			joglesctx.glLightSource[i].enabled = enable ? 1 : 0;
+			joglesctx.numberOfLights += enable ? 1 : 0;
 		}
 	}
 

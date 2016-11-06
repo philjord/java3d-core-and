@@ -17,9 +17,8 @@ import utils.SparseArray;
 
 public class Jogl2es2Context extends JoglContext
 {
-	
-	//NOTES to convert to core
 
+	//NOTES to convert to core
 
 	// Step to convert
 	// 1. replace all SpareArray< with HashMap<Integer, JoglesContext and JoglesPipeline
@@ -35,8 +34,7 @@ public class Jogl2es2Context extends JoglContext
 	// 11. update MasterControl to include jogl2es2 pipeline 
 	// 12. swap the use of teh gl2es2 and gl2es3 variables in context to getters and re-obtain each time
 	//
-	
-	
+
 	//TODO: heaps of lights appears to kill performance, why?
 
 	//pre-casting for speed
@@ -127,16 +125,14 @@ public class Jogl2es2Context extends JoglContext
 		public int programToUBOBuf = -1;
 	}
 
-	
 	public fogData fogData = new fogData();
 
 	public glFrontMaterial materialData = new glFrontMaterial();
 	// should use getMaximumLights() in pipeline? though it's up to the shader
 	public static int MAX_LIGHTS = 32;
+	public int maxLights;
 	public int numberOfLights;
-	public glLightSource[] glLightSource = new glLightSource[MAX_LIGHTS];	 
-
-	
+	public glLightSource[] glLightSource = new glLightSource[MAX_LIGHTS];
 
 	//See here http://download.java.net/media/java3d/javadoc/1.3.2/javax/media/j3d/RenderingAttributes.html
 	// For coloring implementation details
@@ -310,7 +306,7 @@ public class Jogl2es2Context extends JoglContext
 			alphaTestEnabled = false;
 			alphaTestFunction = -1;
 			alphaTestValue = -99f;
-			
+
 			fogData.clear();
 			glFrontMaterial.clear();
 			for (int i = 0; i < MAX_LIGHTS; i++)
@@ -426,7 +422,6 @@ public class Jogl2es2Context extends JoglContext
 	}
 	//	struct lightSource
 	//	{
-	//	  int enabled;
 	//	  vec4 position;
 	//	  vec4 diffuse;
 	//	  vec4 specular;
@@ -443,6 +438,7 @@ public class Jogl2es2Context extends JoglContext
 	public static class glLightSource
 	{
 		public int enabled = -1;
+		public int prevLightSlot = -1;
 		public Vector4f position = new Vector4f();
 		//public Vector4f ambient = new Vector4f();//removed as an oddity
 		public Vector4f diffuse = new Vector4f();
@@ -457,6 +453,7 @@ public class Jogl2es2Context extends JoglContext
 		public void clear()
 		{
 			enabled = -1;
+			prevLightSlot = -1;
 			position.set(-999f, -999f, -999f, -999f);
 			diffuse.set(-999f, -999f, -999f, -999f);
 			specular.set(-999f, -999f, -999f, -999f);
@@ -471,6 +468,7 @@ public class Jogl2es2Context extends JoglContext
 		public void set(glLightSource ogfm)
 		{
 			enabled = ogfm.enabled;
+			prevLightSlot = ogfm.prevLightSlot;
 			position.set(ogfm.position);
 			diffuse.set(ogfm.diffuse);
 			specular.set(ogfm.specular);
@@ -488,8 +486,8 @@ public class Jogl2es2Context extends JoglContext
 			if (o instanceof glLightSource)
 			{
 				glLightSource ogfm = (glLightSource) o;
-				return enabled == ogfm.enabled && ogfm.position.equals(position) && ogfm.diffuse.equals(diffuse)
-						&& ogfm.specular.equals(specular) && ogfm.constantAttenuation == constantAttenuation
+				return enabled == ogfm.enabled && prevLightSlot == ogfm.prevLightSlot && ogfm.position.equals(position)
+						&& ogfm.diffuse.equals(diffuse) && ogfm.specular.equals(specular) && ogfm.constantAttenuation == constantAttenuation
 						&& ogfm.linearAttenuation == linearAttenuation && ogfm.quadraticAttenuation == quadraticAttenuation
 						&& ogfm.spotCutoff == spotCutoff && ogfm.spotExponent == spotExponent && ogfm.spotDirection.equals(spotDirection);
 			}
@@ -502,7 +500,6 @@ public class Jogl2es2Context extends JoglContext
 
 	public static class glLightSourceLocs
 	{
-		public int enabled = -1;
 		public int position = -1;
 		public int diffuse = -1;
 		public int specular = -1;
@@ -515,9 +512,8 @@ public class Jogl2es2Context extends JoglContext
 
 		public boolean present()
 		{
-			return enabled != -1 || position != -1 || diffuse != -1 || specular != -1 || constantAttenuation != -1
-					|| linearAttenuation != -1 || quadraticAttenuation != -1 || spotCutoff != -1 || spotExponent != -1
-					|| spotDirection != -1;
+			return position != -1 || diffuse != -1 || specular != -1 || constantAttenuation != -1 || linearAttenuation != -1
+					|| quadraticAttenuation != -1 || spotCutoff != -1 || spotExponent != -1 || spotDirection != -1;
 		}
 	}
 
