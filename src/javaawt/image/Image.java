@@ -4,6 +4,8 @@ import javaawt.Graphics;
 
 public abstract class Image
 {
+	public static final int SCALE_DEFAULT = 1;
+
 	public void flush()
 	{
 
