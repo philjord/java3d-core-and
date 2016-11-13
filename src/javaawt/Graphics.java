@@ -1,6 +1,8 @@
 package javaawt;
 
-public class Graphics
+public interface Graphics
 {
+	public Object getDelegate();
 
+	public void dispose();
 }

@@ -1,8 +1,9 @@
 package javaawt.image;
 
-public class SampleModel
+public abstract class SampleModel
 {
-
+	public abstract Object getDelegate();
+	
 	public int getNumBands()
 	{
 		throw new UnsupportedOperationException();

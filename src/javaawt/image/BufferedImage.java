@@ -1,14 +1,32 @@
 package javaawt.image;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
 
 import javaawt.Graphics;
 import javaawt.Graphics2D;
+import javaawt.Image;
 import javaawt.Point;
 import javaawt.Rectangle;
+import javaawt.Transparency;
 
-public class BufferedImage extends Image implements WritableRenderedImage
+public class BufferedImage extends Image implements WritableRenderedImage, Transparency
 {
+	/**
+	 * SO think I want a 3 way split of this bad boy
+	 * On desktop for boring buffered Images extend with BufferedImage itself (make a wrapper)
+	 * 
+	 * On android for boring buffered images go this way
+	 * ((ImageView)view).setImageBitmap(BitmapFactory.decodeFile("/data/data/com.myapp/files/someimage.jpg"));
+	 * and for graphics2d https://developer.android.com/reference/android/graphics/Canvas.html
+	 * 
+	 * For compressed do as I am doing now by extending and just using the smallest parts as need now
+	 * 
+	 * 
+	 * 
+	 * https://github.com/trashcutter/AnkiStats/tree/master/app/src/main/java/com/wildplot/android/rendering/graphics/wrapper
+	 */
 	public static final int TYPE_CUSTOM = 0;
 
 	public static final int TYPE_INT_RGB = 1;
@@ -37,9 +55,63 @@ public class BufferedImage extends Image implements WritableRenderedImage
 
 	public static final int TYPE_BYTE_INDEXED = 13;
 
+ 
+
+	private static Class<?> delegateClass = null;
+	private BufferedImage delegate = null;
+
+	//Class<?> newClass = Class.forName("nif.niobject.interpolator." + objectType);
+	public static void installBufferedImageDelegate(Class<?> newDelegateClass)
+	{
+		delegateClass = newDelegateClass;
+	}
+
+	protected BufferedImage()
+	{
+		//For use by DDS bufferedImage, and any sub class that doesn't need the delegate system
+	}
+	 
+	
 	public BufferedImage(int i, int j, int typeIntArgb)
 	{
-		//For use by DDS bufferedImage
+		if (delegateClass != null)
+		{
+		//	Constructor<?>[] consss = delegateClass.getConstructors();
+			Constructor<?> cons = delegateClass.getConstructors()[0];
+			try
+			{
+				Object obj = cons.newInstance(new Integer(i), new Integer(j), new Integer(typeIntArgb));
+				delegate = (BufferedImage) obj;
+			}
+			catch (InstantiationException e)
+			{
+				e.printStackTrace();
+			}
+			catch (IllegalAccessException e)
+			{
+				e.printStackTrace();
+			}
+			catch (IllegalArgumentException e)
+			{
+				e.printStackTrace();
+			}
+			catch (InvocationTargetException e)
+			{
+				e.printStackTrace();
+			}
+
+		}
+
+	}
+
+	@Override
+	public Object getDelegate()
+	{
+		//just trust it, delegate of desktopbi return bi
+		if (delegate != null)
+			return delegate.getDelegate();
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	public BufferedImage(ColorModel cm, WritableRaster wRaster, boolean alphaPremultiplied, Object object)
@@ -49,270 +121,476 @@ public class BufferedImage extends Image implements WritableRenderedImage
 
 	public int getTransparency()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getTransparency();
+		else
+			throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void releaseWritableTile(int tileX, int tileY)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.releaseWritableTile(tileX, tileY);
+		else
+			throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public WritableRaster getWritableTile(int tileX, int tileY)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getWritableTile(tileX, tileY);
+		else
+			throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean hasTileWriters()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.hasTileWriters();
+		else
+			throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Point[] getWritableTileIndices()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getWritableTileIndices();
+		else
+			throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean isTileWritable(int tileX, int tileY)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.isTileWritable(tileX, tileY);
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	public void coerceData(boolean isAlphaPremultiplied)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.coerceData(isAlphaPremultiplied);
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	public boolean isAlphaPremultiplied()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.isAlphaPremultiplied();
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	public Graphics2D createGraphics()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.createGraphics();
+		else
+			throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Graphics getGraphics()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getGraphics();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public void setRGB(int startX, int startY, int w, int h, int[] rgbArray, int offset, int scansize)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.setRGB(startX, startY, w, h, rgbArray, offset, scansize);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public void setRGB(int x, int y, int rgb)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.setRGB(x, y, rgb);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public int[] getRGB(int startX, int startY, int w, int h, int[] rgbArray, int offset, int scansize)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getRGB(startX, startY, w, h, rgbArray, offset, scansize);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public int getRGB(int x, int y)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getRGB(x, y);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public WritableRaster getAlphaRaster()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getAlphaRaster();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public Raster getData(Rectangle rect)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getData(rect);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public Raster getData()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getData();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public Raster getTile(int tileX, int tileY)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getTile(tileX, tileY);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getTileGridYOffset()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getTileGridYOffset();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getTileGridXOffset()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getTileGridXOffset();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getTileHeight()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getTileHeight();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getTileWidth()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getTileWidth();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public BufferedImage getSubimage(int x, int y, int w, int h)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getSubimage(x, y, w, h);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public String[] getPropertyNames()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getPropertyNames();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public Object getProperty(String name)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getProperty(name);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public Vector<RenderedImage> getSources()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getSources();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getMinTileY()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getMinTileY();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getMinTileX()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getMinTileX();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getNumYTiles()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getNumYTiles();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getNumXTiles()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getNumXTiles();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getMinY()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getMinY();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getMinX()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getMinX();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public SampleModel getSampleModel()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getSampleModel();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public ColorModel getColorModel()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getColorModel();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getHeight()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getHeight();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public int getWidth()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getWidth();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	public int getType()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getType();
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
+	@Override
 	public void setData(Raster r)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.setData(r);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	@Override
 	public void addTileObserver(TileObserver to)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.addTileObserver(to);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	@Override
 	public void removeTileObserver(TileObserver to)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			delegate.removeTileObserver(to);
+		else
+			throw new UnsupportedOperationException();
 
 	}
 
 	@Override
 	public WritableRaster copyData(WritableRaster raster)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.copyData(raster);
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int getHeight(ImageObserver observer)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getHeight(observer);
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Object getProperty(String name, ImageObserver observer)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getProperty(name, observer);
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public ImageProducer getSource()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getSource();
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int getWidth(ImageObserver observer)
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getWidth(observer);
+		else
+			throw new UnsupportedOperationException();
 	}
 
 	public WritableRaster getRaster()
 	{
-		throw new UnsupportedOperationException();
+		if (delegate != null)
+			return delegate.getRaster();
+		else
+			throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public void flush()
+	{
+		if (delegate != null)
+			delegate.flush();
+
+		//else nothing
+	}
+
+	@Override
+	public float getAccelerationPriority()
+	{
+		if (delegate != null)
+			return delegate.getAccelerationPriority();
+		else
+			throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Image getScaledInstance(int width, int height, int hints)
+	{
+		if (delegate != null)
+			return delegate.getScaledInstance(width, height, hints);
+		else
+			throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setAccelerationPriority(float priority)
+	{
+		if (delegate != null)
+			delegate.setAccelerationPriority(priority);
+		else
+			throw new UnsupportedOperationException();
+	}
+
+	/*public ImageCapabilities getCapabilities(GraphicsConfiguration gc)
+	{
+		throw new UnsupportedOperationException();
+	}*/
 
 }

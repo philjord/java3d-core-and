@@ -25,11 +25,13 @@ public class Point extends Point2D implements java.io.Serializable
 		this.y = y;
 	}
 
+	@Override
 	public double getX()
 	{
 		return x;
 	}
 
+	@Override
 	public double getY()
 	{
 		return y;
@@ -50,6 +52,7 @@ public class Point extends Point2D implements java.io.Serializable
 		move(x, y);
 	}
 
+	@Override
 	public void setLocation(double x, double y)
 	{
 		this.x = (int) Math.floor(x + 0.5);
@@ -68,6 +71,7 @@ public class Point extends Point2D implements java.io.Serializable
 		this.y += dy;
 	}
 
+	@Override
 	public boolean equals(Object obj)
 	{
 		if (obj instanceof Point)
@@ -78,6 +82,7 @@ public class Point extends Point2D implements java.io.Serializable
 		return super.equals(obj);
 	}
 
+	@Override
 	public String toString()
 	{
 		return getClass().getName() + "[x=" + x + ",y=" + y + "]";

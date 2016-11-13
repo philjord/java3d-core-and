@@ -8,6 +8,10 @@ import javaawt.Rectangle;
 
 public interface RenderedImage
 {
+	
+	public Object getDelegate();
+
+	
 	public WritableRaster copyData(WritableRaster raster);
 
 	public ColorModel getColorModel();

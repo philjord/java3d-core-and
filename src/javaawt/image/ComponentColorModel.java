@@ -1,11 +1,11 @@
 package javaawt.image;
 
-public class ComponentColorModel extends ColorModel
+public interface ComponentColorModel extends ColorModel
 {
 
-	public int[] getComponentSize()
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int[] getComponentSize();
+
+	@Override
+	public Object getDelegate();
 
 }

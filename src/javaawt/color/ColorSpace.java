@@ -1,7 +1,6 @@
 package javaawt.color;
 
-
-public abstract class ColorSpace
+public interface ColorSpace
 {
 
 	public static final int TYPE_XYZ = 0;
@@ -64,24 +63,26 @@ public abstract class ColorSpace
 
 	public static final int CS_GRAY = 1003;
 
-	public abstract boolean isCS_sRGB();
+	public Object getDelegate();
 
-	public abstract float[] toRGB(float[] colorvalue);
+	public boolean isCS_sRGB();
 
-	public abstract float[] fromRGB(float[] rgbvalue);
+	public float[] toRGB(float[] colorvalue);
 
-	public abstract float[] toCIEXYZ(float[] colorvalue);
+	public float[] fromRGB(float[] rgbvalue);
 
-	public abstract float[] fromCIEXYZ(float[] colorvalue);
+	public float[] toCIEXYZ(float[] colorvalue);
 
-	public abstract int getType();
+	public float[] fromCIEXYZ(float[] colorvalue);
 
-	public abstract int getNumComponents();
+	public int getType();
 
-	public abstract String getName(int idx);
+	public int getNumComponents();
 
-	public abstract float getMinValue(int component);
+	public String getName(int idx);
 
-	public abstract float getMaxValue(int component);
+	public float getMinValue(int component);
+
+	public float getMaxValue(int component);
 
 }

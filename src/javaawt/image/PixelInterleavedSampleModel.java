@@ -8,4 +8,10 @@ public class PixelInterleavedSampleModel extends SampleModel
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public Object getDelegate()
+	{
+		throw new UnsupportedOperationException();
+	}
+
 }

@@ -1,6 +1,6 @@
 package javaawt.image;
 
-public class DataBuffer
+public interface DataBuffer
 {
 	// Field descriptor #28 I
 	public static final int TYPE_BYTE = 0;

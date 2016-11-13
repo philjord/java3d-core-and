@@ -1,26 +1,16 @@
 package javaawt.image;
 
-public class Raster
+public interface Raster
 {
 
-	public void getDataElements(int w, int h, Object pixel)
-	{
-		throw new UnsupportedOperationException();
-	}
+	public void getDataElements(int w, int h, Object pixel);
 
-	public int getNumDataElements()
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int getNumDataElements();
 
-	public int getTransferType()
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int getTransferType();
 
-	public DataBuffer getDataBuffer()
-	{
-		throw new UnsupportedOperationException();
-	}
+	public DataBuffer getDataBuffer();
+
+	public Object getDelegate();
 
 }

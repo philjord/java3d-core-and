@@ -2,37 +2,20 @@ package javaawt.image;
 
 import javaawt.color.ColorSpace;
 
-public class ColorModel
+public interface ColorModel
 {
+	public Object getDelegate();
 
-	public boolean isAlphaPremultiplied()
-	{
-		throw new UnsupportedOperationException();
-	}
+	public boolean isAlphaPremultiplied();
 
-	public byte getRed(Object pixel)
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int getRed(Object pixel);
 
-	public byte getGreen(Object pixel)
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int getGreen(Object pixel);
 
-	public byte getBlue(Object pixel)
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int getBlue(Object pixel);
 
-	public byte getAlpha(Object pixel)
-	{
-		throw new UnsupportedOperationException();
-	}
+	public int getAlpha(Object pixel);
 
-	public ColorSpace getColorSpace()
-	{
-		throw new UnsupportedOperationException();
-	}
+	public ColorSpace getColorSpace();
 
 }

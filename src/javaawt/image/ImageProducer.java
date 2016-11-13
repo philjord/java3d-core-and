@@ -1,6 +1,6 @@
 package javaawt.image;
 
-public class ImageProducer
+public interface ImageProducer
 {
-
+	public Object getDelegate();
 }
