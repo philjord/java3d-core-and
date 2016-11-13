@@ -70,7 +70,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 	// This MUST be true on android fullscreen 
 	// setPostiion on NifDisplay locks up if true
-	private static final boolean NEVER_RELEASE_CONTEXT = true;
+	private static final boolean NEVER_RELEASE_CONTEXT = false;
 
 	//crazy new ffp buffer weird ness, online evidence suggest no benefit
 	private static final boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
@@ -718,7 +718,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+//					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
 				case GeometryRetained.GEO_TYPE_TRI_SET:
 					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
 					break;
@@ -4901,7 +4901,9 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.createGLSLShader++;
 
 		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2;
-
+boolean isCurrent = context(ctx).isCurrent();
+		
+		
 		int shaderHandle = 0;
 		if (shaderType == Shader.SHADER_TYPE_VERTEX)
 		{
@@ -6705,9 +6707,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
 
 		{
-
-			// FIXME: I suspect I will only support byte buffer images so perhaps the INT type can be deprecated?
-			System.out.println("IMAGE_DATA_TYPE_INT_ in use!");
 			int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
 			boolean forceAlphaToOne = false;
 			switch (imageFormat)
@@ -6740,7 +6739,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (forceAlphaToOne)
 			{
-				new Throwable("forceAlphaToOne").printStackTrace();
+				//new Throwable("forceAlphaToOne").printStackTrace();
 			}
 
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
@@ -6772,7 +6771,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 		if (imgXOffset > 0 || (width < tilew))
 		{
-			new Throwable("forceAlphaToOne").printStackTrace();
+			//new Throwable("forceAlphaToOne").printStackTrace();
 		}
 
 		int internalFormat = 0;
@@ -6913,7 +6912,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 			if (forceAlphaToOne)
 			{
-				new Throwable("forceAlphaToOne").printStackTrace();
+				//new Throwable("forceAlphaToOne").printStackTrace();
 			}
 
 			IntBuffer buf = null;
