@@ -32,15 +32,15 @@
 
 package org.jogamp.java3d;
 
-//<AND>import java.awt.Point;
-//<AND>import java.awt.image.BufferedImage;
-//<AND>import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.logging.Level;
 
 import javaawt.GraphicsConfiguration;
+import javaawt.Point;
+import javaawt.image.BufferedImage;
+import javaawt.image.ImageObserver;
 
 class Renderer extends J3dThread
 {
@@ -611,11 +611,48 @@ class Renderer extends J3dThread
 
 					if (renderType == J3dMessage.CREATE_OFFSCREENBUFFER)
 					{
-						throw new UnsupportedOperationException();
+						// Fix for issue 18.
+						// Fix for issue 20.
+
+						canvas.drawable = null;
+						try
+						{
+							// Issue 396. Pass in a null ctx for 2 reasons :
+							//   1) We should not use ctx field directly without buffering in a msg.
+							//   2) canvas.ctx should be null.
+							canvas.drawable = canvas.createOffScreenBuffer(null, canvas.offScreenCanvasSize.width,
+									canvas.offScreenCanvasSize.height);
+						}
+						catch (RuntimeException ex)
+						{
+							ex.printStackTrace();
+						}
+
+						if (canvas.drawable == null)
+						{
+							// Issue 260 : indicate fatal error and notify error listeners
+							canvas.setFatalError();
+							RenderingError err = new RenderingError(RenderingError.OFF_SCREEN_BUFFER_ERROR, J3dI18N.getString("Renderer5"));
+							err.setCanvas3D(canvas);
+							err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
+							notifyErrorListeners(err);
+						}
+
+						canvas.offScreenBufferPending = false;
+						m[nmesg++].decRefcount();
+						continue;
 					}
 					else if (renderType == J3dMessage.DESTROY_CTX_AND_OFFSCREENBUFFER)
 					{
-						throw new UnsupportedOperationException();
+						Object[] obj = m[nmesg].args;
+
+						// Fix for issue 175: destroy ctx & off-screen buffer
+						// Fix for issue 340: get display, drawable & ctx from msg
+						removeCtx(canvas, (Drawable) obj[2], (Context) obj[3], false, !canvas.offScreen, true);
+
+						canvas.offScreenBufferPending = false;
+						m[nmesg++].decRefcount();
+						continue;
 					}
 					else if (renderType == J3dMessage.ALLOCATE_CANVASID)
 					{
@@ -631,7 +668,7 @@ class Renderer extends J3dThread
 						// This happen when the canvas just remove from the View
 						if (renderType == J3dMessage.RENDER_OFFSCREEN)
 						{
-							throw new UnsupportedOperationException();
+							canvas.offScreenRendering = false;
 						}
 						m[nmesg++].decRefcount();
 						continue;
@@ -656,20 +693,16 @@ class Renderer extends J3dThread
 					}
 					else if (renderType == J3dMessage.RENDER_IMMEDIATE)
 					{
-						throw new UnsupportedOperationException();
-						//<AND>
-
-						/*
 						int command = ((Integer) m[nmesg].args[1]).intValue();
 						//System.err.println("command= " + command);
 						if (canvas.isFatalError())
 						{
 							continue;
 						}
-						
+
 						try
 						{
-						
+
 							switch (command)
 							{
 							case GraphicsContext3D.CLEAR:
@@ -743,37 +776,34 @@ class Renderer extends J3dThread
 							case GraphicsContext3D.FLUSH:
 								canvas.graphicsContext3D.doFlush(((Boolean) m[nmesg].args[2]).booleanValue());
 								break;
-							//<AND>			
-							//		    case GraphicsContext3D.FLUSH2D:
-							//			canvas.graphics2D.doFlush();
-							//			break;
-							//		    case GraphicsContext3D.DRAWANDFLUSH2D:
-							//			Object ar[] = m[nmesg].args;
-							//			canvas.graphics2D.doDrawAndFlushImage(
-							//					      (BufferedImage) ar[2],
-							//					      ((Point) ar[3]).x,
-							//					      ((Point) ar[3]).y,
-							//					      (ImageObserver) ar[4]);
-							//			break;
-							//		    case GraphicsContext3D.DISPOSE2D:
-							//                        // Issue 583 - the graphics2D field may be null here
-							//			if (canvas.graphics2D != null) {
-							//                            canvas.graphics2D.doDispose();
-							//                        }
-							//			break;
-							//</AND>			
+							case GraphicsContext3D.FLUSH2D:
+								canvas.graphics2D.doFlush();
+								break;
+							case GraphicsContext3D.DRAWANDFLUSH2D:
+								Object ar[] = m[nmesg].args;
+								canvas.graphics2D.doDrawAndFlushImage((BufferedImage) ar[2], ((Point) ar[3]).x, ((Point) ar[3]).y,
+										(ImageObserver) ar[4]);
+								break;
+							case GraphicsContext3D.DISPOSE2D:
+								// Issue 583 - the graphics2D field may be null here
+								if (canvas.graphics2D != null)
+								{
+									canvas.graphics2D.doDispose();
+								}
+								break;
+
 							case GraphicsContext3D.SET_MODELCLIP:
 								canvas.graphicsContext3D.doSetModelClip((ModelClip) m[nmesg].args[2]);
 								break;
 							default:
 								break;
 							}
-						
+
 						}
 						catch (RuntimeException ex)
 						{
 							ex.printStackTrace();
-						
+
 							// Issue 260 : indicate fatal error and notify error listeners
 							canvas.setFatalError();
 							RenderingError err = new RenderingError(RenderingError.CONTEXT_CREATION_ERROR, J3dI18N.getString("Renderer6"));
@@ -781,8 +811,8 @@ class Renderer extends J3dThread
 							err.setGraphicsDevice(canvas.graphicsConfiguration.getDevice());
 							notifyErrorListeners(err);
 						}
-						
-						m[nmesg++].decRefcount();*/
+
+						m[nmesg++].decRefcount();
 					}
 					else
 					{ // retained mode rendering
@@ -800,9 +830,32 @@ class Renderer extends J3dThread
 							continue;
 						}
 
+						ImageComponent2DRetained offBufRetained = null;
+
 						if (renderType == J3dMessage.RENDER_OFFSCREEN)
 						{
-							throw new UnsupportedOperationException();
+							// Issue 131: set offScreenRendering flag here, since it
+							// otherwise won't be set for auto-off-screen rendering
+							// (which doesn't use renderOffScreenBuffer)
+							canvas.offScreenRendering = true;
+							if (canvas.drawable == null || !canvas.active)
+							{
+								canvas.offScreenRendering = false;
+								continue;
+							}
+							else
+							{
+								offBufRetained = (ImageComponent2DRetained) canvas.offScreenBuffer.retained;
+
+								if (offBufRetained.isByReference())
+								{
+									offBufRetained.geomLock.getLock();
+								}
+
+								offBufRetained.evaluateExtensions(canvas);
+
+							}
+
 						}
 						else if (!canvas.active)
 						{
@@ -909,11 +962,11 @@ class Renderer extends J3dThread
 									break doneRender;
 								}
 
-								//<AND>            
-								//if (canvas.graphics2D != null) {
-								//canvas.graphics2D.init();
-								//}
-								//</AND>
+							         
+								if (canvas.graphics2D != null) {
+								canvas.graphics2D.init();
+								}
+
 
 								canvas.ctxTimeStamp = VirtualUniverse.mc.getContextTimeStamp();
 								listOfCtxs.add(canvas.ctx);
@@ -1407,7 +1460,45 @@ class Renderer extends J3dThread
 							canvas.view.inCanvasCallback = false;
 
 							// end offscreen rendering
-							//Unsupported Operation Exception();
+							if (canvas.offScreenRendering)
+							{
+
+								canvas.syncRender(canvas.ctx, true);
+								canvas.endOffScreenRendering();
+								canvas.offScreenRendering = false;
+
+								// Issue 489 - don't call postSwap here for auto-offscreen,
+								// since it will be called later by the SWAP operation
+								if (canvas.manualRendering)
+								{
+									// do the postSwap for offscreen here
+									canvas.view.inCanvasCallback = true;
+									try
+									{
+										canvas.postSwap();
+									}
+									catch (RuntimeException e)
+									{
+										System.err.println("Exception occurred during Canvas 3D callback:");
+										e.printStackTrace();
+									}
+									catch (Error e)
+									{
+										// Issue 264 - catch Error so Renderer doesn't die
+										System.err.println("Error occurred during Canvas3D callback:");
+										e.printStackTrace();
+									}
+
+									if (offBufRetained.isByReference())
+									{
+										offBufRetained.geomLock.unLock();
+									}
+
+									canvas.view.inCanvasCallback = false;
+
+									canvas.releaseCtx();
+								}
+							}
 
 							if (MasterControl.isStatsLoggable(Level.INFO))
 							{

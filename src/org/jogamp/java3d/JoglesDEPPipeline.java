@@ -8,8 +8,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 {
 	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types and formats. \n"//
 			+ "Coordinates must be defined and float type, colors must be float type, if defined. \n"//
-			+ "J3DGraphics2D of Canvas3D is not supported \n"//
-			+ "Rasters and Decaling is not supported. \n"//
+			+ "Decaling is not supported. \n"//
 			+ "Model Clip is not supported and must be reimplemented in shaders \n"//
 			+ "QuadArray or IndexedQuadArray cannot be supported. \n"//
 			+ "Texture Coordinate generation cannot be supported. \n" //
@@ -17,6 +16,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 			+ "Texture3D cannot be supported. \n"//
 			+ "Accum style anti-aliasing cannot be supported. \n"//
 			+ "RasterOps from RenderingAttributes cannot be used. \n"//
+			+ "ReadRaster for depth requires a custom shader and color read instead. \n"//
 			+ "It is strongly recomended that you use the format GeometryArray.USE_NIO_BUFFER = true. \n"//
 			+ "Note LineArray and LineStripArray will not render as nicely as the fixed function pipeline.";//
 
@@ -69,22 +69,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
 
-	// ---------------------------------------------------------------------
-
-	//
-	// GraphicsContext3D methods
-	//
-
-	// Native method for readRaster
-	// REMOVE FOR SIMPLICITY, POSSIBLY ADD BACK LATER
-	@Override
-	@Deprecated
-	void readRaster(Context ctx, int type, int xSrcOffset, int ySrcOffset, int width, int height, int hCanvas, int imageDataType,
-			int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer)
-	{
-
-		throw new UnsupportedOperationException("Read Raster call not support in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
 
 	// ---------------------------------------------------------------------
 
@@ -330,25 +314,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
-	// The following three methods are used in multi-pass case
 
-	@Override
-	@Deprecated
-	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
-			float mapMinY, float mapMaxY, boolean useBilinearFilter)
-	{
-		throw new UnsupportedOperationException("textureFillBackground not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-
-	}
-
-	@Override
-	@Deprecated
-	void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
-			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBilinearFilter)
-	{
-
-		throw new UnsupportedOperationException("textureFillRaster not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
 
 	@Override
 	@Deprecated
@@ -364,7 +330,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void newDisplayList(Context ctx, int displayListId)
 	{
-		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you should can use \n"
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
 				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
@@ -373,7 +339,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void endDisplayList(Context ctx)
 	{
-		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you should can use \n"
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
 				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
@@ -382,7 +348,7 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void callDisplayList(Context ctx, int id, boolean isNonUniformScale)
 	{
-		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you should can use \n"
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
 				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
@@ -391,25 +357,8 @@ abstract class JoglesDEPPipeline extends Pipeline
 	@Deprecated
 	void freeDisplayList(Context ctx, int id)
 	{
-		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you should can use \n"
+		throw new UnsupportedOperationException("DisplayLists in use!. When using the gl2es2pipeline you can use \n"
 				+ "System.setProperty(\"j3d.displaylist\", \"false\"); to avoid this issue. \n"
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
-	}
-
-	@Override
-	@Deprecated
-	// nothing seems to call this in Canvas3D either
-	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
-			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
-	{
-		throw new UnsupportedOperationException("texturemapping not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-	@Override
-	@Deprecated
-	// nothing seems to call this in Canvas3D either
-	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
-	{
-		throw new UnsupportedOperationException("texturemapping not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 }

@@ -48,6 +48,16 @@ public class Jogl2es2Context extends JoglContext
 		if (context.getGL().isGL2ES3())
 			gl2es3 = (GL2ES3) context.getGL();
 	}
+	
+	public GL2ES2 gl2es2()
+	{
+		return context.getGL().getGL2ES2();
+	}
+
+	public GL2ES3 gl2es3()
+	{
+		return context.getGL().getGL2ES3();
+	}
 
 	public JoglShaderObject shaderProgram;
 	public int shaderProgramId = -1;
@@ -344,9 +354,20 @@ public class Jogl2es2Context extends JoglContext
 		perFrameStats = new JoglesPerFrameStats();
 		perFrameStats.endOfPrevFrameTime = System.nanoTime();
 	}
+	
+	// texture and raster fill variables
+	
+	// raster vao and buf are not in the by geom bucket because I don't get given geom
+	// background has to be created and destroyed
 
+	public int simpleTextureShaderProgramId = -1;
+	public int simpleTextureShaderProgramVertLoc = -1;
+	public int simpleTextureShaderProgramTexCoordLoc = -1;
+	public int simpleTextureShaderProgramBaseMapLoc = -1;
+	
 	// just a singleton of the handy matrix/array operations
 	public Jogl2es2MatrixUtil matrixUtil = new Jogl2es2MatrixUtil();
+ 
 
 	/////////////////////////////////////S H A D E R   S T R U C T S /////////////////////////////////////////////////////
 

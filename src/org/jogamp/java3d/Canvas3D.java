@@ -50,6 +50,7 @@ import javaawt.Dimension;
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
 import javaawt.Point;
+import javaawt.image.BufferedImage;
 import jogamp.common.os.PlatformPropsImpl;
 
 /**
@@ -360,26 +361,26 @@ public class Canvas3D //extends Canvas
 	boolean manualRendering = false;
 
 	// user specified offScreen Canvas location
-	//   Point offScreenCanvasLoc;
+	Point offScreenCanvasLoc;
 
 	// user specified offScreen Canvas dimension
-	//    Dimension offScreenCanvasSize;
+	Dimension offScreenCanvasSize;
 
 	//
 	// Flag that indicates whether off-screen rendering is in progress or not
 	//
-	//    volatile boolean offScreenRendering = false;
+	volatile boolean offScreenRendering = false;
 
 	//
 	// Flag that indicates we are waiting for an off-screen buffer to be
 	// created or destroyed by the Renderer.
 	//
-	//    volatile boolean offScreenBufferPending = false;
+	volatile boolean offScreenBufferPending = false;
 
 	//
 	// ImageComponent used for off-screen rendering
 	//
-	//    ImageComponent2D offScreenBuffer = null;
+	ImageComponent2D offScreenBuffer = null;
 
 	// flag that indicates whether this canvas will use shared context
 	boolean useSharedCtx = true;
@@ -570,7 +571,7 @@ public class Canvas3D //extends Canvas
 
 	// The 3D Graphics context used for immediate mode rendering
 	// into this canvas.
-	//<AND> GraphicsContext3D graphicsContext3D = null;
+	GraphicsContext3D graphicsContext3D = null;
 	boolean waiting = false;
 	boolean swapDone = false;
 
@@ -578,7 +579,7 @@ public class Canvas3D //extends Canvas
 
 	// The Java 3D Graphics2D object used for Java2D/AWT rendering
 	// into this Canvas3D
-	//<AND>J3DGraphics2DImpl graphics2D = null;</>
+	J3DGraphics2DImpl graphics2D = null;
 
 	// Lock used to synchronize the creation of the 2D and 3D
 	// graphics context objects
@@ -893,16 +894,19 @@ public class Canvas3D //extends Canvas
 	boolean ctxChanged = false;
 
 	private GLWindow glwindow = null;
+	private GLCapabilities caps;
 
+	/**
+	 * Try not to set size or setvisible as the canvas3d should do that, just add listeners
+	 * @return
+	 */
 	public GLWindow getGLWindow()
 	{
 		return glwindow;
 	}
 
-	//TODO: something about a headless version for just behaviors and live ness
-
 	// where you would normally add to a frame and set size and say frame.setVisible(true)
-	//canvas3D.getGLWindow().setSize()
+	//canvas3D.setSize()
 	//canvas3D.addNotify();
 
 	public Canvas3D(GLWindow win)
@@ -947,10 +951,15 @@ public class Canvas3D //extends Canvas
 
 	public Canvas3D()
 	{
-		this(null, null, false);
+		this(null, null, false, false);
 	}
 
-	public Canvas3D(GLProfile pro, GLCapabilities cap, boolean fullscreen)
+	public Canvas3D(boolean offScreen)
+	{
+		this(null, null, false, offScreen);
+	}
+
+	public Canvas3D(GLProfile pro, GLCapabilities cap, boolean fullscreen, boolean offScreen)
 	{
 		// allow no opts option
 		if (pro == null)
@@ -965,6 +974,7 @@ public class Canvas3D //extends Canvas
 			cap.setNumSamples(2);
 			fullscreen = false;
 		}
+		this.caps = cap;
 		//super(null);
 
 		// only uncomment to discover props
@@ -974,21 +984,40 @@ public class Canvas3D //extends Canvas
 		//System.out.println("caps double buffered: " + cap.getDoubleBuffered());  // true
 		//System.out.println("caps sample buffers: " + cap.getSampleBuffers());  // false		
 
-		this.glwindow = GLWindow.create(cap);
-		if (fullscreen)
-			this.glwindow.setFullscreen(true);
-		else
-			this.glwindow.setSize(10, 10);
-		this.glwindow.setTitle("GLWindow Canvas3D");
-		this.glwindow.setVisible(true);
+		if (!offScreen)
+		{
+			this.glwindow = GLWindow.create(cap);
+			if (fullscreen)
+				this.glwindow.setFullscreen(true);
+			else
+				this.glwindow.setSize(10, 10);
+			this.glwindow.setTitle("GLWindow Canvas3D");
+		}
+
 		//this.glwindow.setRealized(true);
 		//this.glwindow.getContext();
 
 		//this.glwindow.setAlwaysOnTop(true);
 		//this.glwindow.setFullscreen(true);
 
-		//this.offScreen = offScreen;
+		this.offScreen = offScreen;
 		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
+
+		// Issue 131: Set the autoOffScreen variable based on whether this
+		// canvas3d implements the AutoOffScreenCanvas3D tagging interface.
+		// Eventually, we may replace this with an actual API.
+		boolean autoOffScreenCanvas3D = false;
+		if (this instanceof AutoOffScreenCanvas3D)
+		{
+			autoOffScreenCanvas3D = true;
+		}
+
+		// Throw an illegal argument exception if an on-screen canvas is tagged
+		// as an  auto-off-screen canvas
+		if (autoOffScreenCanvas3D && !offScreen)
+		{
+			throw new IllegalArgumentException(J3dI18N.getString("Canvas3D25"));
+		}
 
 		// Issue 163 : Set dirty bits for both Renderer and RenderBin
 		cvDirtyMask[0] = VIEW_INFO_DIRTY;
@@ -996,20 +1025,71 @@ public class Canvas3D //extends Canvas
 
 		requestedStencilSize = cap.getStencilBits();
 
-		GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
-
-		//		eventCatcher = new EventCatcher(this);
-		//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
-		canvasViewEventCatcherNewt = new CanvasViewEventCatcherNewt(this);
-
-		synchronized (VirtualUniverse.mc.deviceScreenMap)
+		if (offScreen)
 		{
-			screen = VirtualUniverse.mc.deviceScreenMap.get(graphicsDevice);
 
-			if (screen == null)
+			// Issue 131: set manual rendering flag based on whether this is
+			// an auto-off-screen Canvas3D.
+			manualRendering = !autoOffScreenCanvas3D;
+
+			screen = new Screen3D(graphicsConfiguration, offScreen);
+
+			// QUESTION: keep a list of off-screen Screen3D objects?
+			// Does this list need to be grouped by GraphicsDevice?
+
+			synchronized (dirtyMaskLock)
 			{
-				screen = new Screen3D(graphicsConfiguration, offScreen);
-				VirtualUniverse.mc.deviceScreenMap.put(graphicsDevice, screen);
+				cvDirtyMask[0] |= MOVED_OR_RESIZED_DIRTY;
+				cvDirtyMask[1] |= MOVED_OR_RESIZED_DIRTY;
+			}
+
+			// this canvas will not receive the paint callback,
+			// so we need to set the necessary flags here
+			firstPaintCalled = true;
+
+			if (manualRendering)
+			{
+				// since this canvas will not receive the addNotify
+				// callback from AWT, set the added flag here for
+				// evaluateActive to work correctly
+				added = true;
+			}
+
+			evaluateActive();
+
+			// create the rendererStructure object
+			//rendererStructure = new RendererStructure();
+			offScreenCanvasLoc = new Point(0, 0);
+			offScreenCanvasSize = new Dimension(0, 0);
+
+			this.setLocation(offScreenCanvasLoc);
+			this.setSize(offScreenCanvasSize);
+			newSize = offScreenCanvasSize;
+			newPosition = offScreenCanvasLoc;
+
+			// Issue 131: create event catchers for auto-offScreen
+			// if (!manualRendering) {
+			// eventCatcher = new EventCatcher(this);
+			// canvasViewEventCatcher = new CanvasViewEventCatcher(this);
+			// }
+		}
+		else
+		{
+			GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
+
+			//		eventCatcher = new EventCatcher(this);
+			//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
+			canvasViewEventCatcherNewt = new CanvasViewEventCatcherNewt(this);
+
+			synchronized (VirtualUniverse.mc.deviceScreenMap)
+			{
+				screen = VirtualUniverse.mc.deviceScreenMap.get(graphicsDevice);
+
+				if (screen == null)
+				{
+					screen = new Screen3D(graphicsConfiguration, offScreen);
+					VirtualUniverse.mc.deviceScreenMap.put(graphicsDevice, screen);
+				}
 			}
 		}
 
@@ -1022,6 +1102,52 @@ public class Canvas3D //extends Canvas
 
 		// Construct the drawing surface object for this Canvas3D
 		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
+		
+		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
+
+	}
+
+	GLCapabilities getCaps()
+	{
+		return caps;
+	}
+
+	public void setLocation(Point p)
+	{
+		if (this.glwindow != null)
+			this.glwindow.setPosition(p.x, p.y);
+	}
+
+	public void setLocation(int x, int y)
+	{
+		if (this.glwindow != null)
+			this.glwindow.setPosition(x, y);
+	}
+
+	//Replacers for Components gear
+	public int getWidth()
+	{
+		if (this.glwindow != null)
+			return this.glwindow.getWidth();
+		else
+			return this.offScreenCanvasSize.width;
+	}
+
+	public int getHeight()
+	{
+		if (this.glwindow != null)
+			return this.glwindow.getHeight();
+		else
+			return this.offScreenCanvasSize.height;
+	}
+
+	public void setVisible(boolean visible2)
+	{
+		if (this.glwindow != null)
+		{
+			this.visible = visible2;
+			this.glwindow.setVisible(visible2);
+		}
 
 	}
 
@@ -1053,7 +1179,9 @@ public class Canvas3D //extends Canvas
 	void evaluateVisiblilty()
 	{
 		//boolean nowVisible = isRecursivelyVisible() && !isIconified();
-		boolean nowVisible = this.glwindow.isVisible();
+		boolean nowVisible = false;
+		if (this.glwindow != null)
+			this.glwindow.isVisible();
 
 		// Only need to reevaluate and repaint if visibility has changed
 		if (this.visible != nowVisible)
@@ -1095,10 +1223,11 @@ public class Canvas3D //extends Canvas
 		{
 			//try
 			{
-				newSize = new Dimension(this.glwindow.getWidth(), this.glwindow.getHeight());
+				newSize = getSize();
 				newPosition = new Point(getLocationOnScreen().x, getLocationOnScreen().y);
 
-				this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
+				if (this.glwindow != null)
+					this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
 
 			}
 			//catch (IllegalComponentStateException e)
@@ -1119,12 +1248,54 @@ public class Canvas3D //extends Canvas
 	}
 
 	//@Override
-	public javaawt.Point getLocationOnScreen()
+	public Point getLocationOnScreen()
 	{
 		com.jogamp.nativewindow.util.Point storage = new com.jogamp.nativewindow.util.Point();
-		this.glwindow.getLocationOnScreen(storage);
-		return new Point(storage.getX(), storage.getY());
+		if (this.glwindow != null)
+		{
+			this.glwindow.getLocationOnScreen(storage);
+			return new Point(storage.getX(), storage.getY());
+		}
+		else
+			return this.offScreenCanvasLoc;
 
+	}
+
+	/**
+	 * This delegates the size to it's glwindow (though this is not on screen)
+	 * @return
+	 */
+	public Dimension getSize()
+	{
+		if (this.glwindow != null)
+			return new Dimension(this.glwindow.getWidth(), this.glwindow.getHeight());
+		else
+			return this.offScreenCanvasSize;
+
+	}
+
+	/**
+	 * This delegates the size to it's glwindow (though this is not on screen)
+	 * @return
+	 */
+	public void setSize(Dimension newSize)
+	{
+		if (this.glwindow != null)
+			this.glwindow.setSize(newSize.width, newSize.height);
+		else
+			this.offScreenCanvasSize.setSize(newSize);
+	}
+
+	/**
+	 * This delegates the size to it's glwindow (though this is not on screen)
+	 * @return
+	 */
+	public void setSize(int width, int height)
+	{
+		if (this.glwindow != null)
+			this.glwindow.setSize(width, height);
+		else
+			this.offScreenCanvasSize.setSize(width, height);
 	}
 
 	// When this canvas is added to a frame, this notification gets called.  We
@@ -1205,7 +1376,10 @@ public class Canvas3D //extends Canvas
 
 		//		this.addComponentListener(eventCatcher);
 		//		this.addComponentListener(canvasViewEventCatcher);
-		this.getGLWindow().addWindowListener(canvasViewEventCatcherNewt);
+		if (this.glwindow != null)
+		{
+			this.glwindow.addWindowListener(canvasViewEventCatcherNewt);
+		}
 
 		//	if (windowParent != null)
 		{
@@ -1228,9 +1402,9 @@ public class Canvas3D //extends Canvas
 		// call evaluateActive for the same reason.
 		if (offScreen)
 		{
-			//firstPaintCalled = true;
-			//visible = true;
-			//evaluateActive();
+			firstPaintCalled = true;
+			visible = true;
+			evaluateActive();
 		}
 
 		// In case the same canvas is removed and add back,
@@ -1246,9 +1420,15 @@ public class Canvas3D //extends Canvas
 			view.universe.checkForEnableEvents();
 		}
 
-		// get the GLWindow cranking!
-		if (!this.glwindow.isFullscreen())
-			this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
+		if (this.glwindow != null)
+		{
+			// get the GLWindow cranking!
+			if (!this.glwindow.isFullscreen())
+				this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
+
+			this.glwindow.setVisible(!offScreen);
+		}
+
 		evaluateVisiblilty();
 		evaluateActive();
 		paintALike();
@@ -1281,7 +1461,7 @@ public class Canvas3D //extends Canvas
 
 		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
 		useStereo = stereoEnable && stereoAvailable;
-		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
+
 
 		if (rdr != null)
 		{
@@ -1368,12 +1548,12 @@ public class Canvas3D //extends Canvas
 		freeCanvasId();
 
 		ra = null;
-		//<AND>graphicsContext3D = null;
+		graphicsContext3D = null;
 
 		ctx = null;
 		// must be after removeCtx() because
 		// it will free graphics2D textureID
-		//<AND>graphics2D = null;</>
+		graphics2D = null;
 
 		//super.removeNotify();
 
@@ -1386,7 +1566,11 @@ public class Canvas3D //extends Canvas
 		//		containerParentList.clear();
 		//		this.removeComponentListener(eventCatcher);
 		//		this.removeComponentListener(canvasViewEventCatcher);
-		this.getGLWindow().removeWindowListener(canvasViewEventCatcherNewt);
+		if (this.glwindow != null)
+		{
+			this.glwindow.removeWindowListener(canvasViewEventCatcherNewt);
+			this.glwindow.setVisible(false);
+		}
 
 		/*		if (eventCatcher != null)
 				{
@@ -1525,16 +1709,17 @@ public class Canvas3D //extends Canvas
 	 * @return a GraphicsContext3D object that can be used for immediate
 	 * mode rendering to this Canvas3D.
 	 */
-	/*public GraphicsContext3D getGraphicsContext3D() {
-		//<AND> immediate mode dropped 
-	synchronized(gfxCreationLock) {
-	    if (graphicsContext3D == null)
-		graphicsContext3D = new GraphicsContext3D(this);
+	public GraphicsContext3D getGraphicsContext3D()
+	{
+		synchronized (gfxCreationLock)
+		{
+			if (graphicsContext3D == null)
+				graphicsContext3D = new GraphicsContext3D(this);
+		}
+
+		return graphicsContext3D;
+
 	}
-	
-	return graphicsContext3D;
-		
-	}*/
 
 	/**
 	 * Get the 2D graphics object associated with
@@ -1546,15 +1731,17 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	//<AND>    
-	//    public J3DGraphics2D getGraphics2D() {
-	//	synchronized(gfxCreationLock) {
-	//	    if (graphics2D == null)
-	//		graphics2D = new J3DGraphics2DImpl(this);
-	//	}
-	//
-	//	return graphics2D;
-	//    }</AND>
+
+	public J3DGraphics2D getGraphics2D()
+	{
+		synchronized (gfxCreationLock)
+		{
+			if (graphics2D == null)
+				graphics2D = new J3DGraphics2DImpl(this);
+		}
+
+		return graphics2D;
+	}
 
 	/**
 	 * This routine is called by the Java 3D rendering loop after clearing
@@ -1801,7 +1988,119 @@ public class Canvas3D //extends Canvas
 	 */
 	public void setOffScreenBuffer(ImageComponent2D buffer)
 	{
-		throw new UnsupportedOperationException();
+		int width, height;
+		boolean freeCanvasId = false;
+
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		if (offScreenRendering)
+			throw new RestrictedAccessException(J3dI18N.getString("Canvas3D2"));
+
+		// Check that offScreenBufferPending is not already set
+		J3dDebug.doAssert(!offScreenBufferPending, "!offScreenBufferPending");
+
+		if (offScreenBuffer != null && offScreenBuffer != buffer)
+		{
+			ImageComponent2DRetained i2dRetained = (ImageComponent2DRetained) offScreenBuffer.retained;
+			i2dRetained.setUsedByOffScreen(false);
+		}
+
+		if (buffer != null)
+		{
+			ImageComponent2DRetained bufferRetained = (ImageComponent2DRetained) buffer.retained;
+
+			if (bufferRetained.byReference && !(bufferRetained.getRefImage(0) instanceof BufferedImage))
+			{
+
+				throw new IllegalArgumentException(J3dI18N.getString("Canvas3D15"));
+			}
+
+			if (bufferRetained.getNumberOfComponents() < 3)
+			{
+				throw new IllegalArgumentException(J3dI18N.getString("Canvas3D16"));
+			}
+
+			if (buffer.isLive())
+			{
+				throw new IllegalSharingException(J3dI18N.getString("Canvas3D26"));
+			}
+
+			if (bufferRetained.getInImmCtx())
+			{
+				throw new IllegalSharingException(J3dI18N.getString("Canvas3D27"));
+			}
+
+			if (buffer != offScreenBuffer && bufferRetained.getUsedByOffScreen())
+			{
+				throw new IllegalSharingException(J3dI18N.getString("Canvas3D28"));
+			}
+
+			bufferRetained.setUsedByOffScreen(true);
+
+			width = bufferRetained.width;
+			height = bufferRetained.height;
+
+			// Issues 347, 348 - assign a canvasId for off-screen Canvas3D
+			if (manualRendering)
+			{
+				sendAllocateCanvasId();
+			}
+		}
+		else
+		{
+			width = height = 0;
+
+			// Issues 347, 348 - release canvasId for off-screen Canvas3D
+			if (manualRendering)
+			{
+				freeCanvasId = true;
+			}
+		}
+
+		// PJ we MUST recreate the drawable when a new offscreen buffer is requested, as the previous is 
+		// already realized and will fail on a createNewContext call
+		//if ((offScreenCanvasSize.width != width) || (offScreenCanvasSize.height != height)) 
+		{
+
+			if (drawable != null)
+			{
+				// Fix for Issue 18 and Issue 175
+				// Will do destroyOffScreenBuffer in the Renderer thread.
+				sendDestroyCtxAndOffScreenBuffer();
+				drawable = null;
+			}
+			// Issue 396. Since context is invalid here, we should set it to null.
+			ctx = null;
+
+			// set the canvas dimension according to the buffer dimension
+			offScreenCanvasSize.setSize(width, height);
+
+			this.setSize(offScreenCanvasSize);
+
+			if (width > 0 && height > 0)
+			{
+				sendCreateOffScreenBuffer();
+			}
+
+		}
+		// else if (ctx != null)
+		// {
+		//	removeCtx();
+		// }
+
+		if (freeCanvasId)
+		{
+			sendFreeCanvasId();
+		}
+
+		offScreenBuffer = buffer;
+
+		synchronized (dirtyMaskLock)
+		{
+			cvDirtyMask[0] |= MOVED_OR_RESIZED_DIRTY;
+			cvDirtyMask[1] |= MOVED_OR_RESIZED_DIRTY;
+		}
 	}
 
 	/**
@@ -1816,7 +2115,11 @@ public class Canvas3D //extends Canvas
 	 */
 	public ImageComponent2D getOffScreenBuffer()
 	{
-		throw new UnsupportedOperationException();
+
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		return (offScreenBuffer);
 	}
 
 	/**
@@ -1851,7 +2154,169 @@ public class Canvas3D //extends Canvas
 	 */
 	public void renderOffScreenBuffer()
 	{
-		throw new UnsupportedOperationException();
+
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		// Issue 131: Cannot manually render to an automatic canvas.
+		if (!manualRendering)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D24"));
+
+		// Issue 260 : Cannot render if we already have a fatal error
+		if (fatalError)
+		{
+			throw new IllegalRenderingStateException(J3dI18N.getString("Canvas3D30"));
+		}
+
+		if (offScreenBuffer == null)
+			throw new NullPointerException(J3dI18N.getString("Canvas3D10"));
+
+		Dimension screenSize = screen.getSize();
+
+		if (screenSize.width <= 0)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D8"));
+
+		if (screenSize.height <= 0)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D9"));
+
+		if (screen.getPhysicalScreenWidth() <= 0.0)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D12"));
+
+		if (screen.getPhysicalScreenHeight() <= 0.0)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D13"));
+
+		if (offScreenRendering)
+			throw new RestrictedAccessException(J3dI18N.getString("Canvas3D2"));
+
+		if (!isRunning)
+			throw new RestrictedAccessException(J3dI18N.getString("Canvas3D11"));
+
+		// Fix to issue 66
+		if ((!active) || (pendingView == null))
+		{
+			/* No rendering is performed if this Canvas3D object has not been
+			   added to an active View. */
+			return;
+		}
+
+		// Issue 131: moved code that determines off-screen boundary to separate
+		// method that is called from the renderer
+
+		offScreenRendering = true;
+
+		// Fix to issue 66.
+		/* This is an attempt to do the following check in one atomic operation :
+		   ((view != null) && (view.inCanvasCallback)) */
+
+		boolean inCanvasCallback = false;
+		try
+		{
+			inCanvasCallback = view.inCanvasCallback;
+
+		}
+		catch (NullPointerException npe)
+		{
+			/* Do nothing here */
+		}
+
+		if (inCanvasCallback)
+		{
+			// Here we assume that view is stable if inCanvasCallback
+			// is true. This assumption is valid among all j3d threads as
+			// all access to view is synchronized by MasterControl.
+			// Issue : user threads access to view isn't synchronize hence
+			// is model will break.
+			if (screen.renderer == null)
+			{
+
+				// It is possible that screen.renderer = null when this View
+				// is shared by another onScreen Canvas and this callback
+				// is from that Canvas. In this case it need one more
+				// round before the renderer.
+				screen.renderer = Screen3D.deviceRendererMap.get(screen.graphicsDevice);
+				// screen.renderer may equal to null when multiple
+				// screen is used and this Canvas3D is in different
+				// screen sharing the same View not yet initialize.
+			}
+
+			// if called from render call back, send a message directly to
+			// the renderer message queue, and call renderer doWork
+			// to do the offscreen rendering now
+			if (Thread.currentThread() == screen.renderer)
+			{
+
+				J3dMessage createMessage = new J3dMessage();
+				createMessage.threads = J3dThread.RENDER_THREAD;
+				createMessage.type = J3dMessage.RENDER_OFFSCREEN;
+				createMessage.universe = this.view.universe;
+				createMessage.view = this.view;
+				createMessage.args[0] = this;
+
+				screen.renderer.rendererStructure.addMessage(createMessage);
+
+				// modify the args to reflect offScreen rendering
+				screen.renderer.args = new Object[4];
+				screen.renderer.args[0] = new Integer(Renderer.REQUESTRENDER);
+				screen.renderer.args[1] = this;
+				screen.renderer.args[2] = view;
+				// This extra argument 3 is needed in MasterControl to
+				// test whether offscreen Rendering is used or not
+				screen.renderer.args[3] = null;
+
+				// call renderer doWork directly since we are already in
+				// the renderer thread
+				screen.renderer.doWork(0);
+			}
+			else
+			{
+
+				// XXXX:
+				// Now we are in trouble, this will cause deadlock if
+				// waitForOffScreenRendering() is invoked
+				J3dMessage createMessage = new J3dMessage();
+				createMessage.threads = J3dThread.RENDER_THREAD;
+				createMessage.type = J3dMessage.RENDER_OFFSCREEN;
+				createMessage.universe = this.view.universe;
+				createMessage.view = this.view;
+				createMessage.args[0] = this;
+				screen.renderer.rendererStructure.addMessage(createMessage);
+				VirtualUniverse.mc.setWorkForRequestRenderer();
+			}
+
+		}
+		else if (Thread.currentThread() instanceof BehaviorScheduler)
+		{
+
+			// If called from behavior scheduler, send a message directly to
+			// the renderer message queue.
+			// Note that we didn't use
+			// currentThread() == view.universe.behaviorScheduler
+			// since the caller may be another universe Behavior
+			// scheduler.
+			J3dMessage createMessage = new J3dMessage();
+			createMessage.threads = J3dThread.RENDER_THREAD;
+			createMessage.type = J3dMessage.RENDER_OFFSCREEN;
+			createMessage.universe = this.view.universe;
+			createMessage.view = this.view;
+			createMessage.args[0] = this;
+			screen.renderer.rendererStructure.addMessage(createMessage);
+			VirtualUniverse.mc.setWorkForRequestRenderer();
+
+		}
+		else
+		{
+			// send a message to renderBin
+			// Fix for issue 66 : Since view might not been set yet,
+			// we have to use pendingView instead.
+			J3dMessage createMessage = new J3dMessage();
+			createMessage.threads = J3dThread.UPDATE_RENDER;
+			createMessage.type = J3dMessage.RENDER_OFFSCREEN;
+			createMessage.universe = this.pendingView.universe;
+			createMessage.view = this.pendingView;
+			createMessage.args[0] = this;
+			createMessage.args[1] = offScreenBuffer;
+			VirtualUniverse.mc.processMessage(createMessage);
+		}
 	}
 
 	/**
@@ -1874,7 +2339,21 @@ public class Canvas3D //extends Canvas
 	 */
 	public void waitForOffScreenRendering()
 	{
-		throw new UnsupportedOperationException();
+
+		if (!offScreen)
+		{
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+		}
+
+		if (Thread.currentThread() instanceof Renderer)
+		{
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D31"));
+		}
+
+		while (offScreenRendering)
+		{
+			MasterControl.threadYield();
+		}
 	}
 
 	/**
@@ -1897,7 +2376,14 @@ public class Canvas3D //extends Canvas
 	 */
 	public void setOffScreenLocation(int x, int y)
 	{
-		throw new UnsupportedOperationException();
+
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		synchronized (cvLock)
+		{
+			offScreenCanvasLoc.setLocation(x, y);
+		}
 	}
 
 	/**
@@ -1918,7 +2404,14 @@ public class Canvas3D //extends Canvas
 	 */
 	public void setOffScreenLocation(Point p)
 	{
-		throw new UnsupportedOperationException();
+
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		synchronized (cvLock)
+		{
+			offScreenCanvasLoc.setLocation(p);
+		}
 	}
 
 	/**
@@ -1939,7 +2432,10 @@ public class Canvas3D //extends Canvas
 	 */
 	public Point getOffScreenLocation()
 	{
-		throw new UnsupportedOperationException();
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		return (new Point(offScreenCanvasLoc));
 	}
 
 	/**
@@ -1966,12 +2462,74 @@ public class Canvas3D //extends Canvas
 	 */
 	public Point getOffScreenLocation(Point rv)
 	{
-		throw new UnsupportedOperationException();
+
+		if (!offScreen)
+			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
+
+		if (rv == null)
+			return (new Point(offScreenCanvasLoc));
+
+		else
+		{
+			rv.setLocation(offScreenCanvasLoc);
+			return rv;
+		}
 	}
 
 	void endOffScreenRendering()
 	{
-		throw new UnsupportedOperationException();
+
+		ImageComponent2DRetained icRetained = (ImageComponent2DRetained) offScreenBuffer.retained;
+		boolean isByRef = icRetained.isByReference();
+		ImageComponentRetained.ImageData imageData = icRetained.getImageData(false);
+
+		if (!isByRef)
+		{
+			// If icRetained has a null image ( BufferedImage)
+			if (imageData == null)
+			{
+				assert (!isByRef);
+				icRetained.createBlankImageData();
+				imageData = icRetained.getImageData(false);
+			}
+			// Check for possible format conversion in imageData
+			else
+			{
+				// Format convert imageData if format is unsupported.
+				icRetained.evaluateExtensions(this);
+			}
+			// read the image from the offscreen buffer
+			readOffScreenBuffer(ctx, icRetained.getImageFormatTypeIntValue(false), icRetained.getImageDataTypeIntValue(), imageData.get(),
+					offScreenCanvasSize.width, offScreenCanvasSize.height);
+
+		}
+		else
+		{
+			icRetained.geomLock.getLock();
+			// Create a copy of format converted image in imageData if format is unsupported.
+			icRetained.evaluateExtensions(this);
+
+			// read the image from the offscreen buffer
+			readOffScreenBuffer(ctx, icRetained.getImageFormatTypeIntValue(false), icRetained.getImageDataTypeIntValue(), imageData.get(),
+					offScreenCanvasSize.width, offScreenCanvasSize.height);
+
+			// For byRef, we might have to copy buffer back into
+			// the user's referenced ImageComponent2D
+			if (!imageData.isDataByRef())
+			{
+				if (icRetained.isImageTypeSupported())
+				{
+					icRetained.copyToRefImage(0);
+				}
+				else
+				{
+					// This method only handle RGBA conversion.
+					icRetained.copyToRefImageWithFormatConversion(0);
+				}
+			}
+
+			icRetained.geomLock.unLock();
+		}
 	}
 
 	/**
@@ -2003,20 +2561,21 @@ public class Canvas3D //extends Canvas
 		{
 			return;
 		}
-		//<AND>
-		/*
-		if (view != null && graphicsContext3D != null) {
-		if ((view.universe != null) &&
-			(Thread.currentThread() == view.universe.behaviorScheduler)) {
-			graphicsContext3D.sendRenderMessage(false, GraphicsContext3D.SWAP, null, null);
-		} else {
-			graphicsContext3D.sendRenderMessage(true, GraphicsContext3D.SWAP, null, null);
+
+		if (view != null && graphicsContext3D != null)
+		{
+			if ((view.universe != null) && (Thread.currentThread() == view.universe.behaviorScheduler))
+			{
+				graphicsContext3D.sendRenderMessage(false, GraphicsContext3D.SWAP, null, null);
+			}
+			else
+			{
+				graphicsContext3D.sendRenderMessage(true, GraphicsContext3D.SWAP, null, null);
+			}
+			graphicsContext3D.runMonitor(J3dThread.WAIT);
 		}
-		graphicsContext3D.runMonitor(J3dThread.WAIT);
-		}*/
 	}
 
-	//PJ - this is not called in retained mode
 	void doSwap()
 	{
 
@@ -2032,7 +2591,7 @@ public class Canvas3D //extends Canvas
 						{
 							if (!drawingSurfaceObject.renderLock())
 							{
-								//<AND>graphicsContext3D.runMonitor(J3dThread.NOTIFY);
+								graphicsContext3D.runMonitor(J3dThread.NOTIFY);
 								return;
 							}
 							this.syncRender(ctx, true);
@@ -2050,7 +2609,7 @@ public class Canvas3D //extends Canvas
 		// Increment the elapsedFrame for the behavior structure
 		// to trigger any interpolators
 		view.universe.behaviorStructure.incElapsedFrames();
-		//<AND>graphicsContext3D.runMonitor(J3dThread.NOTIFY);
+		graphicsContext3D.runMonitor(J3dThread.NOTIFY);
 	}
 
 	/**
@@ -2058,8 +2617,20 @@ public class Canvas3D //extends Canvas
 	 */
 	Context createNewContext(Context shareCtx, boolean isSharedCtx)
 	{
-		Context retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow, this.glwindow.getContext(),
-				shareCtx, isSharedCtx);
+
+		Context retVal = null;
+
+		if (offScreen)
+		{
+			if(shareCtx!=null)
+				throw new RuntimeException("Shared contexts don't work with offscreen now, sorry");
+			retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, null, null, shareCtx, isSharedCtx, offScreen);
+		}
+		else
+		{
+			retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, this.glwindow, this.glwindow.getContext(), shareCtx,
+					isSharedCtx, offScreen);
+		}
 
 		// compute the max available texture units
 		maxAvailableTextureUnits = Math.max(maxTextureUnits, maxTextureImageUnits);
@@ -3794,14 +4365,51 @@ public class Canvas3D //extends Canvas
 	// MasterControl) and wait for it to be done
 	private void sendCreateOffScreenBuffer()
 	{
-		throw new UnsupportedOperationException();
+		// Wait for the buffer to be created unless called from
+		// a Behavior or from a Rendering thread
+		if (!(Thread.currentThread() instanceof BehaviorScheduler) && !(Thread.currentThread() instanceof Renderer))
+		{
+
+			offScreenBufferPending = true;
+		}
+
+		// Send message to Renderer thread to perform createOffScreenBuffer.
+		VirtualUniverse.mc.sendCreateOffScreenBuffer(this);
+
+		// Wait for off-screen buffer to be created
+		while (offScreenBufferPending)
+		{
+			// Issue 364: create master control thread if needed
+			VirtualUniverse.mc.createMasterControlThread();
+			MasterControl.threadYield();
+		}
 	}
 
 	// Send a destroyOffScreenBuffer message to Renderer (via
 	// MasterControl) and wait for it to be done
 	private void sendDestroyCtxAndOffScreenBuffer()
 	{
-		throw new UnsupportedOperationException();
+		// Wait for the buffer to be destroyed unless called from
+		// a Behavior or from a Rendering thread
+		Thread currentThread = Thread.currentThread();
+		if (!(currentThread instanceof BehaviorScheduler) && !(currentThread instanceof Renderer))
+		{
+
+			offScreenBufferPending = true;
+		}
+
+		// Fix for Issue 18 and Issue 175
+		// Send message to Renderer thread to perform remove Ctx and destroyOffScreenBuffer.
+
+		VirtualUniverse.mc.sendDestroyCtxAndOffScreenBuffer(this);
+
+		// Wait for ctx and off-screen buffer to be destroyed
+		while (offScreenBufferPending)
+		{
+			// Issue 364: create master control thread if needed
+			VirtualUniverse.mc.createMasterControlThread();
+			MasterControl.threadYield();
+		}
 	}
 
 	// Send a allocateCanvasId message to Renderer (via MasterControl) without
@@ -4323,13 +4931,14 @@ public class Canvas3D //extends Canvas
 			return;
 		}
 
-		//<AND>
-		//	if (freeBackground) {
-		//	    // Dispose of Graphics2D Texture
-		//            if (graphics2D != null) {
-		//                graphics2D.dispose();
-		//            }
-		//	}</AND>
+		if (freeBackground)
+		{
+			// Dispose of Graphics2D Texture
+			if (graphics2D != null)
+			{
+				graphics2D.dispose();
+			}
+		}
 
 		for (int id = textureIDResourceTable.size() - 1; id >= 0; id--)
 		{
@@ -4766,17 +5375,6 @@ public class Canvas3D //extends Canvas
 		//Pipeline.getPipeline().hasSceneAntialiasingAccum(this);
 	}
 
-	//Replacers for Components gear
-	public int getWidth()
-	{
-		return this.glwindow.getWidth();
-	}
-
-	public int getHeight()
-	{
-		return this.glwindow.getHeight();
-	}
-
 	public GraphicsConfiguration getGraphicsConfiguration()
 	{
 		return this.graphicsConfiguration;
@@ -4842,4 +5440,5 @@ public class Canvas3D //extends Canvas
 			glWindow.setVisible(true);
 		}
 	}
+
 }

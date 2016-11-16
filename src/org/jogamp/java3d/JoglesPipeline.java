@@ -27,7 +27,6 @@ import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.NativeSurface;
 import com.jogamp.nativewindow.ProxySurface;
 import com.jogamp.nativewindow.UpstreamSurfaceHook;
-import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
 import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.FBObject;
 import com.jogamp.opengl.GL;
@@ -718,7 +717,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_QUAD_SET:
-//					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+					//					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
 				case GeometryRetained.GEO_TYPE_TRI_SET:
 					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
 					break;
@@ -2006,9 +2005,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int offset = initialIndexIndex;
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-					bb.order(ByteOrder.nativeOrder());
-					ShortBuffer indicesBuffer = bb.asShortBuffer();
+					ShortBuffer indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder())
+							.asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indicesBuffer.put(s, (short) indexCoord[s]);
 					for (int i = 0; i < strip_len; i++)
@@ -2069,9 +2067,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (gd.geoToIndBuf == -1)
 				{
 					// create and fill index buffer
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-					bb.order(ByteOrder.nativeOrder());
-					ShortBuffer indBuf = bb.asShortBuffer();
+					ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indBuf.put(s, (short) indexCoord[s]);
 					indBuf.position(initialIndexIndex);
@@ -2766,9 +2762,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int offset = initialIndexIndex;
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-					bb.order(ByteOrder.nativeOrder());
-					ShortBuffer indicesBuffer = bb.asShortBuffer();
+					ShortBuffer indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder())
+							.asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indicesBuffer.put(s, (short) indexCoord[s]);
 					for (int i = 0; i < strip_len; i++)
@@ -2846,9 +2841,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 				if (gd.geoToIndBuf == -1)
 				{
 					// create and fill index buffer
-					ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-					bb.order(ByteOrder.nativeOrder());
-					ShortBuffer indBuf = bb.asShortBuffer();
+					ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indBuf.put(s, (short) indexCoord[s]);
 					indBuf.position(initialIndexIndex);
@@ -3235,9 +3228,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					}
 					else
 					{
-						ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-						bb.order(ByteOrder.nativeOrder());
-						indicesBuffer = bb.asShortBuffer();
+						indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 						for (int s = 0; s < indexCoord.length; s++)
 							indicesBuffer.put(s, (short) indexCoord[s]);
 					}
@@ -3324,9 +3315,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 					{
 						//create and fill index buffer
 						//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
-						ByteBuffer bb = ByteBuffer.allocateDirect(indexCoord.length * 2);
-						bb.order(ByteOrder.nativeOrder());
-						indBuf = bb.asShortBuffer();
+						indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 						for (int s = 0; s < indexCoord.length; s++)
 							indBuf.put(s, (short) indexCoord[s]);
 						indBuf.position(initialIndexIndex);
@@ -3862,7 +3851,6 @@ class JoglesPipeline extends JoglesDEPPipeline
 	private static void loadLocs(Jogl2es2Context ctx, GL2ES2 gl)
 	{
 		ProgramData pd = ctx.programData;
-		int shaderProgramId = ctx.shaderProgramId;
 		if (pd.programToLocationData == null)
 		{
 			LocationData locs = new LocationData();
@@ -3870,86 +3858,93 @@ class JoglesPipeline extends JoglesDEPPipeline
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.programToLocationData++;
 
-			// Removed if(ATTEMPT_UBO && gl.isGL2ES3())...
-
-			locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
-			locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
-			locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
-			locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
-			locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
-			locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
-			locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
-			locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
-			locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
-			locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
-			locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
-			locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
-			locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
-			locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
-			locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
-
-			locs.fogData.fogEnabled = gl.glGetUniformLocation(shaderProgramId, "fogData.fogEnabled");
-			locs.fogData.expColor = gl.glGetUniformLocation(shaderProgramId, "fogData.expColor");
-			locs.fogData.expDensity = gl.glGetUniformLocation(shaderProgramId, "fogData.expDensity");
-			locs.fogData.linearColor = gl.glGetUniformLocation(shaderProgramId, "fogData.linearColor");
-			locs.fogData.linearStart = gl.glGetUniformLocation(shaderProgramId, "fogData.linearStart");
-			locs.fogData.linearEnd = gl.glGetUniformLocation(shaderProgramId, "fogData.linearEnd");
-
-			locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.lightEnabled");
-			locs.glFrontMaterial.ambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.ambient");
-			locs.glFrontMaterial.diffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.diffuse");
-			locs.glFrontMaterial.emission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.emission");
-			locs.glFrontMaterial.specular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.specular");
-			locs.glFrontMaterial.shininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.shininess");
-
-			locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
-
-			// lights, notice the vertex attribute is made of a string concat
-			// possibly in es you can't use an array of struct to get locs? TODO: check this
-			for (int i = 0; i < locs.glLightSource.length; i++)
+			int shaderProgramId = ctx.shaderProgramId;
+			// shader program can be disabled, but locs still called
+			if (shaderProgramId != -1)
 			{
-				locs.glLightSource[i] = new glLightSourceLocs();
-				locs.glLightSource[i].position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
-				locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
-				locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
-				locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
-						"glLightSource[" + i + "].constantAttenuation");
-				locs.glLightSource[i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
-						"glLightSource[" + i + "].linearAttenuation");
-				locs.glLightSource[i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
-						"glLightSource[" + i + "].quadraticAttenuation");
-				locs.glLightSource[i].spotCutoff = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotCutoff");
-				locs.glLightSource[i].spotExponent = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotExponent");
-				locs.glLightSource[i].spotDirection = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotDirection");
-			}
+				// Removed if(ATTEMPT_UBO && gl.isGL2ES3())...
 
-			///////ATTRIBUTES!!!!!!!!///////////////////
-			locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
-			locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
-			locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+				locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
+				locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
+				locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
+				locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
+				locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
+				locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
+				locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
+				locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
+				locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
+				locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
+				locs.objectColor = gl.glGetUniformLocation(shaderProgramId, "objectColor");
+				locs.alphaTestEnabled = gl.glGetUniformLocation(shaderProgramId, "alphaTestEnabled");
+				locs.alphaTestFunction = gl.glGetUniformLocation(shaderProgramId, "alphaTestFunction");
+				locs.alphaTestValue = gl.glGetUniformLocation(shaderProgramId, "alphaTestValue");
+				locs.textureTransform = gl.glGetUniformLocation(shaderProgramId, "textureTransform");
 
-			// tex coords, notice the vertex attribute is made of a string concat
-			for (int i = 0; i < locs.glMultiTexCoord.length; i++)
-			{
-				locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
-			}
+				locs.fogData.fogEnabled = gl.glGetUniformLocation(shaderProgramId, "fogData.fogEnabled");
+				locs.fogData.expColor = gl.glGetUniformLocation(shaderProgramId, "fogData.expColor");
+				locs.fogData.expDensity = gl.glGetUniformLocation(shaderProgramId, "fogData.expDensity");
+				locs.fogData.linearColor = gl.glGetUniformLocation(shaderProgramId, "fogData.linearColor");
+				locs.fogData.linearStart = gl.glGetUniformLocation(shaderProgramId, "fogData.linearStart");
+				locs.fogData.linearEnd = gl.glGetUniformLocation(shaderProgramId, "fogData.linearEnd");
 
-			// generic attributes, notice allocated on a program basis not per geom
-			HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
-			if (attToIndex != null)
-			{
-				for (String attrib : attToIndex.keySet())
+				locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.lightEnabled");
+				locs.glFrontMaterial.ambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.ambient");
+				locs.glFrontMaterial.diffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.diffuse");
+				locs.glFrontMaterial.emission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.emission");
+				locs.glFrontMaterial.specular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.specular");
+				locs.glFrontMaterial.shininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.shininess");
+
+				locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
+
+				// lights, notice the vertex attribute is made of a string concat
+				// possibly in es you can't use an array of struct to get locs? TODO: check this
+				for (int i = 0; i < locs.glLightSource.length; i++)
 				{
-					int index = attToIndex.get(attrib);
-					int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
-					locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
+					locs.glLightSource[i] = new glLightSourceLocs();
+					locs.glLightSource[i].position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
+					locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
+					locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
+					locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
+							"glLightSource[" + i + "].constantAttenuation");
+					locs.glLightSource[i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
+							"glLightSource[" + i + "].linearAttenuation");
+					locs.glLightSource[i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
+							"glLightSource[" + i + "].quadraticAttenuation");
+					locs.glLightSource[i].spotCutoff = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotCutoff");
+					locs.glLightSource[i].spotExponent = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotExponent");
+					locs.glLightSource[i].spotDirection = gl.glGetUniformLocation(shaderProgramId,
+							"glLightSource[" + i + "].spotDirection");
 				}
+
+				///////ATTRIBUTES!!!!!!!!///////////////////
+				locs.glVertex = gl.glGetAttribLocation(shaderProgramId, "glVertex");
+				locs.glColor = gl.glGetAttribLocation(shaderProgramId, "glColor");
+				locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
+
+				// tex coords, notice the vertex attribute is made of a string concat
+				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
+				{
+					locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
+				}
+
+				// generic attributes, notice allocated on a program basis not per geom
+				HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
+				if (attToIndex != null)
+				{
+					for (String attrib : attToIndex.keySet())
+					{
+						int index = attToIndex.get(attrib);
+						int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
+						locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
+					}
+				}
+
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
 			}
 
 			pd.programToLocationData = locs;
 		}
-		if (DO_OUTPUT_ERRORS)
-			outputErrors(ctx);
 	}
 
 	private static GeometryData loadAllBuffers(Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
@@ -4404,8 +4399,7 @@ class JoglesPipeline extends JoglesDEPPipeline
 
 				gd.interleavedStride = offset;
 
-				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride);
-				interleavedBuffer.order(ByteOrder.nativeOrder());
+				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride).order(ByteOrder.nativeOrder());
 
 				for (int i = 0; i < vertexCount; i++)
 				{
@@ -4578,7 +4572,140 @@ class JoglesPipeline extends JoglesDEPPipeline
 	// called by the 2 executes above
 
 	// ---------------------------------------------------------------------
+	// Native method for readRaster
+		@Override
+		void readRaster(Context ctx, int type, int xSrcOffset, int ySrcOffset, int width, int height, int hCanvas, int imageDataType,
+				int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer)
+		{
+			Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+			GL2ES2 gl = joglesctx.gl2es2;
 
+			//gl.glPixelStorei(GL2.GL_PACK_ROW_LENGTH, width);
+			gl.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+			int yAdjusted = hCanvas - height - ySrcOffset;
+
+			if ((type & Raster.RASTER_COLOR) != 0)
+			{
+				int oglFormat = 0;
+				if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
+				{
+
+					switch (imageFormat)
+					{
+					case ImageComponentRetained.TYPE_BYTE_BGR:
+						oglFormat = GL2ES2.GL_BGR;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_RGB:
+						oglFormat = GL2ES2.GL_RGB;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_ABGR:
+						oglFormat = GL2ES2.GL_RGBA;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_RGBA:
+						// all RGB types are stored as RGBA
+						oglFormat = GL2ES2.GL_RGBA;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_LA:
+						// all LA types are stored as LA8
+						oglFormat = GL2ES2.GL_LUMINANCE_ALPHA;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_GRAY:
+					case ImageComponentRetained.TYPE_USHORT_GRAY:
+					case ImageComponentRetained.TYPE_INT_BGR:
+					case ImageComponentRetained.TYPE_INT_RGB:
+					case ImageComponentRetained.TYPE_INT_ARGB:
+					default:
+						assert false;
+						return;
+					}
+
+					gl.glReadPixels(xSrcOffset, yAdjusted, width, height, oglFormat, GL.GL_UNSIGNED_BYTE,
+							ByteBuffer.wrap((byte[]) imageBuffer));
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+				{
+					int intType = GL2.GL_UNSIGNED_INT_8_8_8_8;
+					//boolean forceAlphaToOne = false;
+
+					switch (imageFormat)
+					{
+					/* GL_BGR */
+					case ImageComponentRetained.TYPE_INT_BGR: /* Assume XBGR format */
+						oglFormat = GL.GL_RGBA;
+						intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+						//forceAlphaToOne = true;
+						break;
+					case ImageComponentRetained.TYPE_INT_RGB: /* Assume XRGB format */
+						//forceAlphaToOne = true;
+						/* Fall through to next case */
+					case ImageComponentRetained.TYPE_INT_ARGB:
+						oglFormat = GL2.GL_BGRA;
+						intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+						break;
+					/* This method only supports 3 and 4 components formats and INT types. */
+					case ImageComponentRetained.TYPE_BYTE_LA:
+					case ImageComponentRetained.TYPE_BYTE_GRAY:
+					case ImageComponentRetained.TYPE_USHORT_GRAY:
+					case ImageComponentRetained.TYPE_BYTE_BGR:
+					case ImageComponentRetained.TYPE_BYTE_RGB:
+					case ImageComponentRetained.TYPE_BYTE_RGBA:
+					case ImageComponentRetained.TYPE_BYTE_ABGR:
+					default:
+						assert false;
+						return;
+					}
+
+					// Force Alpha to 1.0 if needed
+					//if (forceAlphaToOne
+					//{
+					//	gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
+					//	gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
+					//}
+
+					gl.glReadPixels(xSrcOffset, yAdjusted, width, height, oglFormat, intType, IntBuffer.wrap((int[]) imageBuffer));
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+					// Restore Alpha scale and bias
+					//if (forceAlphaToOne)
+					//{
+					//	gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
+					//	gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
+					//}
+
+				}
+				else
+				{
+					assert false;
+				}
+			}
+
+			if ((type & Raster.RASTER_DEPTH) != 0)
+			{
+				throw new UnsupportedOperationException("To get depth you should use a shader that return depth info for gl2es2 then read from color");
+				/*if (depthFormat == DepthComponentRetained.DEPTH_COMPONENT_TYPE_INT)
+				{
+					// yOffset is adjusted for OpenGL - Y upward
+					gl.glReadPixels(xSrcOffset, yAdjusted, width, height, GL2.GL_DEPTH_COMPONENT, GL.GL_UNSIGNED_INT,
+							IntBuffer.wrap((int[]) depthBuffer));
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}
+				else
+				{
+					// DEPTH_COMPONENT_TYPE_FLOAT
+					// yOffset is adjusted for OpenGL - Y upward
+					gl.glReadPixels(xSrcOffset, yAdjusted, width, height, GL2.GL_DEPTH_COMPONENT, GL.GL_FLOAT,
+							FloatBuffer.wrap((float[]) depthBuffer));
+					if (DO_OUTPUT_ERRORS)
+						outputErrors(ctx);
+				}*/
+			}
+
+		}
 	//
 	// GLSLShaderProgramRetained methods
 	//
@@ -4901,9 +5028,8 @@ class JoglesPipeline extends JoglesDEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.createGLSLShader++;
 
 		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2;
-boolean isCurrent = context(ctx).isCurrent();
-		
-		
+		boolean isCurrent = context(ctx).isCurrent();
+
 		int shaderHandle = 0;
 		if (shaderType == Shader.SHADER_TYPE_VERTEX)
 		{
@@ -5188,28 +5314,29 @@ boolean isCurrent = context(ctx).isCurrent();
 	private boolean USE_NULL_SHADER_WARNING_GIVEN = false;
 
 	@Override
-	ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId)
+	ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId inShaderProgramId)
 	{
+		int shaderProgramId = unbox(inShaderProgramId);
 		if (VERBOSE)
-			System.err.println("JoglPipeline.useGLSLShaderProgram(shaderProgramId=" + unbox(shaderProgramId) + ")");
+			System.err.println("JoglPipeline.useGLSLShaderProgram(shaderProgramId=" + shaderProgramId + ")");
 
 		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
 		if (OUTPUT_PER_FRAME_STATS)
 		{
-			if (joglesContext.gl_state.currentProgramId == unbox(shaderProgramId))
+			if (joglesContext.gl_state.currentProgramId == shaderProgramId)
 			{
 				joglesContext.perFrameStats.redundantUseProgram++;
 			}
 			else
 			{
 				joglesContext.perFrameStats.useGLSLShaderProgram++;
-				joglesContext.perFrameStats.usedPrograms.add(shaderProgramId);
+				joglesContext.perFrameStats.usedPrograms.add(inShaderProgramId);
 			}
 		}
 
-		if (!MINIMISE_NATIVE_SHADER || joglesContext.gl_state.currentProgramId != unbox(shaderProgramId))
+		if (!MINIMISE_NATIVE_SHADER || joglesContext.gl_state.currentProgramId != shaderProgramId)
 		{
-			if (shaderProgramId == null)
+			if (shaderProgramId == -1)
 			{
 				if (!USE_NULL_SHADER_WARNING_GIVEN)
 					System.err.println("Null shader passed for use");
@@ -5218,15 +5345,15 @@ boolean isCurrent = context(ctx).isCurrent();
 
 			GL2ES2 gl = joglesContext.gl2es2;
 
-			gl.glUseProgram(unbox(shaderProgramId));
+			gl.glUseProgram(shaderProgramId);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 
-			joglesContext.setShaderProgram((JoglShaderObject) shaderProgramId);
+			joglesContext.setShaderProgram((JoglShaderObject) inShaderProgramId);
 			loadLocs(joglesContext, gl);
 
 			if (MINIMISE_NATIVE_SHADER)
-				joglesContext.gl_state.currentProgramId = unbox(shaderProgramId);
+				joglesContext.gl_state.currentProgramId = shaderProgramId;
 
 		}
 		return null;
@@ -5238,7 +5365,7 @@ boolean isCurrent = context(ctx).isCurrent();
 	private static int unbox(ShaderAttrLoc loc)
 	{
 		if (loc == null)
-			return 0;
+			return -1;//0 is a valid location
 		return ((JoglShaderObject) loc).getValue();
 	}
 
@@ -7467,6 +7594,134 @@ boolean isCurrent = context(ctx).isCurrent();
 
 		return tmp[0];
 	}
+	
+	@Override
+	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
+			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.texturemapping()");
+
+		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+
+		int glType = GL.GL_RGBA;
+
+		disableAttribFor2D(gl);
+
+		gl.glDepthMask(false);
+		gl.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);
+		gl.glBindTexture(GL.GL_TEXTURE_2D, objectId);
+		// set up texture parameter
+		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
+		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT);
+		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT);
+
+		//gl.glTexEnvf(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL.GL_REPLACE);
+		gl.glEnable(GL.GL_BLEND);
+		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+
+		//gl.glEnable(GL.GL_TEXTURE_2D);
+
+		//gl.glPushAttrib(GL2.GL_TRANSFORM_BIT);
+		//gl.glMatrixMode(GL.GL_TEXTURE);
+		//gl.glLoadIdentity();
+		//gl.glPopAttrib();
+
+		// loaded identity modelview and projection matrix
+		//gl.glMatrixMode(GL2.GL_PROJECTION);
+		//gl.glLoadIdentity();
+
+		//NOTE! winWidth and winHeight! multiplied into the quad xy below
+		//gl.glOrtho(0.0, winWidth, 0.0, winHeight, 0.0, 0.0);
+
+		//gl.glMatrixMode(GL2.GL_MODELVIEW);
+		//gl.glLoadIdentity();
+
+		if (isExtensionAvailable.GL_EXT_abgr(gl))
+		{
+			glType = GL2.GL_ABGR_EXT;
+		}
+		else
+		{
+			switch (format)
+			{
+			case ImageComponentRetained.TYPE_BYTE_RGBA:
+				glType = GL.GL_RGBA;
+				break;
+			case ImageComponentRetained.TYPE_BYTE_RGB:
+				glType = GL.GL_RGB;
+				break;
+			}
+		}
+
+		//gl.glPixelStorei(GL2.GL_UNPACK_ROW_LENGTH, rasWidth);
+		//gl.glPixelStorei(GL2.GL_UNPACK_SKIP_PIXELS, minX);
+		//gl.glPixelStorei(GL2.GL_UNPACK_SKIP_ROWS, minY);
+		gl.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, minX, minY, maxX - minX, maxY - minY, glType, GL.GL_UNSIGNED_BYTE,
+				ByteBuffer.wrap(imageYdown));
+		//gl.glPixelStorei(GL2.GL_UNPACK_ROW_LENGTH, 0);
+		//gl.glPixelStorei(GL2.GL_UNPACK_SKIP_PIXELS, 0);
+		//gl.glPixelStorei(GL2.GL_UNPACK_SKIP_ROWS, 0);
+
+		float texMinU = (float) minX / (float) texWidth;
+		float texMinV = (float) minY / (float) texHeight;
+		float texMaxU = (float) maxX / (float) texWidth;
+		float texMaxV = (float) maxY / (float) texHeight;
+		float halfWidth = winWidth / 2.0f;
+		float halfHeight = winHeight / 2.0f;
+
+		float mapMinX = ((px + minX) - halfWidth) / halfWidth;
+		float mapMinY = (halfHeight - (py + maxY)) / halfHeight;
+		float mapMaxX = (px + maxX - halfWidth) / halfWidth;
+		float mapMaxY = (halfHeight - (py + minY)) / halfHeight;
+
+		float mapZ = 0;
+
+		//NOTE!!!!!! very very well, tex*V is swapped max/min in order to upright the Y of the image!!
+		renderTexturedQuad(ctx, texMinU, texMaxU, texMaxV, texMinV, mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ);
+
+		// Java 3D always clears the Z-buffer
+		gl.glDepthMask(true);
+		gl.glClear(GL.GL_DEPTH_BUFFER_BIT);
+		//gl.glPopAttrib();
+	}
+
+	@Override
+	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.initTexturemapping()");
+
+		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+
+		gl.glBindTexture(GL.GL_TEXTURE_2D, objectId);
+
+		int glType = GL.GL_RGBA;
+		if (isExtensionAvailable.GL_EXT_abgr(gl))
+		{
+			glType = GL2.GL_ABGR_EXT;
+		}
+		else
+		{
+			glType = GL.GL_RGBA;
+		}
+		//some sort of memory space check below?
+		/*gl.glTexImage2D(GL2.GL_PROXY_TEXTURE_2D, 0, GL2ES2.GL_RGBA, texWidth, texHeight, 0, glType, GL.GL_UNSIGNED_BYTE, null);
+		
+		int[] width = new int[1];
+		gl.glGetTexLevelParameteriv(GL2.GL_PROXY_TEXTURE_2D, 0, GL2.GL_TEXTURE_WIDTH, width, 0);
+		
+		if (width[0] <= 0)
+		{
+			return false;
+		}*/
+
+		// init texture size only without filling the pixels
+		gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, texWidth, texHeight, 0, glType, GL.GL_UNSIGNED_BYTE, null);
+
+		return true;
+	}
 
 	// Set glDepthMask.
 	@Override
@@ -8017,6 +8272,66 @@ boolean isCurrent = context(ctx).isCurrent();
 		cv.texture3DDepthMax = tmp[0];*/
 	}
 
+	/*
+	  * Function to disable most rendering attributes when doing a 2D
+	  * clear, image copy, or image composite operation. Note that the
+	  * caller must save/restore the attributes with
+	  * pushAttrib(GL_ENABLE_BIT|...) and popAttrib()
+	  */
+	private static void disableAttribFor2D(GL2ES2 gl)
+	{
+		//Only a few of these exist for ES2
+		//alpha, fog, lighting material are all shader ops 
+		//gl.glDisable(GL2.GL_ALPHA_TEST);
+		gl.glDisable(GL.GL_BLEND);
+		//gl.glDisable(GL.GL_COLOR_LOGIC_OP);
+		//gl.glDisable(GL2.GL_COLOR_MATERIAL);
+		gl.glDisable(GL.GL_CULL_FACE);
+		gl.glDisable(GL.GL_DEPTH_TEST);
+		//gl.glDisable(GL2.GL_FOG);
+		//gl.glDisable(GL2.GL_LIGHTING);
+		gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
+		//gl.glDisable(GL2.GL_POLYGON_STIPPLE);
+		gl.glDisable(GL.GL_STENCIL_TEST);
+		//gl.glDisable(GL.GL_TEXTURE_2D);
+		//gl.glDisable(GL2.GL_TEXTURE_GEN_Q);
+		//gl.glDisable(GL2.GL_TEXTURE_GEN_R);
+		//gl.glDisable(GL2.GL_TEXTURE_GEN_S);
+		//gl.glDisable(GL2.GL_TEXTURE_GEN_T);
+
+		//for (int i = 0; i < 6; i++) {
+		//    gl.glDisable(GL2.GL_CLIP_PLANE0 + i);
+		//}
+
+		//gl.glDisable(GL2.GL_TEXTURE_3D);
+		//gl.glDisable(GL.GL_TEXTURE_CUBE_MAP);
+
+		// FIXME: GL_NV_register_combiners
+		//	        if (gl.isExtensionAvailable("GL_NV_register_combiners")) {
+		//	            gl.glDisable(GL.GL_REGISTER_COMBINERS_NV);
+		//	        }
+		// FIXME: GL_SGI_texture_color_table
+		//	        if (gl.isExtensionAvailable("GL_SGI_texture_color_table")) {
+		//	            gl.glDisable(GL.GL_TEXTURE_COLOR_TABLE_SGI);
+		//	        }
+	}
+
+	private static void disableAttribForRaster(GL2ES2 gl)
+	{
+
+		//gl.glDisable(GL2.GL_COLOR_MATERIAL);
+		gl.glDisable(GL.GL_CULL_FACE);
+		//gl.glDisable(GL2.GL_LIGHTING);
+		gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
+		//gl.glDisable(GL2.GL_POLYGON_STIPPLE);
+
+		// TODO: Disable if Raster.CLIP_POSITION is true
+		//	      for (int i = 0; i < 6; i++) {
+		//	          gl.glDisable(GL2.GL_CLIP_PLANE0 + i);
+		//	      }
+
+	}
+
 	// Not needed generally as transpose can be called on the inteface with gl
 	private static void copyTranspose(double[] src, double[] dst)
 	{
@@ -8061,6 +8376,376 @@ boolean isCurrent = context(ctx).isCurrent();
 			outputErrors(ctx);
 	}
 
+	private static int createSimpleTextureShaderProgram(Context ctx)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.createSimpleTextureShaderProgram()");
+
+		// now create and set shader
+		String vertexProgram = "#version 120\n";
+		vertexProgram += "attribute vec2 glMultiTexCoord0;\n";
+		vertexProgram += "attribute vec4 glVertex;\n";
+		vertexProgram += "varying vec2 glTexCoord0;\n";
+		vertexProgram += "void main( void ){\n";
+		vertexProgram += "gl_Position = glVertex;\n";
+		vertexProgram += "glTexCoord0 = glMultiTexCoord0.st;\n";
+		vertexProgram += "}";
+
+		String fragmentProgram = "#version 120\n";
+		fragmentProgram += "precision mediump float;\n";
+		fragmentProgram += "varying vec2 glTexCoord0;\n";
+		fragmentProgram += "uniform sampler2D BaseMap;\n";
+		fragmentProgram += "void main( void ){\n ";
+		fragmentProgram += "vec4 baseMap = texture2D( BaseMap, glTexCoord0.st );\n";
+		fragmentProgram += "gl_FragColor = baseMap;\n";
+		//fragmentProgram += "gl_FragColor = vec4(1,1,0.5,1);\n";
+		fragmentProgram += "}";
+
+		int programId = createShaderProgram(ctx, vertexProgram, fragmentProgram);
+
+		// now record the locations
+		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = jctx.gl2es2;
+		jctx.simpleTextureShaderProgramVertLoc = gl.glGetAttribLocation(programId, "glVertex");
+		jctx.simpleTextureShaderProgramTexCoordLoc = gl.glGetAttribLocation(programId, "glMultiTexCoord0");
+		jctx.simpleTextureShaderProgramBaseMapLoc = gl.glGetUniformLocation(programId, "BaseMap");
+
+		return programId;
+	}
+
+	private static int createShaderProgram(Context ctx, String vertexProgram, String fragmentProgram)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.createShaderProgram()");
+
+		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = jctx.gl2es2;
+
+		int shaderHandleV = gl.glCreateShader(GL2ES2.GL_VERTEX_SHADER);
+		int shaderHandleF = gl.glCreateShader(GL2ES2.GL_FRAGMENT_SHADER);
+
+		int shaderProgramHandle = gl.glCreateProgram();
+
+		gl.glAttachShader(shaderProgramHandle, shaderHandleV);
+		gl.glAttachShader(shaderProgramHandle, shaderHandleF);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		gl.glShaderSource(shaderHandleV, 1, new String[] { vertexProgram }, null, 0);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		gl.glCompileShader(shaderHandleV);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		int[] status = new int[1];
+		gl.glGetShaderiv(shaderHandleV, GL2ES2.GL_COMPILE_STATUS, status, 0);
+		if (status[0] == 0)
+		{
+			String detailMsg = getShaderInfoLog(gl, shaderHandleV);
+			System.err.println(detailMsg);
+		}
+		gl.glShaderSource(shaderHandleF, 1, new String[] { fragmentProgram }, null, 0);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		gl.glCompileShader(shaderHandleF);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		gl.glGetShaderiv(shaderHandleF, GL2ES2.GL_COMPILE_STATUS, status, 0);
+		if (status[0] == 0)
+		{
+			String detailMsg = getShaderInfoLog(gl, shaderHandleF);
+			System.err.println(detailMsg);
+		}
+
+		gl.glLinkProgram(shaderProgramHandle);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		gl.glGetProgramiv(shaderProgramHandle, GL2ES2.GL_LINK_STATUS, status, 0);
+		if (status[0] == 0)
+		{
+			String detailMsg = getProgramInfoLog(gl, shaderProgramHandle);
+			System.err.println(detailMsg);
+		}
+
+		return shaderProgramHandle;
+	}
+	/**
+	 * Texture 0 must be bound by now
+	 * @param texMinU 
+	 */
+	private static void renderTexturedQuad(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX,
+			float mapMaxX, float mapMinY, float mapMaxY, float mapZ)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.renderTexturedQuad()");
+
+		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = jctx.gl2es2();
+
+		//NOTE .order(ByteOrder.nativeOrder())!!!
+		int vcount = 6;
+		FloatBuffer verts = ByteBuffer.allocateDirect(Float.SIZE / 8 * 3 * vcount).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		FloatBuffer tcs = ByteBuffer.allocateDirect(Float.SIZE / 8 * 2 * vcount).order(ByteOrder.nativeOrder()).asFloatBuffer();
+
+		//CCW windings for fun (cull face should make unnecessary
+		tcs.put(texMinU).put(texMinV);
+		verts.put(mapMinX).put(mapMinY).put(mapZ);
+		tcs.put(texMaxU).put(texMaxV);
+		verts.put(mapMaxX).put(mapMaxY).put(mapZ);
+		tcs.put(texMinU).put(texMaxV);
+		verts.put(mapMinX).put(mapMaxY).put(mapZ);
+
+		tcs.put(texMinU).put(texMinV);
+		verts.put(mapMinX).put(mapMinY).put(mapZ);
+		tcs.put(texMaxU).put(texMinV);
+		verts.put(mapMaxX).put(mapMinY).put(mapZ);
+		tcs.put(texMaxU).put(texMaxV);
+		verts.put(mapMaxX).put(mapMaxY).put(mapZ);
+
+		verts.position(0);
+		tcs.position(0);
+
+		int[] tmp = new int[2];
+		gl.glGenBuffers(2, tmp, 0);
+		int vertBufId = tmp[0];
+		int tcBufId = tmp[1];
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, vertBufId);
+		gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_STREAM_DRAW);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, tcBufId);
+		gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (tcs.remaining() * Float.SIZE / 8), tcs, GL2ES2.GL_STREAM_DRAW);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		if (jctx.simpleTextureShaderProgramId == -1)
+			jctx.simpleTextureShaderProgramId = createSimpleTextureShaderProgram(ctx);
+
+		gl.glUseProgram(jctx.simpleTextureShaderProgramId);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		jctx.prevShaderProgram = jctx.simpleTextureShaderProgramId;
+
+		boolean bindingRequired = true;
+
+		// always create a new one
+		int vaoId = -1;
+		if (jctx.gl2es3() != null)
+		{
+			if (vaoId == -1)
+			{
+				int[] tmp2 = new int[1];
+				jctx.gl2es3().glGenVertexArrays(1, tmp2, 0);
+				vaoId = tmp2[0];
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+			else
+			{
+				bindingRequired = false;
+			}
+			jctx.gl2es3().glBindVertexArray(vaoId);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+
+		if (bindingRequired)
+		{
+			if (jctx.simpleTextureShaderProgramVertLoc != -1)
+			{
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, vertBufId);
+				gl.glVertexAttribPointer(jctx.simpleTextureShaderProgramVertLoc, 3, GL2ES2.GL_FLOAT, false, 0, 0);
+				gl.glEnableVertexAttribArray(jctx.simpleTextureShaderProgramVertLoc);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+
+			if (jctx.simpleTextureShaderProgramTexCoordLoc != -1)
+			{
+				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, tcBufId);
+				gl.glVertexAttribPointer(jctx.simpleTextureShaderProgramTexCoordLoc, 2, GL2ES2.GL_FLOAT, false, 0, 0);
+				gl.glEnableVertexAttribArray(jctx.simpleTextureShaderProgramTexCoordLoc);
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			}
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+
+		if (jctx.simpleTextureShaderProgramBaseMapLoc != -1)
+		{
+			gl.glUniform1i(jctx.simpleTextureShaderProgramBaseMapLoc, 0);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+
+		gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		// clean u as we have to recreate each pass
+		if (vaoId != -1)
+			jctx.gl2es3().glDeleteVertexArrays(1, new int[] { vaoId }, 0);
+
+		if (vertBufId != -1)
+			gl.glDeleteBuffers(1, new int[] { vertBufId }, 0);
+
+		if (tcBufId != -1)
+			gl.glDeleteBuffers(1, new int[] { tcBufId }, 0);
+	}
+
+	@Override
+	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
+			float mapMinY, float mapMaxY, boolean useBilinearFilter)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.textureFillBackground()");
+
+		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = jctx.gl2es2();
+
+		disableAttribFor2D(gl);
+
+		// Setup filter mode if needed 
+		if (useBilinearFilter)
+		{
+			// System.err.println("JoglPipeline - Raster  : use bilinear filter\n");
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+
+		//gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
+		//TODO: alpha value!! make sure blending on and use the alpha value in shader
+
+		gl.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		//gl.glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //note [0,1] not the normal [-1,1]
+
+		// add a Z so we stay closer to textureFillRaster
+		float mapZ = 0f;
+
+		//NOTE!!!!!! very very well, tex*V is swapped max/min in order to upright the Y of the image!!
+		renderTexturedQuad(ctx, texMinU, texMaxU, texMaxV, texMinV, mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ);
+	}
+
+	@Override
+	void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
+			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBilinearFilter)
+	{
+
+		if (VERBOSE)
+			System.err.println("JoglPipeline.textureFillRaster()");
+
+		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = jctx.gl2es2();
+
+		disableAttribForRaster(gl);
+
+		// Setup filter mode if needed 
+		if (useBilinearFilter)
+		{
+			// System.err.println("JoglPipeline - Raster  : use bilinear filter\n");
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+
+		//gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
+		//TODO: alpha value!! make sure blending on and use the alpha value in shader
+
+		gl.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+
+		//gl.glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //note [0,1] not the normal [-1,1]
+
+		//NOTE!!!!!! very very well, tex*V is swapped max/min in order to upright the Y of the image!!
+		renderTexturedQuad(ctx, texMinU, texMaxU, texMaxV, texMinV, mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ);
+
+	}
+
+	
+	@Override
+	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
+			int rasterHeight, int depthWidth, int depthHeight, int depthFormat, Object depthData)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.executeRasterDepth()");
+		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = jctx.gl2es2;
+		throw new UnsupportedOperationException("To get depth you should use a shader that return depth info for gl2es2 then read from color");
+		/*
+		gl.glRasterPos3f(posX, posY, posZ);
+
+		int[] drawBuf = new int[1];
+		gl.glGetIntegerv(GL2.GL_DRAW_BUFFER, drawBuf, 0);
+		// disable draw buffer 
+		gl.glDrawBuffer(GL.GL_NONE);
+
+		
+		 // raster position is upper left corner, default for Java3D
+		 // ImageComponent currently has the data reverse in Y
+		 
+		gl.glPixelZoom(1.0f, -1.0f);
+		gl.glPixelStorei(GL2.GL_UNPACK_ROW_LENGTH, depthWidth);
+		if (srcOffsetX >= 0)
+		{
+			gl.glPixelStorei(GL2.GL_UNPACK_SKIP_PIXELS, srcOffsetX);
+			if (srcOffsetX + rasterWidth > depthWidth)
+			{
+				rasterWidth = depthWidth - srcOffsetX;
+			}
+		}
+		else
+		{
+			rasterWidth += srcOffsetX;
+			if (rasterWidth > depthWidth)
+			{
+				rasterWidth = depthWidth;
+			}
+		}
+		if (srcOffsetY >= 0)
+		{
+			gl.glPixelStorei(GL2.GL_UNPACK_SKIP_ROWS, srcOffsetY);
+			if (srcOffsetY + rasterHeight > depthHeight)
+			{
+				rasterHeight = depthHeight - srcOffsetY;
+			}
+		}
+		else
+		{
+			rasterHeight += srcOffsetY;
+			if (rasterHeight > depthHeight)
+			{
+				rasterHeight = depthHeight;
+			}
+		}
+
+		if (depthFormat == DepthComponentRetained.DEPTH_COMPONENT_TYPE_INT)
+		{
+			gl.glDrawPixels(rasterWidth, rasterHeight, GL2.GL_DEPTH_COMPONENT, GL.GL_UNSIGNED_INT, IntBuffer.wrap((int[]) depthData));
+		}
+		else
+		{ // DepthComponentRetained.DEPTH_COMPONENT_TYPE_FLOAT 
+			gl.glDrawPixels(rasterWidth, rasterHeight, GL2.GL_DEPTH_COMPONENT, GL.GL_FLOAT, FloatBuffer.wrap((float[]) depthData));
+		}
+
+		// re-enable draw buffer 
+		gl.glDrawBuffer(drawBuf[0]);
+
+		gl.glPixelStorei(GL2.GL_UNPACK_ROW_LENGTH, 0);
+		gl.glPixelStorei(GL2.GL_UNPACK_SKIP_PIXELS, 0);
+		gl.glPixelStorei(GL2.GL_UNPACK_SKIP_ROWS, 0);
+*/
+	}
 	/**
 	 * This native method makes sure that the rendering for this canvas gets
 	 * done now.
@@ -8372,14 +9057,14 @@ boolean isCurrent = context(ctx).isCurrent();
 		// ctx unused, doesn't exist yet
 
 		// Offscreen Canvas3D's JoglGraphicsConfiguration
-		JoglGraphicsConfiguration jgc = (JoglGraphicsConfiguration) cv.graphicsConfiguration;
+		//		JoglGraphicsConfiguration jgc = (JoglGraphicsConfiguration) cv.graphicsConfiguration;
 
 		// Retrieve the offscreen Canvas3D's GraphicsConfigInfo
-		GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(jgc);
+		//		GraphicsConfigInfo gcInf0 = Canvas3D.graphicsConfigTable.get(jgc);
 
 		// Offscreen Canvas3D's graphics configuration, determined in
 		// 'getBestConfiguration'
-		AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
+		//		AWTGraphicsConfiguration awtConfig = (AWTGraphicsConfiguration) gcInf0.getPrivateData();
 
 		// TODO Offscreen Canvas3D's graphics devise, determined in
 		// 'getBestConfiguration'
@@ -8390,11 +9075,12 @@ boolean isCurrent = context(ctx).isCurrent();
 
 		// Offscreen Canvas3D's capabilites, determined in
 		// 'getBestConfiguration'
-		GLCapabilities canvasCaps = (GLCapabilities) awtConfig.getChosenCapabilities();
+		//		GLCapabilities canvasCaps = (GLCapabilities) awtConfig.getChosenCapabilities();
+		GLCapabilities canvasCaps = cv.getCaps();
 
 		// For further investigations : the user's GraphicsConfigTemplate3D (not
 		// used yet)
-		GraphicsConfigTemplate3D gct3D = gcInf0.getGraphicsConfigTemplate3D();
+		//		GraphicsConfigTemplate3D gct3D = gcInf0.getGraphicsConfigTemplate3D();
 
 		// Assuming that the offscreen drawable will/can support the chosen
 		// GLCapabilities
@@ -8402,6 +9088,9 @@ boolean isCurrent = context(ctx).isCurrent();
 
 		final GLCapabilities offCaps = new GLCapabilities(GLProfile.get(GLProfile.GL2ES2));
 		offCaps.copyFrom(canvasCaps);
+
+		// not in original, probably set somewhere in canvas3D
+		offCaps.setOnscreen(false);
 
 		// double bufffering only if scene antialiasing is required/preferred
 		// and supported
@@ -8417,7 +9106,7 @@ boolean isCurrent = context(ctx).isCurrent();
 		// Set preferred offscreen drawable : framebuffer object (FBO) or
 		// pbuffer
 		offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
-		// caps.setPBuffer(true);
+		//offCaps.setPBuffer(true);
 
 		// !! a 'null' capability chooser; JOGL doesn't call a chooser for
 		// offscreen drawable
@@ -8481,7 +9170,7 @@ boolean isCurrent = context(ctx).isCurrent();
 		// else pbuffer
 
 		//gl.glPixelStorei(GL2.GL_PACK_ROW_LENGTH, width);
-		//gl.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);
+		gl.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);
 
 		int type = 0;
 
@@ -8493,18 +9182,16 @@ boolean isCurrent = context(ctx).isCurrent();
 			{
 			// GL_BGR
 			case ImageComponentRetained.TYPE_BYTE_BGR:
-				type = GL2.GL_BGR;
+				type = GL2.GL_BGR; //not_ok
 				break;
 			case ImageComponentRetained.TYPE_BYTE_RGB:
-				type = GL.GL_RGB;
+				type = GL.GL_RGB; //ok
 				break;
 			// GL_ABGR_EXT
 			case ImageComponentRetained.TYPE_BYTE_ABGR:
-				if (gl.isExtensionAvailable("GL_EXT_abgr"))
-				{ // If false,
-					// should never
-					// come here!
-					type = GL2.GL_ABGR_EXT;
+				if (isExtensionAvailable.GL_EXT_abgr(gl))
+				{ // If false, should never come here!
+					type = GL2.GL_ABGR_EXT; //ok
 				}
 				else
 				{
@@ -8531,62 +9218,12 @@ boolean isCurrent = context(ctx).isCurrent();
 			}
 
 			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, ByteBuffer.wrap((byte[]) data));
-
-		}
-		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
-		{
-
-			int intType = GL2.GL_UNSIGNED_INT_8_8_8_8;
-			boolean forceAlphaToOne = false;
-
-			switch (format)
-			{
-			/* GL_BGR */
-			case ImageComponentRetained.TYPE_INT_BGR: /* Assume XBGR format */
-				type = GL.GL_RGBA;
-				intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
-				forceAlphaToOne = true;
-				break;
-			case ImageComponentRetained.TYPE_INT_RGB: /* Assume XRGB format */
-				forceAlphaToOne = true;
-				/* Fall through to next case */
-			case ImageComponentRetained.TYPE_INT_ARGB:
-				type = GL2.GL_BGRA;
-				intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
-				break;
-			/*
-			 * This method only supports 3 and 4 components formats and BYTE
-			 * types.
-			 */
-			case ImageComponentRetained.TYPE_BYTE_LA:
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-			default:
-				throw new AssertionError("illegal format " + format);
-			}
-
-			/* Force Alpha to 1.0 if needed */
-			// if (forceAlphaToOne) {
-			// gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
-			// gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
-			// }
-
-			gl.glReadPixels(0, 0, width, height, type, intType, IntBuffer.wrap((int[]) data));
-
-			/* Restore Alpha scale and bias */
-			// if (forceAlphaToOne) {
-			// gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
-			// gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
-			// }
+ 
 		}
 		else
 		{
-			throw new AssertionError("illegal image data type " + dataType);
+
+			throw new AssertionError("illegal image data type " + dataType + " Try creating a BufferedImage of type TYPE_3BYTE_BGR");
 		}
 
 		// If FBO
@@ -8665,7 +9302,8 @@ boolean isCurrent = context(ctx).isCurrent();
 	 * @param isSharedCtx
 	 * @return
 	 */
-	Context createNewContext(Canvas3D cv, GLDrawable glDrawable, GLContext glContext, Context shareCtx, boolean isSharedCtx)
+	Context createNewContext(Canvas3D cv, GLDrawable glDrawable, GLContext glContext, Context shareCtx, boolean isSharedCtx,
+			boolean offScreen)
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createNewContext()");
@@ -8694,17 +9332,22 @@ boolean isCurrent = context(ctx).isCurrent();
 			cv.drawable = new JoglDrawable(glDrawable, nativeWindow);
 			*/
 
-		cv.drawable = new JoglDrawable(glDrawable, null);
+		if (offScreen)
+		{
+			glDrawable = drawable(cv.drawable); // cv.drawable != null, set in 'createOffScreenBuffer' 
+			glContext = glDrawable.createContext(context(shareCtx));		
+		}
+		else
+		{
+			cv.drawable = new JoglDrawable(glDrawable, null);
+		}
 
 		// assuming that this only gets called after addNotify has been called
-		if (!glDrawable.isRealized())
-		{
-			glDrawable.setRealized(true);
-		}
+		glDrawable.setRealized(true);
+
 
 		// Apparently we are supposed to make the context current at this point
 		// and set up a bunch of properties
-
 		glContext.makeCurrent();
 
 		// Work around for some low end graphics driver bug, such as Intel Chipset.
@@ -8796,6 +9439,8 @@ boolean isCurrent = context(ctx).isCurrent();
 				// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
 				fboDrawable.getFBObject(GL2ES2.GL_BACK).bind(gl);
 			}
+
+			//Note offscreen uses the above call in all cases where appropriate
 
 		}
 		finally
