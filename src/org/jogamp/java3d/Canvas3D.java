@@ -947,6 +947,8 @@ public class Canvas3D //extends Canvas
 
 		// Construct the drawing surface object for this Canvas3D
 		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
+
+		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
 	}
 
 	public Canvas3D()
@@ -1001,6 +1003,11 @@ public class Canvas3D //extends Canvas
 		//this.glwindow.setFullscreen(true);
 
 		this.offScreen = offScreen;
+
+		if (!offScreen)
+			this.glwindow.setVisible(true);
+		//MUST set visible before new GraphicsConfiguration(this.glwindow); or size and everything buggered
+
 		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
 
 		// Issue 131: Set the autoOffScreen variable based on whether this
@@ -1102,7 +1109,7 @@ public class Canvas3D //extends Canvas
 
 		// Construct the drawing surface object for this Canvas3D
 		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
-		
+
 		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
 
 	}
@@ -1172,6 +1179,7 @@ public class Canvas3D //extends Canvas
 		// Construct the drawing surface object for this Canvas3D
 		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
 
+		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
 	}
 
 	// Issue 458 - evaluate this Canvas3D's visibility whenever we get a
@@ -1461,7 +1469,6 @@ public class Canvas3D //extends Canvas
 
 		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
 		useStereo = stereoEnable && stereoAvailable;
-
 
 		if (rdr != null)
 		{
@@ -2622,7 +2629,7 @@ public class Canvas3D //extends Canvas
 
 		if (offScreen)
 		{
-			if(shareCtx!=null)
+			if (shareCtx != null)
 				throw new RuntimeException("Shared contexts don't work with offscreen now, sorry");
 			retVal = ((JoglesPipeline) Pipeline.getPipeline()).createNewContext(this, null, null, shareCtx, isSharedCtx, offScreen);
 		}
