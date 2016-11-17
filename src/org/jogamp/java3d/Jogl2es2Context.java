@@ -336,7 +336,7 @@ public class Jogl2es2Context extends JoglContext
 	public int prevShaderProgram;
 
 	// The per frame stats
-	public JoglesPerFrameStats perFrameStats = new JoglesPerFrameStats();
+	public Jogl2es2PerFrameStats perFrameStats = new Jogl2es2PerFrameStats();
 
 	private int statsFrame = 0;
 	private int STATS_OUTPUT_FRAME_FREQ = 50;
@@ -351,7 +351,7 @@ public class Jogl2es2Context extends JoglContext
 			perFrameStats.outputPerFrameData();
 		}
 		// clear for next frame
-		perFrameStats = new JoglesPerFrameStats();
+		perFrameStats = new Jogl2es2PerFrameStats();
 		perFrameStats.endOfPrevFrameTime = System.nanoTime();
 	}
 	
@@ -367,7 +367,6 @@ public class Jogl2es2Context extends JoglContext
 	
 	// just a singleton of the handy matrix/array operations
 	public Jogl2es2MatrixUtil matrixUtil = new Jogl2es2MatrixUtil();
- 
 
 	/////////////////////////////////////S H A D E R   S T R U C T S /////////////////////////////////////////////////////
 

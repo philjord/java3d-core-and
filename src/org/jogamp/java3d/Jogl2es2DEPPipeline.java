@@ -4,7 +4,7 @@ package org.jogamp.java3d;
  * Separated from the actual pipeline for clarity of features that are not supported from the 
  * Pipeline class for the JOGL2ES2 rendering pipeline.
  */
-abstract class JoglesDEPPipeline extends Pipeline
+abstract class Jogl2es2DEPPipeline extends Pipeline
 {
 	public static final String VALID_FORMAT_MESSAGE = "The Gl2ES2 pipeline only supports a subset of the Geometry data types and formats. \n"//
 			+ "Coordinates must be defined and float type, colors must be float type, if defined. \n"//
@@ -23,11 +23,11 @@ abstract class JoglesDEPPipeline extends Pipeline
 	/**
 	 * Constructor for singleton JoglPipeline instance
 	 */
-	protected JoglesDEPPipeline()
+	protected Jogl2es2DEPPipeline()
 	{
 
 	}
-	
+
 	// used for GeometryArrays  (this means DisplayList usage)
 	@Override
 	@Deprecated
@@ -69,6 +69,26 @@ abstract class JoglesDEPPipeline extends Pipeline
 				+ "Please note the recommended solution is to use NIO buffers. \n" + VALID_FORMAT_MESSAGE);
 	}
 
+	@Override
+	@Deprecated
+	boolean decal1stChildSetup(Context ctx)
+	{
+		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
+	}
+
+	@Override
+	@Deprecated
+	void decalNthChildSetup(Context ctx)
+	{
+		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
+	}
+
+	@Override
+	@Deprecated
+	void decalReset(Context ctx, boolean depthBufferEnable)
+	{
+		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
+	}
 
 	// ---------------------------------------------------------------------
 
@@ -293,37 +313,6 @@ abstract class JoglesDEPPipeline extends Pipeline
 		throw new UnsupportedOperationException("accum not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
-	@Override
-	@Deprecated
-	boolean decal1stChildSetup(Context ctx)
-	{
-		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-	@Override
-	@Deprecated
-	void decalNthChildSetup(Context ctx)
-	{
-		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-	@Override
-	@Deprecated
-	void decalReset(Context ctx, boolean depthBufferEnable)
-	{
-		throw new UnsupportedOperationException("decal not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-	}
-
-
-
-	@Override
-	@Deprecated
-	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
-			int rasterHeight, int depthWidth, int depthHeight, int depthFormat, Object depthData)
-	{
-		throw new UnsupportedOperationException("executeRasterDepth not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
-
-	}
 
 	// used for display Lists
 	@Override

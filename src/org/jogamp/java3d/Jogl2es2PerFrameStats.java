@@ -2,7 +2,7 @@ package org.jogamp.java3d;
 
 import java.util.HashSet;
 
-public class JoglesPerFrameStats
+public class Jogl2es2PerFrameStats
 {
 	public long endOfPrevFrameTime;
 
