@@ -199,10 +199,13 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	    runMonitor(J3dThread.NOTIFY);
 	}
 	// this define an empty region
-	xmax = 0;
+	//PJ what the heck was this for??
+	// apparently one of the calls I commented away should have resent us through 
+	// the inti call to reset these possibly?
+/*	xmax = 0;
 	ymax = 0;
 	xmin = width;
-	ymin = height;
+	ymin = height;*/
 	}
 
     }
