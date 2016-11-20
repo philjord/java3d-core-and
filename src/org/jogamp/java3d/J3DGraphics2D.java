@@ -1,5 +1,6 @@
 package org.jogamp.java3d;
 
+import javaawt.Color;
 import javaawt.Graphics2D;
 import javaawt.image.BufferedImage;
 import javaawt.image.ImageObserver;
@@ -67,10 +68,10 @@ public abstract class J3DGraphics2D implements Graphics2D {
      *
      * @see Canvas3D#getGraphics2D
      */
-   // @Override
-   // public final Graphics create() {
-	//throw new UnsupportedOperationException();
-   // }
+/*    @Override
+    public final Graphics create() {
+	throw new UnsupportedOperationException();
+    }*/
 
     /**
      * This method is not supported.  The only way to obtain a
@@ -80,10 +81,10 @@ public abstract class J3DGraphics2D implements Graphics2D {
      *
      * @see Canvas3D#getGraphics2D
      */
-  //  @Override
-  //  public final Graphics create(int x, int y, int width, int height) {
-	//throw new UnsupportedOperationException();
-  //  }
+/*    @Override
+    public final Graphics create(int x, int y, int width, int height) {
+	throw new UnsupportedOperationException();
+    }*/
 
     /**
      * This method is not supported.  Clearing a Canvas3D is done implicitly
@@ -96,10 +97,10 @@ public abstract class J3DGraphics2D implements Graphics2D {
      * @see GraphicsContext3D#setBackground
      * @see GraphicsContext3D#clear
      */
- //   @Override
- //   public final void setBackground(Color color) {
-//	throw new UnsupportedOperationException();
- //   }
+    @Override
+    public final void setBackground(Color color) {
+	throw new UnsupportedOperationException();
+    }
 
     /**
      * This method is not supported.  Clearing a Canvas3D is done implicitly
@@ -112,10 +113,10 @@ public abstract class J3DGraphics2D implements Graphics2D {
      * @see GraphicsContext3D#getBackground
      * @see GraphicsContext3D#clear
      */
- //   @Override
- //   public final Color getBackground() {
-//	throw new UnsupportedOperationException();
- //   }
+    @Override
+    public final Color getBackground() {
+	throw new UnsupportedOperationException();
+    }
 
     /**
      * This method is not supported.  Clearing a Canvas3D is done implicitly
@@ -128,10 +129,10 @@ public abstract class J3DGraphics2D implements Graphics2D {
      * @see GraphicsContext3D#setBackground
      * @see GraphicsContext3D#clear
      */
-//    @Override
- //   public final void clearRect(int x, int y, int width, int height) {
-//	throw new UnsupportedOperationException();
-  //  }
+    @Override
+    public final void clearRect(int x, int y, int width, int height) {
+	throw new UnsupportedOperationException();
+    }
 
 
     /**
