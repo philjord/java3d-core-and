@@ -1057,7 +1057,15 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
         }
 
         if (objectId != -1) {
-        	Canvas3D.freeTexture(canvas3d.ctx, objectId);
+        	 
+        	try{
+        	Canvas3D.freeTexture(canvas3d.ctx, objectId);}
+        	catch(NullPointerException e)
+        	{
+        		//TODO: why is destroyContext being called before this?
+        		//fine probably the ctx has been disposed already
+        	}
+        			
             objectId = -1;
         }
 
