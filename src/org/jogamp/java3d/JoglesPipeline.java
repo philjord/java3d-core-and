@@ -25,9 +25,9 @@ import com.jogamp.common.nio.Buffers;
 import com.jogamp.common.os.Platform;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.NativeSurface;
+import com.jogamp.nativewindow.OffscreenLayerOption;
 import com.jogamp.nativewindow.ProxySurface;
 import com.jogamp.nativewindow.UpstreamSurfaceHook;
-import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.FBObject;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
@@ -72,10 +72,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// This MUST be true on android fullscreen 
 	// setPostiion on a GLWindow can lock-up if true
 	private static final boolean NEVER_RELEASE_CONTEXT = false;
-
-	//crazy new ffp buffer weird ness, online evidence suggest no benefit
-	private static final boolean ATTEMPT_UBO = false;// if you change this, change the shaders too
-	private static final boolean PRESUME_INDICES = true;// only relevant if UBO above true
 
 	// interleave and compressed to half floats and bytes
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
@@ -2853,7 +2849,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 	}
-	 
 
 	//----------------------------------------------------------------------
 	private boolean executeIndexedGeometryOptimized(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
@@ -3189,7 +3184,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDrawStripElementsStrips++;
 
-				}				
+				}
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripElements++;
@@ -7335,7 +7330,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		gl.glEnable(GL.GL_BLEND);
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-		
+
 		if (isExtensionAvailable.GL_EXT_abgr(gl))
 		{
 			glType = GL2.GL_ABGR_EXT;
@@ -8533,7 +8528,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// is probably close enough
 		return 8;
 	}
-	
+
 	// This is the native for reading the image from the offscreen buffer
 	@Override
 	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
@@ -8636,7 +8631,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	// ----------------------- Below here are initialization methods
-	
+
 	@Override
 	@Deprecated
 	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
@@ -8651,11 +8646,15 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			return false;
 
 		JoglDrawable joglDrawble = (JoglDrawable) cv.drawable;
-		JAWTWindow jawtwindow = (JAWTWindow) joglDrawble.getNativeWindow();
-		if (jawtwindow == null)
-			return false;
-
-		return jawtwindow.isOffscreenLayerSurfaceEnabled();
+		if (joglDrawble.getNativeWindow() instanceof OffscreenLayerOption)
+		{
+			OffscreenLayerOption olo = (OffscreenLayerOption) joglDrawble.getNativeWindow();
+			if (olo == null)
+				return false;
+			else
+				return olo.isOffscreenLayerSurfaceEnabled();
+		}
+		return false;
 	}
 
 	static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
@@ -8881,7 +8880,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// it is done in 'destroyContext'
 	}
-
 
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
 	@Override
@@ -10103,7 +10101,5 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			r.run();
 		}
 	}*/
-
-	
 
 }
