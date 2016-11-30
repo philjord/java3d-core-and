@@ -59,7 +59,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Prints extra debugging information
 	private static final boolean EXTRA_DEBUGGING = false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = false;
+	private static final boolean OUTPUT_PER_FRAME_STATS = true;
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 
@@ -7701,13 +7701,14 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	private static void checkGLSLShaderExtensions(Canvas3D cv, JoglContext ctx, GL2ES2 gl, boolean hasgl13)
 	{
 
+		//PJPJ Gl2ES2 MUST support shaders, and the support is NOT an extension
 		// Force shaders to be disabled, since no multitexture support
-		if (!hasgl13)
-			return;
+	//	if (!hasgl13)
+	//		return;
 
-		if ((gl.isExtensionAvailable("GL_ARB_shader_objects") //
-				&& gl.isExtensionAvailable("GL_ARB_shading_language_100")) //
-				|| gl.isExtensionAvailable("GL_AMD_program_binary_Z400"))
+	//	if ((gl.isExtensionAvailable("GL_ARB_shader_objects") //
+	//			&& gl.isExtensionAvailable("GL_ARB_shading_language_100")) //
+	//			|| gl.isExtensionAvailable("GL_AMD_program_binary_Z400"))
 		{
 
 			// FIXME: this isn't complete and would need to set up the
