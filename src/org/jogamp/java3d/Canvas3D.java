@@ -791,6 +791,8 @@ public class Canvas3D //extends Canvas
 
 	// Max number of vertex attrs (not counting coord, etc.)
 	int maxVertexAttrs = 0;
+	
+	int maxVaryingVectors = 0;
 
 	// End of variables set by createNewContext()/createQueryContext()
 
@@ -4071,6 +4073,9 @@ public class Canvas3D //extends Canvas
 
 		keys.add("vertexAttrsMax");
 		values.add(new Integer(maxVertexAttrs));
+		
+		keys.add("maxVaryingVectors");
+		values.add(new Integer(maxVaryingVectors));		
 
 		keys.add("shadingLanguageGLSL");
 		values.add(new Boolean(shadingLanguageGLSL));

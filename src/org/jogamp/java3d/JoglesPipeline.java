@@ -7733,9 +7733,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 			
 			//http://stackoverflow.com/questions/26682631/webgl-shaders-maximum-number-of-varying-variables
-			//TODO: record this in canvas3D
 			gl.glGetIntegerv(GL2ES2.GL_MAX_VARYING_VECTORS, tmp, 0);
-			System.out.println("GL_MAX_VARYING_VECTORS " +tmp[0]);
+			cv.maxVaryingVectors = tmp[0];
 			
 			cv.shadingLanguageGLSL = true;
 		}
@@ -7755,6 +7754,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		cv.maxVertexTextureImageUnits = 0;
 		cv.maxCombinedTextureImageUnits = 0;
 		cv.maxVertexAttrs = 0;
+		cv.maxVaryingVectors = 0;
 		cv.extensionsSupported = 0;
 		cv.textureExtendedFeatures = 0;
 		cv.textureColorTableSize = 0;
