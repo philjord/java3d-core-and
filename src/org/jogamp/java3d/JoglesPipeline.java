@@ -59,7 +59,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Prints extra debugging information
 	private static final boolean EXTRA_DEBUGGING = false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = true;
+	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 
@@ -7731,6 +7731,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				cv.maxVertexAttrs = 0;
 			}
+			
+			//http://stackoverflow.com/questions/26682631/webgl-shaders-maximum-number-of-varying-variables
+			//TODO: record this in canvas3D
+			gl.glGetIntegerv(GL2ES2.GL_MAX_VARYING_VECTORS, tmp, 0);
+			System.out.println("GL_MAX_VARYING_VECTORS " +tmp[0]);
+			
 			cv.shadingLanguageGLSL = true;
 		}
 	}
