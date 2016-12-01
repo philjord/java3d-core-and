@@ -11,7 +11,10 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=java3d-core-and/src"/>
+        <javaElement handleIdentifier="=awtshim/src"/>
         <javaElement handleIdentifier="=java3d-core-and/build-tools"/>
+        <javaElement handleIdentifier="=java3d-compressedtexture/src"/>
+        <javaElement handleIdentifier="=java3d-core-and/src"/>
+        <javaElement handleIdentifier="=awtgeom/src"/>
     </selectedElements>
 </jardesc>
