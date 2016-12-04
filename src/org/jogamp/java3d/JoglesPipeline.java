@@ -8620,8 +8620,62 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			default:
 				throw new AssertionError("illegal format " + format);
 			}
+			
+			ByteBuffer buf = null;
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
+			{
+				buf = ByteBuffer.wrap((byte[]) data);
+			}
+			else
+			{
+				buf = (ByteBuffer) data;
+			}
+			
+			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, buf);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+		}
+		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
+		{
+			switch (format)
+			{
+			// GL_BGR
+			case ImageComponentRetained.TYPE_INT_BGR:
+				type = GL2.GL_BGR;// not ok
+				break;
+			case ImageComponentRetained.TYPE_INT_RGB:
+				type = GL.GL_RGB;//ok
+				break;			
+			case ImageComponentRetained.TYPE_INT_ARGB:
+				type = GL.GL_RGBA;// this a valid case for GL2ES2
+				break;
 
-			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, ByteBuffer.wrap((byte[]) data));
+			/*
+			 * This method only supports 3 and 4 components formats and INT
+			 * types.
+			 */
+			case ImageComponentRetained.TYPE_BYTE_LA:
+			case ImageComponentRetained.TYPE_BYTE_GRAY:
+			case ImageComponentRetained.TYPE_USHORT_GRAY:
+			case ImageComponentRetained.TYPE_BYTE_BGR:
+			case ImageComponentRetained.TYPE_BYTE_RGB:
+			case ImageComponentRetained.TYPE_BYTE_RGBA:
+			default:
+				throw new AssertionError("illegal format " + format);
+			}
+
+			IntBuffer buf = null;
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+			{
+				buf = IntBuffer.wrap((int[]) data);
+			}
+			else
+			{
+				buf = (IntBuffer) data;
+			}
+			
+			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 		}
