@@ -13,8 +13,6 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GLContext;
 
-import utils.SparseArray;
-
 public class Jogl2es2Context extends JoglContext
 {
 

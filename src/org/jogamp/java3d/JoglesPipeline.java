@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2016 JogAmp Community. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation. Sun designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Sun in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ */
+
 package org.jogamp.java3d;
 
 import java.io.UnsupportedEncodingException;
@@ -45,7 +67,6 @@ import com.jogamp.opengl.Threading;
 
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
-import utils.SparseArray;
 
 /**
  * Concrete implementation of Pipeline class for the GL2ES2 rendering pipeline.
@@ -8916,7 +8937,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// Set preferred offscreen drawable : framebuffer object (FBO) or
 		// pbuffer
 		offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
-		//offCaps.setPBuffer(true);
+		// caps.setPBuffer(true);
 
 		// !! a 'null' capability chooser; JOGL doesn't call a chooser for
 		// offscreen drawable
@@ -9717,7 +9738,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (gct.getSceneAntialiasing() != GraphicsConfigTemplate.UNNECESSARY && gct.getDoubleBuffer() != GraphicsConfigTemplate.UNNECESSARY)
 				{
 					caps.setSampleBuffers(true);
-					caps.setNumSamples(2);
+					int numSamples = MasterControl.getIntegerProperty("j3d.numSamples", 2);
+					caps.setNumSamples(numSamples);
 				}
 				else
 				{
@@ -9738,7 +9760,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					caps.setAlphaBits(1);
 				}
 		
-				// Add PREFERRED capabilities in order of least to highest priority and we will try disabling them
+				// Add PREFERRED capabilities in order of least to highest priority and
+				// we will try disabling them
 				ArrayList<DisabledCaps> capsToDisable = new ArrayList<DisabledCaps>();
 		
 				if (gct.getStereo() == GraphicsConfigTemplate.PREFERRED)
@@ -9762,7 +9785,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				AbstractGraphicsScreen screen = (device != null) ? AWTGraphicsScreen.createScreenDevice(device, AbstractGraphicsDevice.DEFAULT_UNIT)
 						: AWTGraphicsScreen.createDefault();
 		
-				// Create a Frame and dummy GLCanvas to perform eager pixel format selection
+				// Create a Frame and dummy GLCanvas to perform eager pixel format
+				// selection
 		
 				// Note that we loop in similar fashion to the NativePipeline's
 				// native code in the situation where we need to disable certain
@@ -9773,16 +9797,17 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				while (tryAgain)
 				{
 					Frame f = new Frame();
-					f.setUndecorated(true);
-					f.setLayout(new BorderLayout());
+					Dialog d = new Dialog(f);
+					d.setUndecorated(true);
+					d.setLayout(new BorderLayout());
 					capturer = new CapabilitiesCapturer();
 					try
 					{
 						awtConfig = createAwtGraphicsConfiguration(caps, capturer, screen);
 						QueryCanvas canvas = new QueryCanvas(awtConfig, capturer);
-						f.add(canvas, BorderLayout.CENTER);
-						f.setSize(MIN_FRAME_SIZE, MIN_FRAME_SIZE);
-						f.setVisible(true);
+						d.add(canvas, BorderLayout.CENTER);
+						d.setSize(MIN_FRAME_SIZE, MIN_FRAME_SIZE);
+						d.setVisible(true);
 						canvas.doQuery();
 						if (DEBUG_CONFIG)
 						{
@@ -9805,6 +9830,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 								}
 							}
 						}
+						disposeOnEDT(d);
 						disposeOnEDT(f);
 						tryAgain = false;
 					}
@@ -9882,11 +9908,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	//private Method getScreenMethod = null;
 
 	@Override
-	//Screen3D class calls during init and that init is only called in the init of Canvas3D
+	// Screen3D class calls during init and that init is only called in the init
+	// of Canvas3D
 	// Notice this is using reflection on the GraphicsDevice!
 	int getScreen(final GraphicsDevice graphicsDevice)
 	{
-		return 0;
+		
 		//FIXME: this should use the GLWindow business
 		/*	if (VERBOSE)
 				System.err.println("JoglPipeline.getScreen()");
@@ -9930,7 +9957,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					throw new RuntimeException(e);
 				}
 			}*/
-
+		
+		return 0;
 	}
 
 	// getBestConfiguration ONLY below here
@@ -10123,8 +10151,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			// This is basically a temporary, NOTE not JoglesContext either
 			JoglContext jctx = new JoglContext(context);
-			GL2 gl = context.getGL().getGL2();
-			//GL2ES2 gl = context.getGL().getGL2ES2();
+			GL2ES2 gl = context.getGL().getGL2ES2();
 			// Set up various properties
 			if (getPropertiesFromCurrentContext(jctx, gl))
 			{
