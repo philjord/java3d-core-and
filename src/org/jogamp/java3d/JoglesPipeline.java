@@ -59,7 +59,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Prints extra debugging information
 	private static final boolean EXTRA_DEBUGGING = false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = true;
+	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 
@@ -6521,7 +6521,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
 		{
-
 			switch (imageFormat)
 			{
 			case ImageComponentRetained.TYPE_BYTE_BGR:
@@ -6657,22 +6656,17 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
 		{
-			int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
-			boolean forceAlphaToOne = false;
 			switch (imageFormat)
-			{
-			/* GL_BGR */
-			case ImageComponentRetained.TYPE_INT_BGR: /* Assume XBGR format */
-				format = GL2ES2.GL_RGBA;
-				type = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
-				forceAlphaToOne = true;
+			{			 
+			case ImageComponentRetained.TYPE_INT_BGR:  
+				//PJ does this work correctly?
+				format = GL2ES2.GL_RGB;
 				break;
-			case ImageComponentRetained.TYPE_INT_RGB: /* Assume XRGB format */
-				forceAlphaToOne = true;
-				/* Fall through to next case */
+			case ImageComponentRetained.TYPE_INT_RGB:  
+				format = GL2ES2.GL_RGB;
+				break;
 			case ImageComponentRetained.TYPE_INT_ARGB:
-				format = GL2ES2.GL_BGRA;
-				type = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+				format = GL2ES2.GL_RGBA;
 				break;
 			// This method only supports 3 and 4 components formats and INT types.			
 			case ImageComponentRetained.TYPE_BYTE_LA:
@@ -6687,21 +6681,15 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				return;
 			}
 
-			if (forceAlphaToOne)
-			{
-				// this is probably fine
-				// new Throwable("forceAlphaToOne").printStackTrace();
-			}
-
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, type, IntBuffer.wrap((int[]) data));
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE, IntBuffer.wrap((int[]) data));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 			else
 			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, type, (Buffer) data);
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE, (Buffer) data);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -7725,7 +7713,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			cv.anisotropicDegreeMax = tmp[0];
 		}
 
-		if (!VirtualUniverse.mc.enforcePowerOfTwo && gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two"))
+		//Gles uses the GL_OES_texture_npot extension 
+		if (!VirtualUniverse.mc.enforcePowerOfTwo && (gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two") ||
+				gl.isExtensionAvailable("GL_OES_texture_npot")))
 		{
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_NON_POWER_OF_TWO;
 		}
