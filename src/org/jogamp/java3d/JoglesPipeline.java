@@ -4457,28 +4457,28 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		if ((type & Raster.RASTER_COLOR) != 0)
 		{
-			int oglFormat = 0;
+			int format = 0;
 			if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 			{
 
 				switch (imageFormat)
 				{
 				case ImageComponentRetained.TYPE_BYTE_BGR:
-					oglFormat = GL2ES2.GL_BGR;
+					format = GL2ES2.GL_BGR;
 					break;
 				case ImageComponentRetained.TYPE_BYTE_RGB:
-					oglFormat = GL2ES2.GL_RGB;
+					format = GL2ES2.GL_RGB;
 					break;
 				case ImageComponentRetained.TYPE_BYTE_ABGR:
-					oglFormat = GL2ES2.GL_RGBA;
+					format = GL2ES2.GL_RGBA;
 					break;
 				case ImageComponentRetained.TYPE_BYTE_RGBA:
 					// all RGB types are stored as RGBA
-					oglFormat = GL2ES2.GL_RGBA;
+					format = GL2ES2.GL_RGBA;
 					break;
 				case ImageComponentRetained.TYPE_BYTE_LA:
 					// all LA types are stored as LA8
-					oglFormat = GL2ES2.GL_LUMINANCE_ALPHA;
+					format = GL2ES2.GL_LUMINANCE_ALPHA;
 					break;
 				case ImageComponentRetained.TYPE_BYTE_GRAY:
 				case ImageComponentRetained.TYPE_USHORT_GRAY:
@@ -4490,32 +4490,26 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					return;
 				}
 
-				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, oglFormat, GL.GL_UNSIGNED_BYTE,
+				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, format, GL2ES2.GL_UNSIGNED_BYTE,
 						ByteBuffer.wrap((byte[]) imageBuffer));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 			else if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 			{
-				int intType = GL2.GL_UNSIGNED_INT_8_8_8_8;
-				//boolean forceAlphaToOne = false;
-
 				switch (imageFormat)
-				{
-				/* GL_BGR */
-				case ImageComponentRetained.TYPE_INT_BGR: /* Assume XBGR format */
-					oglFormat = GL.GL_RGBA;
-					intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
-					//forceAlphaToOne = true;
+				{			 
+				case ImageComponentRetained.TYPE_INT_BGR:  
+					//PJ does this work correctly?
+					format = GL2ES2.GL_RGB;
 					break;
-				case ImageComponentRetained.TYPE_INT_RGB: /* Assume XRGB format */
-					//forceAlphaToOne = true;
-					/* Fall through to next case */
+				case ImageComponentRetained.TYPE_INT_RGB:  
+					format = GL2ES2.GL_RGB;
+					break;
 				case ImageComponentRetained.TYPE_INT_ARGB:
-					oglFormat = GL2.GL_BGRA;
-					intType = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+					format = GL2ES2.GL_RGBA;
 					break;
-				/* This method only supports 3 and 4 components formats and INT types. */
+				// This method only supports 3 and 4 components formats and INT types.			
 				case ImageComponentRetained.TYPE_BYTE_LA:
 				case ImageComponentRetained.TYPE_BYTE_GRAY:
 				case ImageComponentRetained.TYPE_USHORT_GRAY:
@@ -4528,22 +4522,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					return;
 				}
 
-				// Force Alpha to 1.0 if needed
-				//if (forceAlphaToOne
-				//{
-				//	gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 0.0f);
-				//	gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 1.0f);
-				//}
-
-				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, oglFormat, intType, IntBuffer.wrap((int[]) imageBuffer));
+				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, format, GL2ES2.GL_UNSIGNED_BYTE, IntBuffer.wrap((int[]) imageBuffer));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				// Restore Alpha scale and bias
-				//if (forceAlphaToOne)
-				//{
-				//	gl.glPixelTransferf(GL2.GL_ALPHA_SCALE, 1.0f);
-				//	gl.glPixelTransferf(GL2.GL_ALPHA_BIAS, 0.0f);
-				//}
 
 			}
 			else
@@ -6821,24 +6802,19 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
 		{
 			int format = 0;
-			int type = GL2.GL_UNSIGNED_INT_8_8_8_8;
-			boolean forceAlphaToOne = false;
 			switch (imageFormat)
-			{
-			// GL_BGR 
-			case ImageComponentRetained.TYPE_INT_BGR: /* Assume XBGR format */
-				format = GL2ES2.GL_RGBA;
-				type = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
-				forceAlphaToOne = true;
+			{			 
+			case ImageComponentRetained.TYPE_INT_BGR:  
+				//PJ does this work correctly?
+				format = GL2ES2.GL_RGB;
 				break;
-			case ImageComponentRetained.TYPE_INT_RGB: /* Assume XRGB format */
-				forceAlphaToOne = true;
-				/* Fall through to next case */
+			case ImageComponentRetained.TYPE_INT_RGB:  
+				format = GL2ES2.GL_RGB;
+				break;
 			case ImageComponentRetained.TYPE_INT_ARGB:
-				format = GL2ES2.GL_BGRA;
-				type = GL2.GL_UNSIGNED_INT_8_8_8_8_REV;
+				format = GL2ES2.GL_RGBA;
 				break;
-			// This method only supports 3 and 4 components formats and INT types.
+			// This method only supports 3 and 4 components formats and INT types.			
 			case ImageComponentRetained.TYPE_BYTE_LA:
 			case ImageComponentRetained.TYPE_BYTE_GRAY:
 			case ImageComponentRetained.TYPE_USHORT_GRAY:
@@ -6849,12 +6825,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			default:
 				assert false;
 				return;
-			}
-
-			if (forceAlphaToOne)
-			{
-				//Probably fine
-				//new Throwable("forceAlphaToOne").printStackTrace();
 			}
 
 			IntBuffer buf = null;
@@ -6869,7 +6839,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			// offset by the imageOffset
 			buf.position(tilew * imgYOffset + imgXOffset);
-			gl.glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, buf);
+			gl.glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, GL2ES2.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 		}
