@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -441,7 +441,7 @@ ArrayList<ArrayList<View>> viewLists = null;
 	 * Returns an enumeration object of the children.
 	 * @return an enumeration object of the children
 	 */
-	Enumeration<Node> getAllChildren() {
+	Iterator<Node> getAllChildren() {
 		Vector<Node> userChildren = new Vector<Node>(children.size());
 
 		for (int i = 0; i < children.size(); i++) {
@@ -452,7 +452,7 @@ ArrayList<ArrayList<View>> viewLists = null;
 				userChildren.add(null);
 		}
 
-		return userChildren.elements();
+		return userChildren.iterator();
 	}
 
     void checkValidChild(Node child, String s) {

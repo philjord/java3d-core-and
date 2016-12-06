@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * The ViewSpecificGroup node is a Group whose descendants are
@@ -188,11 +188,11 @@ public class ViewSpecificGroup extends Group {
  * Returns an enumeration of this ViewSpecificGroup node's list
  * of views.
  *
- * @return an Enumeration object containing all the views.
+ * @return an Iterator object containing all the views.
  * @exception CapabilityNotSetException if appropriate capability is
  * not set and this object is part of live or compiled scene graph
  */
-public Enumeration<View> getAllViews() {
+public Iterator<View> getAllViews() {
 	if (isLiveOrCompiled() && !this.getCapability(ALLOW_VIEW_READ))
 		throw new CapabilityNotSetException(J3dI18N.getString("ViewSpecificGroup2"));
 
@@ -352,8 +352,8 @@ public Enumeration<View> getAllViews() {
         ViewSpecificGroupRetained attr = (ViewSpecificGroupRetained) originalNode.retained;
 	ViewSpecificGroupRetained rt = (ViewSpecificGroupRetained) retained;
 
-	for (Enumeration<View> e = attr.getAllViews(); e.hasMoreElements(); ) {
-	    rt.addView(e.nextElement());
+	for (Iterator<View> e = attr.getAllViews(); e.hasNext(); ) {
+	    rt.addView(e.next());
 	}
     }
 

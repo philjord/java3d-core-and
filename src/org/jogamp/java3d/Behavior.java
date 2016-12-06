@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * The Behavior leaf node provides a framework for adding user-defined
@@ -241,7 +241,7 @@ public abstract class Behavior extends Leaf {
      * @param criteria an enumeration of triggered wakeup criteria for this
      * behavior
      */
-    public abstract void processStimulus(Enumeration criteria);
+    public abstract void processStimulus(Iterator<WakeupCriterion>  criteria);
 
     /**
      * Set the Behavior's scheduling region to the specified bounds.

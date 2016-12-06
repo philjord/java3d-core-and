@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 import org.jogamp.vecmath.Point3d;
@@ -238,7 +238,7 @@ Geometry getGeometry(int i, int childIndex) {
 }
 
 @Override
-Enumeration<Geometry> getAllGeometries(int childIndex) {
+Iterator<Geometry> getAllGeometries(int childIndex) {
 	ArrayList<Geometry> geoInfo = geometryInfo.get(childIndex);
 	Vector<Geometry> geomList = new Vector<Geometry>();
 
@@ -246,7 +246,7 @@ Enumeration<Geometry> getAllGeometries(int childIndex) {
 		geomList.add(geoInfo.get(i));
 	}
 
-	return geomList.elements();
+	return geomList.iterator();
 }
 
 Bounds getBounds(int childIndex) {

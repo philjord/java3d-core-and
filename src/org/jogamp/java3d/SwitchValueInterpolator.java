@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * SwitchValueInterpolator behavior.  This class defines a
@@ -159,7 +159,7 @@ public class SwitchValueInterpolator extends Interpolator {
      * this stimulus
      */
     @Override
-    public void processStimulus(Enumeration criteria) {
+    public void processStimulus(Iterator<WakeupCriterion> criteria) {
 	// Handle stimulus
 	WakeupCriterion criterion = passiveWakeupCriterion;
 

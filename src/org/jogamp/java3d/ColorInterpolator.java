@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 import org.jogamp.vecmath.Color3f;
 
@@ -172,7 +172,7 @@ public class ColorInterpolator extends Interpolator {
      * stimulus
      */
     @Override
-    public void processStimulus(Enumeration criteria) {
+    public void processStimulus(Iterator criteria) {
 
 	// Handle stimulus
 	WakeupCriterion criterion = passiveWakeupCriterion;

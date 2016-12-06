@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -104,8 +104,8 @@ public Switch getSwitch(int index) {
      * Returns the enumeration object of all switches.
      * @return the enumeration object of all switches
      */
-    public Enumeration getAllSwitches() {
-        return switches.elements();
+    public Iterator getAllSwitches() {
+        return switches.iterator();
     }
 
     /**

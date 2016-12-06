@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 //<AND>import java.awt.AWTEvent;</>
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
@@ -2165,8 +2165,8 @@ private ArrayList<ArrayList<Canvas3D>> canvasList = new ArrayList<ArrayList<Canv
      * Gets the enumeration object of all the Canvas3Ds.
      * @return the enumeration object of all the Canvas3Ds.
      */
-    public Enumeration<Canvas3D> getAllCanvas3Ds(){
-        return canvases.elements();
+    public Iterator<Canvas3D> getAllCanvas3Ds(){
+        return canvases.iterator();
     }
 
     /**

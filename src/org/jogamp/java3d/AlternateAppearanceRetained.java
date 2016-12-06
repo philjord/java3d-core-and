@@ -28,7 +28,7 @@ package org.jogamp.java3d;
 
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 
@@ -352,13 +352,13 @@ Vector<GroupRetained> scopes = new Vector<GroupRetained>();
  * Returns an enumeration object of the scoperen.
  * @return an enumeration object of the scoperen
  */
-Enumeration<Group> getAllScopes() {
-	Enumeration<GroupRetained> elm = scopes.elements();
+Iterator<Group> getAllScopes() {
+	Iterator<GroupRetained> elm = scopes.iterator();
 	Vector<Group> v = new Vector<Group>(scopes.size());
-	while (elm.hasMoreElements()) {
-		v.add((Group)elm.nextElement().source);
+	while (elm.hasNext()) {
+		v.add((Group)elm.next().source);
 	}
-	return v.elements();
+	return v.iterator();
 }
 
   /**
@@ -811,10 +811,10 @@ Enumeration<Group> getAllScopes() {
 
 //	setInfluencingBounds(alternate appearance.getInfluencingBounds());
 
-//	Enumeration elm = alternate appearance.getAllScopes();
-//	while (elm.hasMoreElements()) {
+//	Iterator elm = alternate appearance.getAllScopes();
+//	while (elm.hasNext()) {
 //	    // this reference will set correctly in updateNodeReferences() callback
-//	    addScope((Group) elm.nextElement());
+//	    addScope((Group) elm.next());
 //	}
 
 //	// this reference will set correctly in updateNodeReferences() callback

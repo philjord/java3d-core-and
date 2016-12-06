@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
  * execution environment of the currently running Java 3D application.
  */
 
-class AudioDeviceEnumerator implements Enumeration {
+class AudioDeviceEnumerator implements Iterator {
 
     boolean endOfList;  // NOTE: list length always equals one or zero
     AudioDevice device;
@@ -60,7 +60,7 @@ class AudioDeviceEnumerator implements Enumeration {
      * @return true if the enumerator has more elements, false otherwise
      */
     @Override
-    public boolean hasMoreElements() {
+    public boolean hasNext() {
         if(endOfList == false)
             return true;
         else
@@ -72,12 +72,19 @@ class AudioDeviceEnumerator implements Enumeration {
      * @return the next element in this enumerator
      */
     @Override
-    public Object nextElement() {
-        if (this.hasMoreElements()) {
+    public Object next() {
+        if (this.hasNext()) {
             endOfList = true;
             return ((Object) device);
         } else {
             throw new NoSuchElementException(J3dI18N.getString("AudioDeviceEnumerator0"));
         }
     }
+
+	@Override
+	public void remove()
+	{
+		throw new UnsupportedOperationException();
+		
+	}
 }

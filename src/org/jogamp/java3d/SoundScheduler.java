@@ -1055,15 +1055,15 @@ class SoundScheduler extends J3dStructure {
 	    // XXXX: sync canvases
 	    //<AND> GraphicsContext dropped
 	    /*
-		Enumeration<Canvas3D> canvases = view.getAllCanvas3Ds();
-	    while (canvases.hasMoreElements()) {
-			Canvas3D canvas = canvases.nextElement();
+		Iterator<Canvas3D> canvases = view.getAllCanvas3Ds();
+	    while (canvases.hasNext()) {
+			Canvas3D canvas = canvases.next();
 		GraphicsContext3D graphicsContext = canvas.getGraphicsContext3D();
-		Enumeration nonretainedSounds = graphicsContext.getAllSounds();
-		while (nonretainedSounds.hasMoreElements()) {
+		Iterator nonretainedSounds = graphicsContext.getAllSounds();
+		while (nonretainedSounds.hasNext()) {
 		    if (debugFlag)
 			debugPrint(" prioritizeSound , get non-retained sound");
-		    Sound sound = (Sound)nonretainedSounds.nextElement();
+		    Sound sound = (Sound)nonretainedSounds.next();
 		    if (sound == null)  {
 			if (debugFlag)
 			    debugPrint(" prioritizeSound , sound element is null");

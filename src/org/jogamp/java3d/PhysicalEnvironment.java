@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -237,8 +237,8 @@ synchronized void notifyUsers() {
  * Create an enumerator that produces all input devices.
  * @return an enumerator of all available devices
  */
-public Enumeration<InputDevice> getAllInputDevices() {
-	return devices.elements();
+public Iterator<InputDevice> getAllInputDevices() {
+	return devices.iterator();
 }
 
 /**

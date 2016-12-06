@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -494,12 +494,12 @@ View getView(int index) {
 	}
     }
 
-Enumeration<View> getAllViews() {
+Iterator<View> getAllViews() {
 	Vector<View> viewList = new Vector<View>(apiViewList.size());
 	for (int i = 0; i < apiViewList.size(); i++) {
 		viewList.add(apiViewList.get(i));
 	}
-	return viewList.elements();
+	return viewList.iterator();
 }
 
     int numViews() {

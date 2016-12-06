@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -918,9 +918,9 @@ public ArrayList<SwitchState> getTargetsData(int type, int index) {
             // Issue 514 : NPE in Wonderland : triggered in cached bounds computation
             validCachedBounds = false;
             synchronized(parents) {
-                Enumeration e = parents.elements();
-                while(e.hasMoreElements()) {
-                    LinkRetained parent = (LinkRetained) e.nextElement();
+                Iterator e = parents.iterator();
+                while(e.hasNext()) {
+                    LinkRetained parent = (LinkRetained) e.next();
                     if (parent!=null) {
                         parent.dirtyBoundsCache();
                     }

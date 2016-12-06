@@ -221,7 +221,7 @@ operation.
 <pre><i>        // Establish initial wakeup criteria<br></i></pre>
 <pre>        wakeupOn(w);<br>   }<br></pre>
 <pre><i>    // Override Behavior's stimulus method to handle the event<br></i></pre>
-<pre>    public void processStimulus(Enumeration criteria) {<br></pre>
+<pre>    public void void processStimulus(Iterator<WakeupCriterion> criteria) {<br></pre>
 <pre><i>        // Rotate by another PI/120.0 radians<br></i></pre>
 <pre>        objectMat.mul(objectMat, rotMat);<br>        t.set(objectMat);<br>        objectTransform.setTransform(t);<br></pre>
 <pre><i>        // Set wakeup criteria for next time<br></i></pre>

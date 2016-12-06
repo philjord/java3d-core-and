@@ -26,14 +26,14 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
  * A class that enumerates all wakeup criteria in a wakeup condition
  */
 
-class WakeupCriteriaEnumerator implements Enumeration {
+class WakeupCriteriaEnumerator implements Iterator<WakeupCriterion> {
 
    // An array used for the current criteria in this object
    WakeupCriterion[] criterion = null;
@@ -130,20 +130,33 @@ class WakeupCriteriaEnumerator implements Enumeration {
         }
    }
 
-   @Override
-   public boolean hasMoreElements() {
-        if (currentIndex == length) {
-	   return false;
+	@Override
+	public boolean hasNext()
+	{
+		if (currentIndex == length)
+		{
+			return false;
+		}
+		return true;
 	}
-	return true;
-   }
-
-   @Override
-   public Object nextElement() {
-	if (currentIndex < length) {
-	   return criterion[currentIndex++];
-	} else {
-	   throw new NoSuchElementException(J3dI18N.getString("WakeupCriteriaEnumerator0"));
+	
+	@Override
+	public WakeupCriterion next()
+	{
+		if (currentIndex < length)
+		{
+			return criterion[currentIndex++];
+		}
+		else
+		{
+			throw new NoSuchElementException(J3dI18N.getString("WakeupCriteriaEnumerator0"));
+		}
 	}
-   }
+	
+	@Override
+	public void remove()
+	{
+		throw new UnsupportedOperationException();
+		
+	}
 }

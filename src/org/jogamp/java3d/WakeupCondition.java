@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * An abstract class specifying a single wakeup Condition. This class
@@ -78,7 +78,7 @@ public abstract class WakeupCondition extends Object
 	/**
 	 * Returns an enumeration of all WakeupCriterias in this Condition.
 	 */
-	public Enumeration allElements()
+	public Iterator<WakeupCriterion> allElements()
 	{
 		if (allEnum == null)
 		{
@@ -94,7 +94,7 @@ public abstract class WakeupCondition extends Object
 	/**
 	 * Returns an enumeration of all triggered WakeupCriterias in this Condition.
 	 */
-	public Enumeration triggeredElements()
+	public Iterator<WakeupCriterion> triggeredElements()
 	{
 		if (trigEnum == null)
 		{

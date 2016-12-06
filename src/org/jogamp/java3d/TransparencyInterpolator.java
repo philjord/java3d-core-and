@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * TransparencyInterpolator behavior.  This class defines a behavior
@@ -169,7 +169,7 @@ public class TransparencyInterpolator extends Interpolator {
      * stimulus
      */
     @Override
-    public void processStimulus(Enumeration criteria) {
+    public void processStimulus(Iterator<WakeupCriterion> criteria) {
 	// Handle stimulus
 	WakeupCriterion criterion = passiveWakeupCriterion;
 

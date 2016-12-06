@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 
 /**
@@ -369,14 +369,14 @@ public class Shape3D extends Leaf {
     /**
      * Returns an enumeration of this Shape3D node's list of geometry
      * components.
-     * @return an Enumeration object containing all geometry components in
+     * @return an Iterator object containing all geometry components in
      * this Shape3D node's list of geometry components.
      * @exception CapabilityNotSetException if appropriate capability is
      * not set and this object is part of live or compiled scene graph
      *
      * @since Java 3D 1.2
      */
-    public Enumeration getAllGeometries() {
+    public Iterator getAllGeometries() {
 
 	if (isLiveOrCompiled())
 	    if (!this.getCapability(ALLOW_GEOMETRY_READ))

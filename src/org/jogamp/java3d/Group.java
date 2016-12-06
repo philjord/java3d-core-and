@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Hashtable;
 
 /**
@@ -242,12 +242,12 @@ public class Group extends Node {
 	}
 
     /**
-     * Returns an Enumeration object of this group node's list of children.
-     * @return an Enumeration object of all the children
+     * Returns an Iterator object of this group node's list of children.
+     * @return an Iterator object of all the children
      * @exception CapabilityNotSetException if the appropriate capability is
      * not set and this group node is part of live or compiled scene graph
      */
-	public Enumeration<Node> getAllChildren() {
+	public Iterator<Node> getAllChildren() {
 		if (isLiveOrCompiled() && !this.getCapability(ALLOW_CHILDREN_READ))
 			throw new CapabilityNotSetException(J3dI18N.getString("Group9"));
 

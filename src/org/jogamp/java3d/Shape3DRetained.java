@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 import org.jogamp.vecmath.Point3d;
@@ -469,12 +469,12 @@ Geometry getGeometry(int index, int id) {
     /**
      * Returns an enumeration of this Shape3D node's list of geometry
      * components.
-     * @return an Enumeration object containing all geometry components in
+     * @return an Iterator object containing all geometry components in
      * this Shape3D node's list of geometry components.
      *
      * @since Java 3D 1.2
      */
-Enumeration getAllGeometries(int id) {
+Iterator getAllGeometries(int id) {
 	Vector<Geometry> geomList = new Vector<Geometry>(geometryList.size());
 
 	for (int i = 0; i < geometryList.size(); i++) {
@@ -485,7 +485,7 @@ Enumeration getAllGeometries(int id) {
 			geomList.add(null);
 	}
 
-	return geomList.elements();
+	return geomList.iterator();
 }
 
     /**

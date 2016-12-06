@@ -27,7 +27,7 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -565,17 +565,17 @@ Vector<BranchGroup> branchGroups = new Vector<BranchGroup>();
     }
 
     /**
-     * Gets an Enumeration object of all branch graphs in this Locale.
-     * @return an Enumeration object of all branch graphs.
+     * Gets an Iterator object of all branch graphs in this Locale.
+     * @return an Iterator object of all branch graphs.
      * @exception IllegalStateException if this Locale has been
      * removed from its VirtualUniverse.
      */
-    public Enumeration getAllBranchGraphs(){
+    public Iterator getAllBranchGraphs(){
 	if (universe == null) {
 	    throw new IllegalStateException(J3dI18N.getString("Locale4"));
 	}
 
-	return branchGroups.elements();
+	return branchGroups.iterator();
     }
 
 

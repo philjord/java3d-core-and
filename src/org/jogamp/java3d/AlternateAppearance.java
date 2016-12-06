@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 
 
 /**
@@ -367,12 +367,12 @@ public class AlternateAppearance extends Leaf {
 /**
  * Returns an enumeration of this AlternateAppearance node's list
  * of scopes.
- * @return an Enumeration object containing all nodes in this
+ * @return an Iterator object containing all nodes in this
  * AlternateAppearance node's list of scopes.
  * @exception CapabilityNotSetException if appropriate capability is
  * not set and this object is part of live or compiled scene graph
  */
-public Enumeration<Group> getAllScopes() {
+public Iterator<Group> getAllScopes() {
 	if (isLiveOrCompiled())
 		if (!this.getCapability(ALLOW_SCOPE_READ))
 			throw new CapabilityNotSetException(J3dI18N.getString("AlternateAppearance11"));
@@ -538,10 +538,10 @@ public Enumeration<Group> getAllScopes() {
 
 	rt.initInfluencingBounds(attr.getInfluencingBounds());
 
-	Enumeration<Group> elm = attr.getAllScopes();
-	while (elm.hasMoreElements()) {
+	Iterator<Group> elm = attr.getAllScopes();
+	while (elm.hasNext()) {
 	  // this reference will set correctly in updateNodeReferences() callback
-	    rt.initAddScope(elm.nextElement());
+	    rt.initAddScope(elm.next());
 	}
 
 	// correct value will set in updateNodeReferences

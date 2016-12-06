@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Hashtable;
 
 /**
@@ -582,10 +582,10 @@ public abstract class Node extends SceneGraphObject {
 
         // go through hash table looking for Leaf nodes.
         // call updateNodeReferences for each.
-        Enumeration e = referenceTable.objectHashtable.elements();
+        Iterator e = referenceTable.objectHashtable.values().iterator();
 
-        while (e.hasMoreElements()) {
-            SceneGraphObject o =  (SceneGraphObject) e.nextElement();
+        while (e.hasNext()) {
+            SceneGraphObject o =  (SceneGraphObject) e.next();
 	    o.updateNodeReferences(referenceTable);
         }
         return n;
