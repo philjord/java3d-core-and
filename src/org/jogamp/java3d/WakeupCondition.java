@@ -36,8 +36,7 @@ import java.util.Iterator;
  * scheduler hands back an enumeration of that WakeupCondition.
  */
 
-public abstract class WakeupCondition extends Object
-{
+public abstract class WakeupCondition extends Object {
 
 	static final int ALL_ELEMENTS = 0;
 	static final int TRIGGERED_ELEMENTS = 1;
@@ -140,8 +139,7 @@ public abstract class WakeupCondition extends Object
 	/**
 	 * Initialize And/Or tree and add criterion to the BehaviourStructure
 	 */
-	void buildTree(WakeupCondition parent, int id, BehaviorRetained b)
-	{
+    void buildTree(WakeupCondition parent, int id, BehaviorRetained b){
 		this.parent = parent;
 		this.behav = b;
 		this.id = id;
@@ -154,18 +152,15 @@ public abstract class WakeupCondition extends Object
 	 * We can't use  behav.universe.behaviorStructure since behav
 	 * may reassign to another universe at this time.
 	 */
-	void cleanTree(BehaviorStructure bs)
-	{
+    void cleanTree(BehaviorStructure bs) {
 		conditionMet = false;
 	}
 
-	void reInsertElapseTimeCond()
-	{
+    void reInsertElapseTimeCond() {
 		conditionMet = false;
 	}
 
-	void resetTree()
-	{
+    void resetTree() {
 		conditionMet = false;
 	}
 }

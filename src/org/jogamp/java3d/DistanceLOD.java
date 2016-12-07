@@ -175,7 +175,7 @@ public class DistanceLOD extends LOD {
      * stimulus
      */
     @Override
-    public void processStimulus(Iterator criteria) {
+    public void processStimulus(Iterator<WakeupCriterion>  criteria) {
 
 
 	// compute distance in virtual world

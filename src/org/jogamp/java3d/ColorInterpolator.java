@@ -172,7 +172,7 @@ public class ColorInterpolator extends Interpolator {
      * stimulus
      */
     @Override
-    public void processStimulus(Iterator criteria) {
+    public void processStimulus(Iterator<WakeupCriterion>  criteria) {
 
 	// Handle stimulus
 	WakeupCriterion criterion = passiveWakeupCriterion;

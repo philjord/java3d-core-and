@@ -68,9 +68,13 @@ class Renderer extends J3dThread
 	// stuff for scene antialiasing
 	static final int NUM_ACCUMULATION_SAMPLES = 8;
 
-	static final float ACCUM_SAMPLES_X[] = { -0.54818f, 0.56438f, 0.39462f, -0.54498f, -0.83790f, -0.39263f, 0.32254f, 0.84216f };
+    static final float ACCUM_SAMPLES_X[] =
+		{ -0.54818f,  0.56438f,  0.39462f, -0.54498f,
+	 	  -0.83790f, -0.39263f,  0.32254f,  0.84216f};
 
-	static final float ACCUM_SAMPLES_Y[] = { 0.55331f, -0.53495f, 0.41540f, -0.52829f, 0.82102f, -0.27383f, 0.09133f, -0.84399f };
+    static final float ACCUM_SAMPLES_Y[] =
+		{  0.55331f, -0.53495f,  0.41540f, -0.52829f,
+	 	   0.82102f, -0.27383f,  0.09133f, -0.84399f};
 
 	static final float accumValue = 1.0f / NUM_ACCUMULATION_SAMPLES;
 

@@ -25,7 +25,7 @@
  */
 
 package org.jogamp.java3d;
-@Deprecated
+
 class IntegerFreeList extends MemoryFreeList {
 
     int count = 0;

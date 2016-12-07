@@ -32,8 +32,7 @@ import java.util.ArrayList;
  * An OrderCollections contains a LightBin and an ArrayList of
  * of all top level OrderedGroups under this OrderCollection
  */
-class OrderedCollection extends Object implements ObjectUpdate
-{
+class OrderedCollection extends Object implements ObjectUpdate{
 
 	LightBin lightBin = null;
 
@@ -49,20 +48,16 @@ class OrderedCollection extends Object implements ObjectUpdate
 	boolean onUpdateList = false;
 
 	@Override
-	public void updateObject()
-	{
+    public void updateObject() {
 		int i;
 		LightBin lb;
 		lightBin = nextFrameLightBin;
-		if (addLightBins != null)
-		{
-			if (lightBin != null)
-			{
+	if (addLightBins != null) {
+	    if (lightBin != null) {
 				addLightBins.prev = lightBin;
 				lightBin.next = addLightBins;
 			}
-			else
-			{
+	    else {
 				lightBin = addLightBins;
 				nextFrameLightBin = lightBin;
 			}

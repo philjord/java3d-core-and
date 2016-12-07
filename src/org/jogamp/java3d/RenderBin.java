@@ -33,9 +33,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
-import org.jogamp.java3d.VersionInfo;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Vector3d;
@@ -45,8 +45,7 @@ import org.jogamp.vecmath.Vector3d;
  * state sorting of objects to be rendered.
  */
 
-class RenderBin extends J3dStructure implements ObjectUpdate
-{
+class RenderBin extends J3dStructure  implements ObjectUpdate {
 
 	/**
 	 * The list of RenderAtoms
@@ -215,7 +214,9 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	// list of renderMolecule
 	// RenderBin will not reused in two different universe, so it is
 	// safe to pass null in last parameters in new IndexedUnorderSet()
-	IndexedUnorderSet renderMoleculeList = new IndexedUnorderSet(RenderMolecule.class, RenderMolecule.RENDER_MOLECULE_LIST, null);
+    IndexedUnorderSet renderMoleculeList =
+	new IndexedUnorderSet(RenderMolecule.class,
+			      RenderMolecule.RENDER_MOLECULE_LIST, null);
 
 	// List of renderAtoms that have a shared dlist (due to geo.refCount > 1)
 	// Fix for Issue 5: change this to a Set rather than a list to
@@ -234,8 +235,10 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	/**
 	 * remove the bins first before adding them to new ones
 	 */
-	IndexedUnorderSet removeRenderAtomInRMList = new IndexedUnorderSet(RenderMolecule.class, RenderMolecule.REMOVE_RENDER_ATOM_IN_RM_LIST,
-			null);
+    IndexedUnorderSet removeRenderAtomInRMList =
+	new IndexedUnorderSet(RenderMolecule.class,
+			      RenderMolecule.REMOVE_RENDER_ATOM_IN_RM_LIST, null);
+
 
 	/**
 	 * list of affect OrderedGroups with childIndexOrder changed.
@@ -258,8 +261,8 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	 * that the same snapshot of the geometry is rendered
 	 * across all canvases
 	 */
-	//PJPJPJPJPJ altered for even add/remove performance
-	ArrayList<GeometryRetained> lockGeometryList = new BalancedArrayList<GeometryRetained>(5);
+LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRetained>(5);
+
 
 	/**
 	 * arraylist of dlist that will be rebuilt
@@ -289,8 +292,8 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 
 	// List of node components that need special processing, due to
 	// extensions
-	//PJPJPJPJ altered for even add/remove performance
-	ArrayList<ImageComponentRetained> nodeComponentList = new BalancedArrayList<ImageComponentRetained>(5);
+    LinkedHashSet<ImageComponentRetained> nodeComponentList = new LinkedHashSet<ImageComponentRetained>();
+
 
 	// List of node components ***for this frame*** that need special
 	// processing due to extension
@@ -370,8 +373,7 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 	/**
 	 * Constructs a new RenderBin
 	 */
-	RenderBin(VirtualUniverse u, View v)
-	{
+    RenderBin(VirtualUniverse u, View v) {
 		super(u, J3dThread.UPDATE_RENDER);
 		vworldToVpc.setIdentity();
 		universe = u;
@@ -380,11 +382,11 @@ class RenderBin extends J3dStructure implements ObjectUpdate
 		cachedTranspSortMode = v.transparencySortingPolicy;
 		maxLights = VirtualUniverse.mc.maxLights;
 		ViewPlatform vp = view.getViewPlatform();
-		if (vp != null)
-		{
+	if (vp != null) {
 			locale = ((ViewPlatformRetained) (vp.retained)).locale;
 		}
-		dlistRenderMethod = (DisplayListRenderMethod) VirtualUniverse.mc.getDisplayListRenderMethod();
+	dlistRenderMethod = (DisplayListRenderMethod)
+	    VirtualUniverse.mc.getDisplayListRenderMethod();
 	}
 
 	/**

@@ -376,7 +376,7 @@ public class Shape3D extends Leaf {
      *
      * @since Java 3D 1.2
      */
-    public Iterator getAllGeometries() {
+    public Iterator<Geometry> getAllGeometries() {
 
 	if (isLiveOrCompiled())
 	    if (!this.getCapability(ALLOW_GEOMETRY_READ))

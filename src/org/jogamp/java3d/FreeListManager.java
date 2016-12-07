@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-@Deprecated
+
 class FreeListManager {
 
     private static final boolean DEBUG = false;

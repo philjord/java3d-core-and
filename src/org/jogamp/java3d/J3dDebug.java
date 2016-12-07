@@ -26,8 +26,6 @@
 
 package org.jogamp.java3d;
 
-import org.jogamp.java3d.VersionInfo;
-
 class J3dDebug  {
 
     // For production release devPhase is set to false.

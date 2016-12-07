@@ -570,7 +570,7 @@ Vector<BranchGroup> branchGroups = new Vector<BranchGroup>();
      * @exception IllegalStateException if this Locale has been
      * removed from its VirtualUniverse.
      */
-    public Iterator getAllBranchGraphs(){
+    public Iterator<BranchGroup> getAllBranchGraphs(){
 	if (universe == null) {
 	    throw new IllegalStateException(J3dI18N.getString("Locale4"));
 	}

@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 
 import org.jogamp.vecmath.Point2f;
 import org.jogamp.vecmath.Point3d;
@@ -524,9 +525,10 @@ class SoundScheduler extends J3dStructure {
 	}
 	else if (node instanceof MediaContainerRetained) {
 	    int listSize = ((Integer)m.args[2]).intValue();
-	    ArrayList userList = (ArrayList)m.args[3];
-	    for (int i = 0; i < listSize; i++) {
-		SoundRetained sound = (SoundRetained)userList.get(i);
+	    LinkedHashSet<SoundRetained> userList = (LinkedHashSet<SoundRetained>)m.args[3];
+	    for (SoundRetained sound : userList) {
+	    //for (int i = 0; i < listSize; i++) {
+		//SoundRetained sound = userList.get(i);
 		if (sound != null) {
 		    loadSound(sound, true);
 		    if (debugFlag)
@@ -1059,7 +1061,7 @@ class SoundScheduler extends J3dStructure {
 	    while (canvases.hasNext()) {
 			Canvas3D canvas = canvases.next();
 		GraphicsContext3D graphicsContext = canvas.getGraphicsContext3D();
-		Iterator nonretainedSounds = graphicsContext.getAllSounds();
+		Iterator<Sound> nonretainedSounds = graphicsContext.getAllSounds();
 		while (nonretainedSounds.hasNext()) {
 		    if (debugFlag)
 			debugPrint(" prioritizeSound , get non-retained sound");

@@ -104,7 +104,7 @@ public Switch getSwitch(int index) {
      * Returns the enumeration object of all switches.
      * @return the enumeration object of all switches
      */
-    public Iterator getAllSwitches() {
+    public Iterator<Switch> getAllSwitches() {
         return switches.iterator();
     }
 

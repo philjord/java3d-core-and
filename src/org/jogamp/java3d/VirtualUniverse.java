@@ -27,15 +27,12 @@
 package org.jogamp.java3d;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.jogamp.java3d.VersionInfo;
 
 /**
  * A VirtualUniverse object is the top-level container for all scene
@@ -263,15 +260,6 @@ ArrayList<Integer> viewIdFreeList = new ArrayList<Integer>();
                 System.err.println();
             }
 	}
-
-	// Java 3D cannot run in headless mode, so we will throw a
-	// HeadlessException if isHeadless() is true. This avoids a
-	// cryptic error message from MasterControl.loadLibraries().
-	//<AND>
-	//if (java.awt.GraphicsEnvironment.isHeadless()) {
-	//    throw new java.awt.HeadlessException();
-	//}
-	//</AND>
 
 	// Load the native libraries and create the static
 	// MasterControl object

@@ -58,7 +58,7 @@ public class QuadArray extends GeometryArray {
      */
     public QuadArray(int vertexCount, int vertexFormat) {
 	super(vertexCount,vertexFormat);
-	System.out.println("QuadArray deprecated");
+
         if (vertexCount < 4 || ((vertexCount%4) != 0))
 	    throw new IllegalArgumentException(J3dI18N.getString("QuadArray0"));
     }
@@ -98,7 +98,7 @@ public class QuadArray extends GeometryArray {
 
 	super(vertexCount, vertexFormat,
 	      texCoordSetCount, texCoordSetMap);
-	System.out.println("QuadArray deprecated");
+
         if (vertexCount < 4 || ((vertexCount%4) != 0))
 	    throw new IllegalArgumentException(J3dI18N.getString("QuadArray0"));
     }
@@ -145,7 +145,7 @@ public class QuadArray extends GeometryArray {
 	super(vertexCount, vertexFormat,
 	      texCoordSetCount, texCoordSetMap,
 	      vertexAttrCount, vertexAttrSizes);
-	System.out.println("QuadArray deprecated");
+
         if (vertexCount < 4 || ((vertexCount%4) != 0))
 	    throw new IllegalArgumentException(J3dI18N.getString("QuadArray0"));
     }

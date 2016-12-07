@@ -54,8 +54,7 @@ package org.jogamp.java3d;
  * @since Java 3D 1.4
  */
 
-public class ShaderAttributeArray extends ShaderAttributeObject
-{
+public class ShaderAttributeArray extends ShaderAttributeObject {
 	/**
 	 * Constructs a new ShaderAttributeArray object with the specified
 	 * <code>(attrName,&nbsp;value)</code> pair. The specified value
@@ -70,15 +69,13 @@ public class ShaderAttributeArray extends ShaderAttributeObject
 	 * @exception ClassCastException if value is not an array of
 	 * one of the allowed classes
 	 */
-	public ShaderAttributeArray(String attrName, Object value)
-	{
+    public ShaderAttributeArray(String attrName, Object value) {
 		super(attrName, value);
 	}
 
 	// Implement abstract getValue method
 	@Override
-	public Object getValue()
-	{
+    public Object getValue() {
 		if (isLiveOrCompiled())
 			if (!this.getCapability(ALLOW_VALUE_READ))
 				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
@@ -88,10 +85,8 @@ public class ShaderAttributeArray extends ShaderAttributeObject
 
 	// Implement abstract setValue method
 	@Override
-	public void setValue(Object value)
-	{
-		if (value == null)
-		{
+    public void setValue(Object value) {
+	if (value == null) {
 			throw new NullPointerException();
 		}
 
@@ -122,10 +117,8 @@ public class ShaderAttributeArray extends ShaderAttributeObject
 	 * @exception CapabilityNotSetException if appropriate capability is
 	 * not set and this object is part of live or compiled scene graph
 	 */
-	public void setValue(int index, Object value)
-	{
-		if (value == null)
-		{
+    public void setValue(int index, Object value) {
+	if (value == null) {
 			throw new NullPointerException();
 		}
 
@@ -135,8 +128,7 @@ public class ShaderAttributeArray extends ShaderAttributeObject
 
 		if (isLive())
 			((ShaderAttributeArrayRetained) this.retained).setValue(index, value);
-		else
-		{
+	else {
 			((ShaderAttributeArrayRetained) this.retained).initValue(index, value);
 		}
 	}
@@ -149,8 +141,7 @@ public class ShaderAttributeArray extends ShaderAttributeObject
 	 * @exception CapabilityNotSetException if appropriate capability is
 	 * not set and this object is part of live or compiled scene graph
 	 */
-	public int length()
-	{
+    public int length() {
 		if (isLiveOrCompiled())
 			if (!this.getCapability(ALLOW_VALUE_READ))
 				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
@@ -163,8 +154,7 @@ public class ShaderAttributeArray extends ShaderAttributeObject
 	 * ShaderAttributeArray component object will point to.
 	 */
 	@Override
-	void createRetained()
-	{
+    void createRetained() {
 		this.retained = new ShaderAttributeArrayRetained();
 		this.retained.setSource(this);
 	}

@@ -29,7 +29,6 @@ package org.jogamp.java3d;
 //<AND>import java.awt.AWTEvent;</>
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
 

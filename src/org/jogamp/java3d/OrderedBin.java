@@ -32,8 +32,7 @@ import java.util.ArrayList;
  * An OrderedBin contains an array of OrderedCollection, each represents
  * a child of the OrderedGroup
  */
-class OrderedBin extends Object
-{
+class OrderedBin extends Object {
 	// ArrayList of orderedCollection, one for each child of the orderedGroup
 	ArrayList<OrderedCollection> orderedCollections = new ArrayList<OrderedCollection>();
 
@@ -53,24 +52,20 @@ class OrderedBin extends Object
 	ArrayList<Integer> setOCForOI = new ArrayList<Integer>();
 	ArrayList<OrderedCollection> valueOfSetOCForOI = new ArrayList<OrderedCollection>();
 
-	OrderedBin(int nchildren, OrderedGroupRetained src)
-	{
+    OrderedBin(int nchildren, OrderedGroupRetained src){
 		int i;
-		for (i = 0; i < nchildren; i++)
-		{
+        for (i=0; i< nchildren; i++) {
 			orderedCollections.add(null);
 		}
 		source = src;
 	}
 
-	void addRemoveOrderedCollection()
-	{
+    void addRemoveOrderedCollection() {
 		int i, index;
 
 		// Add the setValues first, since they reflect already existing
 		// orderedCollection
-		for (i = 0; i < setOCForCI.size(); i++)
-		{
+	for (i = 0; i < setOCForCI.size(); i++) {
 			index = setOCForCI.get(i).intValue();
 			OrderedCollection oc = valueOfSetOCForCI.get(i);
 			orderedCollections.set(index, oc);
@@ -79,14 +74,11 @@ class OrderedBin extends Object
 		setOCForCI.clear();
 		valueOfSetOCForCI.clear();
 
-		while (childInfoList != null)
-		{
-			if (childInfoList.type == OrderedChildInfo.ADD)
-			{
+	while (childInfoList != null) {
+	    if (childInfoList.type == OrderedChildInfo.ADD) {
 				orderedCollections.add(childInfoList.childId, childInfoList.value);
 			}
-			else if (childInfoList.type == OrderedChildInfo.REMOVE)
-			{
+	    else if (childInfoList.type == OrderedChildInfo.REMOVE) {
 				orderedCollections.remove(childInfoList.childId);
 			}
 			childInfoList = childInfoList.next;
@@ -95,8 +87,7 @@ class OrderedBin extends Object
 		// Now update the sets based on oi, since the og.orderedChildIdTable reflects
 		// the childIds for the next frame, use the table to set the oc at the
 		// correct place
-		for (i = 0; i < setOCForOI.size(); i++)
-		{
+	for (i = 0; i < setOCForOI.size(); i++) {
 			index = setOCForOI.get(i).intValue();
 			OrderedCollection oc = valueOfSetOCForOI.get(i);
 			int ci = source.orderedChildIdTable[index];
@@ -108,18 +99,15 @@ class OrderedBin extends Object
 		onUpdateList = false;
 		lastChildInfo = null;
 
-	}
 
-	void addChildInfo(OrderedChildInfo cinfo)
-	{
+    }
+    void addChildInfo(OrderedChildInfo cinfo) {
 		// Add this cinfo at the end
-		if (childInfoList == null)
-		{
+	if (childInfoList == null) {
 			childInfoList = cinfo;
 			lastChildInfo = cinfo;
 		}
-		else
-		{
+	else {
 			// Add at the end
 			cinfo.prev = lastChildInfo;
 			lastChildInfo.next = cinfo;

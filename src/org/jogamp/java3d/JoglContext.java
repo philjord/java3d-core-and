@@ -26,13 +26,16 @@
 
 package org.jogamp.java3d;
 
+import java.nio.Buffer;
+import java.nio.FloatBuffer;
+
+import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GLContext;
 
 /**
  * Graphics context objects for Jogl rendering pipeline.
  */
-class JoglContext implements Context
-{
+class JoglContext implements Context {
 	protected GLContext context;
 
 	// Properties we need to keep track of for efficiency
@@ -48,85 +51,59 @@ class JoglContext implements Context
 	// Only used when GLSL shader library is active
 	private int glslVertexAttrOffset;
 
-	JoglContext(GLContext context)
-	{
+  JoglContext(GLContext context) {
 		this.context = context;
 	}
 
-	GLContext getGLContext()
-	{
+  GLContext getGLContext() {
 		return context;
 	}
 
-	int getMaxTexCoordSets()
-	{
-		return maxTexCoordSets;
-	}
+ int   getMaxTexCoordSets()            { return maxTexCoordSets;     }
+  void  setMaxTexCoordSets(int val)     { maxTexCoordSets = val;      }
+  float getAlphaClearValue()            { return alphaClearValue;     }
+  void  setAlphaClearValue(float val)   { alphaClearValue = val;      }
+  int   getCurrentTextureUnit()         { return currentTextureUnit;  }
+  void  setCurrentTextureUnit(int val)  { currentTextureUnit = val;   }
+  int   getCurrentCombinerUnit()        { return currentCombinerUnit; }
+  void  setCurrentCombinerUnit(int val) { currentCombinerUnit = val;  }
+  boolean getHasMultisample()           { return hasMultisample;      }
+  void    setHasMultisample(boolean val){ hasMultisample = val;       }
 
-	void setMaxTexCoordSets(int val)
-	{
-		maxTexCoordSets = val;
-	}
+void vertexAttrPointer(GL gl, int index, int size, int type, int stride, Buffer pointer) {
+	gl.getGL2().glVertexAttribPointerARB(index + glslVertexAttrOffset, size,
+	                                     type, false, stride, pointer);
+}
 
-	float getAlphaClearValue()
-	{
-		return alphaClearValue;
-	}
+void enableVertexAttrArray(GL gl, int index) {
+	gl.getGL2().glEnableVertexAttribArrayARB(index + glslVertexAttrOffset);
+}
 
-	void setAlphaClearValue(float val)
-	{
-		alphaClearValue = val;
-	}
+void disableVertexAttrArray(GL gl, int index) {
+	gl.getGL2().glDisableVertexAttribArrayARB(index + glslVertexAttrOffset);
+}
 
-	int getCurrentTextureUnit()
-	{
-		return currentTextureUnit;
-	}
+void vertexAttr1fv(GL gl, int index, FloatBuffer buf) {
+	gl.getGL2().glVertexAttrib1fvARB(index + glslVertexAttrOffset, buf);
+}
 
-	void setCurrentTextureUnit(int val)
-	{
-		currentTextureUnit = val;
-	}
+void vertexAttr2fv(GL gl, int index, FloatBuffer buf) {
+	gl.getGL2().glVertexAttrib2fvARB(index + glslVertexAttrOffset, buf);
+}
 
-	int getCurrentCombinerUnit()
-	{
-		return currentCombinerUnit;
-	}
+void vertexAttr3fv(GL gl, int index, FloatBuffer buf) {
+	gl.getGL2().glVertexAttrib3fvARB(index + glslVertexAttrOffset, buf);
+}
 
-	void setCurrentCombinerUnit(int val)
-	{
-		currentCombinerUnit = val;
-	}
-
-	boolean getHasMultisample()
-	{
-		return hasMultisample;
-	}
-
-	void setHasMultisample(boolean val)
-	{
-		hasMultisample = val;
-	}
+void vertexAttr4fv(GL gl, int index, FloatBuffer buf) {
+	gl.getGL2().glVertexAttrib4fvARB(index + glslVertexAttrOffset, buf);
+}
 
 	// Used in vertex attribute implementation
-	JoglShaderObject getShaderProgram()
-	{
-		return shaderProgram;
-	}
-
-	void setShaderProgram(JoglShaderObject object)
-	{
-		shaderProgram = object;
-	}
+  JoglShaderObject getShaderProgram()                        { return shaderProgram;   }
+  void             setShaderProgram(JoglShaderObject object) { shaderProgram = object; }
 
 	// Only used when GLSL shaders are in use
-	int getGLSLVertexAttrOffset()
-	{
-		return glslVertexAttrOffset;
-	}
-
-	void setGLSLVertexAttrOffset(int offset)
-	{
-		glslVertexAttrOffset = offset;
-	}
+  int  getGLSLVertexAttrOffset()           { return glslVertexAttrOffset;   }
+  void setGLSLVertexAttrOffset(int offset) { glslVertexAttrOffset = offset; }
 }

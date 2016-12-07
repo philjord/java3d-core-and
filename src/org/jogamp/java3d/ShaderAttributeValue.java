@@ -54,8 +54,7 @@ package org.jogamp.java3d;
  * @since Java 3D 1.4
  */
 
-public class ShaderAttributeValue extends ShaderAttributeObject
-{
+public class ShaderAttributeValue extends ShaderAttributeObject {
 	/**
 	 * Constructs a new ShaderAttributeValue object with the specified
 	 * <code>(attrName,&nbsp;value)</code> pair.
@@ -69,15 +68,13 @@ public class ShaderAttributeValue extends ShaderAttributeObject
 	 * @exception ClassCastException if value is not an instance of
 	 * one of the allowed classes
 	 */
-	public ShaderAttributeValue(String attrName, Object value)
-	{
+    public ShaderAttributeValue(String attrName, Object value) {
 		super(attrName, value);
 	}
 
 	// Implement abstract getValue method
 	@Override
-	public Object getValue()
-	{
+    public Object getValue() {
 
 		if (isLiveOrCompiled())
 			if (!this.getCapability(ALLOW_VALUE_READ))
@@ -88,11 +85,9 @@ public class ShaderAttributeValue extends ShaderAttributeObject
 
 	// Implement abstract setValue method
 	@Override
-	public void setValue(Object value)
-	{
+    public void setValue(Object value) {
 
-		if (value == null)
-		{
+        if (value == null) {
 			throw new NullPointerException();
 		}
 
@@ -112,8 +107,7 @@ public class ShaderAttributeValue extends ShaderAttributeObject
 	 * ShaderAttributeValue component object will point to.
 	 */
 	@Override
-	void createRetained()
-	{
+    void createRetained() {
 		this.retained = new ShaderAttributeValueRetained();
 		this.retained.setSource(this);
 	}

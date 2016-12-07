@@ -26,14 +26,13 @@
 
 package org.jogamp.java3d;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 
 /**
  * Retained version of NodeComponent
  */
 
-class NodeComponentRetained extends SceneGraphObjectRetained
-{
+class NodeComponentRetained extends SceneGraphObjectRetained {
 
 	// duplicate or make a reference when cloneTree() is called
 	//  on this object.
@@ -49,9 +48,7 @@ class NodeComponentRetained extends SceneGraphObjectRetained
 
 	// A list of NodeRetained Objects that refer, directly or indirectly, to this
 	// NodeComponentRetained
-	//PJPJPJPJPJPJPJPJ - so remove node can be as fast as add node
-	//RAISE_BUG:
-	ArrayList users = new BalancedArrayList(1);
+    LinkedHashSet<NodeRetained> users = new LinkedHashSet<NodeRetained>();
 
 	// Mirror object of this node compoenent object
 	NodeComponentRetained mirror = null;
@@ -62,12 +59,10 @@ class NodeComponentRetained extends SceneGraphObjectRetained
 	int compChanged = 0;
 
 	// Increment the refcount.  If this is the first, mark it as live.
-	void doSetLive(boolean inBackgroundGroup, int refCount)
-	{
+    void doSetLive(boolean inBackgroundGroup, int refCount) {
 		int oldRefCount = this.refCount;
 		this.refCount += refCount;
-		if (oldRefCount <= 0)
-		{
+	if (oldRefCount <= 0) {
 			super.doSetLive(inBackgroundGroup);
 
 			// Create and init a mirror object if not already there
@@ -77,138 +72,106 @@ class NodeComponentRetained extends SceneGraphObjectRetained
 		}
 	}
 
-	void setLive(boolean inBackgroundGroup, int refCount)
-	{
+    void setLive(boolean inBackgroundGroup, int refCount) {
 		int oldRefCount = this.refCount;
 		doSetLive(inBackgroundGroup, refCount);
-		if (oldRefCount <= 0)
-		{
+	if (oldRefCount <= 0) {
 			super.markAsLive();
 		}
 	}
 
 	// Decrement the refcount.  If this is the last, mark it as not live.
-	void clearLive(int refCount)
-	{
+    void clearLive(int refCount) {
 		this.refCount -= refCount;
 
-		if (this.refCount <= 0)
-		{
+	if (this.refCount <= 0) {
 			super.clearLive();
 		}
 	}
 
 	// increment the compile reference count
-	synchronized void incRefCnt()
-	{
+    synchronized void incRefCnt() {
 		refCnt++;
 	}
 
 	// decrement the compile reference count
-	synchronized void decRefCnt()
-	{
+    synchronized void decRefCnt() {
 		refCnt--;
 	}
 
 	// remove mirror shape from the list of users
-	void removeAMirrorUser(Shape3DRetained ms)
-	{
-		synchronized (mirror.users)
-		{
+    void removeAMirrorUser(Shape3DRetained ms) {
+	synchronized(mirror.users) {
 			mirror.users.remove(ms);
 		}
 	}
 
 	// Add a mirror shape to the list of users
-	void addAMirrorUser(Shape3DRetained ms)
-	{
-		synchronized (mirror.users)
-		{
+    void addAMirrorUser(Shape3DRetained ms) {
+	synchronized(mirror.users) {
 			mirror.users.add(ms);
 		}
 	}
 
-	// Copy the list of useres passed in into this
-	void copyMirrorUsers(NodeComponentRetained node)
-	{
-		synchronized (mirror.users)
-		{
-			synchronized (node.mirror.users)
-			{
-				//int size = node.mirror.users.size();
-				//for (int i=0; i<size ; i++) {
-				//mirror.users.add(node.mirror.users.get(i));
-				//}
-				////////////////////////PJPJPJPJPJPJ
-				// the above is incredible inefficient!
+    // Copy the list of users passed in into this
+    void copyMirrorUsers(NodeComponentRetained node) {
+	synchronized(mirror.users) {
+	  synchronized(node.mirror.users) {
 				mirror.users.addAll(node.mirror.users);
 			}
 		}
 	}
 
-	// Remove the users of "node" from "this" node compoenent
-	void removeMirrorUsers(NodeComponentRetained node)
-	{
 
-		synchronized (mirror.users)
-		{
-			synchronized (node.mirror.users)
-			{
+    // Remove the users of "node" from "this" node component
+    void removeMirrorUsers(NodeComponentRetained node) {
 
-				//for (int i=node.mirror.users.size()-1; i>=0; i--) {
-				//mirror.users.remove(mirror.users.indexOf(node.mirror.users.get(i)));	    	  
-				//}
-				////////////////////////PJPJPJPJPJPJ
-				// the above is incredible inefficient! removeChild was being killed by this
+	synchronized(mirror.users) {
+	  synchronized(node.mirror.users) {
 				mirror.users.removeAll(node.mirror.users);
 			}
 		}
 	}
 
 	// Add a user to the list of users
-	synchronized void removeUser(NodeRetained node)
-	{
+    synchronized void removeUser(NodeRetained node) {
 		if (node.source.isLive())
-			//users.remove(users.indexOf(node));
-			////////////////////////PJPJPJPJPJPJ
 			users.remove(node);
 	}
 
 	// Add a user to the list of users
-	synchronized void addUser(NodeRetained node)
-	{
+    synchronized void addUser(NodeRetained node) {
 		if (node.source.isLive())
 			users.add(node);
 	}
 
 	// Add a user to the list of users
-	synchronized void notifyUsers()
-	{
+    synchronized void notifyUsers() {
 
-		if (source == null || !source.isLive())
-		{
+	if (source == null || !source.isLive()) {
 			return;
 		}
 
-		for (int i = users.size() - 1; i >= 0; i--)
-		{
-			((NodeRetained) users.get(i)).notifySceneGraphChanged(false);
-		}
+	// the reverse order does not appear to be compulsory
+	// cahnge from ArayList to LinkedHashMap prevents ordered traversal
+	for (NodeRetained nr : users)
+		nr.notifySceneGraphChanged(false);
+	//for (int i=users.size()-1; i >=0; i--) {
+	//    ((NodeRetained)users.get(i)).notifySceneGraphChanged(false);
+	//}
 	}
 
 	/**
 	 * This sets the immedate mode context flag
 	 */
-	void setInImmCtx(boolean inCtx)
-	{
+    void setInImmCtx(boolean inCtx) {
 		inImmCtx = inCtx;
 	}
 
 	/**
 	 * This gets the immedate mode context flag
 	 */
-	boolean getInImmCtx()
-	{
+    boolean getInImmCtx() {
 		return (inImmCtx);
 	}
 
@@ -225,8 +188,7 @@ class NodeComponentRetained extends SceneGraphObjectRetained
 	 * @param duplicate the value to set.
 	 * @see Node#cloneTree
 	 */
-	void setDuplicateOnCloneTree(boolean duplicate)
-	{
+    void setDuplicateOnCloneTree(boolean duplicate) {
 		duplicateOnCloneTree = duplicate;
 	}
 
@@ -243,47 +205,40 @@ class NodeComponentRetained extends SceneGraphObjectRetained
 	 * @return the value of this node's duplicateOnCloneTree
 	 * @see Node#cloneTree
 	 */
-	boolean getDuplicateOnCloneTree()
-	{
+    boolean getDuplicateOnCloneTree() {
 		return duplicateOnCloneTree;
 	}
 
-	void initMirrorObject()
-	{
+
+    void initMirrorObject() {
 	}
 
-	void updateMirrorObject(int component, Object obj)
-	{
+    void updateMirrorObject(int component, Object obj) {
 	}
 
-	void createMirrorObject()
-	{
+    void createMirrorObject() {
 		// Overridden by appearance and other classes
 		initMirrorObject();
 		mirror = null;
 	}
 
-	void setFrequencyChangeMask(int bit, int mask)
-	{
+    void setFrequencyChangeMask(int bit, int mask) {
 		if (source.getCapabilityIsFrequent(bit))
 			changedFrequent |= mask;
-		else if (!source.isLive())
-		{
+	else if (!source.isLive()) {
 			// Record the freq->infreq change only for non-live node components
 			changedFrequent &= ~mask;
 		}
 	}
 
 	@Override
-	protected Object clone()
-	{
+     protected Object clone() {
 		NodeComponentRetained ncr = (NodeComponentRetained) super.clone();
 		ncr.changedFrequent = changedFrequent;
 		return ncr;
 	}
 
-	protected void set(NodeComponentRetained nc)
-	{
+    protected void set(NodeComponentRetained nc) {
 		changedFrequent = nc.changedFrequent;
 	}
 }

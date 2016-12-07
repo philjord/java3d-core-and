@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
+import javaawt.GraphicsEnvironment;
 
 class MasterControl {
 
@@ -339,7 +340,7 @@ class MasterControl {
     boolean disableSeparateSpecularColor = false;
 
     // Flag that indicates whether DisplayList is used or not
-    boolean isDisplayList = false;//DIsplay lists deprecated now
+    boolean isDisplayList = false;//Display lists deprecated now
 
     // If this flag is set, then by-ref geometry will not be
     // put in display list
@@ -400,7 +401,7 @@ class MasterControl {
     // the setting in the driver.
     boolean implicitAntialiasing = false;
     
-    // If set to false default capabilities will not eb set, potentially allowing
+    // If set to false default capabilities will not be set, potentially allowing
     // much more compilation of scene graphs
     boolean defaultReadCapability = true;
     
@@ -535,9 +536,8 @@ class MasterControl {
 	    System.err.println("Java 3D: separate specular color disabled if possible");
 	}
 
-	//Diaplay Lists deprecated now
-	//isDisplayList = getBooleanProperty("j3d.displaylist", isDisplayList,
-					//   "display list");
+	isDisplayList = getBooleanProperty("j3d.displaylist", isDisplayList,
+					   "display list");
 
 	implicitAntialiasing =
 	    getBooleanProperty("j3d.implicitAntialiasing",
@@ -808,6 +808,28 @@ private static String getProperty(final String prop) {
 		});
 }
 
+	static int getIntegerProperty(String prop, int defaultValue)
+	{
+		int value = defaultValue;
+		String propValue = getProperty(prop);
+
+		if (propValue != null)
+		{
+			try
+			{
+				value = Integer.parseInt(propValue);
+			}
+			catch (NumberFormatException e)
+			{
+			}
+		}
+		if (J3dDebug.debug)
+			System.err.println("Java 3D: " + prop + "=" + value);
+
+		return value;
+	}
+
+
     static boolean getBooleanProperty(String prop,
 					      boolean defaultValue,
 					      String trueMsg,
@@ -864,6 +886,11 @@ private static String getProperty(final String prop) {
             // Use default pipeline
         }
 
+        // Java 3D cannot run in headless mode unless using the noop renderer
+        if (GraphicsEnvironment.isHeadless() && pipelineType != Pipeline.Type.NOOP) {
+        	throw new RuntimeException("Headless");
+        }
+        
         // Construct the singleton Pipeline instance
 		Pipeline.createPipeline(pipelineType);
 

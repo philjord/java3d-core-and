@@ -320,6 +320,10 @@ public class Appearance extends NodeComponent {
      * to null.
      */
     public Appearance() {
+    	//Note use of this constructor before Canvas3D or Universe will result in a null pipeline and no warning
+    	if(!(this instanceof ShaderAppearance) && Pipeline.getPipeline() instanceof JoglesPipeline)
+    		System.err.println("Appearance will display nothing when using the Jogl2es2 Pipeline, consider using a ShaderAppearance");
+    	
 	// Just use default values
         // set default read capabilities
         setDefaultReadCapabilities(readCapabilities);
@@ -331,9 +335,6 @@ public class Appearance extends NodeComponent {
      */
     @Override
     void createRetained() {
-    	
-    	new Throwable("Normal Appearance in use!!! ").printStackTrace();
-    	
 	this.retained = new AppearanceRetained();
 	this.retained.setSource(this);
     }

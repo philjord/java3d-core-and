@@ -28,6 +28,7 @@ package org.jogamp.java3d;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Vector;
 
 import org.jogamp.vecmath.Point3d;
@@ -474,7 +475,7 @@ Geometry getGeometry(int index, int id) {
      *
      * @since Java 3D 1.2
      */
-Iterator getAllGeometries(int id) {
+Iterator<Geometry> getAllGeometries(int id) {
 	Vector<Geometry> geomList = new Vector<Geometry>(geometryList.size());
 
 	for (int i = 0; i < geometryList.size(); i++) {
@@ -2372,7 +2373,7 @@ Iterator getAllGeometries(int id) {
      * This is used to send a message of the snapshot of the
      * geometry atoms that are affected by this change.
      */
-final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(ArrayList userList, ArrayList<VirtualUniverse> univList) {
+final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(LinkedHashSet<NodeRetained> userList, ArrayList<VirtualUniverse> univList) {
 	ArrayList<ArrayList<GeometryAtom>> listPerUniverse = new ArrayList<ArrayList<GeometryAtom>>();
 	int index;
 	ArrayList<GeometryAtom> gaList = null;
@@ -2383,12 +2384,8 @@ final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(ArrayList userL
 	synchronized(userList) {
 	//  for (int i = userList.size()-1; i >=0; i--) {
 		//	ms = (Shape3DRetained) userList.get(i);
-			//PJPJPJPPJPJPJPJ -- as the incoming userList is in fact now a BalancedArrayList (no get)
-			//RAISE_BUG: seeNodeComponentRetained
-			for(Object o: userList )
-			{
-				ms = (Shape3DRetained)o;
-
+		for(NodeRetained nr : userList){
+			ms = (Shape3DRetained)nr;
 		if(moreThanOneUniv == false) {
 		    if(firstFndUniv == null) {
 			firstFndUniv = ms.universe;
