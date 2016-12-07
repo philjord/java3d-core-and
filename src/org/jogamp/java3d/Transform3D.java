@@ -4737,13 +4737,28 @@ public class Transform3D {
 	m[9]  *= s[2];
 	m[10] *= s[2];
     }
+    
+    private static double m[] = new double[9];
+    private static double[] u1 = new double[9];
+    private static double[] v1 = new double[9];
+    private static double[] t1 = new double[9];
+    private static double[] t2 = new double[9];	
+    private static double[] svdRot = new double[9];
+    private static double[] e = new double[3];
+    private static double[] svdScales = new double[3];
+    
 
     private void compute_svd(Transform3D matrix, double[] outScale,
 			     double[] outRot) {
 
 	int i,j;
 	double g,scale;
-	double m[] = new double[9];
+	
+	//Single threading setTransform is less impact that the staggering 
+	//amount of garbage created by this one method
+	synchronized(m)
+	{
+/*	double m[] = new double[9];
 
 	// if (!svdAllocd) {
 	double[] u1 = new double[9];
@@ -4756,7 +4771,7 @@ public class Transform3D {
 	// double[] single_values = new double[3]; replaced by t2
 
 	double[] e = new double[3];
-	double[] svdScales = new double[3];
+	double[] svdScales = new double[3];*/
 
 
 	// XXXX: initialize to 0's if alread allocd? Should not have to, since
@@ -5011,15 +5026,17 @@ public class Transform3D {
 
 
 	svdReorder( m, t1, t2, svdRot, svdScales, outRot, outScale);
+	}
     }
 
-
+    private static int[] svdOut = new int[3];
+    private static double[] svdMag = new double[3];
     private void svdReorder( double[] m, double[] t1, double[] t2, double[] rot,
 			     double[] scales, double[] outRot, double[] outScale) {
 
 	int in0, in1, in2, index,i;
-	int[] svdOut = new int[3];
-	double[] svdMag = new double[3];
+	//int[] svdOut = new int[3];
+	//double[] svdMag = new double[3];
 
 
 	// check for rotation information in the scales
@@ -5161,7 +5178,13 @@ public class Transform3D {
 	}
 
     }
-
+    
+    private static double[]   cosl  = new double[2];
+    private static double[]   cosr  = new double[2];
+    private static double[]   sinl  = new double[2];
+    private static double[]   sinr  = new double[2];
+    private static double[]   qr_m  = new double[9];
+	
     private int compute_qr( double[] s, double[] e, double[] u, double[] v) {
 	int i,j,k;
 	boolean converged;
@@ -5173,11 +5196,11 @@ public class Transform3D {
 	final int MAX_INTERATIONS = 10;
 	final double CONVERGE_TOL = 4.89E-15;
 
-	double[]   cosl  = new double[2];
+	/*double[]   cosl  = new double[2];
 	double[]   cosr  = new double[2];
 	double[]   sinl  = new double[2];
 	double[]   sinr  = new double[2];
-	double[]   qr_m  = new double[9];
+	double[]   qr_m  = new double[9];*/
 
 
 	double c_b48 = 1.;

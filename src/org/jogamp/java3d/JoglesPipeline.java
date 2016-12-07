@@ -93,7 +93,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// This MUST be true on android fullscreen 
 	// setPosition on a GLWindow can lock-up if true
 	// also with on and offscreen must be false too
-	private static final boolean NEVER_RELEASE_CONTEXT = false;
+	private static final boolean LATE_RELEASE_CONTEXT = true;
 
 	// interleave and compressed to half floats and bytes
 	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
@@ -749,7 +749,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
-			
+
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.executeSkippedNoShaderProgram++;
 		}
@@ -1466,7 +1466,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
-			
+
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.executeSkippedNoShaderProgram++;
 		}
@@ -2092,7 +2092,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
-			
+
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.executeSkippedNoShaderProgram++;
 		}
@@ -2876,7 +2876,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
-			
+
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.executeSkippedNoShaderProgram++;
 		}
@@ -3314,7 +3314,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
-			
+
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.executeSkippedNoShaderProgram++;
 		}
@@ -3583,7 +3583,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.gl_state.objectColor.set(ctx.objectColor);
 			}
 		}
-		
+
 		// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
 		if (locs.transparencyAlpha != -1)
 		{
@@ -4519,12 +4519,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			else if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 			{
 				switch (imageFormat)
-				{			 
-				case ImageComponentRetained.TYPE_INT_BGR:  
+				{
+				case ImageComponentRetained.TYPE_INT_BGR:
 					//PJ does this work correctly?
 					format = GL2ES2.GL_RGB;
 					break;
-				case ImageComponentRetained.TYPE_INT_RGB:  
+				case ImageComponentRetained.TYPE_INT_RGB:
 					format = GL2ES2.GL_RGB;
 					break;
 				case ImageComponentRetained.TYPE_INT_ARGB:
@@ -6050,8 +6050,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateTransparencyAttributes++;
 
 		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);		
-		
+		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+
 		joglesctx.transparencyAlpha = alpha;
 
 		if ((transparencyMode < TransparencyAttributes.SCREEN_DOOR)
@@ -6101,9 +6101,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		
+
 		joglesctx.transparencyAlpha = 1.0f;
-		
+
 		if (((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
 				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
 		{
@@ -6659,12 +6659,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
 		{
 			switch (imageFormat)
-			{			 
-			case ImageComponentRetained.TYPE_INT_BGR:  
+			{
+			case ImageComponentRetained.TYPE_INT_BGR:
 				//PJ does this work correctly?
 				format = GL2ES2.GL_RGB;
 				break;
-			case ImageComponentRetained.TYPE_INT_RGB:  
+			case ImageComponentRetained.TYPE_INT_RGB:
 				format = GL2ES2.GL_RGB;
 				break;
 			case ImageComponentRetained.TYPE_INT_ARGB:
@@ -6685,13 +6685,15 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
 			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE, IntBuffer.wrap((int[]) data));
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
+						IntBuffer.wrap((int[]) data));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 			else
 			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE, (Buffer) data);
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
+						(Buffer) data);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -6824,12 +6826,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			int format = 0;
 			switch (imageFormat)
-			{			 
-			case ImageComponentRetained.TYPE_INT_BGR:  
+			{
+			case ImageComponentRetained.TYPE_INT_BGR:
 				//PJ does this work correctly?
 				format = GL2ES2.GL_RGB;
 				break;
-			case ImageComponentRetained.TYPE_INT_RGB:  
+			case ImageComponentRetained.TYPE_INT_RGB:
 				format = GL2ES2.GL_RGB;
 				break;
 			case ImageComponentRetained.TYPE_INT_ARGB:
@@ -7705,8 +7707,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		//Gles uses the GL_OES_texture_npot extension 
-		if (!VirtualUniverse.mc.enforcePowerOfTwo && (gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two") ||
-				gl.isExtensionAvailable("GL_OES_texture_npot")))
+		if (!VirtualUniverse.mc.enforcePowerOfTwo
+				&& (gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two") || gl.isExtensionAvailable("GL_OES_texture_npot")))
 		{
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_NON_POWER_OF_TWO;
 		}
@@ -8426,7 +8428,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).outputPerFrameData();
 
 		// also seems to be ok, just do it as well
-		if (!NEVER_RELEASE_CONTEXT)
+		if (!LATE_RELEASE_CONTEXT)
 		{
 			if (wait)
 				gl.glFinish();
@@ -8500,33 +8502,59 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	@Override
 	boolean useCtx(Context ctx, Drawable drawable)
 	{
-		if (!NEVER_RELEASE_CONTEXT || !currently_current)
+
+		if (VERBOSE)
+			System.err.println("JoglPipeline.useCtx()**********************************");
+		if (OUTPUT_PER_FRAME_STATS)
+			((Jogl2es2Context) ctx).perFrameStats.useCtx++;
+
+		GLContext context = context(ctx);
+
+		if (context.getGLDrawable() == null)
+			System.out.println("context.getGLDrawable() == null!");
+
+		if (!LATE_RELEASE_CONTEXT)
 		{
-			if (VERBOSE)
-				System.err.println("JoglPipeline.useCtx()**********************************");
-			if (OUTPUT_PER_FRAME_STATS)
-				((Jogl2es2Context) ctx).perFrameStats.useCtx++;
-
-			GLContext context = context(ctx);
-
-			if (context.getGLDrawable() == null)
-				System.out.println("context.getGLDrawable() == null!");
-
-			currently_current = true;
 			int res = context.makeCurrent();
 			return (res != GLContext.CONTEXT_NOT_CURRENT);
 		}
-		return true;
+		else
+		{
+			// first time through
+			if (current_context == null)
+			{
+				int res = context.makeCurrent();
+				current_context = context;
+				return (res != GLContext.CONTEXT_NOT_CURRENT);
+			}
+			else
+			{
+				// if new context is the current one, release and make
+				if (current_context != context)
+				{
+					if (current_context.isCurrent())
+						current_context.release();
+
+					int res = context.makeCurrent();
+					current_context = context;
+					return (res != GLContext.CONTEXT_NOT_CURRENT);
+				}
+				else
+				{
+					// other wise the use is for the current anyway
+					return true;
+				}
+			}
+		}
 	}
 
-	//only used for NEVER_RELEASE_CONTEXT, just to spot first call
-	public static boolean currently_current = false;
+	public static GLContext current_context = null;
 
 	// Optionally release the context. Returns true if the context was released.
 	@Override
 	boolean releaseCtx(Context ctx)
 	{
-		if (!NEVER_RELEASE_CONTEXT)
+		if (!LATE_RELEASE_CONTEXT)
 		{
 			if (VERBOSE)
 				System.err.println("JoglPipeline.releaseCtx()");
@@ -8537,6 +8565,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (context.isCurrent())
 				context.release();
 		}
+
 		return true;
 	}
 
@@ -8641,7 +8670,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			default:
 				throw new AssertionError("illegal format " + format);
 			}
-			
+
 			ByteBuffer buf = null;
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 			{
@@ -8651,7 +8680,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				buf = (ByteBuffer) data;
 			}
-			
+
 			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -8667,7 +8696,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				break;
 			case ImageComponentRetained.TYPE_INT_RGB:
 				type = GL.GL_RGB;//ok
-				break;			
+				break;
 			case ImageComponentRetained.TYPE_INT_ARGB:
 				type = GL.GL_RGBA;// this a valid case for GL2ES2
 				break;
@@ -8695,7 +8724,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				buf = (IntBuffer) data;
 			}
-			
+
 			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -9913,7 +9942,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Notice this is using reflection on the GraphicsDevice!
 	int getScreen(final GraphicsDevice graphicsDevice)
 	{
-		
+
 		//FIXME: this should use the GLWindow business
 		/*	if (VERBOSE)
 				System.err.println("JoglPipeline.getScreen()");
@@ -9957,7 +9986,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					throw new RuntimeException(e);
 				}
 			}*/
-		
+
 		return 0;
 	}
 

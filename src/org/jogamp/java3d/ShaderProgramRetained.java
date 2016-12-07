@@ -71,9 +71,6 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 	// need to synchronize access from multiple rendering threads
 	Object resourceLock = new Object();
 
-	//PJPJPJPJ
-	private static HashSet<String> warningsGiven = new HashSet<String>();
-
 	// Package-scope default constructor
 	ShaderProgramRetained()
 	{
@@ -1133,11 +1130,10 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 						}
 						else
 						{
-							if (!warningsGiven.contains((ShaderProgram) this.source + " Attr: " + savRetained.getAttributeName()))
+							if (attrNameInfo.compiledAwayWarningGiven == false)
 							{
-								System.out.println(
-										"" + (ShaderProgram) this.source + " Attr: " + savRetained.getAttributeName() + " compiled away");
-								warningsGiven.add((ShaderProgram) this.source + " Attr: " + savRetained.getAttributeName());
+								System.out.println("" + this.source + " Attr: " + savRetained.getAttributeName() + " compiled away");
+								attrNameInfo.compiledAwayWarningGiven = true;
 							}
 						}
 					}
@@ -1161,11 +1157,10 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 						}
 						else
 						{
-							if (!warningsGiven.contains((ShaderProgram) this.source + " Attr: " + saaRetained.getAttributeName()))
+							if (attrNameInfo.compiledAwayWarningGiven == false)
 							{
-								System.out.println(
-										"" + (ShaderProgram) this.source + " Attr: " + saaRetained.getAttributeName() + " compiled away");
-								warningsGiven.add((ShaderProgram) this.source + " Attr: " + saaRetained.getAttributeName());
+								System.out.println("" + this.source + " Attr: " + saaRetained.getAttributeName() + " compiled away");
+								attrNameInfo.compiledAwayWarningGiven = true;
 							}
 						}
 					}
@@ -1267,6 +1262,7 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 
 		AttrNameInfo getAttrNameInfo(String shaderAttribute)
 		{
+			//TODO: a SparseArray here on location would be faster
 			return attrNameInfoMap.get(shaderAttribute);
 		}
 
@@ -1313,5 +1309,8 @@ abstract class ShaderProgramRetained extends NodeComponentRetained
 
 		// type of shader attribute
 		private int type;
+
+		// warning given for compiled away
+		public boolean compiledAwayWarningGiven = false;
 	}
 }
