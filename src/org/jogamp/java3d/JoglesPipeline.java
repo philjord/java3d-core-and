@@ -269,8 +269,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			int vAttrOff = 0;
 			int vAttrStride = 0;
 			int bstride = 0, cbstride = 0;
-			FloatBuffer verts = null;
-			FloatBuffer clrs = null;
+
 			int[] sarray = null;
 			int[] start_array = null;
 
@@ -367,17 +366,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				cstride = 4;
 			}
-			else
-			{
-				// FIXME: need to "auto-slice" this buffer later
-				clrs = verts;
-			}
 
 			cbstride = cstride * Buffers.SIZEOF_FLOAT;
 
 			int startVertex = stride * startVIndex;
 			int startClrs = cstride * startVIndex;
-			if (clrs == verts)
+			if (carray == null)
 			{
 				startClrs += coloroff;
 			}
@@ -393,8 +387,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				System.err.println("  texCoordoff: " + texCoordoff);
 			}
 
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, verts, varray, startVertex, clrs,
-					carray, startClrs);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, varrayBuffer, varray, startVertex,
+					varrayBuffer, carray, startClrs);
 
 			// GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of changeability
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
@@ -435,6 +429,17 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
 					if (morphable)
 					{
+						FloatBuffer verts = null;
+						// do we need to covert a float[]
+						if (varray != null)
+						{
+							verts = getVertexArrayBuffer(varray);
+						}
+						else
+						{
+							verts = varrayBuffer;
+						}
+
 						verts.position(startVertex);
 						// Sometime the FloatBuffer is swapped out for bigger or smaller
 						if (gd.geoToCoordBufSize != verts.remaining())
@@ -523,6 +528,26 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
 				if (changable)
 				{
+					FloatBuffer verts = null;
+					FloatBuffer clrs = null;
+					// do we need to covert a float[]
+					if (varray != null)
+					{
+						verts = getVertexArrayBuffer(varray);
+					}
+					else
+					{
+						verts = varrayBuffer;
+					}
+					if (carray != null)
+					{
+						verts = getColorArrayBuffer(carray);
+					}
+					else
+					{
+						clrs = verts;
+					}
+
 					clrs.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, clrs.remaining() * Float.SIZE / 8, clrs);
@@ -1001,6 +1026,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
 						if (morphable)
 						{
+							//if I have vfcoords instead of fverts need to get a fverts buff now
+							if (vfcoords != null)
+							{
+								fverts = getVertexArrayBuffer(vfcoords);
+							}
+
 							int coordoff = 3 * initialCoordIndex;
 							fverts.position(coordoff);
 							// Sometime the FloatBuffer is swapped out for bigger or smaller 
@@ -1103,6 +1134,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
 				if (changable)
 				{
+					//if I have cfdata instead of fclrs need to get a fclrs buff now
+					if (cfdata != null)
+					{
+						fclrs = getColorArrayBuffer(cfdata);
+					}
+					
 					fclrs.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
@@ -1114,6 +1151,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
 				if (changable)
 				{
+					//if I have ndata instead of norms need to get a norms buff now
+					if (ndata != null)
+					{
+						norms = getNormalArrayBuffer(ndata);
+					}
 					norms.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
@@ -1122,6 +1164,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			if (vattrDefined)
 			{
+				if (vertexAttrData != null)
+				{
+					vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrData);
+				}
 				for (int index = 0; index < vertexAttrCount; index++)
 				{
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
@@ -1144,6 +1190,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			if (textureDefined)
 			{
+				// convert from float[][] to FloatBuffer[]
+				if (texCoords instanceof float[][])
+				{
+					texCoords = getTexCoordSetBuffer(texCoords);
+				}
 				boolean[] texSetsBound = new boolean[texCoords.length];
 				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
 				{
@@ -1306,9 +1357,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
 						{
 							texSetsBound[texSet] = true;
-							// stupid interface...
-							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
-							buf.position(0);
+							
 
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 							if (bufIds == null)
@@ -1487,8 +1536,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			int vAttrOff = 0;
 			int vAttrStride = 0;
 			int bstride = 0, cbstride = 0;
-			FloatBuffer verts = null;
-			FloatBuffer clrs = null;
+
 			int[] sarray = null;
 			int strip_len = 0;
 
@@ -1584,11 +1632,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				cstride = 4;
 			}
-			else
-			{
-				// FIXME: need to "auto-slice" this buffer later
-				clrs = verts;
-			}
 
 			cbstride = cstride * Buffers.SIZEOF_FLOAT;
 
@@ -1603,7 +1646,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				System.err.println("  texCoordoff: " + texCoordoff);
 			}
 
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, verts, varray, 0, clrs, carray, 0);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, vdata, varray, 0, vdata, carray,
+					0);
 
 			// GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of changeability
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
@@ -1643,6 +1687,17 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
 					if (morphable)
 					{
+						FloatBuffer verts = null;
+
+						// do we need to covert a float[]
+						if (varray != null)
+						{
+							verts = getVertexArrayBuffer(varray);
+						}
+						else
+						{
+							verts = vdata;
+						}
 
 						verts.position(0);
 						// Sometime the FloatBuffer is swapped out for bigger or smaller 
@@ -1734,6 +1789,27 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
 				if (changable)
 				{
+					// clrs in the vdata, unless seperate
+					FloatBuffer clrs = null;
+					FloatBuffer verts = null;
+
+					// do we need to covert a float[]
+					if (varray != null)
+					{
+						verts = getVertexArrayBuffer(varray);
+					}
+					else
+					{
+						verts = vdata;
+					}
+					if (carray != null)
+					{
+						clrs = getColorArrayBuffer(carray);
+					}
+					else
+					{
+						clrs = verts;
+					}
 					clrs.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, clrs.remaining() * Float.SIZE / 8, clrs);
@@ -2073,8 +2149,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		executeIndexedGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, initialIndexIndex, validIndexCount,
-				vertexCount, vformat, vdefined,null, vfcoords, null,vdcoords, null,cfdata,null, cbdata,null, ndata, vertexAttrCount, vertexAttrSizes, null,vertexAttrData,
-				texCoordMapLength, texcoordoffset, numActiveTexUnitState, texStride, texCoords, cdirty, indexCoord, sarray, strip_len);
+				vertexCount, vformat, vdefined, null, vfcoords, null, vdcoords, null, cfdata, null, cbdata, null, ndata, vertexAttrCount,
+				vertexAttrSizes, null, vertexAttrData, texCoordMapLength, texcoordoffset, numActiveTexUnitState, texStride, texCoords,
+				cdirty, indexCoord, sarray, strip_len);
 	}
 
 	// non interleaved, by reference, nio buffer
@@ -2251,6 +2328,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						if (morphable)
 						{
+							
+							//if I have vfcoords instead of fverts need to get a fverts buff now
+							if (vfarray != null)
+							{
+								fverts = getVertexArrayBuffer(vfarray);
+							}
+							
 							fverts.position(0);
 
 							// Sometime the FloatBuffer is swapped out for bigger or smaller 
@@ -2353,6 +2437,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
 				if (changable)
 				{
+					//if I have cfdata instead of fclrs need to get a fclrs buff now
+					if (cfarray != null)
+					{
+						fclrs = getColorArrayBuffer(cfarray);
+					}
+					
 					fclrs.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
@@ -2364,6 +2454,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
 				if (changable)
 				{
+					//if I have ndata instead of norms need to get a norms buff now
+					if (fnorms != null)
+					{
+						norms = getNormalArrayBuffer(fnorms);
+					}
+					
 					norms.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
@@ -2372,6 +2468,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			if (vattrDefined)
 			{
+				if (vertexAttrArrays != null)
+				{
+					vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrArrays);
+				}
+				
 				for (int index = 0; index < vertexAttrCount; index++)
 				{
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
@@ -2394,6 +2495,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			if (textureDefined)
 			{
+				// convert from float[][] to FloatBuffer[]
+				if (texCoords instanceof float[][])
+				{
+					texCoords = getTexCoordSetBuffer(texCoords);
+				}
 				boolean[] texSetsBound = new boolean[texCoords.length];
 				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
 				{
