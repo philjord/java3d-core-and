@@ -130,7 +130,7 @@ package org.jogamp.java3d;
  *     with the Java3D sound scheduler by associating this device with a
  *     PhysicalEnvironment.  The setAudioDevice method introduces new devices
  *     to the Java3D environment and the allAudioDevices method produces an
- *     enumeration that allows examining all available devices within a Java3D
+ *     iterator that allows examining all available devices within a Java3D
  *     environment. See PhysicalEnvironment class for more details.</UL>
  * <P>
  * General Rules for calling AudioDevice methods:

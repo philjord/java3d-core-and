@@ -2161,8 +2161,8 @@ private ArrayList<ArrayList<Canvas3D>> canvasList = new ArrayList<ArrayList<Canv
     }
 
     /**
-     * Gets the enumeration object of all the Canvas3Ds.
-     * @return the enumeration object of all the Canvas3Ds.
+     * Gets the iterator object of all the Canvas3Ds.
+     * @return the iterator object of all the Canvas3Ds.
      */
     public Iterator<Canvas3D> getAllCanvas3Ds(){
         return canvases.iterator();

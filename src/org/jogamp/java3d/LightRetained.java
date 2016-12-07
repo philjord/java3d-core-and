@@ -343,8 +343,8 @@ ArrayList<LightRetained> newlyAddedMirrorLights = new ArrayList<LightRetained>()
     }
 
 /**
- * Returns an enumeration object of the scope
- * @return an enumeration object of the scope
+ * Returns an iterator object of the scope
+ * @return an iterator object of the scope
  */
 Iterator<Group> getAllScopes() {
 	Iterator<GroupRetained> elm = scopes.iterator();

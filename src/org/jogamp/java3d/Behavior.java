@@ -133,7 +133,7 @@ import java.util.Iterator;
  * <P>
  * <UL>
  * <LI>Code to decode and extract references from the WakeupCondition
- * enumeration that caused the object's awakening.</LI>
+ * iterator that caused the object's awakening.</LI>
  * <LI>Code to perform the manipulations associated with the
  * WakeupCondition</LI>
  * <LI>Code to establish this behavior's new WakeupCondition</LI>

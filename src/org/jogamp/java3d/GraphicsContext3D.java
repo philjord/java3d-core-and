@@ -963,8 +963,8 @@ public Light getLight(int index) {
 }
 
 /**
- * Retrieves the enumeration object of all the lights.
- * @return the enumeration object of all the lights
+ * Retrieves the iterator object of all the lights.
+ * @return the iterator object of all the lights
  */
 public Iterator<Light> getAllLights() {
 	return uLights.iterator();
@@ -1329,8 +1329,8 @@ public Sound getSound(int index) {
 }
 
 /**
- * Retrieves the enumeration object of all the sounds.
- * @return the enumeration object of all the sounds
+ * Retrieves the iterator object of all the sounds.
+ * @return the iterator object of all the sounds
  */
 public Iterator<Sound> getAllSounds() {
 	return uSounds.iterator();

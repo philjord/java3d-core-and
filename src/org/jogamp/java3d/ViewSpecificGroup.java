@@ -185,7 +185,7 @@ public class ViewSpecificGroup extends Group {
 
 
 /**
- * Returns an enumeration of this ViewSpecificGroup node's list
+ * Returns an iterator of this ViewSpecificGroup node's list
  * of views.
  *
  * @return an Iterator object containing all the views.

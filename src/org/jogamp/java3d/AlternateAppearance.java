@@ -365,7 +365,7 @@ public class AlternateAppearance extends Leaf {
 
 
 /**
- * Returns an enumeration of this AlternateAppearance node's list
+ * Returns an iterator of this AlternateAppearance node's list
  * of scopes.
  * @return an Iterator object containing all nodes in this
  * AlternateAppearance node's list of scopes.

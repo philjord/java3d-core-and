@@ -155,7 +155,7 @@ public abstract class TransformInterpolator extends Interpolator {
      * First it gets the alpha value that corresponds to the current time.
      * Then it calls computeTransform() method to computes the transform based on this
      * alpha vaule,  and updates the specified TransformGroup node with this new transform.
-     * @param criteria an enumeration of the criteria that caused the
+     * @param criteria an iterator of the criteria that caused the
      * stimulus
      */
     @Override

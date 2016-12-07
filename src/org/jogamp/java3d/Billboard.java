@@ -306,7 +306,7 @@ public class Billboard extends Behavior {
 
     /**
      * Process stimulus method that computes appropriate transform.
-     * @param criteria an enumeration of the criteria that caused the
+     * @param criteria an iterator of the criteria that caused the
      * stimulus
      */
     @Override

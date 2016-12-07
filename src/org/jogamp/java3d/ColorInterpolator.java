@@ -168,7 +168,7 @@ public class ColorInterpolator extends Interpolator {
      * or specular color (or both the ambient and diffuse color) of
      * the specified target Material object with this new color value.
      *
-     * @param criteria an enumeration of the criteria that caused the
+     * @param criteria an iterator of the criteria that caused the
      * stimulus
      */
     @Override

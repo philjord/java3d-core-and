@@ -357,7 +357,7 @@ ArrayList<Integer> viewIdFreeList = new ArrayList<Integer>();
 
 
 /**
- * Returns the enumeration object of all locales in this virtual universe.
+ * Returns the iterator object of all locales in this virtual universe.
  *
  * @return the enumeration object
  */

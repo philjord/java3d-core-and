@@ -33,7 +33,7 @@ import java.util.Iterator;
  * is extended by the WakeupCriterion, WakeupOr, WakeupAnd,
  * WakeupOrOfAnds, and WakeupAndOfOr classes. A Behavior node hands a
  * WakeupCondition object to the behavior scheduler and the behavior
- * scheduler hands back an enumeration of that WakeupCondition.
+ * scheduler hands back an iterator of that WakeupCondition.
  */
 
 public abstract class WakeupCondition extends Object {

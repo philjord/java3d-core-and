@@ -165,7 +165,7 @@ public class TransparencyInterpolator extends Interpolator {
      * maps the alpha value that corresponds to the current time into a
      * transparency value and updates the specified TransparencyAttributes
      * object with this new transparency value.
-     * @param criteria an enumeration of the criteria that caused the
+     * @param criteria an iterator of the criteria that caused the
      * stimulus
      */
     @Override

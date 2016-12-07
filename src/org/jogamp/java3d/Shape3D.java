@@ -367,9 +367,9 @@ public class Shape3D extends Leaf {
 
 
     /**
-     * Returns an enumeration of this Shape3D node's list of geometry
+     * Returns an iterator of this Shape3D node's list of geometry
      * components.
-     * @return an Iterator object containing all geometry components in
+     * @return an iterator object containing all geometry components in
      * this Shape3D node's list of geometry components.
      * @exception CapabilityNotSetException if appropriate capability is
      * not set and this object is part of live or compiled scene graph

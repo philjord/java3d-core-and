@@ -349,7 +349,7 @@ public abstract class Fog extends Leaf {
 
 
 /**
- * Returns an enumeration of this Fog node's list of scopes.
+ * Returns an iterator of this Fog node's list of scopes.
  * @return an Iterator object containing all nodes in this Fog node's
  * list of scopes.
  * @exception CapabilityNotSetException if appropriate capability is

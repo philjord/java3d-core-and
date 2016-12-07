@@ -171,7 +171,7 @@ public class DistanceLOD extends LOD {
 
     /**
      * Process stimulus method that computes appropriate level of detail.
-     * @param criteria an enumeration of the criteria that caused the
+     * @param criteria an iterator of the criteria that caused the
      * stimulus
      */
     @Override

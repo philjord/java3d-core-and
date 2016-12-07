@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
  * execution environment of the currently running Java 3D application.
  */
 
-class AudioDeviceEnumerator implements Iterator {
+class AudioDeviceEnumerator implements Iterator<AudioDevice> {
 
     boolean endOfList;  // NOTE: list length always equals one or zero
     AudioDevice device;
@@ -72,10 +72,10 @@ class AudioDeviceEnumerator implements Iterator {
      * @return the next element in this enumerator
      */
     @Override
-    public Object next() {
+    public AudioDevice next() {
         if (this.hasNext()) {
             endOfList = true;
-            return ((Object) device);
+            return device;
         } else {
             throw new NoSuchElementException(J3dI18N.getString("AudioDeviceEnumerator0"));
         }

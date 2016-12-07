@@ -137,7 +137,7 @@ import org.jogamp.vecmath.Color3f;
  * nodes, defined by a Group object. This is known as "scoping."
  * All nodes attached to a Group node define a <i>list of scopes</i>.
  * Methods in the Light class permit the setting, addition, insertion,
- * removal, and enumeration of nodes in the list of scopes.
+ * removal, and iterator of nodes in the list of scopes.
  * <p>
  * <b>Two-sided Lighting of Polygons</b>
  * <p>
@@ -437,7 +437,7 @@ public abstract class Light extends Leaf {
 
 
 /**
- * Returns an enumeration of this Light node's list of scopes.
+ * Returns an iterator of this Light node's list of scopes.
  * @return an Iterator object containing all nodes in this Light node's
  * list of scopes.
  * @exception CapabilityNotSetException if appropriate capability is

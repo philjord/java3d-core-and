@@ -510,8 +510,8 @@ Vector<GroupRetained> scopes = new Vector<GroupRetained>();
     }
 
 /**
- * Returns an enumeration object of the scoperen.
- * @return an enumeration object of the scoperen
+ * Returns an iterator object of the scoperen.
+ * @return an iterator object of the scoperen
  */
 Iterator<Group> getAllScopes() {
 	Iterator<GroupRetained> elm = scopes.iterator();

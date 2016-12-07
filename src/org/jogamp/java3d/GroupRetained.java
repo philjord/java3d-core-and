@@ -438,8 +438,8 @@ ArrayList<ArrayList<View>> viewLists = null;
 	}
 
 	/**
-	 * Returns an enumeration object of the children.
-	 * @return an enumeration object of the children
+	 * Returns an iterator object of the children.
+	 * @return an iterator object of the children
 	 */
 	Iterator<Node> getAllChildren() {
 		Vector<Node> userChildren = new Vector<Node>(children.size());
