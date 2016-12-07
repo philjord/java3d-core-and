@@ -550,12 +550,6 @@ public class Jogl2es2Context extends JoglContext
 		public int spotCutoff = -1;
 		public int spotExponent = -1;
 		public int spotDirection = -1;
-
-		public boolean present()
-		{
-			return position != -1 || diffuse != -1 || specular != -1 || constantAttenuation != -1 || linearAttenuation != -1
-					|| quadraticAttenuation != -1 || spotCutoff != -1 || spotExponent != -1 || spotDirection != -1;
-		}
 	}
 
 	// in the shader as follows

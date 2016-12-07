@@ -1139,7 +1139,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						fclrs = getColorArrayBuffer(cfdata);
 					}
-					
+
 					fclrs.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
@@ -1191,7 +1191,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (textureDefined)
 			{
 				// convert from float[][] to FloatBuffer[]
-				if (texCoords instanceof float[][])
+				if (!(texCoords[0] instanceof FloatBuffer))
 				{
 					texCoords = getTexCoordSetBuffer(texCoords);
 				}
@@ -1357,7 +1357,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
 						{
 							texSetsBound[texSet] = true;
-							
 
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 							if (bufIds == null)
@@ -2328,13 +2327,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						if (morphable)
 						{
-							
+
 							//if I have vfcoords instead of fverts need to get a fverts buff now
 							if (vfarray != null)
 							{
 								fverts = getVertexArrayBuffer(vfarray);
 							}
-							
+
 							fverts.position(0);
 
 							// Sometime the FloatBuffer is swapped out for bigger or smaller 
@@ -2442,7 +2441,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						fclrs = getColorArrayBuffer(cfarray);
 					}
-					
+
 					fclrs.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
@@ -2459,7 +2458,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						norms = getNormalArrayBuffer(fnorms);
 					}
-					
+
 					norms.position(0);
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, norms.remaining() * Float.SIZE / 8, norms);
@@ -2472,7 +2471,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrArrays);
 				}
-				
+
 				for (int index = 0; index < vertexAttrCount; index++)
 				{
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
@@ -3581,7 +3580,6 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
 		if (locs.transparencyAlpha != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
@@ -3615,45 +3613,47 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		int lightSlotToUse = 0;
 		for (int i = 0; i < ctx.maxLights; i++)
 		{
-			if (locs.glLightSource[lightSlotToUse].present())
+			if (locs.glLightSource[lightSlotToUse] != null)
 			{
-				if (ctx.glLightSource[i].enabled == 1)
+
+				glLightSource glLightSource = ctx.glLightSource[i];
+				if (glLightSource.enabled == 1)
 				{
 					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource[i].equals(ctx.glLightSource[i])))
+							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource[i].equals(glLightSource)))
 					{
-						ctx.glLightSource[i].prevLightSlot = lightSlotToUse;// record for the equals check
-						if (locs.glLightSource[lightSlotToUse].position != -1)
-							gl.glUniform4f(locs.glLightSource[lightSlotToUse].position, ctx.glLightSource[i].position.x,
-									ctx.glLightSource[i].position.y, ctx.glLightSource[i].position.z, ctx.glLightSource[i].position.w);
-						if (locs.glLightSource[lightSlotToUse].diffuse != -1)
-							gl.glUniform4f(locs.glLightSource[lightSlotToUse].diffuse, ctx.glLightSource[i].diffuse.x,
-									ctx.glLightSource[i].diffuse.y, ctx.glLightSource[i].diffuse.z, ctx.glLightSource[i].diffuse.w);
-						if (locs.glLightSource[lightSlotToUse].specular != -1)
-							gl.glUniform4f(locs.glLightSource[lightSlotToUse].specular, ctx.glLightSource[i].specular.x,
-									ctx.glLightSource[i].specular.y, ctx.glLightSource[i].specular.z, ctx.glLightSource[i].specular.w);
-						if (locs.glLightSource[lightSlotToUse].constantAttenuation != -1)
-							gl.glUniform1f(locs.glLightSource[lightSlotToUse].constantAttenuation,
-									ctx.glLightSource[i].constantAttenuation);
-						if (locs.glLightSource[lightSlotToUse].linearAttenuation != -1)
-							gl.glUniform1f(locs.glLightSource[lightSlotToUse].linearAttenuation, ctx.glLightSource[i].linearAttenuation);
-						if (locs.glLightSource[lightSlotToUse].quadraticAttenuation != -1)
-							gl.glUniform1f(locs.glLightSource[lightSlotToUse].quadraticAttenuation,
-									ctx.glLightSource[i].quadraticAttenuation);
-						if (locs.glLightSource[lightSlotToUse].spotCutoff != -1)
-							gl.glUniform1f(locs.glLightSource[lightSlotToUse].spotCutoff, ctx.glLightSource[i].spotCutoff);
-						if (locs.glLightSource[lightSlotToUse].spotExponent != -1)
-							gl.glUniform1f(locs.glLightSource[lightSlotToUse].spotExponent, ctx.glLightSource[i].spotExponent);
-						if (locs.glLightSource[lightSlotToUse].spotDirection != -1)
-							gl.glUniform3f(locs.glLightSource[lightSlotToUse].spotDirection, ctx.glLightSource[i].spotDirection.x,
-									ctx.glLightSource[i].spotDirection.y, ctx.glLightSource[i].spotDirection.z);
+						glLightSource.prevLightSlot = lightSlotToUse;// record for the equals to check for moved
+
+						glLightSourceLocs glLightSourceLocs = locs.glLightSource[lightSlotToUse];
+						if (glLightSourceLocs.position != -1)
+							gl.glUniform4f(glLightSourceLocs.position, glLightSource.position.x, glLightSource.position.y,
+									glLightSource.position.z, glLightSource.position.w);
+						if (glLightSourceLocs.diffuse != -1)
+							gl.glUniform4f(glLightSourceLocs.diffuse, glLightSource.diffuse.x, glLightSource.diffuse.y,
+									glLightSource.diffuse.z, glLightSource.diffuse.w);
+						if (glLightSourceLocs.specular != -1)
+							gl.glUniform4f(glLightSourceLocs.specular, glLightSource.specular.x, glLightSource.specular.y,
+									glLightSource.specular.z, glLightSource.specular.w);
+						if (glLightSourceLocs.constantAttenuation != -1)
+							gl.glUniform1f(glLightSourceLocs.constantAttenuation, glLightSource.constantAttenuation);
+						if (glLightSourceLocs.linearAttenuation != -1)
+							gl.glUniform1f(glLightSourceLocs.linearAttenuation, glLightSource.linearAttenuation);
+						if (glLightSourceLocs.quadraticAttenuation != -1)
+							gl.glUniform1f(glLightSourceLocs.quadraticAttenuation, glLightSource.quadraticAttenuation);
+						if (glLightSourceLocs.spotCutoff != -1)
+							gl.glUniform1f(glLightSourceLocs.spotCutoff, glLightSource.spotCutoff);
+						if (glLightSourceLocs.spotExponent != -1)
+							gl.glUniform1f(glLightSourceLocs.spotExponent, glLightSource.spotExponent);
+						if (glLightSourceLocs.spotDirection != -1)
+							gl.glUniform3f(glLightSourceLocs.spotDirection, glLightSource.spotDirection.x, glLightSource.spotDirection.y,
+									glLightSource.spotDirection.z);
 					}
 					lightSlotToUse++;
 
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glLightSource[i].set(ctx.glLightSource[i]);
+						ctx.gl_state.glLightSource[i].set(glLightSource);
 				}
 			}
 		}
@@ -3791,22 +3791,32 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
 
 				// lights, notice the vertex attribute is made of a string concat
+				// notice we stop once the light loc is not found, as that is the max the shader will accept
 				for (int i = 0; i < locs.glLightSource.length; i++)
 				{
-					locs.glLightSource[i] = new glLightSourceLocs();
-					locs.glLightSource[i].position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
-					locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
-					locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
-					locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
-							"glLightSource[" + i + "].constantAttenuation");
-					locs.glLightSource[i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
-							"glLightSource[" + i + "].linearAttenuation");
-					locs.glLightSource[i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
-							"glLightSource[" + i + "].quadraticAttenuation");
-					locs.glLightSource[i].spotCutoff = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotCutoff");
-					locs.glLightSource[i].spotExponent = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotExponent");
-					locs.glLightSource[i].spotDirection = gl.glGetUniformLocation(shaderProgramId,
-							"glLightSource[" + i + "].spotDirection");
+					int position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
+					if (position != -1)
+					{
+						locs.glLightSource[i] = new glLightSourceLocs();
+						locs.glLightSource[i].position = position;
+						locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
+						locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
+						locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].constantAttenuation");
+						locs.glLightSource[i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].linearAttenuation");
+						locs.glLightSource[i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].quadraticAttenuation");
+						locs.glLightSource[i].spotCutoff = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotCutoff");
+						locs.glLightSource[i].spotExponent = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].spotExponent");
+						locs.glLightSource[i].spotDirection = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].spotDirection");
+					}
+					else
+					{
+						break;
+					}
 				}
 
 				///////ATTRIBUTES!!!!!!!!///////////////////
@@ -4136,9 +4146,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		if (textureDefined)
 		{
-
 			// convert from float[][] to FloatBuffer[]
-			if (texCoords instanceof float[][])
+			//WOW careful java has a hard time knowing what an Object[] contains can't check float[][]
+			if (!(texCoords[0] instanceof FloatBuffer))
 			{
 				texCoords = getTexCoordSetBuffer(texCoords);
 			}
@@ -4150,7 +4160,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (texSet != -1 && !texSetsLoaded[texSet])
 				{
 					texSetsLoaded[texSet] = true;
-					// stupid interface...
+					// stupid interface...					
 					FloatBuffer buf = (FloatBuffer) texCoords[texSet];
 					buf.position(0);
 
@@ -4342,7 +4352,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (textureDefined)
 				{
 					// convert from float[][] to FloatBuffer[]
-					if (texCoords instanceof float[][])
+					if (!(texCoords[0] instanceof FloatBuffer))
 					{
 						texCoords = getTexCoordSetBuffer(texCoords);
 					}
