@@ -80,7 +80,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Prints extra debugging information
 	private static final boolean EXTRA_DEBUGGING = false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = false;
+	private static final boolean OUTPUT_PER_FRAME_STATS = true;
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 
@@ -3411,7 +3411,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
-				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 
 				gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
 				if (DO_OUTPUT_ERRORS)
@@ -3433,8 +3434,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
-				ctx.currentModelViewMatInverse.mul(ctx.currentViewMat, ctx.currentModelMat);
-				ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
+				if (ctx.currentModelViewMatInverse.m00 == Double.NEGATIVE_INFINITY)
+				{
+					ctx.currentModelViewMatInverse.mul(ctx.currentViewMat, ctx.currentModelMat);
+					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
+				}
 
 				//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
 				gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
@@ -3458,8 +3462,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
-				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-				ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
+				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+				if (ctx.currentModelViewProjMat.m00 == Double.NEGATIVE_INFINITY)
+					ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
 
 				//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
 				gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
@@ -3482,9 +3488,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!MINIMISE_NATIVE_CALLS_FFP
 					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
 			{
-				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
-				ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
-				Jogl2es2MatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
+				// Expensive, only calc if required, not in the setmodelview call, in case unneeded				
+				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
+					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
+				if (ctx.currentNormalMat.m00 == Double.NEGATIVE_INFINITY)
+					Jogl2es2MatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
 				//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
 				gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
@@ -3787,7 +3795,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.fogData.linearStart = gl.glGetUniformLocation(shaderProgramId, "fogData.linearStart");
 				locs.fogData.linearEnd = gl.glGetUniformLocation(shaderProgramId, "fogData.linearEnd");
 				locs.fogData.setPresent();
-				
+
 				locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.lightEnabled");
 				locs.glFrontMaterial.ambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.ambient");
 				locs.glFrontMaterial.diffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.diffuse");
@@ -5757,7 +5765,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		//if (joglesctx.materialData.equals(joglesctx.gl_state.glFrontMaterial))
 		//	joglesctx.gl_state.glFrontMaterial = joglesctx.materialData;
 		//else
-			joglesctx.gl_state.glFrontMaterial = null;
+		joglesctx.gl_state.glFrontMaterial = null;
 
 	}
 
@@ -7310,10 +7318,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		//Moved up into setffp and only calc'ed if requested
 
-		joglesctx.currentModelViewMat.setZero(); // indicate no longer valid	
-		joglesctx.currentModelViewMatInverse.setZero();
-		joglesctx.currentModelViewProjMat.setZero();
-		joglesctx.currentNormalMat.setZero();
+		joglesctx.currentModelViewMat.m00 = Double.NEGATIVE_INFINITY;// indicate no longer valid	
+		joglesctx.currentModelViewMatInverse.m00 = Double.NEGATIVE_INFINITY;
+		joglesctx.currentModelViewProjMat.m00 = Double.NEGATIVE_INFINITY;
+		joglesctx.currentNormalMat.m00 = Double.NEGATIVE_INFINITY;
 
 		/*
 		
