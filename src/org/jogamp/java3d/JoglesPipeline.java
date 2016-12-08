@@ -3610,21 +3610,21 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// the lighting structures 
-		int lightSlotToUse = 0;
-		for (int i = 0; i < ctx.maxLights; i++)
+		int pipelineLightSlotToUse = 0;
+		for (int shaderLightIndex = 0; shaderLightIndex < ctx.maxLights; shaderLightIndex++)
 		{
-			if (locs.glLightSource[lightSlotToUse] != null)
+			if (locs.glLightSource[pipelineLightSlotToUse] != null)
 			{
-
-				glLightSource glLightSource = ctx.glLightSource[i];
+				glLightSource glLightSource = ctx.glLightSource[shaderLightIndex];
 				if (glLightSource.enabled == 1)
 				{
+					//Notice use of == as we want to see it's simply the exact same light source or not
 					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightSource[i].equals(glLightSource)))
+							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glLightSource[shaderLightIndex] != glLightSource))
 					{
-						glLightSource.prevLightSlot = lightSlotToUse;// record for the equals to check for moved
+						glLightSource.prevLightSlot = pipelineLightSlotToUse;// record for the equals to check for moved
 
-						glLightSourceLocs glLightSourceLocs = locs.glLightSource[lightSlotToUse];
+						glLightSourceLocs glLightSourceLocs = locs.glLightSource[pipelineLightSlotToUse];
 						if (glLightSourceLocs.position != -1)
 							gl.glUniform4f(glLightSourceLocs.position, glLightSource.position.x, glLightSource.position.y,
 									glLightSource.position.z, glLightSource.position.w);
@@ -3647,13 +3647,14 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (glLightSourceLocs.spotDirection != -1)
 							gl.glUniform3f(glLightSourceLocs.spotDirection, glLightSource.spotDirection.x, glLightSource.spotDirection.y,
 									glLightSource.spotDirection.z);
-					}
-					lightSlotToUse++;
 
-					if (DO_OUTPUT_ERRORS)
-						outputErrors(ctx);
-					if (MINIMISE_NATIVE_CALLS_FFP)
-						ctx.gl_state.glLightSource[i].set(glLightSource);
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.glLightSource[shaderLightIndex] = glLightSource;
+					}
+					pipelineLightSlotToUse++;
+
 				}
 			}
 		}
@@ -5476,7 +5477,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
-			joglesctx.gl_state.glLightSource[lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource[lightSlot] = null;
 		}
 
 		joglesctx.glLightSource[lightSlot].diffuse.x = red;
@@ -5525,7 +5526,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
-			joglesctx.gl_state.glLightSource[lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource[lightSlot] = null;
 		}
 
 		joglesctx.glLightSource[lightSlot].diffuse.x = red;
@@ -5573,7 +5574,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
-			joglesctx.gl_state.glLightSource[lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource[lightSlot] = null;
 		}
 
 		joglesctx.glLightSource[lightSlot].diffuse.x = red;
@@ -7185,11 +7186,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (joglesctx.glLightSource[i] == null)
 			{
 				joglesctx.glLightSource[i] = new glLightSource();
-				joglesctx.gl_state.glLightSource[i] = new glLightSource();
 			}
 
 			joglesctx.glLightSource[i].enabled = enable ? 1 : 0;
 			joglesctx.numberOfLights += enable ? 1 : 0;
+
+			// clear gl_state
+			joglesctx.gl_state.glLightSource[i] = null; // this is a pointer not a container
 		}
 	}
 
