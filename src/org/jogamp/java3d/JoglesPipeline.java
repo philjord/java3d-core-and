@@ -3711,7 +3711,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// Fog
-		if (locs.fogData.present())
+		if (locs.fogData.present)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.fogData.equals(ctx.fogData)))
 			{
@@ -3786,7 +3786,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.fogData.linearColor = gl.glGetUniformLocation(shaderProgramId, "fogData.linearColor");
 				locs.fogData.linearStart = gl.glGetUniformLocation(shaderProgramId, "fogData.linearStart");
 				locs.fogData.linearEnd = gl.glGetUniformLocation(shaderProgramId, "fogData.linearEnd");
-
+				locs.fogData.setPresent();
+				
 				locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.lightEnabled");
 				locs.glFrontMaterial.ambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.ambient");
 				locs.glFrontMaterial.diffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.diffuse");
@@ -3794,7 +3795,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.glFrontMaterial.specular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.specular");
 				locs.glFrontMaterial.shininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.shininess");
 				locs.glFrontMaterial.setPresent();
-				
+
 				locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
 
 				// lights, notice the vertex attribute is made of a string concat
@@ -5750,9 +5751,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.materialData.diffuse.y = dGreen;
 		joglesctx.materialData.diffuse.z = dBlue;
 		joglesctx.materialData.diffuse.w = alpha;
-		
-		// clear teh gl_state record of up-to-updateness
-		joglesctx.gl_state.glFrontMaterial = null;
+
+		// clear the gl_state record of up-to-dateness
+		// TODO:why no work?
+		//if (joglesctx.materialData.equals(joglesctx.gl_state.glFrontMaterial))
+		//	joglesctx.gl_state.glFrontMaterial = joglesctx.materialData;
+		//else
+			joglesctx.gl_state.glFrontMaterial = null;
 
 	}
 

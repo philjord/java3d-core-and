@@ -290,7 +290,7 @@ public class Jogl2es2Context extends JoglContext
 		public float alphaTestValue;
 
 		public fogData fogData = new fogData();
-		public glFrontMaterial glFrontMaterial = new glFrontMaterial();
+		public glFrontMaterial glFrontMaterial = null;
 		public int numberOfLights = -1;
 		public glLightSource[] glLightSource = new glLightSource[MAX_LIGHTS];
 
@@ -338,11 +338,10 @@ public class Jogl2es2Context extends JoglContext
 			alphaTestValue = -99f;
 
 			fogData.clear();
-			glFrontMaterial.clear();
+			glFrontMaterial = null;
 			for (int i = 0; i < MAX_LIGHTS; i++)
 			{
-				if (glLightSource[i] != null)
-					glLightSource[i].clear();
+				glLightSource[i] = null;
 			}
 		}
 	}
@@ -419,6 +418,21 @@ public class Jogl2es2Context extends JoglContext
 			emission.set(-999f, -999f, -999f);
 			specular.set(-999f, -999f, -999f);
 			shininess = -99;
+		}
+	 
+		@Override
+		public boolean equals(Object o)
+		{
+			if (o instanceof glFrontMaterial)
+			{
+				glFrontMaterial ogfm = (glFrontMaterial) o;
+				return ogfm.lightEnabled == lightEnabled && ogfm.ambient.equals(ambient) && ogfm.diffuse.equals(diffuse)
+						&& ogfm.emission.equals(emission) && ogfm.specular.equals(specular) && ogfm.shininess == shininess;
+			}
+			else
+			{
+				return false;
+			}
 		}
 	}
 
@@ -586,6 +600,7 @@ public class Jogl2es2Context extends JoglContext
 
 	public static class fogDataLocs
 	{
+		public boolean present = false;
 		public int fogEnabled = -1;
 		public int expColor = -1;
 		public int expDensity = -1;
@@ -593,9 +608,9 @@ public class Jogl2es2Context extends JoglContext
 		public int linearStart = -1;
 		public int linearEnd = -1;
 
-		public boolean present()
+		public void setPresent()
 		{
-			return fogEnabled != -1 || expColor != -1 || expDensity != -1 || linearColor != -1 || linearStart != -1 || linearEnd != -1;
+			present = fogEnabled != -1 || expColor != -1 || expDensity != -1 || linearColor != -1 || linearStart != -1 || linearEnd != -1;
 		}
 	}
 }
