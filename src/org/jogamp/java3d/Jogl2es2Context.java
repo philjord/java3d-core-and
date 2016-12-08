@@ -420,35 +420,11 @@ public class Jogl2es2Context extends JoglContext
 			specular.set(-999f, -999f, -999f);
 			shininess = -99;
 		}
-
-		public void set(glFrontMaterial ogfm)
-		{
-			lightEnabled = ogfm.lightEnabled;
-			ambient.set(ogfm.ambient);
-			diffuse.set(ogfm.diffuse);
-			emission.set(ogfm.emission);
-			specular.set(ogfm.specular);
-			shininess = ogfm.shininess;
-		}
-
-		@Override
-		public boolean equals(Object o)
-		{
-			if (o instanceof glFrontMaterial)
-			{
-				glFrontMaterial ogfm = (glFrontMaterial) o;
-				return ogfm.lightEnabled == lightEnabled && ogfm.ambient.equals(ambient) && ogfm.diffuse.equals(diffuse)
-						&& ogfm.emission.equals(emission) && ogfm.specular.equals(specular) && ogfm.shininess == shininess;
-			}
-			else
-			{
-				return false;
-			}
-		}
 	}
 
 	public static class glFrontMaterialLocs
 	{
+		public boolean present = false;
 		public int lightEnabled = -1;
 		public int ambient = -1;
 		public int diffuse = -1;
@@ -456,9 +432,9 @@ public class Jogl2es2Context extends JoglContext
 		public int specular = -1;
 		public int shininess = -1;
 
-		public boolean present()
+		public void setPresent()
 		{
-			return lightEnabled != -1 || ambient != -1 || diffuse != -1 || emission != -1 || specular != -1 || shininess != -1;
+			present = lightEnabled != -1 || ambient != -1 || diffuse != -1 || emission != -1 || specular != -1 || shininess != -1;
 		}
 	}
 	//	struct lightSource

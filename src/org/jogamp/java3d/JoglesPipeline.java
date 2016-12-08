@@ -3522,10 +3522,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// the front material structure
-		if (locs.glFrontMaterial.present())
+		if (locs.glFrontMaterial.present)
 		{
+			//note != not equals
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glFrontMaterial.equals(ctx.materialData)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial != ctx.materialData))
 			{
 				if (locs.glFrontMaterial.lightEnabled != -1)
 					gl.glUniform1i(locs.glFrontMaterial.lightEnabled, ctx.materialData.lightEnabled);
@@ -3547,8 +3548,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterial.set(ctx.materialData);
+					ctx.gl_state.glFrontMaterial = ctx.materialData;
 			}
+		}
+		else
+		{
+			ctx.gl_state.glFrontMaterial = null;
 		}
 
 		// ambient does not come from material notice
@@ -3788,7 +3793,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.glFrontMaterial.emission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.emission");
 				locs.glFrontMaterial.specular = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.specular");
 				locs.glFrontMaterial.shininess = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.shininess");
-
+				locs.glFrontMaterial.setPresent();
+				
 				locs.numberOfLights = gl.glGetUniformLocation(shaderProgramId, "numberOfLights");
 
 				// lights, notice the vertex attribute is made of a string concat
@@ -5744,6 +5750,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.materialData.diffuse.y = dGreen;
 		joglesctx.materialData.diffuse.z = dBlue;
 		joglesctx.materialData.diffuse.w = alpha;
+		
+		// clear teh gl_state record of up-to-updateness
+		joglesctx.gl_state.glFrontMaterial = null;
 
 	}
 
