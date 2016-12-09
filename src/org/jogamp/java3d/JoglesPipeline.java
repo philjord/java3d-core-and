@@ -3496,6 +3496,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.glModelViewProjectionMatrix.m00 = 0;
+
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
 			}
@@ -3522,6 +3523,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.glNormalMatrix.m00 = 0;
+
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glNormalMatrixUpdated++;
 			}
@@ -3757,29 +3759,38 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// Fog
-		if (locs.fogData.present)
+		if (locs.fogData.present && locs.fogData.fogEnabled != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.fogData.expColor.x == Float.NEGATIVE_INFINITY))
+			if (!MINIMISE_NATIVE_CALLS_FFP || shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.fogData.fogEnabled != ctx.fogData.fogEnabled)
 			{
-				if (locs.fogData.fogEnabled != -1)
-					gl.glUniform1i(locs.fogData.fogEnabled, ctx.fogData.fogEnabled);
-				if (locs.fogData.expColor != -1)
-					gl.glUniform4f(locs.fogData.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z, 1.0f);
-				if (locs.fogData.expDensity != -1)
-					gl.glUniform1f(locs.fogData.expDensity, ctx.fogData.expDensity);
-				if (locs.fogData.linearColor != -1)
-					gl.glUniform4f(locs.fogData.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y,
-							ctx.fogData.linearColor.z, 1.0f);
-				if (locs.fogData.linearStart != -1)
-					gl.glUniform1f(locs.fogData.linearStart, ctx.fogData.linearStart);
-				if (locs.fogData.linearEnd != -1)
-					gl.glUniform1f(locs.fogData.linearEnd, ctx.fogData.linearEnd);
+				gl.glUniform1i(locs.fogData.fogEnabled, ctx.fogData.fogEnabled);
 
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.fogData.expColor.x = 0;
+				ctx.gl_state.fogData.fogEnabled = ctx.fogData.fogEnabled;
+
+				if (ctx.fogData.fogEnabled == 1)
+				{
+					if ((shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.fogData.expColor.x == Float.NEGATIVE_INFINITY))
+					{
+						if (locs.fogData.expColor != -1)
+							gl.glUniform4f(locs.fogData.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z,
+									1.0f);
+						if (locs.fogData.expDensity != -1)
+							gl.glUniform1f(locs.fogData.expDensity, ctx.fogData.expDensity);
+						if (locs.fogData.linearColor != -1)
+							gl.glUniform4f(locs.fogData.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y,
+									ctx.fogData.linearColor.z, 1.0f);
+						if (locs.fogData.linearStart != -1)
+							gl.glUniform1f(locs.fogData.linearStart, ctx.fogData.linearStart);
+						if (locs.fogData.linearEnd != -1)
+							gl.glUniform1f(locs.fogData.linearEnd, ctx.fogData.linearEnd);
+
+						if (DO_OUTPUT_ERRORS)
+							outputErrors(ctx);
+						if (MINIMISE_NATIVE_CALLS_FFP)
+							ctx.gl_state.fogData.expColor.x = 0;
+					}
+				}
 			}
 		}
 
@@ -5694,7 +5705,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// https://www.opengl.org/discussion_boards/showthread.php/151415-Fog-with-pixel-shader-%28arb_fragment_program%29
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;				
+		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.linearColor.x = red;
 		joglesctx.fogData.linearColor.y = green;
 		joglesctx.fogData.linearColor.z = blue;
@@ -5988,9 +5999,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 			if (MINIMISE_NATIVE_CALLS_OTHER)
+			{
 				joglesctx.gl_state.polygonOffsetFactor = polygonOffsetFactor;
-			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.polygonOffset = polygonOffset;
+			}
 		}
 		joglesctx.polygonMode = polygonMode;
 	}
@@ -6023,9 +6035,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 			if (MINIMISE_NATIVE_CALLS_OTHER)
+			{
 				joglesctx.gl_state.polygonOffsetFactor = 0.0f;
-			if (MINIMISE_NATIVE_CALLS_OTHER)
 				joglesctx.gl_state.polygonOffset = 0.0f;
+			}
 		}
 
 		joglesctx.polygonMode = PolygonAttributes.POLYGON_FILL;
@@ -6246,11 +6259,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 
 				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
+				{
 					joglesctx.gl_state.glEnableGL_BLEND = true;
-				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.srcBlendFunction = srcBlendFunction;
-				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.dstBlendFunction = dstBlendFunction;
+				}
 			}
 
 		}
@@ -6294,11 +6307,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
+				{
 					joglesctx.gl_state.glEnableGL_BLEND = true;
-				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.srcBlendFunction = TransparencyAttributes.BLEND_SRC_ALPHA;
-				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 					joglesctx.gl_state.dstBlendFunction = TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA;
+				}
 			}
 		}
 		else
@@ -7247,11 +7260,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
+			{
 				joglesctx.gl_state.glEnableGL_BLEND = true;
-			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 				joglesctx.gl_state.srcBlendFunction = srcBlendFunction;
-			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
 				joglesctx.gl_state.dstBlendFunction = dstBlendFunction;
+			}
 		}
 	}
 
