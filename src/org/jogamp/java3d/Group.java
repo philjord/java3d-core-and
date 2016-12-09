@@ -154,6 +154,16 @@ public class Group extends Node {
 	    }
 	}
 
+	//PJPJPJPJ TODO: needs auto compile flag turned on in mc
+			if (this.isLive())
+			{
+				if (child instanceof BranchGroup && !((BranchGroup) child).isCompiled())
+				{
+			//		System.out.println("autocompiling " + child);
+			//		((BranchGroup) child).compile();
+				}
+			}
+	
 	((GroupRetained)retained).setChild(child, index);
     }
 
@@ -188,6 +198,16 @@ public class Group extends Node {
 		throw new CapabilityNotSetException(J3dI18N.getString("Group14"));
 	}
 
+	//PJPJPJPJ TODO: needs auto compile flag turned on in mc
+			if (this.isLive())
+			{
+				if (child instanceof BranchGroup && !((BranchGroup) child).isCompiled())
+				{
+			//		System.out.println("autocompiling " + child);
+			//		((BranchGroup) child).compile();
+				}
+			}
+	
 	((GroupRetained)this.retained).insertChild(child, index);
     }
 
@@ -278,6 +298,16 @@ public class Group extends Node {
 	    if(!this.getCapability(ALLOW_CHILDREN_EXTEND))
 		throw new CapabilityNotSetException(J3dI18N.getString("Group16"));
 	}
+	
+		//PJPJPJPJ TODO: needs auto compile flag turned on in mc
+		if (this.isLive())
+		{
+			if (child instanceof BranchGroup && !((BranchGroup) child).isCompiled())
+			{
+		//		System.out.println("autocompiling " + child);
+		//		((BranchGroup) child).compile();
+			}
+		}
 
 	((GroupRetained)this.retained).addChild(child);
     }
@@ -299,6 +329,16 @@ public class Group extends Node {
 		throw new CapabilityNotSetException(J3dI18N.getString("Group4"));
 	    }
 	}
+	
+	//PJPJPJPJ TODO: needs auto compile flag turned on in mc
+			if (this.isLive())
+			{
+				if ( !branchGroup.isCompiled())
+				{
+			//		System.out.println("autocompiling " + child);
+			//		((BranchGroup) child).compile();
+				}
+			}
 
 	((GroupRetained)this.retained).moveTo(branchGroup);
     }

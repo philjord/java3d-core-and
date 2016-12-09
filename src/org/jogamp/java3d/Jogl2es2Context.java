@@ -290,7 +290,7 @@ public class Jogl2es2Context extends JoglContext
 		public float alphaTestValue;
 
 		public fogData fogData = new fogData();
-		public glFrontMaterial glFrontMaterial = null;
+		public glFrontMaterial glFrontMaterial = new glFrontMaterial();
 		public int numberOfLights = -1;
 		public glLightSource[] glLightSource = new glLightSource[MAX_LIGHTS];
 
@@ -324,21 +324,21 @@ public class Jogl2es2Context extends JoglContext
 			polygonOffsetFactor = -1;
 			polygonOffset = -1;
 			ignoreVertexColors = -1;
-			glLightModelambient.set(-999f, -999f, -999f, -999f);
-			objectColor.set(-999f, -999f, -999f, -999f);
+			glLightModelambient.set(Float.NEGATIVE_INFINITY, -999f, -999f, -999f);
+			objectColor.set(Float.NEGATIVE_INFINITY, -999f, -999f, -999f);
 			transparencyAlpha = -1;
-			textureTransform.setIdentity();
-			modelMatrix.setIdentity();
-			glModelViewMatrix.setIdentity();
-			glModelViewMatrixInverse.setIdentity();
-			glModelViewProjectionMatrix.setIdentity();
-			glNormalMatrix.setIdentity();
+			textureTransform.m00 = Double.NEGATIVE_INFINITY;
+			modelMatrix.m00 = Double.NEGATIVE_INFINITY;
+			glModelViewMatrix.m00 = Double.NEGATIVE_INFINITY;
+			glModelViewMatrixInverse.m00 = Double.NEGATIVE_INFINITY;
+			glModelViewProjectionMatrix.m00 = Double.NEGATIVE_INFINITY;
+			glNormalMatrix.m00 = Double.NEGATIVE_INFINITY;
 			alphaTestEnabled = false;
 			alphaTestFunction = -1;
 			alphaTestValue = -99f;
 
 			fogData.clear();
-			glFrontMaterial = null;
+			glFrontMaterial.clear();
 			for (int i = 0; i < MAX_LIGHTS; i++)
 			{
 				glLightSource[i] = null;
@@ -413,10 +413,10 @@ public class Jogl2es2Context extends JoglContext
 		public void clear()
 		{
 			lightEnabled = -1;
-			ambient.set(-999f, -999f, -999f, -999f);
-			diffuse.set(-999f, -999f, -999f, -999f);
-			emission.set(-999f, -999f, -999f);
-			specular.set(-999f, -999f, -999f);
+			ambient.set(Float.NEGATIVE_INFINITY, -999f, -999f, -999f);
+			diffuse.set(Float.NEGATIVE_INFINITY, -999f, -999f, -999f);
+			emission.set(Float.NEGATIVE_INFINITY, -999f, -999f);
+			specular.set(Float.NEGATIVE_INFINITY, -999f, -999f);
 			shininess = -99;
 		}
 	 

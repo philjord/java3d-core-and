@@ -3388,13 +3388,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (locs.glModelMatrix != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.modelMatrix.equals(ctx.currentModelMat)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.modelMatrix.m00 == Double.NEGATIVE_INFINITY))
 			{
 				gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.modelMatrix.set(ctx.currentModelMat);
+					ctx.gl_state.modelMatrix.m00 = 0;
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.modelMatrixUpdated++;
@@ -3408,7 +3408,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (locs.glModelViewMatrix != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glModelViewMatrix.equals(ctx.currentModelViewMat)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glModelViewMatrix.m00 == Double.NEGATIVE_INFINITY))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
@@ -3419,7 +3419,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glModelViewMatrix.set(ctx.currentModelViewMat);
+					ctx.gl_state.glModelViewMatrix.m00 = 0;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewMatrixUpdated++;
 			}
@@ -3430,8 +3430,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 		if (locs.glModelViewMatrixInverse != -1)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| !ctx.gl_state.glModelViewMatrixInverse.equals(ctx.currentModelViewMatInverse)))
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glModelViewMatrixInverse.m00 == Double.NEGATIVE_INFINITY))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
 				if (ctx.currentModelViewMatInverse.m00 == Double.NEGATIVE_INFINITY)
@@ -3446,7 +3446,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glModelViewMatrixInverse.set(ctx.currentModelViewMatInverse);
+					ctx.gl_state.glModelViewMatrixInverse.m00 = 0;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
 			}
@@ -3459,7 +3459,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (locs.glModelViewProjectionMatrix != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| !ctx.gl_state.glModelViewProjectionMatrix.equals(ctx.currentModelViewProjMat)))
+					|| ctx.gl_state.glModelViewProjectionMatrix.m00 == Double.NEGATIVE_INFINITY))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
@@ -3473,7 +3473,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glModelViewProjectionMatrix.set(ctx.currentModelViewProjMat);
+					ctx.gl_state.glModelViewProjectionMatrix.m00 = 0;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
 			}
@@ -3486,7 +3486,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (locs.glNormalMatrix != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glNormalMatrix.equals(ctx.currentNormalMat)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glNormalMatrix.m00 == Double.NEGATIVE_INFINITY))
 			{
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded				
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
@@ -3499,7 +3499,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glNormalMatrix.set(ctx.currentNormalMat);
+					ctx.gl_state.glNormalMatrix.m00 = 0;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glNormalMatrixUpdated++;
 			}
@@ -3530,52 +3530,68 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// the front material structure
+		// the front material structure
 		if (locs.glFrontMaterial.present)
 		{
 			//note != not equals
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial != ctx.materialData))
+			if (locs.glFrontMaterial.lightEnabled != -1 && (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.lightEnabled != ctx.materialData.lightEnabled))
 			{
-				if (locs.glFrontMaterial.lightEnabled != -1)
-					gl.glUniform1i(locs.glFrontMaterial.lightEnabled, ctx.materialData.lightEnabled);
-				if (locs.glFrontMaterial.ambient != -1)
-					gl.glUniform4f(locs.glFrontMaterial.ambient, ctx.materialData.ambient.x, ctx.materialData.ambient.y,
-							ctx.materialData.ambient.z, 1f);
-				if (locs.glFrontMaterial.diffuse != -1)
-					gl.glUniform4f(locs.glFrontMaterial.diffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
-							ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
-				if (locs.glFrontMaterial.emission != -1)
-					gl.glUniform4f(locs.glFrontMaterial.emission, ctx.materialData.emission.x, ctx.materialData.emission.y,
-							ctx.materialData.emission.z, 1f); // note extra alpha value for ease
-				if (locs.glFrontMaterial.specular != -1)
-					gl.glUniform3f(locs.glFrontMaterial.specular, ctx.materialData.specular.x, ctx.materialData.specular.y,
-							ctx.materialData.specular.z);
-				if (locs.glFrontMaterial.shininess != -1)
-					gl.glUniform1f(locs.glFrontMaterial.shininess, ctx.materialData.shininess);
-
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glFrontMaterial = ctx.materialData;
+				gl.glUniform1i(locs.glFrontMaterial.lightEnabled, ctx.materialData.lightEnabled);
+				ctx.gl_state.glFrontMaterial.lightEnabled = ctx.materialData.lightEnabled;
 			}
-		}
-		else
-		{
-			ctx.gl_state.glFrontMaterial = null;
+
+			if (locs.glFrontMaterial.ambient != -1
+					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.ambient.x == Float.NEGATIVE_INFINITY))
+			{
+				gl.glUniform4f(locs.glFrontMaterial.ambient, ctx.materialData.ambient.x, ctx.materialData.ambient.y,
+						ctx.materialData.ambient.z, 1f);
+				ctx.gl_state.glFrontMaterial.ambient.x = 0;
+			}
+			if (locs.glFrontMaterial.diffuse != -1
+					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.diffuse.x == Float.NEGATIVE_INFINITY))
+			{
+				gl.glUniform4f(locs.glFrontMaterial.diffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
+						ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
+				ctx.gl_state.glFrontMaterial.diffuse.x = 0;
+			}
+			if (locs.glFrontMaterial.emission != -1
+					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.emission.x == Float.NEGATIVE_INFINITY))
+			{
+				gl.glUniform4f(locs.glFrontMaterial.emission, ctx.materialData.emission.x, ctx.materialData.emission.y,
+						ctx.materialData.emission.z, 1f); // note extra alpha value for ease
+				ctx.gl_state.glFrontMaterial.emission.x = 0;
+			}
+			if (locs.glFrontMaterial.specular != -1
+					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.specular.x == Float.NEGATIVE_INFINITY))
+			{
+				gl.glUniform3f(locs.glFrontMaterial.specular, ctx.materialData.specular.x, ctx.materialData.specular.y,
+						ctx.materialData.specular.z);
+				ctx.gl_state.glFrontMaterial.specular.x = 0;
+			}
+			if (locs.glFrontMaterial.shininess != -1
+					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.shininess != ctx.materialData.shininess))
+			{
+				gl.glUniform1f(locs.glFrontMaterial.shininess, ctx.materialData.shininess);
+				ctx.gl_state.glFrontMaterial.shininess = ctx.materialData.shininess;
+			}
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+
 		}
 
 		// ambient does not come from material notice
 		if (locs.glLightModelambient != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.glLightModelambient.equals(ctx.currentAmbientColor)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glLightModelambient.x == Float.NEGATIVE_INFINITY))
 			{
 				gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y, ctx.currentAmbientColor.z,
 						ctx.currentAmbientColor.w);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.glLightModelambient.set(ctx.currentAmbientColor);
+					ctx.gl_state.glLightModelambient.x = 0;
 			}
 		}
 
@@ -3583,13 +3599,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (locs.objectColor != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.objectColor.equals(ctx.objectColor)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.objectColor.x == Float.NEGATIVE_INFINITY))
 			{
 				gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.objectColor.set(ctx.objectColor);
+					ctx.gl_state.objectColor.x = 0;
 			}
 		}
 
@@ -3707,14 +3723,14 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (locs.textureTransform != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.textureTransform.equals(ctx.textureTransform)))
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.textureTransform.m00 == Double.NEGATIVE_INFINITY))
 			{
 				// gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
 				gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.matrixUtil.toArray(ctx.textureTransform), 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.textureTransform.set(ctx.textureTransform);
+					ctx.gl_state.textureTransform.m00 = 0;
 			}
 		}
 
@@ -5740,33 +5756,42 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateMaterial++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		// will we need to repush to shaders?
+		if (joglesctx.objectColor.x != red || joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
+				|| joglesctx.objectColor.w != alpha)
+			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = red;
 		joglesctx.objectColor.y = green;
 		joglesctx.objectColor.z = blue;
 		joglesctx.objectColor.w = alpha;
+
 		joglesctx.materialData.lightEnabled = lightEnable ? 1 : 0;
 		joglesctx.materialData.shininess = shininess;
+		if (joglesctx.materialData.emission.x != eRed || joglesctx.materialData.emission.y != eGreen
+				|| joglesctx.materialData.emission.z != eBlue)
+			joglesctx.gl_state.glFrontMaterial.emission.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.emission.x = eRed;
 		joglesctx.materialData.emission.y = eGreen;
 		joglesctx.materialData.emission.z = eBlue;
+		if (joglesctx.materialData.ambient.x != aRed || joglesctx.materialData.ambient.y != aGreen
+				|| joglesctx.materialData.ambient.z != aBlue)
+			joglesctx.gl_state.glFrontMaterial.ambient.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.ambient.x = aRed;
 		joglesctx.materialData.ambient.y = aGreen;
 		joglesctx.materialData.ambient.z = aBlue;
+		if (joglesctx.materialData.specular.x != sRed || joglesctx.materialData.specular.y != sGreen
+				|| joglesctx.materialData.specular.z != sBlue)
+			joglesctx.gl_state.glFrontMaterial.specular.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.specular.x = sRed;
 		joglesctx.materialData.specular.y = sGreen;
 		joglesctx.materialData.specular.z = sBlue;
+		if (joglesctx.materialData.diffuse.x != dRed || joglesctx.materialData.diffuse.y != dGreen
+				|| joglesctx.materialData.diffuse.z != dBlue || joglesctx.materialData.diffuse.w != alpha)
+			joglesctx.gl_state.glFrontMaterial.diffuse.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.diffuse.x = dRed;
 		joglesctx.materialData.diffuse.y = dGreen;
 		joglesctx.materialData.diffuse.z = dBlue;
 		joglesctx.materialData.diffuse.w = alpha;
-
-		// clear the gl_state record of up-to-dateness
-		// TODO:why no work?
-		//if (joglesctx.materialData.equals(joglesctx.gl_state.glFrontMaterial))
-		//	joglesctx.gl_state.glFrontMaterial = joglesctx.materialData;
-		//else
-		joglesctx.gl_state.glFrontMaterial = null;
-
 	}
 
 	// native method for setting Material when no material is present
@@ -5806,6 +5831,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.objectColor.z = blue;
 		joglesctx.objectColor.w = alpha;
 
+		//TODO: why is enable light ignored?
+
 	}
 
 	// native method for setting default ColoringAttributes
@@ -5822,6 +5849,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.objectColor.y = g;
 		joglesctx.objectColor.z = b;
 		joglesctx.objectColor.w = a;
+
+		//TODO: why is enable light ignored?
 	}
 
 	// ---------------------------------------------------------------------
@@ -6265,6 +6294,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateTextureAttributes++;
 
 		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		joglesctx.gl_state.textureTransform.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.textureTransform.set(transform);
 	}
 
@@ -6279,6 +6309,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// set Identity
 		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		joglesctx.gl_state.textureTransform.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.textureTransform.setIdentity();
 
 	}
@@ -7227,6 +7258,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			((Jogl2es2Context) ctx).perFrameStats.setSceneAmbient++;
 		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+
+		// do we need to push onto the shader now?
+		if (joglesctx.currentAmbientColor.x != red || joglesctx.currentAmbientColor.y != green || joglesctx.currentAmbientColor.z != blue)
+			joglesctx.gl_state.glLightModelambient.x = Float.NEGATIVE_INFINITY;
+
 		joglesctx.currentAmbientColor.x = red;
 		joglesctx.currentAmbientColor.y = green;
 		joglesctx.currentAmbientColor.z = blue;
@@ -7316,8 +7352,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		//joglesctx.matrixUtil.deburnM.transpose();// now done in ffp by call to native
 		joglesctx.currentModelMat.set(modelMatrix);
 
-		//Moved up into setffp and only calc'ed if requested
+		joglesctx.gl_state.modelMatrix.m00 = Double.NEGATIVE_INFINITY;// indicate needs pushing onto shader	
+		joglesctx.gl_state.glModelViewMatrix.m00 = Double.NEGATIVE_INFINITY;
+		joglesctx.gl_state.glModelViewMatrixInverse.m00 = Double.NEGATIVE_INFINITY;
+		joglesctx.gl_state.glModelViewProjectionMatrix.m00 = Double.NEGATIVE_INFINITY;
+		joglesctx.gl_state.glNormalMatrix.m00 = Double.NEGATIVE_INFINITY;
 
+		//Moved up into setffp and only calc'ed if requested
 		joglesctx.currentModelViewMat.m00 = Double.NEGATIVE_INFINITY;// indicate no longer valid	
 		joglesctx.currentModelViewMatInverse.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.currentModelViewProjMat.m00 = Double.NEGATIVE_INFINITY;
