@@ -62,7 +62,7 @@ public class Jogl2es2Context extends JoglContext
 		if (context.getGL().isGL2ES3())
 			gl2es3 = (GL2ES3) context.getGL();
 	}
-	
+
 	public GL2ES2 gl2es2()
 	{
 		return context.getGL().getGL2ES2();
@@ -177,7 +177,7 @@ public class Jogl2es2Context extends JoglContext
 	}
 
 	public RenderingData renderingData = new RenderingData();
-	
+
 	public float transparencyAlpha = 0;
 
 	public Vector4f currentAmbientColor = new Vector4f();
@@ -231,7 +231,6 @@ public class Jogl2es2Context extends JoglContext
 
 		public int[] glMultiTexCoord = new int[16];
 		public SparseArray<Integer> genAttIndexToLoc = new SparseArray<Integer>();
-
 
 	}
 
@@ -373,9 +372,9 @@ public class Jogl2es2Context extends JoglContext
 		perFrameStats = new Jogl2es2PerFrameStats();
 		perFrameStats.endOfPrevFrameTime = System.nanoTime();
 	}
-	
+
 	// texture and raster fill variables
-	
+
 	// raster vao and buf are not in the by geom bucket because I don't get given geom
 	// background has to be created and destroyed
 
@@ -383,10 +382,9 @@ public class Jogl2es2Context extends JoglContext
 	public int simpleTextureShaderProgramVertLoc = -1;
 	public int simpleTextureShaderProgramTexCoordLoc = -1;
 	public int simpleTextureShaderProgramBaseMapLoc = -1;
-	
+
 	// just a singleton of the handy matrix/array operations
 	public Jogl2es2MatrixUtil matrixUtil = new Jogl2es2MatrixUtil();
-
 
 	/////////////////////////////////////S H A D E R   S T R U C T S /////////////////////////////////////////////////////
 
@@ -419,7 +417,7 @@ public class Jogl2es2Context extends JoglContext
 			specular.set(Float.NEGATIVE_INFINITY, -999f, -999f);
 			shininess = -99;
 		}
-	 
+
 		@Override
 		public boolean equals(Object o)
 		{
@@ -565,7 +563,7 @@ public class Jogl2es2Context extends JoglContext
 		public void clear()
 		{
 			fogEnabled = -1;
-			expColor.set(-999f, -999f, -999f);
+			expColor.set(Float.NEGATIVE_INFINITY, -999f, -999f);
 			expDensity = -99;
 			linearColor.set(-999f, -999f, -999f);
 			linearStart = -99;

@@ -3737,7 +3737,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// Fog
 		if (locs.fogData.present)
 		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram || !ctx.gl_state.fogData.equals(ctx.fogData)))
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.fogData.expColor.x == Float.NEGATIVE_INFINITY))
 			{
 				if (locs.fogData.fogEnabled != -1)
 					gl.glUniform1i(locs.fogData.fogEnabled, ctx.fogData.fogEnabled);
@@ -3756,7 +3757,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.fogData.set(ctx.fogData);
+					ctx.gl_state.fogData.expColor.x = 0;
 			}
 		}
 
@@ -5646,6 +5647,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateExponentialFog++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.expColor.x = red;
 		joglesctx.fogData.expColor.y = green;
 		joglesctx.fogData.expColor.z = blue;
@@ -5670,6 +5672,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// https://www.opengl.org/discussion_boards/showthread.php/151415-Fog-with-pixel-shader-%28arb_fragment_program%29
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;				
 		joglesctx.fogData.linearColor.x = red;
 		joglesctx.fogData.linearColor.y = green;
 		joglesctx.fogData.linearColor.z = blue;
@@ -5688,6 +5691,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.disableFog++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.fogEnabled = 0;
 	}
 
@@ -5701,6 +5705,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.setFogEnableFlag++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.fogEnabled = enable ? 1 : 0;
 	}
 
@@ -5805,6 +5810,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// update single color in case where material has color and there are no coloring attributes
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		if (joglesctx.objectColor.x != r || joglesctx.objectColor.y != g || joglesctx.objectColor.z != b || joglesctx.objectColor.w != a)
+			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = r;
 		joglesctx.objectColor.y = g;
 		joglesctx.objectColor.z = b;
@@ -5826,6 +5833,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
 		// note we ignore lightEnabled and always pass the object color to the shader if it wants it
+		if (joglesctx.objectColor.x != red || joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
+				|| joglesctx.objectColor.w != alpha)
+			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = red;
 		joglesctx.objectColor.y = green;
 		joglesctx.objectColor.z = blue;
@@ -5845,6 +5855,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.resetColoringAttributes++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		if (joglesctx.objectColor.x != r || joglesctx.objectColor.y != g || joglesctx.objectColor.z != b || joglesctx.objectColor.w != a)
+			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = r;
 		joglesctx.objectColor.y = g;
 		joglesctx.objectColor.z = b;
