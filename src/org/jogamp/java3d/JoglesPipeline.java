@@ -70,6 +70,28 @@ import javaawt.GraphicsDevice;
 
 /**
  * Concrete implementation of Pipeline class for the GL2ES2 rendering pipeline.
+ * 
+ * Note the order of calls in this pipeline depends on the Renderer used
+ * Currently a renderer (and EnvironmentSet and ShaderBin etc) called "renderer_shader" is used
+ * 
+ * These calls set up various factors and as you traverse the tree each will force
+ * the values to be recall, though in fact the Canvas3D.updateState actually does the pipeline calls
+ * and therefore dictates the order of calls (though many can be skipped)
+ * Obviously Renderer calls render Opaque, Sorted, Transparent
+ * Then
+ * RenderBin sorts out background calls and projection and view
+ * EnvironmentSet calls lights
+ * ShaderBin call shader program use
+ * AttributeBin renderattributes
+ * TextureBin sets textures up
+ * RenderMolecule
+ * RenderAtom
+ * Canvas3D.updateSate
+ * Execute geometries
+ * 
+ * 
+ * 
+ * 
  */
 class JoglesPipeline extends Jogl2es2DEPPipeline
 {
