@@ -102,7 +102,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Prints extra debugging information
 	private static final boolean EXTRA_DEBUGGING = false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = true;
+	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
 	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
 
