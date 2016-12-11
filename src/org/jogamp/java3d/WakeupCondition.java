@@ -75,7 +75,7 @@ public abstract class WakeupCondition extends Object {
 	int listIdx[][];
 
 	/**
-	 * Returns an enumeration of all WakeupCriterias in this Condition.
+     * Returns an iterator of all WakeupCriterias in this Condition.
 	 */
 	public Iterator<WakeupCriterion> allElements()
 	{
@@ -91,7 +91,7 @@ public abstract class WakeupCondition extends Object {
 	}
 
 	/**
-	 * Returns an enumeration of all triggered WakeupCriterias in this Condition.
+     * Returns an iterator of all triggered WakeupCriterias in this Condition.
 	 */
 	public Iterator<WakeupCriterion> triggeredElements()
 	{

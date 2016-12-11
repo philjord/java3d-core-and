@@ -37,30 +37,9 @@ import com.jogamp.opengl.GLContext;
 public class Jogl2es2Context extends JoglContext
 {
 
-	//NOTES to convert to core
-
-	// Step to convert
-	// 1. GeometryArrayRetained must add context tracking for buffers
-	// 2. remove all calls relating to ATTEMPT_OPTIMIZED_VERTICES
-	// 3. JoglContext ctx = new JoglContext(glContext); in createNewContext becomes Jogl2es2Context ctx = new Jogl2es2Context(glContext);
-	// 4. and again for createQueryContext -What? are these 2 right?
-	// 5. rename jogles* to jogl2es2* and delete the optimized triangle array class
-	// 6. update Pipeline to include the new type GL2ES2
-	// 7. update MasterControl to include jogl2es2 pipeline 
-	//
-
-	//TODO: heaps of lights appears to kill performance, why?
-
-	//pre-casting for speed
-	public GL2ES2 gl2es2 = null;
-	public GL2ES3 gl2es3 = null;
-
 	public Jogl2es2Context(GLContext context)
 	{
 		super(context);
-		gl2es2 = context.getGL().getGL2ES2();
-		if (context.getGL().isGL2ES3())
-			gl2es3 = (GL2ES3) context.getGL();
 	}
 
 	public GL2ES2 gl2es2()

@@ -150,7 +150,7 @@ import java.util.Iterator;
  * node provides the Java 3D behavior scheduler with a WakeupCondition
  * object. When that object's WakeupCondition has been satisfied, the
  * behavior scheduler hands that same WakeupCondition back to the
- * Behavior via an enumeration.
+ * Behavior via an iterator.
  *
  * <P>
  * <b>WakeupCriterion Object</b>
@@ -238,7 +238,7 @@ public abstract class Behavior extends Leaf {
      * <br>
      * NOTE: Applications should <i>not</i> call this method.  It is called
      * by the Java 3D behavior scheduler.
-     * @param criteria an enumeration of triggered wakeup criteria for this
+     * @param criteria an iterator of triggered wakeup criteria for this
      * behavior
      */
     public abstract void processStimulus(Iterator<WakeupCriterion>  criteria);

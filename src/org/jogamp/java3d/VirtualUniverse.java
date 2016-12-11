@@ -359,7 +359,7 @@ ArrayList<Integer> viewIdFreeList = new ArrayList<Integer>();
 /**
  * Returns the iterator object of all locales in this virtual universe.
  *
- * @return the enumeration object
+ * @return the iterator object
  */
 public Iterator<Locale> getAllLocales() {
 	return this.listOfLocales.iterator();

@@ -574,9 +574,11 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 				tb = tbUpdateList.get(i);
 				// Bug Id : 4701430 - Have to be sure tb.shaderBin is
 				// not equal to null. This is a temporary fix for j3d1.3.
+				
+				//TODO: this null check is bad
 				if (((tb.tbFlag & TextureBin.RESORT) != 0) && (tb.shaderBin != null))
 				{
-
+					//PJPJ
 					tb.attributeBin.reInsertTextureBin(tb);
 					tb.tbFlag &= ~TextureBin.RESORT;
 				}
@@ -2196,6 +2198,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 
 		RenderAtom ra = null;
 		TextureBin tb;
+		//PJPJPJ
 		AttributeBin ab;
 		boolean reInsertNeeded = false;
 
@@ -2259,6 +2262,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 			}
 			else
 			{
+				//PJPJ
 				ab = ra.renderMolecule.textureBin.attributeBin;
 				ra.renderMolecule.removeRenderAtom(ra);
 				reInsertTextureBin(ab, ra);
@@ -2334,6 +2338,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 			}
 			else
 			{
+				//PJPJ
 				ab = ra.renderMolecule.textureBin.attributeBin;
 				ra.renderMolecule.removeRenderAtom(ra);
 				reInsertTextureBin(ab, ra);
@@ -2451,6 +2456,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 	{
 		RenderAtom ra = null;
 		TextureBin tb;
+		//PJPJPJ
 		AttributeBin ab;
 		boolean mirrorSet = false;
 		boolean firstTextureBin = true;
@@ -2498,6 +2504,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 			}
 			else
 			{
+				//PJPJ
 				ab = ra.renderMolecule.textureBin.attributeBin;
 				ra.renderMolecule.removeRenderAtom(ra);
 				reInsertTextureBin(ab, ra);
@@ -2676,7 +2683,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra = gaArr[i].getRenderAtom(view);
 						if (ra == null || !ra.inRenderBin())
 							continue;
-
+						//PJPJ
 						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
 						ra.renderMolecule.removeRenderAtom(ra);
 						reInsertAttributeBin(sb, ra);
@@ -2723,7 +2730,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra = gaArr[i].getRenderAtom(view);
 						if (ra == null || !ra.inRenderBin())
 							continue;
-
+						//PJPJ
 						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
 						ra.renderMolecule.removeRenderAtom(ra);
 						reInsertAttributeBin(sb, ra);
@@ -2850,6 +2857,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra = gaArr[i].getRenderAtom(view);
 						if (ra == null || !ra.inRenderBin())
 							continue;
+						//PJPJ
 						AttributeBin ab = ra.renderMolecule.textureBin.attributeBin;
 						ra.renderMolecule.removeRenderAtom(ra);
 						reInsertTextureBin(ab, ra);
@@ -2902,6 +2910,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 								continue;
 							EnvironmentSet e = ra.renderMolecule.textureBin.environmentSet;
 							ra.renderMolecule.removeRenderAtom(ra);
+							//PJPJPJ
 							reInsertShaderBin(e, ra);
 						}
 					}
@@ -3092,6 +3101,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
+						//PJPJ
 						reInsertShaderBin(e, ra);
 					}
 				}
@@ -3110,6 +3120,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
+						//PJPJ
 						reInsertShaderBin(e, ra);
 					}
 				}
@@ -3173,6 +3184,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 				ra.app = app;
 				e = ra.renderMolecule.textureBin.environmentSet;
 				ra.renderMolecule.removeRenderAtom(ra);
+				//PJPJ
 				reInsertShaderBin(e, ra);
 			}
 		}
@@ -3240,6 +3252,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
+						//PJPJ
 						reInsertShaderBin(e, ra);
 					}
 				}
@@ -3257,6 +3270,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						ra.app = ra.geometryAtom.source.appearance;
 						e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
+						//PJPJ
 						reInsertShaderBin(e, ra);
 					}
 				}
@@ -3317,6 +3331,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 				ra.app = app;
 				e = ra.renderMolecule.textureBin.environmentSet;
 				ra.renderMolecule.removeRenderAtom(ra);
+				//PJPJ
 				reInsertShaderBin(e, ra);
 			}
 		}
@@ -3903,16 +3918,14 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 							// Note that the rm LOCALE Translation update should ocuur
 							// Before the ra is added to the object update list
 							// It is a Text3D Molecule
-							//<AND>
-							//			    else if ((rm.primaryMoleculeType  & RenderMolecule.TEXT3D_MOLECULE) != 0){
-							//
-							//				if (!ra.onUpdateList()) {
-							//				    ra.dirtyMask |= RenderAtom.ON_UPDATELIST;
-							//				    objUpdateList.add(ra);
-							//				}
-							//			    }</>
-							if (ra.isOriented() && !ra.inDirtyOrientedRAs())
-							{
+			    else if ((rm.primaryMoleculeType  & RenderMolecule.TEXT3D_MOLECULE) != 0){
+			   		
+				if (!ra.onUpdateList()) {
+				    ra.dirtyMask |= RenderAtom.ON_UPDATELIST;
+				    objUpdateList.add(ra);
+				}
+			    }
+			    if (ra.isOriented() && !ra.inDirtyOrientedRAs()) {
 								dirtyOrientedRAs.add(ra);
 								ra.dirtyMask |= RenderAtom.IN_DIRTY_ORIENTED_RAs;
 
@@ -4430,6 +4443,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 			ra.app = app;
 			e = ra.envSet;
 			ra.renderMolecule.removeRenderAtom(ra);
+			//PJPJ
 			reInsertShaderBin(e, ra);
 		}
 
@@ -4719,6 +4733,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 		ra.lights = lights;
 		ra.modelClip = modelClip;
 		ra.app = app;
+		//PJPJ
 		reInsertShaderBin(eNew, ra);
 
 	}
@@ -4727,7 +4742,8 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 	{
 		ShaderBin sb;
 
-		// System.err.println("RenderBin.reInsertShaderBin() ra= " + ra);
+		// System.err.println("RenderBin.reInsertShaderBin() ra= " + ra);\
+		//PJPJ
 		sb = findShaderBin(e, ra);
 		reInsertAttributeBin(sb, ra);
 	}
@@ -4735,17 +4751,18 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 	{
 		AttributeBin ab;
 		// Just go up to the environment and re-insert
+		//PJPJ
 		ab = findAttributeBin(sb, ra);
 		reInsertTextureBin(ab, ra);		
 	}
 	private void reInsertTextureBin(AttributeBin ab, RenderAtom ra)
 	{
 		TextureBin tb;
-
+		//PJPJ
 		tb = findTextureBin(ab, ra);
 		reInsertRenderAtom(tb, ra);
 	}
-
+	//PJPJ
 	private void reInsertRenderAtom(TextureBin tb, RenderAtom ra)
 	{
 		RenderMolecule newRm;
@@ -4862,6 +4879,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 		// determined
 		environmentSet = findEnvironmentSet(ra);
 		// System.err.println("RenderBin : findShaderBin()");
+		//PJPJ
 		shaderBin = findShaderBin(environmentSet, ra);
 		attributeBin = findAttributeBin(shaderBin, ra);
 		textureBin = findTextureBin(attributeBin, ra);
@@ -5142,7 +5160,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 			sApp = (ShaderAppearanceRetained) ra.app;
 		else
 			sApp = null;
-
+//PJPJ
 		currentBin = envSet.shaderBinList;
 		while (currentBin != null)
 		{
@@ -5154,6 +5172,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 		}
 
 		// Check the "to-be-added" list of shaderBins for a match
+		//PJPJ
 		size = envSet.addShaderBins.size();
 		for (i = 0; i < size; i++)
 		{

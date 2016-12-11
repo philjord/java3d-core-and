@@ -641,30 +641,29 @@ static ArrayList<NodeRetained> initSceneGraphPath(NodeRetained nodeR) {
                 if (geomR == null)
                     continue;
 
-             //<AND>   if (geomR instanceof Text3DRetained) {
+                if (geomR instanceof Text3DRetained) {
                     // assume this case is not frequent, we allocate
                     // ArrayList only when necessary and we use ArrayList
                     // instead of HashMap since the case of when large
                     // number of distingish Text3DRetained node hit is
                     // rare.
-                //    if (text3dList == null) {
-                //        text3dList = new ArrayList(3);
-                //    } else {
-                //        int size = text3dList.size();
-                //        boolean found = false;
-                //        for (int j=0; j < size; j++) {
-                //            if (text3dList.get(j) == srcNode) {
-                //                found = true;
-                //               break;
-                //            }
-                //       }
-                //        if (found) {
-                //            continue;  // try next geomAtom
-                //        }
-                //    }
-                //    text3dList.add(srcNode);
-                //}
-                //</AND>
+                    if (text3dList == null) {
+                        text3dList = new ArrayList(3);
+                    } else {
+                        int size = text3dList.size();
+                        boolean found = false;
+                        for (int j=0; j < size; j++) {
+                            if (text3dList.get(j) == srcNode) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) {
+                            continue;  // try next geomAtom
+                        }
+                    }
+                    text3dList.add(srcNode);
+                }
             }
 
             // If srcNode is instance of compile retained, then loop thru

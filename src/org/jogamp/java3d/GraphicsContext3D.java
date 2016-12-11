@@ -2062,9 +2062,7 @@ public int numSounds() {
 
 	        geoRetained.setVertexFormat(false, ignoreVertexColors, canvas3d.ctx );
 
-	    } 
-	    /* Text3D not supported :(
-	     * else if (geometry.retained instanceof Text3DRetained) {
+	    } else if (geometry.retained instanceof Text3DRetained) {
 	        ((Text3DRetained)geometry.retained).setModelViewMatrix(
 			vpcToEc, this.drawTransform);
 		drawGeo = (GeometryRetained)geometry.retained;
@@ -2080,8 +2078,7 @@ public int numSounds() {
                     }
                 }
                 drawGeo = (GeometryRetained)geometry.retained;
-            }*/
-             else {
+            } else {
 		drawGeo = (GeometryRetained)geometry.retained;
 	    }
 

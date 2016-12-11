@@ -284,7 +284,7 @@ class MasterControl {
     /**
      * The text3D rendering method
      */
-    //<AND>private Text3DRenderMethod text3DRenderMethod = null;</>
+    private Text3DRenderMethod text3DRenderMethod = null;
     
     /**
      * The vertex array rendering method
@@ -2126,7 +2126,7 @@ private static String getProperty(final String prop) {
 	    timestampUpdateList.clear();
 
 	    defaultRenderMethod = null;
-	   //<AND> text3DRenderMethod = null;</>
+	    text3DRenderMethod = null;
 	    vertexArrayRenderMethod = null;
 	    displayListRenderMethod = null;
 	    compressedGeometryRenderMethod = null;
@@ -2329,14 +2329,12 @@ private static String getProperty(final String prop) {
     /**
      * This returns the text3d RenderMethod
      */
-    //<AND>
-    //RenderMethod getText3DRenderMethod() {
-	//if (text3DRenderMethod == null) {
-	//    text3DRenderMethod = new Text3DRenderMethod();
-	//}
-	//return text3DRenderMethod;
-   // }
-    //</AND>
+    RenderMethod getText3DRenderMethod() {
+	if (text3DRenderMethod == null) {
+	    text3DRenderMethod = new Text3DRenderMethod();
+	}
+	return text3DRenderMethod;
+    }
 
 
     /**

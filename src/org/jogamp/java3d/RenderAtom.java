@@ -304,26 +304,26 @@ class RenderAtom extends Object implements ObjectUpdate {
 	    ((OrientedShape3DRetained)geometryAtom.source).
 	    getOrientedTransform(renderMolecule.renderBin.view.viewIndex);
 	for (int i = 0; i < rListInfo.length; i++) {
-//<AND>
-//	    if (geometryAtom.geoType == GeometryRetained.GEO_TYPE_TEXT3D &&
-//		geometryAtom.lastLocalTransformArray[i] != null) {
-//		if (geometryAtom.source.inBackgroundGroup) {
-//		    if (rListInfo[i].infLocalToVworld == null)
-//			rListInfo[i].infLocalToVworld = new Transform3D();
-//
-//		    rListInfo[i].infLocalToVworld.mul(
-//			renderMolecule.infLocalToVworld[lastLVWIndex],
-//			orientedTransform);
-//		    rListInfo[i].infLocalToVworld.mul(
-//			geometryAtom.lastLocalTransformArray[i]);
-//		} else {
-//		    rListInfo[i].localToVworld.mul(
-//			renderMolecule.localeLocalToVworld[lastLVWIndex],
-//			orientedTransform);
-//		    rListInfo[i].localToVworld.mul(
-//			geometryAtom.lastLocalTransformArray[i]);
-//		}
-//	    } else {
+
+	    if (geometryAtom.geoType == GeometryRetained.GEO_TYPE_TEXT3D &&
+		geometryAtom.lastLocalTransformArray[i] != null) {
+		if (geometryAtom.source.inBackgroundGroup) {
+		    if (rListInfo[i].infLocalToVworld == null)
+			rListInfo[i].infLocalToVworld = new Transform3D();
+
+		    rListInfo[i].infLocalToVworld.mul(
+			renderMolecule.infLocalToVworld[lastLVWIndex],
+			orientedTransform);
+		    rListInfo[i].infLocalToVworld.mul(
+			geometryAtom.lastLocalTransformArray[i]);
+		} else {
+		    rListInfo[i].localToVworld.mul(
+			renderMolecule.localeLocalToVworld[lastLVWIndex],
+			orientedTransform);
+		    rListInfo[i].localToVworld.mul(
+			geometryAtom.lastLocalTransformArray[i]);
+		}
+	    } else {
 		if (geometryAtom.source.inBackgroundGroup) {
 		    if (rListInfo[i].infLocalToVworld == null)
 			rListInfo[i].infLocalToVworld = new Transform3D();
@@ -335,7 +335,7 @@ class RenderAtom extends Object implements ObjectUpdate {
 		    rListInfo[i].localToVworld.mul(
 			renderMolecule.localeLocalToVworld[lastLVWIndex],
 			orientedTransform);
-		//}</>
+		}
 	    }
 	}
     }
