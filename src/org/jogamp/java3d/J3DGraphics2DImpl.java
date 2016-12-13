@@ -30,6 +30,7 @@ import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
 import javaawt.Color;
+import javaawt.Font;
 import javaawt.Graphics2D;
 import javaawt.GraphicsConfiguration;
 import javaawt.Image;
@@ -507,10 +508,10 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	return offScreenGraphics2D.getComposite();
     }*/
 
- /*   @Override
+   @Override
     public final Font getFont() {
 	return offScreenGraphics2D.getFont();
-    }*/
+    }
 
 /*    @Override
     public final FontMetrics getFontMetrics(Font f) {
@@ -895,12 +896,12 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	offScreenGraphics2D.setComposite(comp);
     }
  */
-/*
+
     @Override
     public final void setFont(Font font) {
 	offScreenGraphics2D.setFont(font);
     }
- */
+ 
 
     @Override
     public final void setPaint( Paint paint ) {
