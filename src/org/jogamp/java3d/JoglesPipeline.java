@@ -890,6 +890,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			return;
 		}
+		
+		
+		if (floatColorsDefined)
+		{
+			fclrs =  (FloatBuffer)cdataBuffer;
+		}
 
 		if (byteColorsDefined)
 		{
