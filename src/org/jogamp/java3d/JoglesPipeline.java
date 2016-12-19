@@ -284,7 +284,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
 
-			setFFPAttributes(ctx, gl, shaderProgramId, pd, vformat);
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vformat, ignoreVertexColors);
 
 			int stride = 0, coordoff = 0, normoff = 0, coloroff = 0, texCoordoff = 0;
 			int texSize = 0, texStride = 0;
@@ -998,7 +998,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
 
-			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined, ignoreVertexColors);
 
 			// If any buffers need loading do that now
 			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, vfcoords, dverts,
@@ -1556,7 +1556,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
 
-			setFFPAttributes(ctx, gl, shaderProgramId, pd, vformat);
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vformat, ignoreVertexColors);
 
 			int stride = 0, coordoff = 0, normoff = 0, coloroff = 0, texCoordoff = 0;
 			int texSize = 0, texStride = 0;
@@ -2300,7 +2300,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
 
-			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined, ignoreVertexColors);
 
 			// If any buffers need loading do that now 
 			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, vfarray, dverts,
@@ -2943,7 +2943,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
 
-			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined);
+			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined, ignoreVertexColors);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -3356,7 +3356,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	 * @param vdefined
 	 */
 
-	private static void setFFPAttributes(Jogl2es2Context ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd, int vdefined)
+	private static void setFFPAttributes(Jogl2es2Context ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd, int vdefined, boolean ignoreVertexColors)
 	{
 
 		LocationData locs = pd.programToLocationData;
@@ -3540,26 +3540,36 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// if set one of the 2 colors below should be used by the shader (material for lighting)
-
 		if (locs.ignoreVertexColors != -1)
 		{
 			// vertex colors MUST be ignored if no glColors set
-			boolean ignoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
-
+			boolean finalIgnoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
+		
+			//TODO: the execute calls all have a separate ignore vertex colors bool, but it appears to add no value?
+			// is it just a legacy artifact of some sort?
+			/*if(finalIgnoreVertexColors != ignoreVertexColors )
+			{			
+				System.out.println("odd mismatch I wonder about why ");
+				System.out.println("finalIgnoreVertexColors " +finalIgnoreVertexColors+ " ignoreVertexColors " +ignoreVertexColors);
+				System.out.println("ctx.renderingData.ignoreVertexColors " +ctx.renderingData.ignoreVertexColors);
+				System.out.println("floatColorsDefined " +floatColorsDefined);
+			}*/
+			
+			int finalIgnoreVertexColorsInt = finalIgnoreVertexColors ? 1 : 0;
+			
 			//note ctx.gl_state.ignoreVertexColors can be -1 for not set
 			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| ctx.gl_state.ignoreVertexColors != ctx.renderingData.ignoreVertexColors))
+					|| ctx.gl_state.ignoreVertexColors != finalIgnoreVertexColorsInt))
 			{
-				gl.glUniform1i(locs.ignoreVertexColors, ignoreVertexColors ? 1 : 0);// note local variable used
+				gl.glUniform1i(locs.ignoreVertexColors, finalIgnoreVertexColorsInt);// note local variable used
 
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.ignoreVertexColors = ctx.renderingData.ignoreVertexColors;
+					ctx.gl_state.ignoreVertexColors = finalIgnoreVertexColorsInt;
 			}
 		}
 
-		// the front material structure
 		// the front material structure
 		if (locs.glFrontMaterial.present)
 		{
