@@ -791,7 +791,7 @@ public class Canvas3D //extends Canvas
 
 	// Max number of vertex attrs (not counting coord, etc.)
 	int maxVertexAttrs = 0;
-	
+
 	int maxVaryingVectors = 0;
 
 	// End of variables set by createNewContext()/createQueryContext()
@@ -968,7 +968,10 @@ public class Canvas3D //extends Canvas
 		// allow no opts option
 		if (pro == null)
 		{
-			pro = GLProfile.get(GLProfile.GL2ES2);
+			//NOTE!!!! GLProfile.GL2ES2 used here will cause Curve hud gear to stop displaying!
+			// for desktop, lord knows why.
+			//GLProfile.GL2 and GLProfile.GL2GL3 are both fine
+			pro = GLProfile.get(null);
 			cap = new GLCapabilities(pro);
 
 			// improved values
@@ -4073,9 +4076,9 @@ public class Canvas3D //extends Canvas
 
 		keys.add("vertexAttrsMax");
 		values.add(new Integer(maxVertexAttrs));
-		
+
 		keys.add("maxVaryingVectors");
-		values.add(new Integer(maxVaryingVectors));		
+		values.add(new Integer(maxVaryingVectors));
 
 		keys.add("shadingLanguageGLSL");
 		values.add(new Boolean(shadingLanguageGLSL));
