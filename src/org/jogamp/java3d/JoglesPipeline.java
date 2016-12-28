@@ -9152,7 +9152,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// AbstractGraphicsDevice device = awtConfig.getScreen().getDevice(); //
 		// throws exception
 		// Alternative: default graphics device
-		AbstractGraphicsDevice device = GLDrawableFactory.getDesktopFactory().getDefaultDevice();
+		AbstractGraphicsDevice device = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).getDefaultDevice();
 
 		// Offscreen Canvas3D's capabilites, determined in
 		// 'getBestConfiguration'
