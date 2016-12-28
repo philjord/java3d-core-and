@@ -31,6 +31,7 @@ import java.util.Map;
 
 import javaawt.Color;
 import javaawt.Font;
+import javaawt.Graphics;
 import javaawt.Graphics2D;
 import javaawt.GraphicsConfiguration;
 import javaawt.Image;
@@ -107,6 +108,11 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 		return offScreenGraphics2D;
 	}
     
+    @Override
+	public Graphics create()
+	{
+		return this;
+	}
     
     // This is invoke from Renderer callback when the first
     // time createContext() finish which set
