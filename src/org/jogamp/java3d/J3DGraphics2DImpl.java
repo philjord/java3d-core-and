@@ -30,6 +30,7 @@ import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
 import javaawt.Color;
+import javaawt.Composite;
 import javaawt.Font;
 import javaawt.Graphics;
 import javaawt.Graphics2D;
@@ -1291,6 +1292,19 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	    threadWaiting = false;
 	}
     }
+
+
+	@Override
+	public void setComposite(Composite comp)
+	{
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Composite getComposite()
+	{
+		throw new UnsupportedOperationException();
+	}
 
 	
 }
