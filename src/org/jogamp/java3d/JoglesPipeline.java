@@ -9184,10 +9184,21 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// Never stereo
 		offCaps.setStereo(false);
 
-		// Set preferred offscreen drawable : framebuffer object (FBO) or
-		// pbuffer
-		offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
-		// caps.setPBuffer(true);
+		//PJPJPJ I appear to get the reverse of what I expect to receive
+		// so to be safe I'll just go for the existing property
+		// if this quirk then pBuffers only
+		//GLDrawableFactory glDrawableFactory = GLDrawableFactory.getFactory(GLProfile.get(null));		
+		//if (glDrawableFactory.getRendererQuirks(device, GLProfile.get(null)).exist(GLRendererQuirks.NoSurfacelessCtx))
+		if(VirtualUniverse.mc.usePbuffer)
+		{			
+			offCaps.setFBO(false);
+			offCaps.setPBuffer(true);
+		}
+		else
+		{ 
+			// Set preferred offscreen drawable : framebuffer object (FBO) or pbuffer	
+			offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
+		}
 
 		// !! a 'null' capability chooser; JOGL doesn't call a chooser for
 		// offscreen drawable

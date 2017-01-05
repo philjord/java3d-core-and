@@ -126,11 +126,10 @@ class MasterControl {
 
     /**
      * Flag to indicate whether Pbuffers are used for off-screen
-     * rendering; true by default.  Set by the "j3d.usePbuffer"
-     * property, When this flag is set to false, Bitmap (Windows) or
-     * Pixmap (UNIX) rendering will be used
+     * rendering; if false (the default) then FBO are used
+     * This is useful if GLRendererQuirks.NoSurfacelessCtx might be true
      */
-    boolean usePbuffer = true;
+    boolean usePbuffer = false;
 
     /**
      * Flag to indicate whether should renderer view frustum culling is done;

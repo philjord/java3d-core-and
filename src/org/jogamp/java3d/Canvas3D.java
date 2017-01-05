@@ -975,11 +975,14 @@ public class Canvas3D //extends Canvas
 			cap = new GLCapabilities(pro);
 
 			// improved values
-			cap.setDepthBits(24);
-			cap.setStencilBits(8);
-			cap.setSampleBuffers(true);
-			cap.setNumSamples(2);
-			fullscreen = false;
+			if (!offScreen)
+			{
+				cap.setDepthBits(24);
+				cap.setStencilBits(8);
+				cap.setSampleBuffers(true);
+				cap.setNumSamples(2);
+				fullscreen = false;
+			}
 		}
 		this.caps = cap;
 		//super(null);
