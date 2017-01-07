@@ -49,7 +49,10 @@ public class Jogl2es2Context extends JoglContext
 
 	public GL2ES3 gl2es3()
 	{
-		return context.getGL().getGL2ES3();
+		if(context.getGL().isGL2ES3())
+			return context.getGL().getGL2ES3();
+		else
+			return null;
 	}
 
 	public JoglShaderObject shaderProgram;
