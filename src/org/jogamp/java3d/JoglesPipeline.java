@@ -96,7 +96,7 @@ import javaawt.GraphicsDevice;
 class JoglesPipeline extends Jogl2es2DEPPipeline
 {
 	//Note this is VERY expensive and should be false unless debugging
-	private static final boolean DO_OUTPUT_ERRORS = false;
+	private static final boolean DO_OUTPUT_ERRORS = true;
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
 	// Prints extra debugging information
@@ -890,11 +890,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			return;
 		}
-		
-		
+
 		if (floatColorsDefined)
 		{
-			fclrs =  (FloatBuffer)cdataBuffer;
+			fclrs = (FloatBuffer) cdataBuffer;
 		}
 
 		if (byteColorsDefined)
@@ -3000,7 +2999,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					if (floatCoordDefined)
 					{
-						if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
+						if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
 						{
 							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false, gd.interleavedStride,
 									gd.geoToCoordOffset);
@@ -3356,7 +3355,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	 * @param vdefined
 	 */
 
-	private static void setFFPAttributes(Jogl2es2Context ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd, int vdefined, boolean ignoreVertexColors)
+	private static void setFFPAttributes(Jogl2es2Context ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd, int vdefined,
+			boolean ignoreVertexColors)
 	{
 
 		LocationData locs = pd.programToLocationData;
@@ -3377,7 +3377,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
 			{
-				gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
+				else
+					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentProjMat)), 0);
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -3397,7 +3402,11 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					System.err.println("" + e);
 				}
 
-				gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
+				else
+					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentProjMatInverse)), 0);
 
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -3418,7 +3427,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (!MINIMISE_NATIVE_CALLS_FFP
 					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.modelMatrix.m00 == Double.NEGATIVE_INFINITY))
 			{
-				gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
+
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
+				else
+					gl.glUniformMatrix4fv(locs.glModelMatrix, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelMat)), 0);
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
@@ -3442,7 +3457,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 
-				gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
+				else
+					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewMat)), 0);
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -3468,8 +3488,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 				}
 
-				//gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false, ctx.toFB(ctx.currentModelViewMatInverse));
-				gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
+				
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
+				else
+					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse)), 0);
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -3494,9 +3519,14 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 				if (ctx.currentModelViewProjMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
+				
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
+				else
+					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat)), 0);
 
-				//gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false, ctx.toFB(ctx.currentModelViewProjMat));
-				gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
+				
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -3523,8 +3553,14 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.currentNormalMat.m00 == Double.NEGATIVE_INFINITY)
 					Jogl2es2MatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
-				//gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false, ctx.toFB(ctx.currentNormalMat));
-				gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
+				if (gl.isGL2ES3())
+					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
+				else
+					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false,
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentNormalMat)), 0);
+
+				
+				
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
@@ -3544,7 +3580,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			// vertex colors MUST be ignored if no glColors set
 			boolean finalIgnoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
-		
+
 			//TODO: the execute calls all have a separate ignore vertex colors bool, but it appears to add no value?
 			// is it just a legacy artifact of some sort?
 			/*if(finalIgnoreVertexColors != ignoreVertexColors )
@@ -3554,12 +3590,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				System.out.println("ctx.renderingData.ignoreVertexColors " +ctx.renderingData.ignoreVertexColors);
 				System.out.println("floatColorsDefined " +floatColorsDefined);
 			}*/
-			
+
 			int finalIgnoreVertexColorsInt = finalIgnoreVertexColors ? 1 : 0;
-			
+
 			//note ctx.gl_state.ignoreVertexColors can be -1 for not set
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| ctx.gl_state.ignoreVertexColors != finalIgnoreVertexColorsInt))
+			if (!MINIMISE_NATIVE_CALLS_FFP
+					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.ignoreVertexColors != finalIgnoreVertexColorsInt))
 			{
 				gl.glUniform1i(locs.ignoreVertexColors, finalIgnoreVertexColorsInt);// note local variable used
 
@@ -4353,7 +4389,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 
 					gd.geoToCoordOffset = offset;
-					if (COMPRESS_OPTIMIZED_VERTICES)
+					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 					{
 						offset += 8;// 3 half float = 6 align on 4						
 					}
@@ -6537,9 +6573,10 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_BASE_LEVEL, baseLevel);
 
 		// http://stackoverflow.com/questions/12767917/is-using-gl-nearest-mipmap-or-gl-linear-mipmap-for-gl-texture-min-filter-con
-		// so hopefully ES2 just assumes the mip maps given are correct and ignores this call
+		// ES2 throws a 1280 invalid enum here
 
-		gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
+		if (gl.isGL2ES3())
+			gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
 		// gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MIN_LOD, minimumLOD);
 		// gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MAX_LOD, maximumLOD);
 
@@ -9189,13 +9226,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// if this quirk then pBuffers only
 		//GLDrawableFactory glDrawableFactory = GLDrawableFactory.getFactory(GLProfile.get(null));		
 		//if (glDrawableFactory.getRendererQuirks(device, GLProfile.get(null)).exist(GLRendererQuirks.NoSurfacelessCtx))
-		if(VirtualUniverse.mc.usePbuffer)
-		{			
+		if (VirtualUniverse.mc.usePbuffer)
+		{
 			offCaps.setFBO(false);
 			offCaps.setPBuffer(true);
 		}
 		else
-		{ 
+		{
 			// Set preferred offscreen drawable : framebuffer object (FBO) or pbuffer	
 			offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
 		}
