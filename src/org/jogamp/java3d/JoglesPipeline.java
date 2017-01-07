@@ -3035,7 +3035,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
 				{
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
+					if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
 					{
 						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_UNSIGNED_BYTE, true, gd.interleavedStride,
 								gd.geoToColorsOffset);
@@ -3062,7 +3062,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				if (normalsDefined && locs.glNormal != -1)
 				{
-					if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
+					if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
 					{
 						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride, gd.geoToNormalsOffset);
 					}
@@ -3088,7 +3088,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						{
 							int sz = vertexAttrSizes[index];
 
-							if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
+							if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
 							{
 								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true, gd.interleavedStride,
 										gd.geoToVattrOffset[index]);
@@ -3115,7 +3115,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsLoaded[texSet])
 						{
 							texSetsLoaded[texSet] = true;
-							if (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)
+							if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
 							{
 								gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_HALF_FLOAT, true,
 										gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
@@ -4410,7 +4410,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					gd.geoToColorsOffset = offset;
 
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					if (COMPRESS_OPTIMIZED_VERTICES)
+					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 					{
 						offset += 4;// minimum alignment
 					}
@@ -4429,7 +4429,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 
 					gd.geoToNormalsOffset = offset;
-					if (COMPRESS_OPTIMIZED_VERTICES)
+					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 					{
 						offset += 4;// minimum alignment
 					}
@@ -4452,7 +4452,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						gd.geoToVattrOffset[index] = offset;
 
 						int sz = vertexAttrSizes[index];
-						if (COMPRESS_OPTIMIZED_VERTICES)
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 						{
 							offset += 4 * (int) Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
 						}
@@ -4483,7 +4483,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						{
 							texSetsLoaded[texSet] = true;
 							gd.geoToTexCoordOffset[texSet] = offset;
-							if (COMPRESS_OPTIMIZED_VERTICES)
+							if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 							{
 								// note half floats sized
 								int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
@@ -4508,7 +4508,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					interleavedBuffer.position(i * gd.interleavedStride);
 					if (floatCoordDefined)
 					{
-						if (COMPRESS_OPTIMIZED_VERTICES)
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 						{
 							int startPos = interleavedBuffer.position();
 							for (int c = 0; c < 3; c++)
@@ -4532,7 +4532,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					if (floatColorsDefined && !ignoreVertexColors)
 					{
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-						if (COMPRESS_OPTIMIZED_VERTICES)
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 						{
 							int startPos = interleavedBuffer.position();
 							for (int c = 0; c < sz; c++)
@@ -4552,7 +4552,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 					if (normalsDefined)
 					{
-						if (COMPRESS_OPTIMIZED_VERTICES)
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 						{
 							int startPos = interleavedBuffer.position();
 							for (int c = 0; c < 3; c++)
@@ -4576,7 +4576,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 						{
 							int sz = vertexAttrSizes[index];
 							FloatBuffer vertexAttrs = vertexAttrBufs[index];
-							if (COMPRESS_OPTIMIZED_VERTICES)
+							if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 							{
 								int startPos = interleavedBuffer.position();
 								for (int va = 0; va < sz; va++)
@@ -4606,7 +4606,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 								texSetsLoaded[texSet] = true;
 								FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
 
-								if (COMPRESS_OPTIMIZED_VERTICES)
+								if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
 								{
 									int startPos = interleavedBuffer.position();
 									for (int c = 0; c < texStride; c++)
