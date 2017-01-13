@@ -96,7 +96,7 @@ import javaawt.GraphicsDevice;
 class JoglesPipeline extends Jogl2es2DEPPipeline
 {
 	//Note this is VERY expensive and should be false unless debugging
-	private static final boolean DO_OUTPUT_ERRORS = true;
+	private static final boolean DO_OUTPUT_ERRORS = false;
 	// Currently prints for entry points already implemented
 	static final boolean VERBOSE = false;
 	// Prints extra debugging information
@@ -115,6 +115,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	// This MUST be true on android fullscreen 
 	// setPosition on a GLWindow can lock-up if true
 	// also with on and offscreen must be false too
+	// possibly must be false as preserve/restore fail otherwise
 	private static final boolean LATE_RELEASE_CONTEXT = true;
 
 	// interleave and compressed to half floats and bytes
@@ -7894,13 +7895,13 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).outputPerFrameData();
 
 		// also seems to be ok, just do it as well
-		if (!LATE_RELEASE_CONTEXT)
+	/*	if (!LATE_RELEASE_CONTEXT)
 		{
 			if (wait)
 				gl.glFinish();
 			else
 				gl.glFlush();
-		}
+		}*/
 
 	}
 
@@ -8714,20 +8715,43 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 		// com.jogamp.opengl.GLException: Error swapping buffers, eglError 0x300d, jogamp.opengl.egl.EGLDrawable[realized true,
 
 		if (joglDrawable != null)
-		{
-			if (GLContext.getCurrent() == context)
+		{			
+			
+			if (!LATE_RELEASE_CONTEXT)
 			{
-				context.release();
+				if (GLContext.getCurrent() == context)
+					context.release();				
 			}
-			context.destroy();
+			else
+			{				
+				// if new context is the current one, release and make
+				if (current_context != context)
+				{
+					if (current_context.isCurrent())
+						current_context.release();	
+					
+					
+				}
+				
+				if(context.isCurrent())
+					context.release();		
+				
+				current_context = null;
+			}
+			
+			
+			
+			if(!VirtualUniverse.mc.noDestroyContext)
+				context.destroy();
 
 			// assuming this is the right point at which to make this call
 			joglDrawable.getGLDrawable().setRealized(false);
-
-			joglDrawable.destroyNativeWindow();
+			
+			if(!VirtualUniverse.mc.noDestroyContext)
+				joglDrawable.destroyNativeWindow();
 		}
 	}
-
+	
 	// This is the native method for getting the number of lights the underlying
 	// native library can support.
 	@Override

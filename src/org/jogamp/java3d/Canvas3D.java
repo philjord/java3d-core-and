@@ -896,6 +896,7 @@ public class Canvas3D //extends Canvas
 	boolean ctxChanged = false;
 
 	private GLWindow glwindow = null;
+	private boolean autoCreateGlwindow = true;
 	private GLCapabilities caps;
 
 	/**
@@ -911,9 +912,14 @@ public class Canvas3D //extends Canvas
 	//canvas3D.setSize()
 	//canvas3D.addNotify();
 
+	/**
+	 * glwindow MUST be visible at this point!
+	 * @param win
+	 */
 	public Canvas3D(GLWindow win)
 	{
 		this.glwindow = win;
+		autoCreateGlwindow = false;
 		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
 
 		// Issue 163 : Set dirty bits for both Renderer and RenderBin
@@ -1332,6 +1338,8 @@ public class Canvas3D //extends Canvas
 			return;
 		}
 		addNotifyCalled = true;
+		
+ 
 
 		// Issue 131: This method is now being called by JCanvas3D for its
 		// off-screen Canvas3D, so we need to handle off-screen properly here.
@@ -1364,6 +1372,8 @@ public class Canvas3D //extends Canvas
 				}
 			}
 		}
+		
+		
 
 		// Issue 131: Don't call super for off-screen Canvas3D
 		if (!offScreen)
@@ -1436,7 +1446,7 @@ public class Canvas3D //extends Canvas
 			view.universe.checkForEnableEvents();
 		}
 
-		if (this.glwindow != null)
+		if (this.glwindow != null && autoCreateGlwindow)
 		{
 			// get the GLWindow cranking!
 			if (!this.glwindow.isFullscreen())
@@ -1549,9 +1559,11 @@ public class Canvas3D //extends Canvas
 			validCanvas = false;
 		}
 
+		// note the context shouldn't be destoryed if we don't own it by the static noDestroyContext 
 		removeCtx();
-
+		// this is a no op of joglepipeline anyway
 		Pipeline.getPipeline().freeDrawingSurface(this, drawingSurfaceObject);
+		
 
 		// Clear first paint and visible flags
 		firstPaintCalled = false;
@@ -1584,7 +1596,6 @@ public class Canvas3D //extends Canvas
 		if (this.glwindow != null)
 		{
 			this.glwindow.removeWindowListener(canvasViewEventCatcherNewt);
-			this.glwindow.setVisible(false);
 		}
 
 		/*		if (eventCatcher != null)
@@ -1604,6 +1615,13 @@ public class Canvas3D //extends Canvas
 		}
 
 		added = false;
+		
+		// if we own the window set visible false now at the very end
+		if (this.glwindow != null && autoCreateGlwindow && this.glwindow.isVisible())
+		{
+			this.glwindow.setVisible(false);
+		}
+				
 
 		if (rdr != null)
 		{
@@ -1618,6 +1636,9 @@ public class Canvas3D //extends Canvas
 		// Fix for issue 102 removing strong reference and avoiding memory leak
 		// due retention of parent container
 		//		this.windowParent = null;
+
+		
+		
 	}
 
 	void allocateCanvasId()

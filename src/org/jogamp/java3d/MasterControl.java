@@ -130,7 +130,16 @@ class MasterControl {
      * This is useful if GLRendererQuirks.NoSurfacelessCtx might be true
      */
     boolean usePbuffer = false;
-
+    
+    
+    /**
+     * Flag to indicate the GLWindow is not owned by the Canvas3D and hence should never have it's context destroyed
+     * in particular in the Pipeline.destroyContext method, though that method may do other clean up
+     * This should only be set true if you are using the Canvas3D constructor that accept a pre-created GLWindow 
+     * If this is set to true the application must take care of the windows life cycle outside Java3D
+     */
+    boolean noDestroyContext = false;
+    
     /**
      * Flag to indicate whether should renderer view frustum culling is done;
      * true by default.
@@ -519,6 +528,11 @@ class MasterControl {
 	    getBooleanProperty("j3d.forceReleaseView", forceReleaseView,
 			       "forceReleaseView  after Canvas3D dispose enabled",
 			       "forceReleaseView  after Canvas3D dispose disabled");
+	
+	
+	noDestroyContext = getBooleanProperty("j3d.noDestroyContext",
+			noDestroyContext,
+			"No Destroy Context");
 
 // FIXME: GL_NV_register_combiners
 //	useCombiners = getBooleanProperty("j3d.usecombiners", useCombiners,
