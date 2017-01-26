@@ -1018,13 +1018,13 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
  */
  
-/*    @Override
+    @Override
     public void drawRect(int x, int y, int width, int height) {
 	// XXXX: call validate with bounding box of primitive
 	// XXXX: need to consider Stroke width
 	validate();
 	offScreenGraphics2D.drawRect(x, y, width, height);
-    }*/
+    }
 
 /*    @Override
     public void fill3DRect(int x, int y, int width, int height,
