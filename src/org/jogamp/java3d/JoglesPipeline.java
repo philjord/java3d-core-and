@@ -68,6 +68,7 @@ import com.jogamp.opengl.Threading;
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
 
+
 /**
  * Concrete implementation of Pipeline class for the GL2ES2 rendering pipeline.
  * 
@@ -93,7 +94,7 @@ import javaawt.GraphicsDevice;
  * 
  * 
  */
-class JoglesPipeline extends Jogl2es2DEPPipeline
+public class JoglesPipeline extends Jogl2es2DEPPipeline
 {
 	//Note this is VERY expensive and should be false unless debugging
 	private static final boolean DO_OUTPUT_ERRORS = false;
@@ -119,8 +120,8 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 	private static final boolean LATE_RELEASE_CONTEXT = true;
 
 	// interleave and compressed to half floats and bytes
-	private static final boolean ATTEMPT_OPTIMIZED_VERTICES = true;
-	private static final boolean COMPRESS_OPTIMIZED_VERTICES = true;
+	public static boolean ATTEMPT_OPTIMIZED_VERTICES = true;
+	public static boolean COMPRESS_OPTIMIZED_VERTICES = true;
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
@@ -2290,6 +2291,12 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			// on true execute has decided it is possible
 			return;
 		}
+		
+		if(geo instanceof JoglesIndexedTriangleArrayRetained)
+		{
+			System.out.println("JoglesIndexTriangleArrayRetained can't render due to ATTEMPT_OPTIMIZED_VERTICES == false");
+			return;
+		}
 
 		Jogl2es2Context ctx = (Jogl2es2Context) absCtx;
 		int shaderProgramId = ctx.shaderProgramId;
@@ -3761,6 +3768,9 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					norms = getNormalArrayBuffer(narray);
 				}
+				
+				if(norms==null)
+					System.out.println("norms ==null");
 
 				norms.position(0);
 
@@ -6388,7 +6398,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 			assert false;
 			return;
 		}
-
+		
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 	}
@@ -9796,7 +9806,7 @@ class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
-
+									
 			if (bindingRequired)
 			{
 				if (gd.coordBufId != -1)
