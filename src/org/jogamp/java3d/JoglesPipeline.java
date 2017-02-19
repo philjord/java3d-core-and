@@ -97,21 +97,21 @@ import javaawt.GraphicsDevice;
 public class JoglesPipeline extends Jogl2es2DEPPipeline
 {
 	//Note this is VERY expensive and should be false unless debugging
-	private static final boolean DO_OUTPUT_ERRORS = false;
+	public static boolean DO_OUTPUT_ERRORS = false;
 	// Currently prints for entry points already implemented
-	static final boolean VERBOSE = false;
+	public static  boolean VERBOSE = false;
 	// Prints extra debugging information
 	private static final boolean EXTRA_DEBUGGING = false;
 
 	private static final boolean OUTPUT_PER_FRAME_STATS = false;
 
-	private static final boolean MINIMISE_NATIVE_CALLS_FFP = true;
+	public static boolean MINIMISE_NATIVE_CALLS_FFP = true;
 
-	private static final boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
-	private static final boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
+	public static boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
+	public static boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
 
-	private static final boolean MINIMISE_NATIVE_SHADER = true;
-	private static final boolean MINIMISE_NATIVE_CALLS_OTHER = true;
+	public static boolean MINIMISE_NATIVE_SHADER = true;
+	public static boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	// This MUST be true on android fullscreen 
 	// setPosition on a GLWindow can lock-up if true
@@ -6641,8 +6641,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				gl.glActiveTexture(texUnitIndex + GL2ES2.GL_TEXTURE0);
 				// TODO: should I bind these to 0?
-				// gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, 0);//-1 is no texture , 0 is default
-				// gl.glBindTexture(GL2ES2.GL_TEXTURE_CUBE_MAP, 0);
+				gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, 0);//-1 is no texture , 0 is default
+				gl.glBindTexture(GL2ES2.GL_TEXTURE_CUBE_MAP, 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_TEXTURE)
