@@ -117,7 +117,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// setPosition on a GLWindow can lock-up if true
 	// also with on and offscreen must be false too
 	// possibly must be false as preserve/restore fail otherwise
-	private static final boolean LATE_RELEASE_CONTEXT = true;
+	public static boolean LATE_RELEASE_CONTEXT = true;
 
 	// interleave and compressed to half floats and bytes
 	public static boolean ATTEMPT_OPTIMIZED_VERTICES = true;
@@ -7993,6 +7993,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (!LATE_RELEASE_CONTEXT)
 		{
 			int res = context.makeCurrent();
+			
+			if(res == GLContext.CONTEXT_CURRENT_NEW)
+				System.err.println("res == GLContext.CONTEXT_CURRENT_NEW if this happens more than once think about it");
 			return (res != GLContext.CONTEXT_NOT_CURRENT);
 		}
 		else
