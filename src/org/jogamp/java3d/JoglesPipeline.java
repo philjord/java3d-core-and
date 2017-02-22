@@ -421,12 +421,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (ctx.gl2es3() != null)
+			GL2ES3 gl2es3 = ctx.gl2es3();
+			if (gl2es3 != null)
 			{
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					ctx.gl2es3().glGenVertexArrays(1, tmp, 0);
+					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -435,7 +436,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					bindingRequired = false;
 				}
-				ctx.gl2es3().glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -1021,12 +1022,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (ctx.gl2es3() != null)
+			GL2ES3 gl2es3 = ctx.gl2es3();
+			if (gl2es3 != null)
 			{
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					ctx.gl2es3().glGenVertexArrays(1, tmp, 0);
+					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -1035,7 +1037,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					bindingRequired = false;
 				}
-				ctx.gl2es3().glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -1684,12 +1686,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (ctx.gl2es3() != null)
+			GL2ES3 gl2es3 = ctx.gl2es3();
+			if (gl2es3 != null)
 			{
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					ctx.gl2es3().glGenVertexArrays(1, tmp, 0);
+					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -1698,7 +1701,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					bindingRequired = false;
 				}
-				ctx.gl2es3().glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -2005,10 +2008,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int offset = initialIndexIndex;
-					ShortBuffer indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder())
+					/*ShortBuffer indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder())
 							.asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
-						indicesBuffer.put(s, (short) indexCoord[s]);
+						indicesBuffer.put(s, (short) indexCoord[s]);*/
+					
+					ShortBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(offset);
@@ -2067,10 +2072,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (gd.geoToIndBuf == -1)
 				{
 					// create and fill index buffer
-					ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
-					for (int s = 0; s < indexCoord.length; s++)
-						indBuf.put(s, (short) indexCoord[s]);
-					indBuf.position(initialIndexIndex);
+					//ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
+					//for (int s = 0; s < indexCoord.length; s++)
+					//	indBuf.put(s, (short) indexCoord[s]);
+					//indBuf.position(initialIndexIndex);
+					ShortBuffer indBuf = getIndexArrayBuffer(indexCoord);
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
@@ -2329,12 +2335,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (ctx.gl2es3() != null)
+			GL2ES3 gl2es3 = ctx.gl2es3();
+			if (gl2es3 != null)
 			{
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					ctx.gl2es3().glGenVertexArrays(1, tmp, 0);
+					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -2343,7 +2350,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					bindingRequired = false;
 				}
-				ctx.gl2es3().glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -2759,10 +2766,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int offset = initialIndexIndex;
-					ShortBuffer indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder())
-							.asShortBuffer();
+					/*ShortBuffer indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder())
+							.asShortBuffer();					 
+					 
 					for (int s = 0; s < indexCoord.length; s++)
-						indicesBuffer.put(s, (short) indexCoord[s]);
+						indicesBuffer.put(s, (short) indexCoord[s]);*/
+					
+					ShortBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
+					
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(offset);
@@ -2837,10 +2848,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (gd.geoToIndBuf == -1)
 				{
 					// create and fill index buffer
-					ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
+					/*ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indBuf.put(s, (short) indexCoord[s]);
-					indBuf.position(initialIndexIndex);
+					indBuf.position(initialIndexIndex);*/
+					
+					ShortBuffer indBuf = getIndexArrayBuffer(indexCoord);
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
@@ -7668,12 +7681,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// always create a new one
 		int vaoId = -1;
-		if (jctx.gl2es3() != null)
+		GL2ES3 gl2es3 = jctx.gl2es3();
+		if (gl2es3 != null)
 		{
 			if (vaoId == -1)
 			{
 				int[] tmp2 = new int[1];
-				jctx.gl2es3().glGenVertexArrays(1, tmp2, 0);
+				gl2es3.glGenVertexArrays(1, tmp2, 0);
 				vaoId = tmp2[0];
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -7682,7 +7696,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				bindingRequired = false;
 			}
-			jctx.gl2es3().glBindVertexArray(vaoId);
+			gl2es3.glBindVertexArray(vaoId);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 		}
@@ -8887,7 +8901,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ----------------------------------------------------------------------
 	// General helper routines
 	//
-
+	private static ThreadLocal<ShortBuffer> nioIndexTemp = new ThreadLocal<ShortBuffer>();
 	private static ThreadLocal<FloatBuffer> nioVertexTemp = new ThreadLocal<FloatBuffer>();
 	private static ThreadLocal<DoubleBuffer> nioVertexDoubleTemp = new ThreadLocal<DoubleBuffer>();
 	private static ThreadLocal<FloatBuffer> nioColorTemp = new ThreadLocal<FloatBuffer>();
@@ -8898,6 +8912,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// I think these are not used often as nio buffers sort it out
 	// but they are used a bit mind you
+	
+	private static ShortBuffer getIndexArrayBuffer(int[] indexArray)
+	{
+		return getIndexArrayBuffer(indexArray, true);
+	}
+
+	private static ShortBuffer getIndexArrayBuffer(int[] indexArray, boolean copyData)
+	{
+		return getNIOBuffer(indexArray, nioIndexTemp, copyData);
+	}
+	
 	private static FloatBuffer getVertexArrayBuffer(float[] vertexArray)
 	{
 		return getVertexArrayBuffer(vertexArray, true);
@@ -8957,7 +8982,44 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	{
 		return getNIOBuffer(vertexAttrSet, nioVertexAttrSetTemp);
 	}
-
+	
+	//NOTE! int array copied, ShortBuffer returned
+	private static ShortBuffer getNIOBuffer(int[] array, ThreadLocal<ShortBuffer> threadLocal, boolean copyData)
+	{
+		if (array == null)
+		{
+			return null;
+		}
+		ShortBuffer buf = threadLocal.get();
+		if (buf == null)
+		{
+			buf = Buffers.newDirectShortBuffer(array.length);
+			threadLocal.set(buf);
+		}
+		else
+		{
+			buf.rewind();
+			if (buf.remaining() < array.length)
+			{
+				int newSize = Math.max(2 * buf.remaining(), array.length);
+				buf = Buffers.newDirectShortBuffer(newSize);
+				threadLocal.set(buf);
+			}
+		}
+		if (copyData)
+		{
+			//NOTE! int array copied			
+			short[] shorts = new short[array.length];
+			for(int i=0;i<array.length;i++)
+				shorts[i] = (short)array[i];
+			
+			buf.put(shorts);
+			buf.rewind();
+			buf.limit(array.length);
+		}
+		return buf;
+	}
+	
 	private static FloatBuffer getNIOBuffer(float[] array, ThreadLocal<FloatBuffer> threadLocal, boolean copyData)
 	{
 		if (array == null)
@@ -9791,12 +9853,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			// not required second time around for VAO
 			boolean bindingRequired = true;
-			if (ctx.gl2es3() != null)
+			GL2ES3 gl2es3 = ctx.gl2es3();
+			if (gl2es3 != null)
 			{
 				if (gd.vaoId == -1)
 				{
 					int[] tmp = new int[1];
-					ctx.gl2es3().glGenVertexArrays(1, tmp, 0);
+					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -9805,7 +9868,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					bindingRequired = false;
 				}
-				ctx.gl2es3().glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(gd.vaoId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
@@ -10007,9 +10070,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 					else
 					{
-						indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
+						/*indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 						for (int s = 0; s < indexCoord.length; s++)
-							indicesBuffer.put(s, (short) indexCoord[s]);
+							indicesBuffer.put(s, (short) indexCoord[s]);*/
+						indicesBuffer = getIndexArrayBuffer(indexCoord);
 					}
 
 					for (int i = 0; i < strip_len; i++)
@@ -10093,10 +10157,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						//create and fill index buffer
 						//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
-						indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
+						/*indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 						for (int s = 0; s < indexCoord.length; s++)
 							indBuf.put(s, (short) indexCoord[s]);
-						indBuf.position(initialIndexIndex);
+						indBuf.position(initialIndexIndex);*/
+						indBuf = getIndexArrayBuffer(indexCoord);
 					}
 
 					int[] tmp = new int[1];
