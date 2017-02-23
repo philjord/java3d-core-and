@@ -2951,12 +2951,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (OUTPUT_PER_FRAME_STATS)
 			ctx.perFrameStats.setFFPAttributes++;
 
+		boolean isGL2ES3 = gl.isGL2ES3();
 		// if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
 		if (locs.glProjectionMatrix != -1)
 		{
 			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
 			{
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false,
@@ -2981,7 +2982,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					System.err.println("" + e);
 				}
 
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false,
@@ -3007,7 +3008,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.modelMatrix.m00 == Double.NEGATIVE_INFINITY))
 			{
 
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelMatrix, 1, false,
@@ -3036,7 +3037,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false,
@@ -3068,7 +3069,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 
 				
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false,
@@ -3099,7 +3100,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.currentModelViewProjMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
 				
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false,
@@ -3131,7 +3132,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.currentNormalMat.m00 == Double.NEGATIVE_INFINITY)
 					Jogl2es2MatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
-				if (gl.isGL2ES3())
+				if (isGL2ES3)
 					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
 				else
 					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false,
@@ -5080,40 +5081,40 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
 		// will we need to repush to shaders?
 		if (joglesctx.objectColor.x != red || joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
-				|| joglesctx.objectColor.w != alpha)
+				|| joglesctx.objectColor.w != alpha){
 			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = red;
 		joglesctx.objectColor.y = green;
 		joglesctx.objectColor.z = blue;
-		joglesctx.objectColor.w = alpha;
+		joglesctx.objectColor.w = alpha;}
 
 		joglesctx.materialData.lightEnabled = lightEnable ? 1 : 0;
 		joglesctx.materialData.shininess = shininess;
 		if (joglesctx.materialData.emission.x != eRed || joglesctx.materialData.emission.y != eGreen
-				|| joglesctx.materialData.emission.z != eBlue)
+				|| joglesctx.materialData.emission.z != eBlue){
 			joglesctx.gl_state.glFrontMaterial.emission.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.emission.x = eRed;
 		joglesctx.materialData.emission.y = eGreen;
-		joglesctx.materialData.emission.z = eBlue;
+		joglesctx.materialData.emission.z = eBlue;}
 		if (joglesctx.materialData.ambient.x != aRed || joglesctx.materialData.ambient.y != aGreen
-				|| joglesctx.materialData.ambient.z != aBlue)
+				|| joglesctx.materialData.ambient.z != aBlue){
 			joglesctx.gl_state.glFrontMaterial.ambient.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.ambient.x = aRed;
 		joglesctx.materialData.ambient.y = aGreen;
-		joglesctx.materialData.ambient.z = aBlue;
+		joglesctx.materialData.ambient.z = aBlue;}
 		if (joglesctx.materialData.specular.x != sRed || joglesctx.materialData.specular.y != sGreen
-				|| joglesctx.materialData.specular.z != sBlue)
+				|| joglesctx.materialData.specular.z != sBlue){
 			joglesctx.gl_state.glFrontMaterial.specular.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.specular.x = sRed;
 		joglesctx.materialData.specular.y = sGreen;
-		joglesctx.materialData.specular.z = sBlue;
+		joglesctx.materialData.specular.z = sBlue;}
 		if (joglesctx.materialData.diffuse.x != dRed || joglesctx.materialData.diffuse.y != dGreen
-				|| joglesctx.materialData.diffuse.z != dBlue || joglesctx.materialData.diffuse.w != alpha)
+				|| joglesctx.materialData.diffuse.z != dBlue || joglesctx.materialData.diffuse.w != alpha){
 			joglesctx.gl_state.glFrontMaterial.diffuse.x = Float.NEGATIVE_INFINITY;
 		joglesctx.materialData.diffuse.x = dRed;
 		joglesctx.materialData.diffuse.y = dGreen;
 		joglesctx.materialData.diffuse.z = dBlue;
-		joglesctx.materialData.diffuse.w = alpha;
+		joglesctx.materialData.diffuse.w = alpha;}
 	}
 
 	// native method for setting Material when no material is present
@@ -5807,8 +5808,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// http://stackoverflow.com/questions/12767917/is-using-gl-nearest-mipmap-or-gl-linear-mipmap-for-gl-texture-min-filter-con
 		// ES2 throws a 1280 invalid enum here
 
-		if (gl.isGL2ES3())
-			gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
+		//if (gl.isGL2ES3())
+		//	gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
 		// gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MIN_LOD, minimumLOD);
 		// gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MAX_LOD, maximumLOD);
 
@@ -5981,20 +5982,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		default:
 			assert false;
 		}
-
-		// FIXME: geometries go black if this is the case (no mipmap)
-		// so to disable automipmap, must set it to false in texture I guess?
-		// see above glGenMipMap once on pure ES2 (if on pure ES2?)
-		if (useAutoMipMap)
-		{
-			throw new UnsupportedOperationException("Disable auto mip map generation!\n" + VALID_FORMAT_MESSAGE);
-			// gl.glTexParameteri(target, GL2ES2.GL_GENERATE_MIPMAP, GL2ES2.GL_TRUE);
-		}
-		else
-		{
-			// should default to false
-			// gl.glTexParameteri(target, GL2ES2.GL_GENERATE_MIPMAP, GL2ES2.GL_FALSE);
-		}
+	
+		boolean createMipMaps = useAutoMipMap;
 
 		int format = 0;
 
@@ -6085,6 +6074,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				assert false;
 				return;
 			}
+			
+
 
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 			{
@@ -6097,6 +6088,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			{
 				if (format == -1)
 				{
+					createMipMaps = false; // no auto gen for compressed textures
 					ByteBuffer bb = (ByteBuffer) data;
 
 					gl.glCompressedTexImage2D(target, level, internalFormat, width, height, boundaryWidth, bb.limit(), bb);
@@ -6179,6 +6171,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		else
 		{
 			assert false;
+		}
+		
+		if(createMipMaps && level == 0)
+		{
+			gl.glHint(GL.GL_GENERATE_MIPMAP_HINT, GL.GL_NICEST);
+			gl.glGenerateMipmap(target);
+			// as a new feature that happens seldom, output errors
+			outputErrors(ctx);
 		}
 
 		if (DO_OUTPUT_ERRORS)
@@ -6372,9 +6372,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST);
 			break;
 		case Texture.BASE_LEVEL_LINEAR:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR);
+			// TODO: this should match the useAutoMipMap of texImage2D
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR_MIPMAP_LINEAR);
+			//gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR);
 			break;
-		case Texture.MULTI_LEVEL_POINT:
+		case Texture.MULTI_LEVEL_POINT:		
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST_MIPMAP_NEAREST);
 			break;
 		case Texture.NICEST:
@@ -6593,12 +6595,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// do we need to push onto the shader now?
 		if (joglesctx.currentAmbientColor.x != red || joglesctx.currentAmbientColor.y != green || joglesctx.currentAmbientColor.z != blue)
-			joglesctx.gl_state.glLightModelambient.x = Float.NEGATIVE_INFINITY;
+		{	joglesctx.gl_state.glLightModelambient.x = Float.NEGATIVE_INFINITY;
 
 		joglesctx.currentAmbientColor.x = red;
 		joglesctx.currentAmbientColor.y = green;
 		joglesctx.currentAmbientColor.z = blue;
-		joglesctx.currentAmbientColor.w = 1.0f;
+		joglesctx.currentAmbientColor.w = 1.0f;}
 
 	}
 
@@ -7203,11 +7205,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_NON_POWER_OF_TWO;
 		}
 
-		//autoMipMapGeneration disabled
-		/*if (gl.isExtensionAvailable("GL_SGIS_generate_mipmap"))
+		//autoMipMapGeneration
+		//if (gl.isExtensionAvailable("GL_SGIS_generate_mipmap"))
 		{
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_AUTO_MIPMAP_GENERATION;
-		}*/
+		}
 
 	}
 
