@@ -2381,8 +2381,6 @@ final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(LinkedHashSet<N
 	VirtualUniverse firstFndUniv = null;
 
 	synchronized(userList) {
-	//  for (int i = userList.size()-1; i >=0; i--) {
-		//	ms = (Shape3DRetained) userList.get(i);
 		for(NodeRetained nr : userList){
 			ms = (Shape3DRetained)nr;
 		if(moreThanOneUniv == false) {
@@ -2490,8 +2488,7 @@ final static ArrayList<ArrayList<GeometryAtom>> getGeomAtomsList(LinkedHashSet<N
                 alphaEditable = true;
 
             } else if (geo instanceof RasterRetained) {
-                if ((((RasterRetained)geo).type & Raster.RASTER_COLOR) !=
-0
+                if ((((RasterRetained)geo).type & Raster.RASTER_COLOR) != 0
                     && ((RasterRetained)geo).source.getCapability(
                         Raster.ALLOW_IMAGE_WRITE)) {
 

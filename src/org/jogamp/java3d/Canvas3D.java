@@ -979,6 +979,8 @@ public class Canvas3D //extends Canvas
 			//GLProfile.GL2 and GLProfile.GL2GL3 are both fine
 			pro = GLProfile.get(null);
 			cap = new GLCapabilities(pro);
+			cap.setHardwareAccelerated(true);
+			
 
 			// improved values
 			if (!offScreen)
@@ -988,6 +990,10 @@ public class Canvas3D //extends Canvas
 				cap.setSampleBuffers(true);
 				cap.setNumSamples(2);
 				fullscreen = false;
+			}
+			else
+			{
+				cap.setPBuffer(true);
 			}
 		}
 		this.caps = cap;

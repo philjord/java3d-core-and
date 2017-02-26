@@ -6196,6 +6196,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		
 		if(createMipMaps && level == 0)
 		{
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR_MIPMAP_LINEAR);
 			gl.glHint(GL.GL_GENERATE_MIPMAP_HINT, GL.GL_NICEST);
 			gl.glGenerateMipmap(target);
 			// as a new feature that happens seldom, output errors
@@ -6393,9 +6394,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST);
 			break;
 		case Texture.BASE_LEVEL_LINEAR:
-			// TODO: this should match the useAutoMipMap of texImage2D
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR_MIPMAP_LINEAR);
-			//gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR);
+			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR);
 			break;
 		case Texture.MULTI_LEVEL_POINT:		
 			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST_MIPMAP_NEAREST);
@@ -6681,8 +6680,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
 				gl.glActiveTexture(texUnitIndex + GL2ES2.GL_TEXTURE0);
 				// TODO: should I bind these to 0?
-				gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, 0);//-1 is no texture , 0 is default
-				gl.glBindTexture(GL2ES2.GL_TEXTURE_CUBE_MAP, 0);
+				// gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, 0);//-1 is no texture , 0 is default
+				// gl.glBindTexture(GL2ES2.GL_TEXTURE_CUBE_MAP, 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_TEXTURE)
@@ -7964,7 +7963,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	{
 		if (VERBOSE)
 			System.err.println("JoglPipeline.swapBuffers()");
-
+	
 		GLDrawable draw = drawable(drawable);
 		draw.swapBuffers();
 
@@ -8705,6 +8704,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			//gl.glEnable(GL2ES2.GL_COLOR_MATERIAL);//FIXME: once materials and gl_Color working
 
+			  
 			/*
 			OpenGL specs:
 			   glReadBuffer specifies a color buffer as the source for subsequent glReadPixels.

@@ -1754,22 +1754,30 @@ public void setUpper(Point3d p1) {
 	int i = 5;
 	while (i>=0){
 	    Vector4d vc = frustum.clipPlanes[i--];
-	    if ((( upper.x*vc.x + upper.y*vc.y +
-		   upper.z*vc.z + vc.w ) < 0.0 ) &&
-		(( upper.x*vc.x + lower.y*vc.y +
-		   upper.z*vc.z + vc.w ) < 0.0 ) &&
-		(( upper.x*vc.x + lower.y*vc.y +
-		   lower.z*vc.z + vc.w ) < 0.0 ) &&
-		(( upper.x*vc.x + upper.y*vc.y +
-		   lower.z*vc.z + vc.w ) < 0.0 ) &&
-		(( lower.x*vc.x + upper.y*vc.y +
-		   upper.z*vc.z + vc.w ) < 0.0 ) &&
-		(( lower.x*vc.x + lower.y*vc.y +
-		   upper.z*vc.z + vc.w ) < 0.0 ) &&
-		(( lower.x*vc.x + lower.y*vc.y +
-		   lower.z*vc.z + vc.w ) < 0.0 ) &&
-		(( lower.x*vc.x +  upper.y*vc.y +
-		   lower.z*vc.z + vc.w ) < 0.0 )) {
+	    
+	    double upxxvcx = upper.x*vc.x;
+	    double loxxvcx = lower.x*vc.x;
+	    double upyxvcy = upper.y*vc.y;
+	    double loyxvcy = lower.y*vc.y;
+	    double upzxvcz = upper.z*vc.z;
+	    double lozxvcz = lower.z*vc.z;
+	    
+	    if ((( upxxvcx + upyxvcy +
+		   upzxvcz + vc.w ) < 0.0 ) &&
+		(( upxxvcx + loyxvcy +
+		   upzxvcz + vc.w ) < 0.0 ) &&
+		(( upxxvcx + loyxvcy +
+		   lozxvcz + vc.w ) < 0.0 ) &&
+		(( upxxvcx + upyxvcy +
+		   lozxvcz + vc.w ) < 0.0 ) &&
+		(( loxxvcx + upyxvcy +
+		   upzxvcz + vc.w ) < 0.0 ) &&
+		(( loxxvcx + loyxvcy +
+		   upzxvcz + vc.w ) < 0.0 ) &&
+		(( loxxvcx + loyxvcy +
+		   lozxvcz + vc.w ) < 0.0 ) &&
+		(( loxxvcx +  upyxvcy +
+		   lozxvcz + vc.w ) < 0.0 )) {
 		// all corners outside this frustum plane
 		// System.err.println("*** all corners outside this frustum plane");
 		return false;

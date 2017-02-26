@@ -153,7 +153,7 @@ class NodeComponentRetained extends SceneGraphObjectRetained {
 		}
 
 	// the reverse order does not appear to be compulsory
-	// cahnge from ArayList to LinkedHashMap prevents ordered traversal
+	// change from ArrayList to LinkedHashMap prevents ordered traversal
 	for (NodeRetained nr : users)
 		nr.notifySceneGraphChanged(false);
 	//for (int i=users.size()-1; i >=0; i--) {
