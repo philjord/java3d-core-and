@@ -4997,7 +4997,13 @@ public class Canvas3D //extends Canvas
 			// TODO KCR : determine why this is the case
 			//            assert id == ((TextureRetained)obj).objectId;
 
-			Canvas3D.freeTexture(ctx, id);
+			try{
+			Canvas3D.freeTexture(ctx, id);}
+			catch(NullPointerException e)
+			{
+				//ignore as some times the GL context has been disposed before now
+			}
+			
 			synchronized (tex.resourceLock)
 			{
 				tex.resourceCreationMask &= ~canvasBit;
