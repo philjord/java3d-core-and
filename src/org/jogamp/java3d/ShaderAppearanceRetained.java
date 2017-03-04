@@ -56,7 +56,15 @@ class ShaderAppearanceRetained extends AppearanceRetained {
     void setShaderProgram(ShaderProgram sp) {
 	synchronized(liveStateLock) {
 	    if (source.isLive()) {
-		// System.err.println("**** ShaderAppearceRetained.setShaderProgram()");
+		 //System.err.println("**** ShaderAppearceRetained.setShaderProgram()");
+	    	
+	    	//FIXME: setting a shader program appears to be that the ShaderAppearance
+	    	//system doesn’t want a new program to be set on a live appearance, 
+	    	//some sort of bug is calling update native on the older shaderProgramRetained 
+	    	//instead of the newly set one
+	    	//So updateNative should see boolean loadShaderProgram = false; can create the program compile it etc,
+	    	//but as these are not the new ones this is not called
+	    	System.err.println("ShaderAppearance.setShaderProgram on a live appearance will not swap the program out correctly.");
 
 		if (this.shaderProgram != null) {
 		    this.shaderProgram.clearLive(refCount);
