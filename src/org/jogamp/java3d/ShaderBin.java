@@ -118,9 +118,10 @@ class ShaderBin implements ObjectUpdate
 		
 		if (sApp != null)
 		{
-			shaderProgram = sApp.shaderProgram;			
+			shaderProgram = sApp.shaderProgram;	
+			shaderAttributeSet.clearAttributes();
 			if(sApp.shaderAttributeSet != null)
-				shaderAttributeSet.getAttrs().putAll(sApp.shaderAttributeSet.getAttrs());
+				shaderAttributeSet.replaceAttributes(sApp.shaderAttributeSet.getAttrs().values());
 		}
 		else
 		{
@@ -322,11 +323,10 @@ class ShaderBin implements ObjectUpdate
 		{
 			//System.err.println("  - SHADER_ATTRIBUTE_SET_DIRTY");
 			 
-			Map<String, ShaderAttributeRetained> attrs = shaderAttributeSet.getAttrs();
-			attrs.clear();			 
+			shaderAttributeSet.clearAttributes();
 			if (shaderAppearance.shaderAttributeSet != null)
 			{
-				attrs.putAll(shaderAppearance.shaderAttributeSet.getAttrs());
+				shaderAttributeSet.replaceAttributes(shaderAppearance.shaderAttributeSet.getAttrs().values());
 			}
 		}
 		

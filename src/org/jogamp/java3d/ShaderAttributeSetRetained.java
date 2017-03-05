@@ -28,6 +28,7 @@ package org.jogamp.java3d;
 
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,6 +192,26 @@ private Map<String, ShaderAttributeRetained> attrs = new HashMap<String, ShaderA
 	return sAttrs;
     }
 
+    void clearAttributes()
+    {
+    	attrs.clear();
+    	attrsValues.clear();
+    }
+    
+    void replaceAttributes(Collection<ShaderAttributeRetained> collection)
+    {
+    	attrs.clear();
+    	attrsValues.clear();
+    	for(ShaderAttributeRetained sAttr : collection)
+    	{    	 
+		    if(sAttr != null);
+		    {
+			    attrs.put(sAttr.attrName, sAttr);
+			    attrsValues.add(sAttr);
+		    }
+    	}
+    }
+    
     /**
      * Returns the number of elements in the attributes set.
      *
@@ -206,6 +227,10 @@ private Map<String, ShaderAttributeRetained> attrs = new HashMap<String, ShaderA
         shaderProgram.setShaderAttributes(cv, this);
     }
 
+    /**
+     * Caution, do not modify the returned Map!!! do not add to it, use put!
+     * @return
+     */
 Map<String, ShaderAttributeRetained> getAttrs() {
 	return attrs;
 }

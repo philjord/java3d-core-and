@@ -407,9 +407,9 @@ class EnvironmentSet extends Object implements ObjectUpdate
 			// System.err.println("AttributeBin : sApp.isMirror = " + sApp.isMirror);			
 			assert (sApp.isMirror);
 			sb.shaderProgram = sApp.shaderProgram;		
-			sb.shaderAttributeSet.getAttrs().clear();
-			if(sApp.shaderAttributeSet != null)
-				sb.shaderAttributeSet.getAttrs().putAll(sApp.shaderAttributeSet.getAttrs());
+
+			if(sApp.shaderAttributeSet != null)				
+				sb.shaderAttributeSet.replaceAttributes(sApp.shaderAttributeSet.getAttrs().values());
 		}
 		sb.shaderAppearance = sApp;
 
