@@ -404,10 +404,12 @@ class EnvironmentSet extends Object implements ObjectUpdate
 		if (sApp != null)
 		{
 			// ShaderBin should reference to the mirror components. -- JADA.
-			// System.err.println("AttributeBin : sApp.isMirror = " + sApp.isMirror);
+			// System.err.println("AttributeBin : sApp.isMirror = " + sApp.isMirror);			
 			assert (sApp.isMirror);
-			sb.shaderProgram = sApp.shaderProgram;
-			sb.shaderAttributeSet = sApp.shaderAttributeSet;
+			sb.shaderProgram = sApp.shaderProgram;		
+			sb.shaderAttributeSet.getAttrs().clear();
+			if(sApp.shaderAttributeSet != null)
+				sb.shaderAttributeSet.getAttrs().putAll(sApp.shaderAttributeSet.getAttrs());
 		}
 		sb.shaderAppearance = sApp;
 

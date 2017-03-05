@@ -115,16 +115,16 @@ class ShaderBin implements ObjectUpdate
 		attributeBinList = null;
 
 		onUpdateList = false;
-
+		
 		if (sApp != null)
 		{
-			shaderProgram = sApp.shaderProgram;
-			shaderAttributeSet = sApp.shaderAttributeSet;
+			shaderProgram = sApp.shaderProgram;			
+			if(sApp.shaderAttributeSet != null)
+				shaderAttributeSet.getAttrs().putAll(sApp.shaderAttributeSet.getAttrs());
 		}
 		else
 		{
 			shaderProgram = null;
-			shaderAttributeSet = null;
 		}
 		shaderAppearance = sApp;
 	}
@@ -158,7 +158,7 @@ class ShaderBin implements ObjectUpdate
 		{
 			return false;
 		}
-
+		
 		return true;
 
 	}
@@ -305,14 +305,14 @@ class ShaderBin implements ObjectUpdate
 
 	void updateNodeComponent()
 	{
-		// System.err.println("ShaderBin.updateNodeComponent() ...");
+	 //System.err.println("ShaderBin.updateNodeComponent() ...");
 
 		// We don't need to clone shaderProgram.
 		// ShaderProgram object can't be modified once it is live,
 		// so each update should be a new reference.
 		if ((componentDirty & SHADER_PROGRAM_DIRTY) != 0)
 		{
-			// System.err.println("  - SHADER_PROGRAM_DIRTY");
+			//System.err.println("  - SHADER_PROGRAM_DIRTY");
 
 			shaderProgram = shaderAppearance.shaderProgram;
 		}
@@ -320,16 +320,16 @@ class ShaderBin implements ObjectUpdate
 		// We need to clone the shaderAttributeSet.
 		if ((componentDirty & SHADER_ATTRIBUTE_SET_DIRTY) != 0)
 		{
-			// System.err.println("  - SHADER_ATTRIBUTE_SET_DIRTY");
-
+			//System.err.println("  - SHADER_ATTRIBUTE_SET_DIRTY");
+			 
 			Map<String, ShaderAttributeRetained> attrs = shaderAttributeSet.getAttrs();
-			attrs.clear();
+			attrs.clear();			 
 			if (shaderAppearance.shaderAttributeSet != null)
 			{
 				attrs.putAll(shaderAppearance.shaderAttributeSet.getAttrs());
 			}
 		}
-
+		
 		componentDirty = 0;
 	}
 

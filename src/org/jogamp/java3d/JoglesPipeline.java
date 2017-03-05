@@ -425,11 +425,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (gl.isGL2ES3())
 			{
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1)
+				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
 				{
 					int[] tmp = new int[1];
 					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
+					gd.shaderIdForCurrentVaoId = shaderProgramId;
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 				}
@@ -1026,11 +1027,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (gl.isGL2ES3())
 			{
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1)
+				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
 				{
 					int[] tmp = new int[1];
 					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
+					gd.shaderIdForCurrentVaoId = shaderProgramId;
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 				}
@@ -1689,12 +1691,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
 			if (gl.isGL2ES3())
 			{
-				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1)
+				GL2ES3 gl2es3 = (GL2ES3)gl;				
+				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
 				{
 					int[] tmp = new int[1];
 					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
+					gd.shaderIdForCurrentVaoId = shaderProgramId;
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 				}
@@ -2339,11 +2342,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (gl.isGL2ES3())
 			{
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1)
+				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
 				{
 					int[] tmp = new int[1];
 					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
+					gd.shaderIdForCurrentVaoId = shaderProgramId;
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 				}
@@ -3439,9 +3443,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	private static void loadLocs(Jogl2es2Context ctx, GL2ES2 gl)
 	{
+		
 		ProgramData pd = ctx.programData;
 		if (pd.programToLocationData == null)
-		{
+		{			
 			LocationData locs = new LocationData();
 
 			if (OUTPUT_PER_FRAME_STATS)
@@ -9886,11 +9891,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (gl.isGL2ES3())
 			{
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1)
+				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
 				{
 					int[] tmp = new int[1];
 					gl2es3.glGenVertexArrays(1, tmp, 0);
 					gd.vaoId = tmp[0];
+					gd.shaderIdForCurrentVaoId = shaderProgramId;
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 				}

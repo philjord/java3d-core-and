@@ -2684,9 +2684,9 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						if (ra == null || !ra.inRenderBin())
 							continue;
 						//PJPJ
-						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
+						EnvironmentSet e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(sb, ra);
+						reInsertShaderBin(e, ra);
 					}
 				}
 			}
@@ -2731,9 +2731,9 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 						if (ra == null || !ra.inRenderBin())
 							continue;
 						//PJPJ
-						ShaderBin sb = ra.renderMolecule.textureBin.shaderBin;
+						EnvironmentSet e = ra.renderMolecule.textureBin.environmentSet;
 						ra.renderMolecule.removeRenderAtom(ra);
-						reInsertAttributeBin(sb, ra);
+						reInsertShaderBin(e, ra);
 					}
 				}
 			}
@@ -2864,7 +2864,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 					}
 				}
 			}
-			else if ((component & AppearanceRetained.RENDERING) != 0)
+			else if ((component & AppearanceRetained.RENDERING) != 0) 
 			{
 				boolean visible = ((Boolean) args[4]).booleanValue();
 				visGAIsDirty = true;
