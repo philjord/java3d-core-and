@@ -571,7 +571,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
     }
 
     // Compute boundingbox for interleaved nio buffer
-    void computeBoundingBox(int vIndex,   FloatBuffer vdata) {
+    void computeBoundingBox(int vIndex, FloatBuffer vdata) {
 	int i, offset;
 	double xmin, xmax, ymin, ymax, zmin, zmax;
 
@@ -588,25 +588,30 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 	    // Initial offset
 	    offset = vIndex * stride+coordinateOffset;
 	    // Compute the bounding box
-	    xmin = xmax = vdata.get(offset);
-	    ymin = ymax = vdata.get(offset+1);
-	    zmin = zmax = vdata.get(offset+2);
+	    float[] ftmp = new float[3];
+	    vdata.position(offset);
+	    vdata.get(ftmp);
+	    xmin = xmax = ftmp[0];
+	    ymin = ymax = ftmp[1];
+	    zmin = zmax = ftmp[2];
 	    offset += stride;
 	    for (i=1; i<validVertexCount; i++) {
-		if (vdata.get(offset) > xmax)
-		    xmax = vdata.get(offset);
-		if (vdata.get(offset) < xmin)
-		    xmin = vdata.get(offset);
+	    	vdata.position(offset);
+	 	    vdata.get(ftmp);	 	    
+		if (ftmp[0] > xmax)
+		    xmax = ftmp[0];
+		if (ftmp[0] < xmin)
+		    xmin = ftmp[0];
 
-		if (vdata.get(offset+1) > ymax)
-		    ymax = vdata.get(offset+1);
-		if (vdata.get(offset+1) < ymin)
-		    ymin = vdata.get(offset+1);
+		if (ftmp[1] > ymax)
+		    ymax = ftmp[1];
+		if (ftmp[1] < ymin)
+		    ymin = ftmp[1];
 
-		if (vdata.get(offset+2) > zmax)
-		    zmax = vdata.get(offset+2);
-		if (vdata.get(offset+2) < zmin)
-		    zmin = vdata.get(offset+2);
+		if (ftmp[2] > zmax)
+		    zmax = ftmp[2];
+		if (ftmp[2] < zmin)
+		    zmin = ftmp[2];
 
 		offset += stride;
 	    }
@@ -636,28 +641,30 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 	    int maxIndex = 3*validVertexCount;
 
 	    // Compute the bounding box
-	    xmin = xmax = buffer.get(sIndex++);
-	    ymin = ymax = buffer.get(sIndex++);
-	    zmin = zmax = buffer.get(sIndex++);
-
+	    double[] dtmp = new double[3];
+	    buffer.position(sIndex);
+	    buffer.get(dtmp);
+	    xmin = xmax = dtmp[0];
+	    ymin = ymax = dtmp[1];
+	    zmin = zmax = dtmp[2];
+	    sIndex += 3;
 	    for (i=sIndex; i<maxIndex; i+=3) {
-		j = i + 1;
-		k = i + 2;
+		buffer.position(i);
+	    buffer.get(dtmp);
+		if (dtmp[0] > xmax)
+		    xmax = dtmp[0];
+		if (dtmp[0] < xmin)
+		    xmin = dtmp[0];
 
-		if (buffer.get(i) > xmax)
-		    xmax = buffer.get(i);
-		if (buffer.get(i) < xmin)
-		    xmin = buffer.get(i);
+		if (dtmp[1] > ymax)
+		    ymax = dtmp[1];
+		if (dtmp[1] < ymin)
+		    ymin = dtmp[1];
 
-		if (buffer.get(j) > ymax)
-		    ymax = buffer.get(j);
-		if (buffer.get(j) < ymin)
-		    ymin = buffer.get(j);
-
-		if (buffer.get(k) > zmax)
-		    zmax = buffer.get(k);
-		if (buffer.get(k) < zmin)
-		    zmin = buffer.get(k);
+		if (dtmp[2] > zmax)
+		    zmax = dtmp[2];
+		if (dtmp[2] < zmin)
+		    zmin = dtmp[2];
 
 	    }
 	    geoBounds.setUpper(xmax, ymax, zmax);
@@ -686,28 +693,31 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 	    int maxIndex = 3*validVertexCount;
 
 	    // Compute the bounding box
-	    xmin = xmax = buffer.get(sIndex++);
-	    ymin = ymax = buffer.get(sIndex++);
-	    zmin = zmax = buffer.get(sIndex++);
-
+	    float[] ftmp = new float[3];
+	    buffer.position(sIndex);
+	    buffer.get(ftmp);
+	    xmin = xmax = ftmp[0];
+	    ymin = ymax = ftmp[1];
+	    zmin = zmax = ftmp[2];
+	    sIndex += 3;
 	    for (i=sIndex; i<maxIndex; i+=3) {
-		j = i + 1;
-		k = i + 2;
+	    	 buffer.position(sIndex);
+	 	    buffer.get(ftmp);
 
-		if (buffer.get(i) > xmax)
-		    xmax = buffer.get(i);
-		if (buffer.get(i) < xmin)
-		    xmin = buffer.get(i);
+		if (ftmp[0] > xmax)
+		    xmax = ftmp[0];
+		if (ftmp[0] < xmin)
+		    xmin = ftmp[0];
 
-		if (buffer.get(j) > ymax)
-		    ymax = buffer.get(j);
-		if (buffer.get(j) < ymin)
-		    ymin = buffer.get(j);
+		if (ftmp[1] > ymax)
+		    ymax = ftmp[1];
+		if (ftmp[1] < ymin)
+		    ymin = ftmp[1];
 
-		if (buffer.get(k) > zmax)
-		    zmax = buffer.get(k);
-		if (buffer.get(k) < zmin)
-		    zmin = buffer.get(k);
+		if (ftmp[2] > zmax)
+		    zmax = ftmp[2];
+		if (ftmp[2] < zmin)
+		    zmin = ftmp[2];
 
 	    }
 	    geoBounds.setUpper(xmax, ymax, zmax);
@@ -7700,7 +7710,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 		    vec0.x = coordinates[l].x - coordinates[i].x;
 		    vec0.y = coordinates[l].y - coordinates[i].y;
 		    vec0.z = coordinates[l].z - coordinates[i].z;
-		    if (vec0.length() > 0.0) {
+		    if (vec0.x != 0.0 || vec0.y != 0.0 || vec0.z != 0.0) {
 			break;
 		    }
 		}
@@ -7715,14 +7725,14 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 		    vec1.x = coordinates[k].x - coordinates[j].x;
 		    vec1.y = coordinates[k].y - coordinates[j].y;
 		    vec1.z = coordinates[k].z - coordinates[j].z;
-		    if (vec1.length() > 0.0) {
+		    if (vec1.x != 0.0 || vec1.y != 0.0 || vec1.z != 0.0) {
 			break;
 		    }
 		}
 	
 		pNrm.cross(vec0,vec1);
 	
-		if ((vec1.length() == 0) || (pNrm.length() == 0)) {
+		if ((vec0.x == 0.0 && vec0.y == 0.0 && vec0.z == 0.0) || (pNrm.x == 0.0 && pNrm.y == 0.0 && pNrm.z == 0.0)) {
 		    // degenerate to line if vec0.length() == 0
 		    // or vec0.length > 0 and vec0 parallel to vec1
 		    k = (l == 0 ? coordinates.length-1: l-1);
@@ -10781,24 +10791,34 @@ int numDlistUsers(RenderBin renderBin) {
 	}// end of non nio buffer
 	else { // NIO BUFFER
 	    if ((vertexFormat & GeometryArray.INTERLEAVED) != 0) {
-		offset = stride * i + coordinateOffset;
-		pnts.x = this.interleavedFloatBufferImpl.get(offset);
-		pnts.y = this.interleavedFloatBufferImpl.get(offset+1);
-		pnts.z = this.interleavedFloatBufferImpl.get(offset+2);
+		offset = stride * i + coordinateOffset;		
+		float[] tmp = new float[3];
+	    this.interleavedFloatBufferImpl.position(offset);
+	    this.interleavedFloatBufferImpl.get(tmp);
+	    pnts.x = tmp[0];
+	    pnts.y = tmp[1];
+	    pnts.z = tmp[2];		
 	    }
 	    else {
 		switch ((vertexType & GeometryArrayRetained.VERTEX_DEFINED)) {
 		case GeometryArrayRetained.PF:
 		    offset = i*3;
-		    pnts.x = this.floatBufferRefCoords.get(offset);
-		    pnts.y = this.floatBufferRefCoords.get(offset+1);
-		    pnts.z = this.floatBufferRefCoords.get(offset+2);
+		    float[] ftmp = new float[3];
+		    this.floatBufferRefCoords.position(offset);
+		    this.floatBufferRefCoords.get(ftmp);
+		    pnts.x = ftmp[0];
+		    pnts.y = ftmp[1];
+		    pnts.z = ftmp[2];		   
 		    break;
 		case GeometryArrayRetained.PD:
 		    offset = i*3;
-		    pnts.x = this.doubleBufferRefCoords.get(offset);
-		    pnts.y = this.doubleBufferRefCoords.get(offset+1);
-		    pnts.z = this.doubleBufferRefCoords.get(offset+2);
+		    double[] dtmp = new double[3];
+		    this.doubleBufferRefCoords.position(offset);
+		    this.doubleBufferRefCoords.get(dtmp);
+		    pnts.x = dtmp[0];
+		    pnts.y = dtmp[1];
+		    pnts.z = dtmp[2];
+		    
 		    break;
 		}
 	    }
