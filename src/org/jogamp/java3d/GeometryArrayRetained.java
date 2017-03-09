@@ -7673,273 +7673,282 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
      *  Return true if triangle or quad intersects with ray and the distance is
      *  stored in pr.
      */
+    //PJPJPJ made synchronized to save new's
+    private Vector3d tempV3d = new Vector3d();;
+    private Vector3d vec0 = new Vector3d();
+    private Vector3d vec1 = new Vector3d();
+    private Vector3d pNrm = new Vector3d();
     boolean intersectRayOrSegment(Point3d coordinates[],
 				  Vector3d direction, Point3d origin,
 				  double dist[], Point3d iPnt, boolean isSegment) {
-	Vector3d vec0, vec1, pNrm, tempV3d;
-	vec0 = new Vector3d();
-	vec1 = new Vector3d();
-	pNrm = new Vector3d();
-
-	double  absNrmX, absNrmY, absNrmZ, pD = 0.0;
-	double pNrmDotrDir = 0.0;
-
-	boolean isIntersect = false;
-	int i, j, k=0, l = 0;
-
-	// Compute plane normal.
-	for (i=0; i<coordinates.length; i++) {
-	    if (i != coordinates.length-1) {
-		l = i+1;
-	    } else {
-		l = 0;
-	    }
-	    vec0.x = coordinates[l].x - coordinates[i].x;
-	    vec0.y = coordinates[l].y - coordinates[i].y;
-	    vec0.z = coordinates[l].z - coordinates[i].z;
-	    if (vec0.length() > 0.0) {
-		break;
-	    }
-	}
-
-
-	for (j=l; j<coordinates.length; j++) {
-	    if (j != coordinates.length-1) {
-		k = j+1;
-	    } else {
-		k = 0;
-	    }
-	    vec1.x = coordinates[k].x - coordinates[j].x;
-	    vec1.y = coordinates[k].y - coordinates[j].y;
-	    vec1.z = coordinates[k].z - coordinates[j].z;
-	    if (vec1.length() > 0.0) {
-		break;
-	    }
-	}
-
-	pNrm.cross(vec0,vec1);
-
-	if ((vec1.length() == 0) || (pNrm.length() == 0)) {
-	    // degenerate to line if vec0.length() == 0
-	    // or vec0.length > 0 and vec0 parallel to vec1
-	    k = (l == 0 ? coordinates.length-1: l-1);
-	    isIntersect = intersectLineAndRay(coordinates[l],
-					      coordinates[k],
-					      origin,
-					      direction,
-					      dist,
-					      iPnt);
-
-	    // put the Vectors on the freelist
-	    return isIntersect;
-	}
-
-	// It is possible that Quad is degenerate to Triangle
-	// at this point
-
-	pNrmDotrDir = pNrm.dot(direction);
-
-    	// Ray is parallel to plane.
-	if (pNrmDotrDir == 0.0) {
-	    // Ray is parallel to plane
-	    // Check line/triangle intersection on plane.
-	    for (i=0; i < coordinates.length ;i++) {
-		if (i != coordinates.length-1) {
-		    k = i+1;
+	
+	synchronized(vec0)
+	{
+		double absNrmX, absNrmY, absNrmZ, pD = 0.0;
+		double pNrmDotrDir = 0.0;
+	
+		boolean isIntersect = false;
+		int i, j, k=0, l = 0;
+	
+		// Compute plane normal.
+		for (i=0; i<coordinates.length; i++) {
+		    if (i != coordinates.length-1) {
+			l = i+1;
+		    } else {
+			l = 0;
+		    }
+		    vec0.x = coordinates[l].x - coordinates[i].x;
+		    vec0.y = coordinates[l].y - coordinates[i].y;
+		    vec0.z = coordinates[l].z - coordinates[i].z;
+		    if (vec0.length() > 0.0) {
+			break;
+		    }
+		}
+	
+	
+		for (j=l; j<coordinates.length; j++) {
+		    if (j != coordinates.length-1) {
+			k = j+1;
+		    } else {
+			k = 0;
+		    }
+		    vec1.x = coordinates[k].x - coordinates[j].x;
+		    vec1.y = coordinates[k].y - coordinates[j].y;
+		    vec1.z = coordinates[k].z - coordinates[j].z;
+		    if (vec1.length() > 0.0) {
+			break;
+		    }
+		}
+	
+		pNrm.cross(vec0,vec1);
+	
+		if ((vec1.length() == 0) || (pNrm.length() == 0)) {
+		    // degenerate to line if vec0.length() == 0
+		    // or vec0.length > 0 and vec0 parallel to vec1
+		    k = (l == 0 ? coordinates.length-1: l-1);
+		    isIntersect = intersectLineAndRay(coordinates[l],
+						      coordinates[k],
+						      origin,
+						      direction,
+						      dist,
+						      iPnt);
+	
+		    // put the Vectors on the freelist
+		    return isIntersect;
+		}
+	
+		// It is possible that Quad is degenerate to Triangle
+		// at this point
+	
+		pNrmDotrDir = pNrm.dot(direction);
+	
+	    	// Ray is parallel to plane.
+		if (pNrmDotrDir == 0.0) {
+		    // Ray is parallel to plane
+		    // Check line/triangle intersection on plane.
+		    for (i=0; i < coordinates.length ;i++) {
+			if (i != coordinates.length-1) {
+			    k = i+1;
+			} else {
+			    k = 0;
+			}
+			if (intersectLineAndRay(coordinates[i],
+						coordinates[k],
+						origin,
+						direction,
+						dist,
+						iPnt)) {
+			    isIntersect = true;
+			    break;
+			}
+		    }
+		    return isIntersect;
+		}
+	
+		// Plane equation: (p - p0)*pNrm = 0 or p*pNrm = pD;		
+		tempV3d.set(coordinates[0]);
+		pD = pNrm.dot(tempV3d);
+		tempV3d.set(origin);
+	
+		// Substitute Ray equation:
+		// p = origin + pi.distance*direction
+		// into the above Plane equation
+	
+		dist[0] = (pD - pNrm.dot(tempV3d))/ pNrmDotrDir;
+	
+		// Ray intersects the plane behind the ray's origin.
+		if ((dist[0] < -EPS ) ||
+		    (isSegment && (dist[0] > 1.0+EPS))) {
+		    // Ray intersects the plane behind the ray's origin
+		    // or intersect point not fall in Segment
+		    return false;
+		}
+	
+		// Now, one thing for sure the ray intersect the plane.
+		// Find the intersection point.
+		if (iPnt == null) {
+		    iPnt = new Point3d();
+		}
+		iPnt.x = origin.x + direction.x * dist[0];
+		iPnt.y = origin.y + direction.y * dist[0];
+		iPnt.z = origin.z + direction.z * dist[0];
+	
+		// Project 3d points onto 2d plane
+		// Find the axis so that area of projection is maximize.
+		
+		//PJPJPJ these are relatively expensive on android, swapped to core java simple versions
+		//absNrmX = Math.abs(pNrm.x);
+		//absNrmY = Math.abs(pNrm.y);
+		//absNrmZ = Math.abs(pNrm.z);
+		
+		absNrmX = (pNrm.x <= 0.0D) ? 0.0D - pNrm.x : pNrm.x;
+		absNrmY = (pNrm.y <= 0.0D) ? 0.0D - pNrm.y : pNrm.y;
+		absNrmZ = (pNrm.z <= 0.0D) ? 0.0D - pNrm.z : pNrm.z;
+	
+		// All sign of (y - y0) (x1 - x0) - (x - x0) (y1 - y0)
+		// must agree.
+		double sign, t, lastSign = 0;
+		Point3d p0 = coordinates[coordinates.length-1];
+		Point3d p1 = coordinates[0];
+	
+		isIntersect = true;
+	
+		if (absNrmX > absNrmY) {
+		    if (absNrmX < absNrmZ) {
+			for (i=0; i < coordinates.length; i++) {
+			    p0 = coordinates[i];
+			    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
+	 		    sign = (iPnt.y - p0.y)*(p1.x - p0.x) -
+				   (iPnt.x - p0.x)*(p1.y - p0.y);
+			    if (isNonZero(sign)) {
+				if (sign*lastSign < 0) {
+				    isIntersect = false;
+				    break;
+				}
+				lastSign = sign;
+			    } else { // point on line, check inside interval
+				t = p1.y - p0.y;
+				if (isNonZero(t)) {
+				    t = (iPnt.y - p0.y)/t;
+				    isIntersect = ((t > -EPS) && (t < 1+EPS));
+				    break;
+				} else {
+				    t = p1.x - p0.x;
+				    if (isNonZero(t)) {
+					t = (iPnt.x - p0.x)/t;
+					isIntersect = ((t > -EPS) && (t < 1+EPS));
+					break;
+				    } else {
+	    // Ignore degenerate line=>point happen when Quad => Triangle.
+	    // Note that by next round sign*lastSign = 0 so it will
+	    // not pass the interest test. This should only happen once in the
+	    // loop because we already check for degenerate geometry before.
+				    }
+				}
+			    }
+			}
+		    } else {
+			for (i=0; i<coordinates.length; i++) {
+			    p0 = coordinates[i];
+			    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
+			    sign = (iPnt.y - p0.y)*(p1.z - p0.z) -
+				   (iPnt.z - p0.z)*(p1.y - p0.y);
+			    if (isNonZero(sign)) {
+				if (sign*lastSign < 0) {
+				    isIntersect = false;
+				    break;
+				}
+				lastSign = sign;
+			    } else { // point on line, check inside interval
+				t = p1.y - p0.y;
+	
+				if (isNonZero(t)) {
+				    t = (iPnt.y - p0.y)/t;
+				    isIntersect = ((t > -EPS) && (t < 1+EPS));
+				    break;
+	
+				} else {
+				    t = p1.z - p0.z;
+				    if (isNonZero(t)) {
+					t = (iPnt.z - p0.z)/t;
+					isIntersect = ((t > -EPS) && (t < 1+EPS));
+					break;
+				    } else {
+					//degenerate line=>point
+				    }
+				}
+			    }
+			}
+		    }
 		} else {
-		    k = 0;
-		}
-		if (intersectLineAndRay(coordinates[i],
-					coordinates[k],
-					origin,
-					direction,
-					dist,
-					iPnt)) {
-		    isIntersect = true;
-		    break;
-		}
-	    }
-	    return isIntersect;
-	}
-
-	// Plane equation: (p - p0)*pNrm = 0 or p*pNrm = pD;
-	tempV3d = new Vector3d();
-	tempV3d.set(coordinates[0]);
-	pD = pNrm.dot(tempV3d);
-	tempV3d.set(origin);
-
-	// Substitute Ray equation:
-	// p = origin + pi.distance*direction
-	// into the above Plane equation
-
-	dist[0] = (pD - pNrm.dot(tempV3d))/ pNrmDotrDir;
-
-	// Ray intersects the plane behind the ray's origin.
-	if ((dist[0] < -EPS ) ||
-	    (isSegment && (dist[0] > 1.0+EPS))) {
-	    // Ray intersects the plane behind the ray's origin
-	    // or intersect point not fall in Segment
-	    return false;
-	}
-
-	// Now, one thing for sure the ray intersect the plane.
-	// Find the intersection point.
-	if (iPnt == null) {
-	    iPnt = new Point3d();
-	}
-	iPnt.x = origin.x + direction.x * dist[0];
-	iPnt.y = origin.y + direction.y * dist[0];
-	iPnt.z = origin.z + direction.z * dist[0];
-
-	// Project 3d points onto 2d plane
-	// Find the axis so that area of projection is maximize.
-	absNrmX = Math.abs(pNrm.x);
-	absNrmY = Math.abs(pNrm.y);
-	absNrmZ = Math.abs(pNrm.z);
-
-	// All sign of (y - y0) (x1 - x0) - (x - x0) (y1 - y0)
-	// must agree.
-	double sign, t, lastSign = 0;
-	Point3d p0 = coordinates[coordinates.length-1];
-	Point3d p1 = coordinates[0];
-
-	isIntersect = true;
-
-	if (absNrmX > absNrmY) {
-	    if (absNrmX < absNrmZ) {
-		for (i=0; i < coordinates.length; i++) {
-		    p0 = coordinates[i];
-		    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
- 		    sign = (iPnt.y - p0.y)*(p1.x - p0.x) -
-			   (iPnt.x - p0.x)*(p1.y - p0.y);
-		    if (isNonZero(sign)) {
-			if (sign*lastSign < 0) {
-			    isIntersect = false;
-			    break;
+		    if (absNrmY < absNrmZ) {
+			for (i=0; i<coordinates.length; i++) {
+			    p0 = coordinates[i];
+			    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
+			    sign = (iPnt.y - p0.y)*(p1.x - p0.x) -
+				   (iPnt.x - p0.x)*(p1.y - p0.y);
+			    if (isNonZero(sign)) {
+				if (sign*lastSign < 0) {
+				    isIntersect = false;
+				    break;
+				}
+				lastSign = sign;
+			    } else { // point on line, check inside interval
+				t = p1.y - p0.y;
+				if (isNonZero(t)) {
+				    t = (iPnt.y - p0.y)/t;
+				    isIntersect = ((t > -EPS) && (t < 1+EPS));
+				    break;
+				} else {
+				    t = p1.x - p0.x;
+				    if (isNonZero(t)) {
+					t = (iPnt.x - p0.x)/t;
+					isIntersect = ((t > -EPS) && (t < 1+EPS));
+					break;
+				    } else {
+					//degenerate line=>point
+				    }
+				}
+			    }
 			}
-			lastSign = sign;
-		    } else { // point on line, check inside interval
-			t = p1.y - p0.y;
-			if (isNonZero(t)) {
-			    t = (iPnt.y - p0.y)/t;
-			    isIntersect = ((t > -EPS) && (t < 1+EPS));
-			    break;
-			} else {
-			    t = p1.x - p0.x;
-			    if (isNonZero(t)) {
-				t = (iPnt.x - p0.x)/t;
-				isIntersect = ((t > -EPS) && (t < 1+EPS));
-				break;
-			    } else {
-    // Ignore degenerate line=>point happen when Quad => Triangle.
-    // Note that by next round sign*lastSign = 0 so it will
-    // not pass the interest test. This should only happen once in the
-    // loop because we already check for degenerate geometry before.
+		    } else {
+			for (i=0; i<coordinates.length; i++) {
+			    p0 = coordinates[i];
+			    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
+			    sign = (iPnt.x - p0.x)*(p1.z - p0.z) -
+				   (iPnt.z - p0.z)*(p1.x - p0.x);
+			    if (isNonZero(sign)) {
+				if (sign*lastSign < 0) {
+				    isIntersect = false;
+				    break;
+				}
+				lastSign = sign;
+			    } else { // point on line, check inside interval
+				t = p1.x - p0.x;
+				if (isNonZero(t)) {
+				    t = (iPnt.x - p0.x)/t;
+				    isIntersect = ((t > -EPS) && (t < 1+EPS));
+				    break;
+				} else {
+				    t = p1.z - p0.z;
+				    if (isNonZero(t)) {
+					t = (iPnt.z - p0.z)/t;
+					isIntersect = ((t > -EPS) && (t < 1+EPS));
+					break;
+				    } else {
+					//degenerate line=>point
+				    }
+				}
 			    }
 			}
 		    }
 		}
-	    } else {
-		for (i=0; i<coordinates.length; i++) {
-		    p0 = coordinates[i];
-		    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
-		    sign = (iPnt.y - p0.y)*(p1.z - p0.z) -
-			   (iPnt.z - p0.z)*(p1.y - p0.y);
-		    if (isNonZero(sign)) {
-			if (sign*lastSign < 0) {
-			    isIntersect = false;
-			    break;
-			}
-			lastSign = sign;
-		    } else { // point on line, check inside interval
-			t = p1.y - p0.y;
-
-			if (isNonZero(t)) {
-			    t = (iPnt.y - p0.y)/t;
-			    isIntersect = ((t > -EPS) && (t < 1+EPS));
-			    break;
-
-			} else {
-			    t = p1.z - p0.z;
-			    if (isNonZero(t)) {
-				t = (iPnt.z - p0.z)/t;
-				isIntersect = ((t > -EPS) && (t < 1+EPS));
-				break;
-			    } else {
-				//degenerate line=>point
-			    }
-			}
-		    }
+	
+		if (isIntersect) {
+		    dist[0] *= direction.length();
 		}
-	    }
-	} else {
-	    if (absNrmY < absNrmZ) {
-		for (i=0; i<coordinates.length; i++) {
-		    p0 = coordinates[i];
-		    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
-		    sign = (iPnt.y - p0.y)*(p1.x - p0.x) -
-			   (iPnt.x - p0.x)*(p1.y - p0.y);
-		    if (isNonZero(sign)) {
-			if (sign*lastSign < 0) {
-			    isIntersect = false;
-			    break;
-			}
-			lastSign = sign;
-		    } else { // point on line, check inside interval
-			t = p1.y - p0.y;
-			if (isNonZero(t)) {
-			    t = (iPnt.y - p0.y)/t;
-			    isIntersect = ((t > -EPS) && (t < 1+EPS));
-			    break;
-			} else {
-			    t = p1.x - p0.x;
-			    if (isNonZero(t)) {
-				t = (iPnt.x - p0.x)/t;
-				isIntersect = ((t > -EPS) && (t < 1+EPS));
-				break;
-			    } else {
-				//degenerate line=>point
-			    }
-			}
-		    }
-		}
-	    } else {
-		for (i=0; i<coordinates.length; i++) {
-		    p0 = coordinates[i];
-		    p1 = (i != coordinates.length-1 ? coordinates[i+1]: coordinates[0]);
-		    sign = (iPnt.x - p0.x)*(p1.z - p0.z) -
-			   (iPnt.z - p0.z)*(p1.x - p0.x);
-		    if (isNonZero(sign)) {
-			if (sign*lastSign < 0) {
-			    isIntersect = false;
-			    break;
-			}
-			lastSign = sign;
-		    } else { // point on line, check inside interval
-			t = p1.x - p0.x;
-			if (isNonZero(t)) {
-			    t = (iPnt.x - p0.x)/t;
-			    isIntersect = ((t > -EPS) && (t < 1+EPS));
-			    break;
-			} else {
-			    t = p1.z - p0.z;
-			    if (isNonZero(t)) {
-				t = (iPnt.z - p0.z)/t;
-				isIntersect = ((t > -EPS) && (t < 1+EPS));
-				break;
-			    } else {
-				//degenerate line=>point
-			    }
-			}
-		    }
-		}
-	    }
+		return isIntersect;
 	}
-
-	if (isIntersect) {
-	    dist[0] *= direction.length();
-	}
-	return isIntersect;
     }
 
 
