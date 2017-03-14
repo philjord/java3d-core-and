@@ -701,7 +701,7 @@ ArrayList<ArrayList<MorphRetained>> morphUserLists = null;
 	    zmin = zmax = ftmp[2];
 	    sIndex += 3;
 	    for (i=sIndex; i<maxIndex; i+=3) {
-	    	 buffer.position(sIndex);
+	    	 buffer.position(i);
 	 	    buffer.get(ftmp);
 
 		if (ftmp[0] > xmax)

@@ -5811,7 +5811,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	private static void updateTextureLodRange(Context ctx, int target, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
 	{
-		//GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
 
 		// I notice these 4 parameters don't appear under GL2ES2
 
@@ -5833,8 +5833,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// http://stackoverflow.com/questions/12767917/is-using-gl-nearest-mipmap-or-gl-linear-mipmap-for-gl-texture-min-filter-con
 		// ES2 throws a 1280 invalid enum here
 
-		//if (gl.isGL2ES3())
-		//	gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
+		if (gl.isGL2ES3())
+			gl.glTexParameteri(target, GL2ES3.GL_TEXTURE_MAX_LEVEL, maximumLevel);
 		// gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MIN_LOD, minimumLOD);
 		// gl.glTexParameterf(target, GL2ES3.GL_TEXTURE_MAX_LOD, maximumLOD);
 
@@ -6201,7 +6201,6 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		
 		if(createMipMaps && level == 0)
 		{
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR_MIPMAP_LINEAR);
 			gl.glHint(GL.GL_GENERATE_MIPMAP_HINT, GL.GL_NICEST);
 			gl.glGenerateMipmap(target);
 			// as a new feature that happens seldom, output errors
