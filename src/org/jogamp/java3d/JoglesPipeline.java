@@ -4836,9 +4836,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = dirx;// world space
-		joglesctx.glLightSource[lightSlot].position.y = diry;
-		joglesctx.glLightSource[lightSlot].position.z = dirz;
+		joglesctx.glLightSource[lightSlot].position.x = -dirx;// world space
+		joglesctx.glLightSource[lightSlot].position.y = -diry;
+		joglesctx.glLightSource[lightSlot].position.z = -dirz;
 		joglesctx.glLightSource[lightSlot].position.w = 0.0f;// 0 means directional light
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
 		// joglesctx.glLightSource[lightSlot].GL_POSITION = 1.0f; // what is this?
