@@ -4805,7 +4805,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// ---------------------------------------------------------------------
 
-	private static final Vector4f black = new Vector4f();
+	//private static final Vector4f black = new Vector4f();
 
 	//
 	// DirectionalLightRetained methods
@@ -4821,15 +4821,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateDirectionalLight++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-
-		// note the current state of MV MUST be used by the lights when setting position!
-		// https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
-
-		// note can't use the modelview as it's  calced late
-
-		//TODO:? possibly directional should only take the view mat, but surely I'd get a blank model??
-		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, -dirx, -diry, -dirz, 0f);
-
+		
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
@@ -4844,9 +4836,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = lightPos.x;
-		joglesctx.glLightSource[lightSlot].position.y = lightPos.y;
-		joglesctx.glLightSource[lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource[lightSlot].position.x = dirx;// world space
+		joglesctx.glLightSource[lightSlot].position.y = diry;
+		joglesctx.glLightSource[lightSlot].position.z = dirz;
 		joglesctx.glLightSource[lightSlot].position.w = 0.0f;// 0 means directional light
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
 		// joglesctx.glLightSource[lightSlot].GL_POSITION = 1.0f; // what is this?
@@ -4872,13 +4864,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updatePointLight++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-
-		// note the current state of MV MUST be used by the lights when setting position!
-		// https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
-
-		// note can't use the modelview as it's calced late		
-		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx, posy, posz, 1.0f);
-
+	
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
@@ -4893,9 +4879,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = lightPos.x;
-		joglesctx.glLightSource[lightSlot].position.y = lightPos.y;
-		joglesctx.glLightSource[lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource[lightSlot].position.x = posx; // world space
+		joglesctx.glLightSource[lightSlot].position.y = posy;
+		joglesctx.glLightSource[lightSlot].position.z = posz;
 		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
 		//joglesctx.pointLight[lightSlot].ambient = black;// odd
 		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
@@ -4920,13 +4906,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateSpotLight++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-
-		// note the current state of MV MUST be used by the lights when setting position!
-		//https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
-
-		// note can't use the modelview as it's  calced late
-		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx, posy, posz, 1.0f);
-
+	
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
@@ -4941,15 +4921,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = lightPos.x;
-		joglesctx.glLightSource[lightSlot].position.y = lightPos.y;
-		joglesctx.glLightSource[lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource[lightSlot].position.x = posx;// world space
+		joglesctx.glLightSource[lightSlot].position.y = posy;
+		joglesctx.glLightSource[lightSlot].position.z = posz;
 		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
 		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
 		joglesctx.glLightSource[lightSlot].linearAttenuation = atteny;
 		joglesctx.glLightSource[lightSlot].quadraticAttenuation = attenz;
-		joglesctx.glLightSource[lightSlot].spotDirection.x = dirx;
+		joglesctx.glLightSource[lightSlot].spotDirection.x = dirx;// world space
 		joglesctx.glLightSource[lightSlot].spotDirection.y = diry;
 		joglesctx.glLightSource[lightSlot].spotDirection.z = dirz;
 		joglesctx.glLightSource[lightSlot].spotExponent = concentration;
@@ -7492,6 +7472,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_SIZE, tmp, 0);
 		cv.textureWidthMax = tmp[0];
 		cv.textureHeightMax = tmp[0];
+		
+		
+		// Write these values out, as they are very useful for es development
+		gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_ATTRIBS, tmp, 0);
+		System.out.println("GL_MAX_VERTEX_ATTRIBS " + tmp[0]);
+		gl.glGetIntegerv(GL2ES2.GL_MAX_VARYING_VECTORS, tmp, 0);
+		System.out.println("GL_MAX_VARYING_VECTORS " + tmp[0]);
+		gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_UNIFORM_VECTORS, tmp, 0);
+		System.out.println("GL_MAX_VERTEX_UNIFORM_VECTORS " + tmp[0]);
+		gl.glGetIntegerv(GL2ES2.GL_MAX_FRAGMENT_UNIFORM_VECTORS, tmp, 0);
+		System.out.println("GL_MAX_FRAGMENT_UNIFORM_VECTORS " + tmp[0]);
+		System.out.println("GL_VERSION " + gl.glGetString(GL2ES2.GL_VERSION ));
+		System.out.println("GL_SHADING_LANGUAGE_VERSION " + gl.glGetString(GL2ES2.GL_SHADING_LANGUAGE_VERSION ));
+					 
+					
+					
 	}
 
 	private static void disableAttribFor2D(GL2ES2 gl)
@@ -8737,6 +8733,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 
 			//Note offscreen uses the above call in all cases where appropriate
+			
+			
+			
 
 		}
 		finally
