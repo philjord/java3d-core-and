@@ -27,9 +27,12 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import org.jogamp.vecmath.Matrix3d;
+import org.jogamp.vecmath.Matrix3f;
 import org.jogamp.vecmath.Matrix4d;
 import org.jogamp.vecmath.SingularMatrixException;
+import org.jogamp.vecmath.Tuple3f;
 import org.jogamp.vecmath.Tuple4f;
+import org.jogamp.vecmath.Vector3f;
 import org.jogamp.vecmath.Vector4f;
 
 /** class that demands single threading and uses deburners, don't touch if you don't understand, it will be bad...
@@ -650,6 +653,18 @@ class Jogl2es2MatrixUtil
 		vecOut.y = y;
 		vecOut.z = z;
 	}
+	
+	public final void transform(Matrix3d m, Tuple3f vecOut)
+	{
+		float x, y, z;
+
+		x = (float) (m.m00 * vecOut.x + m.m01 * vecOut.y + m.m02 * vecOut.z);
+		y = (float) (m.m10 * vecOut.x + m.m11 * vecOut.y + m.m12 * vecOut.z);
+		z = (float) (m.m20 * vecOut.x + m.m21 * vecOut.y + m.m22 * vecOut.z);		
+		vecOut.x = x;
+		vecOut.y = y;
+		vecOut.z = z;
+	}
 
 	//Oh lordy lordy yo' betta swear yo' single freadin' !!!
 
@@ -805,7 +820,7 @@ class Jogl2es2MatrixUtil
 	}
 
 	//More single threaded death-defying gear
-	private Vector4f tmpV4f = new Vector4f();;
+	private Vector4f tmpV4f = new Vector4f();
 
 	public Vector4f transform(Matrix4d m1, Matrix4d m2, float tx, float ty, float tz, float tw)
 	{
@@ -813,6 +828,24 @@ class Jogl2es2MatrixUtil
 		transform(m1, tmpV4f);
 		transform(m2, tmpV4f);
 		return tmpV4f;
+	}
+	
+	public Vector4f transform(Matrix4d m1, float tx, float ty, float tz, float tw)
+	{
+		tmpV4f.set(tx, ty, tz, tw);
+		transform(m1, tmpV4f);
+		return tmpV4f;
+	}
+	
+	private Vector3f tmpV3f = new Vector3f();
+	private Matrix3d tmpM3d = new Matrix3d();
+	//gets the rotation only
+	public Vector3f transform(Matrix4d m1, float tx, float ty, float tz)
+	{		
+		m1.getRotationScale(tmpM3d); 
+		tmpV3f.set(tx, ty, tz);
+		transform(tmpM3d, tmpV3f);	
+		return tmpV3f;
 	}
 
 	private FloatBuffer matFB4x4;

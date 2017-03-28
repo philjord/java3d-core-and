@@ -393,11 +393,15 @@ ArrayList<PointLightRetained> pointLts = new ArrayList<PointLightRetained>();
 
             if (geometryBackground == null) {
 		scale = cv.canvasViewCache.getVworldToCoexistenceScale();
-                cv.setModelViewMatrix(cv.ctx, cv.vpcToEc.mat,
+	//PJPJPJ not sure why this is like this, I need view matrix to pre transform light positions
+		//this looks like maybe for the fixed pipeline it needed the view and model mats
+		// to be set so the light position calls would be in eye space
+		// note to my knowledge the renderBin.vworldToVpc here is ignored in the pipeline
+                cv.setModelViewMatrix(cv.ctx, cv.vworldToEc.mat,//PJcv.vpcToEc.mat,
 				      renderBin.vworldToVpc);
 	    } else {
 		scale = cv.canvasViewCache.getInfVworldToCoexistenceScale();
-                cv.setModelViewMatrix(cv.ctx, cv.vpcToEc.mat,
+                cv.setModelViewMatrix(cv.ctx, cv.vworldToEc.mat,//.vpcToEc.mat,
 				      renderBin.infVworldToVpc);
 	    }
 
@@ -422,11 +426,11 @@ ArrayList<PointLightRetained> pointLts = new ArrayList<PointLightRetained>();
 	    // Just update the dirty lights
             if (geometryBackground == null) {
 		scale = cv.canvasViewCache.getVworldToCoexistenceScale();
-                cv.setModelViewMatrix(cv.ctx, cv.vpcToEc.mat,
+                cv.setModelViewMatrix(cv.ctx, cv.vworldToEc.mat,//cv.vpcToEc.mat,
 				      renderBin.vworldToVpc);
 	    } else {
 		scale = cv.canvasViewCache.getInfVworldToCoexistenceScale();
-                cv.setModelViewMatrix(cv.ctx, cv.vpcToEc.mat,
+                cv.setModelViewMatrix(cv.ctx, cv.vworldToEc.mat,//cv.vpcToEc.mat,
 				      renderBin.infVworldToVpc);
 	    }
 	    i = 0;
@@ -446,11 +450,11 @@ ArrayList<PointLightRetained> pointLts = new ArrayList<PointLightRetained>();
 	else if ((pointLts.size() > 0) && ((cv.canvasDirty & Canvas3D.VIEW_MATRIX_DIRTY) != 0 )) {
             if (geometryBackground == null) {
 		scale = cv.canvasViewCache.getVworldToCoexistenceScale();
-                cv.setModelViewMatrix(cv.ctx, cv.vpcToEc.mat,
+                cv.setModelViewMatrix(cv.ctx, cv.vworldToEc.mat,//cv.vpcToEc.mat,
 				      renderBin.vworldToVpc);
 	    } else {
 		scale = cv.canvasViewCache.getInfVworldToCoexistenceScale();
-                cv.setModelViewMatrix(cv.ctx, cv.vpcToEc.mat,
+                cv.setModelViewMatrix(cv.ctx, cv.vworldToEc.mat,//cv.vpcToEc.mat,
 				      renderBin.infVworldToVpc);
 	    }
 	    for (i = 0; i < pointLts.size(); i++) {

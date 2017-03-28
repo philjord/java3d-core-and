@@ -40,7 +40,9 @@ import org.jogamp.java3d.Jogl2es2Context.LocationData;
 import org.jogamp.java3d.Jogl2es2Context.ProgramData;
 import org.jogamp.java3d.Jogl2es2Context.glLightSource;
 import org.jogamp.java3d.Jogl2es2Context.glLightSourceLocs;
+import org.jogamp.vecmath.Matrix3d;
 import org.jogamp.vecmath.SingularMatrixException;
+import org.jogamp.vecmath.Vector3f;
 import org.jogamp.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
@@ -4822,6 +4824,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
 		
+		//lights are only used in calcs in eye space
+		// for directional lights I need to rotate but not translate
+		Vector3f dir = joglesctx.matrixUtil.transform(joglesctx.currentViewMat, dirx, diry, dirz);
+		 
+		
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
@@ -4836,9 +4843,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = -dirx;// world space
-		joglesctx.glLightSource[lightSlot].position.y = -diry;
-		joglesctx.glLightSource[lightSlot].position.z = -dirz;
+		joglesctx.glLightSource[lightSlot].position.x = -dir.x;// world space
+		joglesctx.glLightSource[lightSlot].position.y = -dir.y;
+		joglesctx.glLightSource[lightSlot].position.z = -dir.z;
 		joglesctx.glLightSource[lightSlot].position.w = 0.0f;// 0 means directional light
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
 		// joglesctx.glLightSource[lightSlot].GL_POSITION = 1.0f; // what is this?
@@ -4864,7 +4871,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updatePointLight++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-	
+		
+		//note the LightBin had to be modified so the view mat would appear here now. 
+		//lights are only used in calcs in eye space
+		Vector4f pos = joglesctx.matrixUtil.transform(joglesctx.currentViewMat, posx, posy, posz, 1.0f);		
+		
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
@@ -4879,9 +4890,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = posx; // world space
-		joglesctx.glLightSource[lightSlot].position.y = posy;
-		joglesctx.glLightSource[lightSlot].position.z = posz;
+		joglesctx.glLightSource[lightSlot].position.x = pos.x; // world space
+		joglesctx.glLightSource[lightSlot].position.y = pos.y;
+		joglesctx.glLightSource[lightSlot].position.z = pos.z;
 		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
 		//joglesctx.pointLight[lightSlot].ambient = black;// odd
 		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
@@ -4906,7 +4917,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			((Jogl2es2Context) ctx).perFrameStats.updateSpotLight++;
 
 		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-	
+		
+		//lights are only used in calcs in eye space
+		Vector4f pos = joglesctx.matrixUtil.transform(joglesctx.currentViewMat, posx, posy, posz, 1.0f);		
+				
 		if (joglesctx.glLightSource[lightSlot] == null)
 		{
 			joglesctx.glLightSource[lightSlot] = new glLightSource();
@@ -4921,9 +4935,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.glLightSource[lightSlot].specular.y = green;
 		joglesctx.glLightSource[lightSlot].specular.z = blue;
 		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = posx;// world space
-		joglesctx.glLightSource[lightSlot].position.y = posy;
-		joglesctx.glLightSource[lightSlot].position.z = posz;
+		joglesctx.glLightSource[lightSlot].position.x = pos.x;// world space
+		joglesctx.glLightSource[lightSlot].position.y = pos.y;
+		joglesctx.glLightSource[lightSlot].position.z = pos.z;
 		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
 		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
