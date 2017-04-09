@@ -1055,7 +1055,10 @@ private static String getProperty(final String prop) {
 			    r = new Renderer(rootThreadGroup);
 			    r.initialize();
 			    r.setPriority(threadPriority);
-			    Screen3D.deviceRendererMap.put(gd, r);
+			    synchronized(Screen3D.deviceRendererMap)
+			    {
+			    	Screen3D.deviceRendererMap.put(gd, r);
+			    }
 			}
 			return null;
 		   }
@@ -1967,51 +1970,58 @@ private static String getProperty(final String prop) {
 				 "MC: Destroy all Renderers");
 	    }
 	    // remove all Renderers if this is the last View
-	    for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
-		 e.hasNext(); ) {
-		Renderer rdr = e.next();
-		Screen3D scr;
-
-		rendererCleanupArgs[2] = REMOVEALLCTXS_CLEANUP;
-		runMonitor(RUN_RENDERER_CLEANUP, null, null, null, rdr);
-		scr = rdr.onScreen;
-		if (scr != null) {
-		    if (scr.renderer != null) {
+	    synchronized(Screen3D.deviceRendererMap)
+		 {
+		    for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
+			 e.hasNext(); ) {
+			Renderer rdr = e.next();
+			Screen3D scr;
+	
 			rendererCleanupArgs[2] = REMOVEALLCTXS_CLEANUP;
-			runMonitor(RUN_RENDERER_CLEANUP, null, null,
-				   null, scr.renderer);
-			scr.renderer = null;
+			runMonitor(RUN_RENDERER_CLEANUP, null, null, null, rdr);
+			scr = rdr.onScreen;
+			if (scr != null) {
+			    if (scr.renderer != null) {
+				rendererCleanupArgs[2] = REMOVEALLCTXS_CLEANUP;
+				runMonitor(RUN_RENDERER_CLEANUP, null, null,
+					   null, scr.renderer);
+				scr.renderer = null;
+			    }
+	
+			}
+			scr = rdr.offScreen;
+			if (scr != null) {
+			    if (scr.renderer != null) {
+				rendererCleanupArgs[2] = REMOVEALLCTXS_CLEANUP;
+				runMonitor(RUN_RENDERER_CLEANUP, null, null,
+					   null, scr.renderer);
+				scr.renderer = null;
+			    }
+			}
+			rdr.onScreen = null;
+			rdr.offScreen = null;
 		    }
+		 
 
-		}
-		scr = rdr.offScreen;
-		if (scr != null) {
-		    if (scr.renderer != null) {
-			rendererCleanupArgs[2] = REMOVEALLCTXS_CLEANUP;
-			runMonitor(RUN_RENDERER_CLEANUP, null, null,
-				   null, scr.renderer);
-			scr.renderer = null;
+		    // cleanup ThreadData corresponds to the view in renderer
+		    for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
+			 e.hasNext(); ) {
+		    	e.next().cleanup();
 		    }
-		}
-		rdr.onScreen = null;
-		rdr.offScreen = null;
-	    }
-
-	    // cleanup ThreadData corresponds to the view in renderer
-	    for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
-		 e.hasNext(); ) {
-	    	e.next().cleanup();
-	    }
-	    // We have to reuse renderer even though MC exit
-	    // see bug 4363279
-	    //  Screen3D.deviceRendererMap.clear();
+		    // We have to reuse renderer even though MC exit
+		    // see bug 4363279
+		    //  Screen3D.deviceRendererMap.clear();
+		 }
 
 	} else {
-	    // cleanup ThreadData corresponds to the view in renderer
-	    for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
-		 e.hasNext(); ) {
-		e.next().cleanupView();
-	    }
+		synchronized(Screen3D.deviceRendererMap)
+		 {
+		    // cleanup ThreadData corresponds to the view in renderer
+		    for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
+			 e.hasNext(); ) {
+			e.next().cleanupView();
+		    }
+		 }
 	}
 
 
@@ -2215,7 +2225,10 @@ private static String getProperty(final String prop) {
                                           }
 					});
 					screen.renderer.initialize();
-					Screen3D.deviceRendererMap.put(screen.graphicsDevice, screen.renderer);
+					 synchronized(Screen3D.deviceRendererMap)
+					 {
+						 Screen3D.deviceRendererMap.put(screen.graphicsDevice, screen.renderer);
+					 }
 				    } else {
 					screen.renderer = rdr;
 				    }
@@ -2746,15 +2759,17 @@ private static String getProperty(final String prop) {
 	}
 
 	thread = null;
-
-	for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
-	     e.hasNext(); ) {
-	    Renderer rdr = e.next();
-	    thread = rdr.getThreadData(null, null);
-	    requestRenderWorkThreads.add(thread);
-	    thread.threadOpts = J3dThreadData.CONT_THREAD;
-	    ((Object[]) thread.threadArgs)[0] = REQUESTRENDER;
-	}
+	synchronized(Screen3D.deviceRendererMap)
+	 {
+		for (Iterator<Renderer> e = Screen3D.deviceRendererMap.values().iterator();
+		     e.hasNext(); ) {
+		    Renderer rdr = e.next();
+		    thread = rdr.getThreadData(null, null);
+		    requestRenderWorkThreads.add(thread);
+		    thread.threadOpts = J3dThreadData.CONT_THREAD;
+		    ((Object[]) thread.threadArgs)[0] = REQUESTRENDER;
+		}
+	 }
 
 	if (thread != null) {
 	    thread.threadOpts |= J3dThreadData.WAIT_ALL_THREADS;
