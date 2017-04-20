@@ -1025,10 +1025,15 @@ public class Canvas3D //extends Canvas
 		this.offScreen = offScreen;
 
 		if (!offScreen)
+		{
 			this.glwindow.setVisible(true);
-		//MUST set visible before new GraphicsConfiguration(this.glwindow); or size and everything buggered
-
-		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
+			//MUST set visible before new GraphicsConfiguration(this.glwindow); or size and everything buggered
+			this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
+		}
+		else
+		{
+			this.graphicsConfiguration = new GraphicsConfiguration(10, 10);
+		}
 
 		// Issue 131: Set the autoOffScreen variable based on whether this
 		// canvas3d implements the AutoOffScreenCanvas3D tagging interface.
