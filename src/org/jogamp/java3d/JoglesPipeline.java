@@ -179,11 +179,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						if (gd.geoToIndBuf != -1)
 							gl.glDeleteBuffers(1, new int[] { gd.geoToIndBuf }, 0);
+						
 						if (gd.geoToCoordBuf != -1)
 							gl.glDeleteBuffers(1, new int[] { gd.geoToCoordBuf }, 0);
-						if (gd.geoToColorBuf != -1)
+						
+						// note possible interleaved using one buffer
+						if (gd.geoToColorBuf != -1 && gd.geoToColorBuf != gd.geoToCoordBuf)
 							gl.glDeleteBuffers(1, new int[] { gd.geoToColorBuf }, 0);
-						if (gd.geoToNormalBuf != -1)
+						
+						// note possible interleaved using one buffer
+						if (gd.geoToNormalBuf != -1 && gd.geoToNormalBuf != gd.geoToCoordBuf)
 							gl.glDeleteBuffers(1, new int[] { gd.geoToNormalBuf }, 0);
 
 						int[] bufIds = gd.geoToIndStripBuf;
@@ -198,8 +203,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 							for (int i = 0; i < tcBufIds.size(); i++)
 							{
 								Integer tcBufId = tcBufIds.get(tcBufIds.keyAt(i));
-
-								if (tcBufId != null)
+								// note possible interleaved using one buffer
+								if (tcBufId != null && tcBufId.intValue() != gd.geoToCoordBuf)
 									gl.glDeleteBuffers(1, new int[] { tcBufId.intValue() }, 0);
 							}
 							tcBufIds.clear();
@@ -211,7 +216,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 							for (int i = 0; i < vaBufIds.size(); i++)
 							{
 								Integer vaBufId = vaBufIds.get(vaBufIds.keyAt(i));
-								if (vaBufId != null)
+								// note possible interleaved using one buffer
+								if (vaBufId != null && vaBufId.intValue() != gd.geoToCoordBuf)
 									gl.glDeleteBuffers(1, new int[] { vaBufId.intValue() }, 0);
 							}
 							vaBufIds.clear();
@@ -219,10 +225,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 						if (gd.interleavedBufId != -1)
 							gl.glDeleteBuffers(1, new int[] { gd.interleavedBufId }, 0);
-
+						
 						if (gd.vaoId != -1)
 							((GL2ES3) gl).glDeleteVertexArrays(1, new int[] { gd.vaoId }, 0);
-
 					}
 
 				}
