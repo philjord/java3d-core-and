@@ -34,93 +34,95 @@ import java.util.LinkedHashSet;
 
 class NodeComponentRetained extends SceneGraphObjectRetained {
 
-	// duplicate or make a reference when cloneTree() is called
-	//  on this object.
-	boolean duplicateOnCloneTree = false;
+    // duplicate or make a reference when cloneTree() is called
+    //  on this object.
+    boolean duplicateOnCloneTree = false;
 
-	// This keeps track of how many times this NodeComponent is referenced in
-	// the Scene Graph
-	int refCount = 0; // this is used in setLive
-	int refCnt = 0; // this is used in compile
+    // This keeps track of how many times this NodeComponent is referenced in
+    // the Scene Graph
+    int refCount = 0;		// this is used in setLive
+    int refCnt = 0;		// this is used in compile
 
-	// This is true when this appearance is referenced in an immediate mode context
-	private boolean inImmCtx = false;
+    // This is true when this appearance is referenced in an immediate mode context
+    private boolean inImmCtx = false;
 
-	// A list of NodeRetained Objects that refer, directly or indirectly, to this
-	// NodeComponentRetained
+    // A list of NodeRetained Objects that refer, directly or indirectly, to this
+    // NodeComponentRetained
     LinkedHashSet<NodeRetained> users = new LinkedHashSet<NodeRetained>();
 
-	// Mirror object of this node compoenent object
-	NodeComponentRetained mirror = null;
+    // Mirror object of this node compoenent object
+    NodeComponentRetained mirror = null;
 
-	// Sole User FrequencyBit
-	// In the case of Appearance, its a bitmask of all components
-	int changedFrequent = 0;
-	int compChanged = 0;
+    // Sole User FrequencyBit
+    // In the case of Appearance, its a bitmask of all components
+    int changedFrequent = 0;
+    int compChanged = 0;
 
-	// Increment the refcount.  If this is the first, mark it as live.
+    // Increment the refcount.  If this is the first, mark it as live.
     void doSetLive(boolean inBackgroundGroup, int refCount) {
-		int oldRefCount = this.refCount;
-		this.refCount += refCount;
+	int oldRefCount = this.refCount;
+	this.refCount += refCount;
 	if (oldRefCount <= 0) {
-			super.doSetLive(inBackgroundGroup);
+	    super.doSetLive(inBackgroundGroup);
 
-			// Create and init a mirror object if not already there
-			// The two procedures is combined since it is redunctant to
-			// call initMirrorObject() if mirror == this (static object).
-			createMirrorObject();
-		}
+	    // Create and init a mirror object if not already there
+	    // The two procedures is combined since it is redunctant to
+	    // call initMirrorObject() if mirror == this (static object).
+	    createMirrorObject();
 	}
+    }
 
     void setLive(boolean inBackgroundGroup, int refCount) {
-		int oldRefCount = this.refCount;
-		doSetLive(inBackgroundGroup, refCount);
+	int oldRefCount = this.refCount;
+	doSetLive(inBackgroundGroup, refCount);
 	if (oldRefCount <= 0) {
-			super.markAsLive();
-		}
+	    super.markAsLive();
 	}
+    }
 
-	// Decrement the refcount.  If this is the last, mark it as not live.
+
+
+    // Decrement the refcount.  If this is the last, mark it as not live.
     void clearLive(int refCount) {
-		this.refCount -= refCount;
+	this.refCount -= refCount;
 
 	if (this.refCount <= 0) {
-			super.clearLive();
-		}
+	    super.clearLive();
 	}
+    }
 
-	// increment the compile reference count
+    // increment the compile reference count
     synchronized void incRefCnt() {
-		refCnt++;
-	}
+	refCnt++;
+    }
 
-	// decrement the compile reference count
+    // decrement the compile reference count
     synchronized void decRefCnt() {
-		refCnt--;
-	}
+	refCnt--;
+    }
 
-	// remove mirror shape from the list of users
+    // remove mirror shape from the list of users
     void removeAMirrorUser(Shape3DRetained ms) {
 	synchronized(mirror.users) {
-			mirror.users.remove(ms);
-		}
+	    mirror.users.remove(ms);
 	}
+    }
 
-	// Add a mirror shape to the list of users
+    // Add a mirror shape to the list of users
     void addAMirrorUser(Shape3DRetained ms) {
 	synchronized(mirror.users) {
-			mirror.users.add(ms);
-		}
+	    mirror.users.add(ms);
 	}
+    }
 
     // Copy the list of users passed in into this
     void copyMirrorUsers(NodeComponentRetained node) {
 	synchronized(mirror.users) {
 	  synchronized(node.mirror.users) {
-				mirror.users.addAll(node.mirror.users);
-			}
-		}
+		  mirror.users.addAll(node.mirror.users);
+	    }
 	}
+    }
 
 
     // Remove the users of "node" from "this" node component
@@ -128,29 +130,30 @@ class NodeComponentRetained extends SceneGraphObjectRetained {
 
 	synchronized(mirror.users) {
 	  synchronized(node.mirror.users) {
-				mirror.users.removeAll(node.mirror.users);
-			}
-		}
+		  mirror.users.removeAll(node.mirror.users);
+	    }
 	}
+    }
 
-	// Add a user to the list of users
+    // Add a user to the list of users
     synchronized void removeUser(NodeRetained node) {
-		if (node.source.isLive())
-			users.remove(node);
-	}
+	if (node.source.isLive())
+		users.remove(node);
+    }
 
-	// Add a user to the list of users
+    // Add a user to the list of users
     synchronized void addUser(NodeRetained node) {
-		if (node.source.isLive())
-			users.add(node);
-	}
+	if (node.source.isLive())
+		users.add(node);
+    }
 
-	// Add a user to the list of users
+
+    // Add a user to the list of users
     synchronized void notifyUsers() {
 
 	if (source == null || !source.isLive()) {
-			return;
-		}
+	    return;
+	}
 
 	// the reverse order does not appear to be compulsory
 	// change from ArrayList to LinkedHashMap prevents ordered traversal
@@ -159,86 +162,86 @@ class NodeComponentRetained extends SceneGraphObjectRetained {
 	//for (int i=users.size()-1; i >=0; i--) {
 	//    ((NodeRetained)users.get(i)).notifySceneGraphChanged(false);
 	//}
-	}
+    }
 
-	/**
-	 * This sets the immedate mode context flag
-	 */
+    /**
+     * This sets the immedate mode context flag
+     */
     void setInImmCtx(boolean inCtx) {
-		inImmCtx = inCtx;
-	}
+        inImmCtx = inCtx;
+    }
 
-	/**
-	 * This gets the immedate mode context flag
-	 */
+    /**
+     * This gets the immedate mode context flag
+     */
     boolean getInImmCtx() {
-		return (inImmCtx);
-	}
+        return (inImmCtx);
+    }
 
-	/**
-	 * Sets this node's duplicateOnCloneTree value.  The
-	 * <i>duplicateOnCloneTree</i> value is used to determine if NodeComponent
-	 * objects are to be duplicated or referenced during a
-	 * <code>cloneTree</code> operation. A value of <code>true</code> means
-	 *  that this NodeComponent object should be duplicated, while a value
-	 *  of <code>false</code> indicates that this NodeComponent object's
-	 *  reference will be copied into the newly cloned object.  This value
-	 *  can be overriden via the <code>forceDuplicate</code> parameter of
-	 *  the <code>cloneTree</code> method.
-	 * @param duplicate the value to set.
-	 * @see Node#cloneTree
-	 */
+    /**
+     * Sets this node's duplicateOnCloneTree value.  The
+     * <i>duplicateOnCloneTree</i> value is used to determine if NodeComponent
+     * objects are to be duplicated or referenced during a
+     * <code>cloneTree</code> operation. A value of <code>true</code> means
+     *  that this NodeComponent object should be duplicated, while a value
+     *  of <code>false</code> indicates that this NodeComponent object's
+     *  reference will be copied into the newly cloned object.  This value
+     *  can be overriden via the <code>forceDuplicate</code> parameter of
+     *  the <code>cloneTree</code> method.
+     * @param duplicate the value to set.
+     * @see Node#cloneTree
+     */
     void setDuplicateOnCloneTree(boolean duplicate) {
-		duplicateOnCloneTree = duplicate;
-	}
+	duplicateOnCloneTree = duplicate;
+    }
 
-	/**
-	 * Returns this node's duplicateOnCloneTree value. The
-	 * <i>duplicateOnCloneTree</i> value is used to determine if NodeComponent
-	 * objects are to be duplicated or referenced during a
-	 * <code>cloneTree</code> operation. A value of <code>true</code> means
-	 *  that this NodeComponent object should be duplicated, while a value
-	 *  of <code>false</code> indicates that this NodeComponent object's
-	 *  reference will be copied into the newly cloned object.  This value
-	 *  can be overriden via the <code>forceDuplicate</code> parameter of
-	 *  the <code>cloneTree</code> method.
-	 * @return the value of this node's duplicateOnCloneTree
-	 * @see Node#cloneTree
-	 */
+    /**
+     * Returns this node's duplicateOnCloneTree value. The
+     * <i>duplicateOnCloneTree</i> value is used to determine if NodeComponent
+     * objects are to be duplicated or referenced during a
+     * <code>cloneTree</code> operation. A value of <code>true</code> means
+     *  that this NodeComponent object should be duplicated, while a value
+     *  of <code>false</code> indicates that this NodeComponent object's
+     *  reference will be copied into the newly cloned object.  This value
+     *  can be overriden via the <code>forceDuplicate</code> parameter of
+     *  the <code>cloneTree</code> method.
+     * @return the value of this node's duplicateOnCloneTree
+     * @see Node#cloneTree
+     */
     boolean getDuplicateOnCloneTree() {
-		return duplicateOnCloneTree;
-	}
+	return duplicateOnCloneTree;
+    }
 
 
     void initMirrorObject() {
-	}
+    }
 
     void updateMirrorObject(int component, Object obj) {
-	}
+    }
 
     void createMirrorObject() {
-		// Overridden by appearance and other classes
-		initMirrorObject();
-		mirror = null;
-	}
+	// Overridden by appearance and other classes
+	initMirrorObject();
+	mirror = null;
+    }
 
     void setFrequencyChangeMask(int bit, int mask) {
-		if (source.getCapabilityIsFrequent(bit))
-			changedFrequent |= mask;
+	if (source.getCapabilityIsFrequent(bit))
+	    changedFrequent |= mask;
 	else if (!source.isLive()) {
-			// Record the freq->infreq change only for non-live node components
-			changedFrequent &= ~mask;
-		}
+            // Record the freq->infreq change only for non-live node components
+	    changedFrequent &= ~mask;
 	}
+    }
 
-	@Override
+     @Override
      protected Object clone() {
-		NodeComponentRetained ncr = (NodeComponentRetained) super.clone();
-		ncr.changedFrequent = changedFrequent;
-		return ncr;
-	}
+         NodeComponentRetained ncr = (NodeComponentRetained)super.clone();
+	 ncr.changedFrequent = changedFrequent;
+	 return ncr;
+     }
 
     protected void set(NodeComponentRetained nc) {
-		changedFrequent = nc.changedFrequent;
-	}
+	changedFrequent = nc.changedFrequent;
+    }
 }

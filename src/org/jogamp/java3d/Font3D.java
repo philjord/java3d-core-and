@@ -81,7 +81,7 @@ public class Font3D extends NodeComponent {
     Font              font;
     double            tessellationTolerance;
     FontExtrusion     fontExtrusion;
-    //FontRenderContext frc;
+    //PJ FontRenderContext frc;
     // Used by triangulateGlyphs method to split contour data into islands.
     final static float EPS = 0.000001f;
 
@@ -180,7 +180,7 @@ Hashtable<Character, GeometryArrayRetained> geomHash = new Hashtable<Character, 
      */
     public void getBoundingBox(int glyphCode, BoundingBox bounds){
       int[] gCodes = {glyphCode};
-  /*    GlyphVector gVec = font.createGlyphVector(frc, gCodes);
+  /*PJ    GlyphVector gVec = font.createGlyphVector(frc, gCodes);
       Rectangle2D.Float bounds2d = (Rectangle2D.Float)
 	(((GlyphMetrics)(gVec.getGlyphMetrics(0))).getBounds2D());
 
@@ -232,7 +232,7 @@ private static class IntVector {
      * @since Java 3D 1.4
      */
     public GeometryArray getGlyphGeometry(char c) {
-       /* char code[] = { c };
+       /*PJ char code[] = { c };
         GlyphVector gv = font.createGlyphVector(frc, code);
 
         // triangulate the glyph
@@ -267,7 +267,7 @@ private static class IntVector {
 
 
   // Triangulate glyph with 'unicode' if not already done.
-/*    GeometryArrayRetained triangulateGlyphs(GlyphVector gv, char c) {
+/*PJ    GeometryArrayRetained triangulateGlyphs(GlyphVector gv, char c) {
 	Character ch = new Character(c);
 	GeometryArrayRetained geo = geomHash.get(ch);
 

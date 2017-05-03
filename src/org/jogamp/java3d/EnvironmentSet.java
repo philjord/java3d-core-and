@@ -37,8 +37,7 @@ import org.jogamp.vecmath.Color3f;
  * the underlying rendering layer.
  */
 
-class EnvironmentSet extends Object implements ObjectUpdate
-{
+class EnvironmentSet extends Object implements ObjectUpdate{
 	// A list of pre-defined bits to indicate which component
 	// of the rendermolecule changed
 	static final int LIGHTENABLE_CHANGED = 0x01;
@@ -131,14 +130,14 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	 */
 	boolean onUpdateList = false;
 
-	EnvironmentSet(RenderAtom ra, LightRetained[] lightList, FogRetained fog, ModelClipRetained modelClip, RenderBin rb)
-	{
+	EnvironmentSet(RenderAtom ra, LightRetained[] lightList, FogRetained fog,
+	 	ModelClipRetained modelClip, RenderBin rb) {
 		renderBin = rb;
 		reset(ra, lightList, fog, modelClip);
 	}
 
-	private void reset(RenderAtom ra, LightRetained[] lightList, FogRetained fog, ModelClipRetained modelClip)
-	{
+	private void reset(RenderAtom ra, LightRetained[] lightList, FogRetained fog,
+	 	ModelClipRetained modelClip) {
 		int i;
 		LightRetained light;
 
@@ -152,33 +151,26 @@ class EnvironmentSet extends Object implements ObjectUpdate
 		sceneAmbient.x = 0.0f;
 		sceneAmbient.y = 0.0f;
 		sceneAmbient.z = 0.0f;
-		if (lightList != null)
-		{
-			for (i = 0; i < lightList.length; i++)
-			{
+		if (lightList != null) {
+			for (i = 0; i < lightList.length; i++) {
 				light = lightList[i];
-				if (light.nodeType == NodeRetained.AMBIENTLIGHT)
-				{
+				if (light.nodeType == NodeRetained.AMBIENTLIGHT) {
 					ambLights.add(light);
 					sceneAmbient.x += light.color.x;
 					sceneAmbient.y += light.color.y;
 					sceneAmbient.z += light.color.z;
 				}
-				else
-				{
+				else {
 					lights.add(light);
 				}
 			}
-			if (sceneAmbient.x > 1.0f)
-			{
+			if (sceneAmbient.x > 1.0f) {
 				sceneAmbient.x = 1.0f;
 			}
-			if (sceneAmbient.y > 1.0f)
-			{
+			if (sceneAmbient.y > 1.0f) {
 				sceneAmbient.y = 1.0f;
 			}
-			if (sceneAmbient.z > 1.0f)
-			{
+			if (sceneAmbient.z > 1.0f) {
 				sceneAmbient.z = 1.0f;
 			}
 		}
@@ -187,10 +179,8 @@ class EnvironmentSet extends Object implements ObjectUpdate
 
 		this.modelClip = modelClip;
 		enableMCMaskCache = 0;
-		if (modelClip != null)
-		{
-			for (i = 0; i < 6; i++)
-			{
+		if (modelClip != null) {
+			for (i = 0; i < 6; i++) {
 				if (modelClip.enables[i])
 					enableMCMaskCache |= 1 << i;
 			}
@@ -203,21 +193,17 @@ class EnvironmentSet extends Object implements ObjectUpdate
 
 		// Issue 466 : add the env set to the light, fog, and model clip
 		// lists only after the newly constructed env set is initialized
-		if (lightList != null)
-		{
-			for (i = 0; i < lightList.length; i++)
-			{
+		if (lightList != null) {
+			for (i = 0; i < lightList.length; i++) {
 				lightList[i].environmentSets.add(this);
 			}
 		}
 
-		if (fog != null)
-		{
+		if (fog != null) {
 			fog.environmentSets.add(this);
 		}
 
-		if (modelClip != null)
-		{
+		if (modelClip != null) {
 			modelClip.environmentSets.add(this);
 		}
 	}
@@ -225,62 +211,47 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	/**
 	 * This tests if the qiven lights and fog match this EnviornmentSet
 	 */
-	boolean equals(RenderAtom ra, LightRetained[] lights, FogRetained fog, ModelClipRetained modelClip)
-	{
+	boolean equals(RenderAtom ra, LightRetained[] lights, FogRetained fog,
+	 	ModelClipRetained modelClip) {
 		int i;
 
 		// First see if the lights match.
-		if (lights == null && ambLights == null)
-		{
-			if (this.lights.size() == 0)
-			{
-				if (this.fog == fog)
-				{
+	if (lights == null && ambLights == null) {
+	    if (this.lights.size() == 0) {
+		if (this.fog == fog) {
 					return (true);
-				}
-				else
-				{
+		} else {
 					return (false);
 				}
-			}
-			else
-			{
+	    } else {
 				return (false);
 			}
 		}
 
-		if ((this.lights.size() + this.ambLights.size()) != lights.length)
-		{
+	if ((this.lights.size() + this.ambLights.size())!= lights.length) {
 			return (false);
 		}
 
-		for (i = 0; i < lights.length; i++)
-		{
-			if (lights[i].nodeType == LightRetained.AMBIENTLIGHT)
-			{
-				if (!this.ambLights.contains(lights[i]))
-				{
+	for (i=0; i<lights.length; i++) {
+	    if (lights[i].nodeType == LightRetained.AMBIENTLIGHT) {
+		if (!this.ambLights.contains(lights[i])) {
 					return (false);
 				}
 			}
-			else
-			{
-				if (!this.lights.contains(lights[i]))
-				{
+	    else {
+		if (!this.lights.contains(lights[i])) {
 					return (false);
 				}
 			}
 		}
 
 		// Now check fog
-		if (this.fog != fog)
-		{
+	if (this.fog != fog) {
 			return (false);
 		}
 
 		// Now check model clip
-		if (this.modelClip != modelClip)
-		{
+	if (this.modelClip != modelClip) {
 			return (false);
 		}
 
@@ -290,37 +261,28 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	/**
 	 * This tests if the qiven lights match this EnviornmentSet
 	 */
-	boolean equalLights(LightRetained[] lights)
-	{
+    boolean equalLights(LightRetained[] lights) {
 		int i;
 
 		// First see if the lights match.
-		if (lights == null && ambLights == null)
-		{
-			if (this.lights.size() == 0)
-			{
+	if (lights == null && ambLights == null) {
+	    if (this.lights.size() == 0) {
 				return (true);
 			}
 		}
 
-		if ((this.lights.size() + this.ambLights.size()) != lights.length)
-		{
+	if ((this.lights.size() + this.ambLights.size())!= lights.length) {
 			return (false);
 		}
 
-		for (i = 0; i < lights.length; i++)
-		{
-			if (lights[i].nodeType == LightRetained.AMBIENTLIGHT)
-			{
-				if (!this.ambLights.contains(lights[i]))
-				{
+	for (i=0; i<lights.length; i++) {
+	    if (lights[i].nodeType == LightRetained.AMBIENTLIGHT) {
+		if (!this.ambLights.contains(lights[i])) {
 					return (false);
 				}
 			}
-			else
-			{
-				if (!this.lights.contains(lights[i]))
-				{
+	    else {
+		if (!this.lights.contains(lights[i])) {
 					return (false);
 				}
 			}
@@ -330,31 +292,26 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	}
 
 	@Override
-	public void updateObject()
-	{
+	public void updateObject() {
 		ShaderBin sb;
 		int i, size;
 
 		size = addShaderBins.size();
-		if (size > 0)
-		{
+		if (size > 0) {
 			// TODO : JADA - sort by ShaderProgram to avoid state trashing.
 			// right now this is just bangs them on the front of the queue
 			// MUST be in order
 
 			sb = addShaderBins.get(0);
-			if (shaderBinList == null)
-			{
+			if (shaderBinList == null) {
 				shaderBinList = sb;
 			}
-			else
-			{
+			else {
 				sb.next = shaderBinList;
 				shaderBinList.prev = sb;
 				shaderBinList = sb;
 			}
-			for (i = 1; i < size; i++)
-			{
+			for (i = 1; i < size; i++) {
 				sb = addShaderBins.get(i);
 				sb.next = shaderBinList;
 				shaderBinList.prev = sb;
@@ -362,29 +319,25 @@ class EnvironmentSet extends Object implements ObjectUpdate
 			}
 
 		}
+		
 		addShaderBins.clear();
 
-		if (canvasDirty != 0)
-		{
+		if (canvasDirty != 0) {
 			Canvas3D canvases[] = renderBin.view.getCanvases();
 
-			for (i = 0; i < canvases.length; i++)
-			{
+			for (i = 0; i < canvases.length; i++) {
 				canvases[i].canvasDirty |= canvasDirty;
 			}
 
-			if ((canvasDirty & Canvas3D.AMBIENTLIGHT_DIRTY) != 0)
-			{
+			if ((canvasDirty & Canvas3D.AMBIENTLIGHT_DIRTY) != 0) {
 				updateSceneAmbient();
 			}
 
-			if ((canvasDirty & Canvas3D.LIGHTENABLES_DIRTY) != 0)
-			{
+			if ((canvasDirty & Canvas3D.LIGHTENABLES_DIRTY) != 0) {
 				enableMask = enableMaskCache;
 			}
 
-			if ((canvasDirty & Canvas3D.MODELCLIP_DIRTY) != 0)
-			{
+			if ((canvasDirty & Canvas3D.MODELCLIP_DIRTY) != 0) {
 				enableMCMask = enableMCMaskCache;
 			}
 
@@ -396,13 +349,11 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	/**
 	 * Adds the given shaderBin to this AttributeBin.
 	 */
-	void addShaderBin(ShaderBin sb, RenderBin rb, ShaderAppearanceRetained sApp)
-	{
+	void addShaderBin(ShaderBin sb, RenderBin rb, ShaderAppearanceRetained sApp) {
 
 		sb.environmentSet = this;
 
-		if (sApp != null)
-		{
+		if (sApp != null) {
 			// ShaderBin should reference to the mirror components. -- JADA.
 			// System.err.println("AttributeBin : sApp.isMirror = " + sApp.isMirror);			
 			assert (sApp.isMirror);
@@ -415,8 +366,7 @@ class EnvironmentSet extends Object implements ObjectUpdate
 
 		addShaderBins.add(sb);
 
-		if (!onUpdateList)
-		{
+		if (!onUpdateList) {
 			rb.objUpdateList.add(this);
 			onUpdateList = true;
 		}
@@ -426,30 +376,22 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	/**
 	 * Removes the given shaderBin from this AttributeBin.
 	 */
-	void removeShaderBin(ShaderBin sb)
-	{
-
+	void removeShaderBin(ShaderBin sb) {
+	int i;
 		// If the shaderBin being remove is contained in addShaderBins,
 		// then remove the shadereBin from the addList
-		if (addShaderBins.contains(sb))
-		{
+		if (addShaderBins.contains(sb)) {
 			addShaderBins.remove(addShaderBins.indexOf(sb));
 		}
-		else
-		{
-			if (sb.prev == null)
-			{ // At the head of the list
+		else {
+			if (sb.prev == null) { // At the head of the list
 				shaderBinList = sb.next;
-				if (sb.next != null)
-				{
+				if (sb.next != null) {
 					sb.next.prev = null;
 				}
-			}
-			else
-			{ // In the middle or at the end.
+			} else { // In the middle or at the end.
 				sb.prev.next = sb.next;
-				if (sb.next != null)
-				{
+				if (sb.next != null) {
 					sb.next.prev = sb.prev;
 				}
 			}
@@ -457,22 +399,18 @@ class EnvironmentSet extends Object implements ObjectUpdate
 
 		sb.clear();
 
-		if (shaderBinList == null && addShaderBins.size() == 0)
-		{
+		if (shaderBinList == null && addShaderBins.size() == 0) {
 			// Now remove this environment set from all the lights and fogs
 			// that use this
 			int sz = lights.size();
-			for (int i = 0; i < sz; i++)
-			{
+	    for (i=0; i < sz; i++) {
 				lights.get(i).environmentSets.remove(this);
 			}
 			sz = ambLights.size();
-			for (int i = 0; i < sz; i++)
-			{
+	    for (i = 0; i < sz; i++) {
 				ambLights.get(i).environmentSets.remove(this);
 			}
-			if (fog != null)
-			{
+	    if (fog != null) {
 				fog.environmentSets.remove(this);
 			}
 			lightBin.removeEnvironmentSet(this);
@@ -487,26 +425,21 @@ class EnvironmentSet extends Object implements ObjectUpdate
 		sceneAmbient.x = 0.0f;
 		sceneAmbient.y = 0.0f;
 		sceneAmbient.z = 0.0f;
-		for (i = 0; i < ambLights.size(); i++)
-		{
+	for (i=0; i<ambLights.size(); i++) {
 			LightRetained aL = ambLights.get(i);
-			if (aL.lightOn)
-			{
+	    if (aL.lightOn) {
 				sceneAmbient.x += aL.color.x;
 				sceneAmbient.y += aL.color.y;
 				sceneAmbient.z += aL.color.z;
 			}
 		}
-		if (sceneAmbient.x > 1.0f)
-		{
+	if (sceneAmbient.x > 1.0f) {
 			sceneAmbient.x = 1.0f;
 		}
-		if (sceneAmbient.y > 1.0f)
-		{
+	if (sceneAmbient.y > 1.0f) {
 			sceneAmbient.y = 1.0f;
 		}
-		if (sceneAmbient.z > 1.0f)
-		{
+	if (sceneAmbient.z > 1.0f) {
 			sceneAmbient.z = 1.0f;
 		}
 	}
@@ -514,125 +447,111 @@ class EnvironmentSet extends Object implements ObjectUpdate
 	/**
 	 * Renders this EnvironmentSet
 	 */
-	void render(Canvas3D cv)
-	{
-		//System.out.println("	EnvironmentSet.render " + this);
+	void render(Canvas3D cv) {
+	 
 		// include this EnvironmentSet to the to-be-updated list in Canvas
 		cv.setStateToUpdate(Canvas3D.ENVIRONMENTSET_BIT, this);
 
 		ShaderBin sb = shaderBinList;
-		while (sb != null)
-		{
+		while (sb != null) {
 			sb.render(cv);
 			sb = sb.next;
 		}
 
 	}
 
-	void updateAttributes(Canvas3D cv)
-	{
+	void updateAttributes(Canvas3D cv) {
 		double scale;
 		boolean updateSceneAmbient = false, updateLightEnables = false;
 		boolean updateModelClip = false, updateFog = false;
 		// within frame
-		if (cv.environmentSet != this)
-		{
-			if (cv.enableMask != enableMask)
-			{
+	if (cv.environmentSet != this ) {
+            if (cv.enableMask != enableMask) {
 				updateLightEnables = true;
 			}
 
-			if (cv.sceneAmbient.x != sceneAmbient.x || cv.sceneAmbient.y != sceneAmbient.y || cv.sceneAmbient.z != sceneAmbient.z)
-			{
+            if (cv.sceneAmbient.x != sceneAmbient.x ||
+                cv.sceneAmbient.y != sceneAmbient.y ||
+                cv.sceneAmbient.z != sceneAmbient.z ) {
 				updateSceneAmbient = true;
 			}
 
-			if (cv.fog != fog)
-			{
+            if (cv.fog != fog) {
 				updateFog = true;
 			}
 
-			if (cv.modelClip != modelClip)
-			{
+            if (cv.modelClip != modelClip) {
 				updateModelClip = true;
 			}
 		}
 
 		// Check for dirtybit.
-		if ((cv.canvasDirty & (Canvas3D.LIGHTENABLES_DIRTY | Canvas3D.AMBIENTLIGHT_DIRTY | Canvas3D.FOG_DIRTY | Canvas3D.MODELCLIP_DIRTY
-				| Canvas3D.VIEW_MATRIX_DIRTY)) != 0)
-		{
+	if ((cv.canvasDirty & (Canvas3D.LIGHTENABLES_DIRTY|
+			       Canvas3D.AMBIENTLIGHT_DIRTY|
+			       Canvas3D.FOG_DIRTY|
+			       Canvas3D.MODELCLIP_DIRTY|
+			       Canvas3D.VIEW_MATRIX_DIRTY)) != 0)  {
 
-			if ((cv.canvasDirty & Canvas3D.LIGHTENABLES_DIRTY) != 0)
-			{
+	    if ((cv.canvasDirty & Canvas3D.LIGHTENABLES_DIRTY) != 0) {
 				updateLightEnables = true;
 			}
 
-			if ((cv.canvasDirty & Canvas3D.AMBIENTLIGHT_DIRTY) != 0)
-			{
+	    if ((cv.canvasDirty & Canvas3D.AMBIENTLIGHT_DIRTY) != 0) {
 				updateSceneAmbient = true;
 			}
 
-			if ((cv.canvasDirty & Canvas3D.FOG_DIRTY) != 0)
-			{
+	    if ((cv.canvasDirty & Canvas3D.FOG_DIRTY) != 0) {
 				updateFog = true;
 			}
 
-			if ((cv.canvasDirty & Canvas3D.MODELCLIP_DIRTY) != 0)
-			{
+	    if ((cv.canvasDirty & Canvas3D.MODELCLIP_DIRTY) != 0) {
 				updateModelClip = true;
 			}
 
-			if ((cv.canvasDirty & Canvas3D.VIEW_MATRIX_DIRTY) != 0)
-			{
+	    if ((cv.canvasDirty &  Canvas3D.VIEW_MATRIX_DIRTY) != 0) {
 				updateFog = true;
 				updateModelClip = true;
 			}
 		}
 
 		// do states update here.
-		if (updateLightEnables)
-		{
+	if (updateLightEnables) {
 			cv.setLightEnables(cv.ctx, enableMask, renderBin.maxLights);
 			cv.enableMask = enableMask;
 		}
 
-		if (updateSceneAmbient)
-		{
-			cv.setSceneAmbient(cv.ctx, sceneAmbient.x, sceneAmbient.y, sceneAmbient.z);
+	if (updateSceneAmbient) {
+	    cv.setSceneAmbient(cv.ctx, sceneAmbient.x,
+			       sceneAmbient.y, sceneAmbient.z);
 			cv.sceneAmbient.set(sceneAmbient);
 		}
 
-		if (updateFog)
-		{
-			if (fog != null)
-			{
-				scale = lightBin.geometryBackground == null ? cv.canvasViewCache.getVworldToCoexistenceScale()
-						: cv.canvasViewCache.getInfVworldToCoexistenceScale();
+	if (updateFog) {
+	    if (fog != null) {
+		scale = lightBin.geometryBackground == null?
+		    cv.canvasViewCache.getVworldToCoexistenceScale():
+		    cv.canvasViewCache.getInfVworldToCoexistenceScale();
 				fog.update(cv.ctx, scale);
-			}
-			else
-			{
+	    } else {
 				cv.disableFog(cv.ctx);
 			}
 			cv.fog = fog;
 		}
 
-		if (updateModelClip)
-		{
-			if (modelClip != null)
-			{
+	if (updateModelClip) {
+	    if (modelClip != null) {
 				modelClip.update(cv, enableMCMask);
-			}
-			else
-			{
+	    } else {
 				cv.disableModelClip(cv.ctx);
 			}
 			cv.modelClip = modelClip;
 		}
 
-		cv.canvasDirty &= ~(Canvas3D.LIGHTENABLES_DIRTY | Canvas3D.AMBIENTLIGHT_DIRTY | Canvas3D.FOG_DIRTY | Canvas3D.MODELCLIP_DIRTY
-				| Canvas3D.VIEW_MATRIX_DIRTY);
+	cv.canvasDirty &= ~(Canvas3D.LIGHTENABLES_DIRTY|
+			    Canvas3D.AMBIENTLIGHT_DIRTY |
+			    Canvas3D.FOG_DIRTY |
+			    Canvas3D.MODELCLIP_DIRTY |
+			    Canvas3D.VIEW_MATRIX_DIRTY);
 
 		cv.environmentSet = this;
 

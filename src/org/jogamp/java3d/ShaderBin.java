@@ -29,15 +29,16 @@ package org.jogamp.java3d;
 import java.util.ArrayList;
 import java.util.Map;
 
+
 // XXXX : We should have a common Bin object that all other Bins extend from.
 
+
 //class ShaderBin extends Object implements ObjectUpdate, NodeComponentUpdate {
-class ShaderBin implements ObjectUpdate
-{
+class ShaderBin implements ObjectUpdate {
 
 	//PJPJPJPJPJPJPJPJPJPJ
-	//For performance on modern cards we MUST rendering is shader program order
-	// shader program switching is very expensive
+	//Performance on modern cards suggest rendering in shader program order as
+	// shader program switching is very expensive. This does not have empirical test results to confirm.
 	// Obviously we must still respect the background/opaque/order/transparent passes
 	// Lights and EnvironmentSet are at the top of the render tree, they are spatially
 	// configured, so they don't easily interchange with the simple attributes of shader/attribute/texture
@@ -71,8 +72,6 @@ class ShaderBin implements ObjectUpdate
 	 */
 	RenderBin renderBin = null;
 
-	//  is this truely needed now?  AttributeBin attributeBin = null;
-
 	/**
 	 * The EnvirionmentSet that this AttributeBin resides
 	 */
@@ -101,13 +100,11 @@ class ShaderBin implements ObjectUpdate
 	ShaderProgramRetained shaderProgram = null;
 	ShaderAttributeSetRetained shaderAttributeSet = new ShaderAttributeSetRetained();
 
-	ShaderBin(ShaderAppearanceRetained sApp, RenderBin rBin)
-	{
+    ShaderBin(ShaderAppearanceRetained sApp,  RenderBin rBin) {
 		reset(sApp, rBin);
 	}
 
-	void reset(ShaderAppearanceRetained sApp, RenderBin rBin)
-	{
+    void reset(ShaderAppearanceRetained sApp, RenderBin rBin) {
 		prev = null;
 		next = null;
 		renderBin = rBin;
@@ -116,47 +113,39 @@ class ShaderBin implements ObjectUpdate
 
 		onUpdateList = false;
 		
-		if (sApp != null)
-		{
+		if (sApp != null) {
 			shaderProgram = sApp.shaderProgram;	
 			shaderAttributeSet.clearAttributes();
 			if(sApp.shaderAttributeSet != null)
 				shaderAttributeSet.replaceAttributes(sApp.shaderAttributeSet.getAttrs().values());
 		}
-		else
-		{
+		else {
 			shaderProgram = null;
 		}
 		shaderAppearance = sApp;
 	}
 
-	void clear()
-	{
+    void clear() {
 		reset(null, null);
 	}
 
 	/**
 	 * This tests if the qiven ra.shaderProgram  match this shaderProgram
 	 */
-	boolean equals(ShaderAppearanceRetained sApp)
-	{
+    boolean equals(ShaderAppearanceRetained sApp) {
 
 		ShaderProgramRetained sp;
 		ShaderAttributeSetRetained ss;
 
-		if (sApp == null)
-		{
+	if (sApp == null) {
 			sp = null;
 			ss = null;
-		}
-		else
-		{
+	} else {
 			sp = sApp.shaderProgram;
 			ss = sApp.shaderAttributeSet;
 		}
 
-		if ((shaderProgram != sp) || (shaderAttributeSet != ss))
-		{
+	if((shaderProgram != sp) || (shaderAttributeSet != ss)) {
 			return false;
 		}
 		
@@ -165,48 +154,41 @@ class ShaderBin implements ObjectUpdate
 	}
 
 	@Override
-	public void updateObject()
-	{
-		int i;
-		AttributeBin a;
-
-		if (addAttributeBins.size() > 0)
+    public void updateObject() {
+	AttributeBin a;
+	int i;
+		
+	if (addAttributeBins.size() > 0) {
+		a = addAttributeBins.get(0);
+		if (attributeBinList == null)
 		{
-			a = addAttributeBins.get(0);
-			if (attributeBinList == null)
-			{
-				attributeBinList = a;
+			attributeBinList = a;
 
-			}
-			else
-			{
-				a.next = attributeBinList;
-				attributeBinList.prev = a;
-				attributeBinList = a;
-			}
-			for (i = 1; i < addAttributeBins.size(); i++)
-			{
-				a = addAttributeBins.get(i);
-				a.next = attributeBinList;
-				attributeBinList.prev = a;
-				attributeBinList = a;
-			}
 		}
-
-		addAttributeBins.clear();
-
-		onUpdateList = false;
+		else {
+			a.next = attributeBinList;
+			attributeBinList.prev = a;
+			attributeBinList = a;
+		}
+		for (i = 1; i < addAttributeBins.size(); i++) {
+			a = addAttributeBins.get(i);
+			a.next = attributeBinList;
+			attributeBinList.prev = a;
+			attributeBinList = a;
+		}
+	}
+	addAttributeBins.clear();
+	onUpdateList = false;
+	
 	}
 
 	/**
 	 * Adds the given AttributeBin to this EnvironmentSet.
 	 */
-	void addAttributeBin(AttributeBin a, RenderBin rb)
-	{
+	void addAttributeBin(AttributeBin a, RenderBin rb) {
 		a.shaderBin = this;
 		addAttributeBins.add(a);
-		if (!onUpdateList)
-		{
+		if (!onUpdateList) {
 			rb.objUpdateList.add(this);
 			onUpdateList = true;
 		}
@@ -216,30 +198,23 @@ class ShaderBin implements ObjectUpdate
 	/**
 	 * Removes the given AttributeBin from this EnvironmentSet.
 	 */
-	void removeAttributeBin(AttributeBin a)
-	{
+	void removeAttributeBin(AttributeBin a) {
 		a.shaderBin = null;
 		// If the attributeBin being remove is contained in addAttributeBins, then
 		// remove the attributeBin from the addList
-		if (addAttributeBins.contains(a))
-		{
+		if (addAttributeBins.contains(a)) {
 			addAttributeBins.remove(addAttributeBins.indexOf(a));
 		}
-		else
-		{
-			if (a.prev == null)
-			{ // At the head of the list
+		else {
+			if (a.prev == null) { // At the head of the list
 				attributeBinList = a.next;
-				if (a.next != null)
-				{
+				if (a.next != null) {
 					a.next.prev = null;
 				}
 			}
-			else
-			{ // In the middle or at the end.
+			else { // In the middle or at the end.
 				a.prev.next = a.next;
-				if (a.next != null)
-				{
+				if (a.next != null) {
 					a.next.prev = a.prev;
 				}
 			}
@@ -249,10 +224,10 @@ class ShaderBin implements ObjectUpdate
 
 		if (a.definingRenderingAttributes != null && (a.definingRenderingAttributes.changedFrequent != 0))
 			a.definingRenderingAttributes = null;
+			
 		a.onUpdateList &= ~AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
 
-		if (attributeBinList == null && addAttributeBins.size() == 0)
-		{
+		if (attributeBinList == null && addAttributeBins.size() == 0) {
 			// Note: Removal of this shaderBin as a user of the rendering
 			// atttrs is done during removeRenderAtom() in RenderMolecule.java
 			environmentSet.removeShaderBin(this);
@@ -262,39 +237,34 @@ class ShaderBin implements ObjectUpdate
 	/**
 	 * Renders this ShaderBin
 	 */
-	void render(Canvas3D cv)
-	{
+    void render(Canvas3D cv) {
 
+	AttributeBin a;
+		
 		// include this ShaderBin to the to-be-updated list in canvas
 		cv.setStateToUpdate(Canvas3D.SHADERBIN_BIT, this);
 
-		AttributeBin a = attributeBinList;
-		while (a != null)
-		{
+		a = attributeBinList;
+		while (a != null) {
 			a.render(cv);
 			a = a.next;
 		}
 	}
 
-	void updateAttributes(Canvas3D cv)
-	{
+    void updateAttributes(Canvas3D cv) {
 
 		// System.err.println("ShaderBin.updateAttributes() shaderProgram is " + shaderProgram);
-		if (shaderProgram != null)
-		{
+	if (shaderProgram != null) {
 			// Compile, link, and enable shader program
 			shaderProgram.updateNative(cv, true);
 
-			if (shaderAttributeSet != null)
-			{
+	    if (shaderAttributeSet != null) {
 				shaderAttributeSet.updateNative(cv, shaderProgram);
 			}
 
 		}
-		else
-		{
-			if (cv.shaderProgram != null)
-			{
+	else {
+	    if (cv.shaderProgram != null) {
 				// Disable shader program
 				cv.shaderProgram.updateNative(cv, false);
 			}
@@ -304,28 +274,24 @@ class ShaderBin implements ObjectUpdate
 		cv.shaderProgram = shaderProgram;
 	}
 
-	void updateNodeComponent()
-	{
+    void updateNodeComponent() {
 	 //System.err.println("ShaderBin.updateNodeComponent() ...");
 
 		// We don't need to clone shaderProgram.
 		// ShaderProgram object can't be modified once it is live,
 		// so each update should be a new reference.
-		if ((componentDirty & SHADER_PROGRAM_DIRTY) != 0)
-		{
+	if ((componentDirty & SHADER_PROGRAM_DIRTY) != 0) {
 			//System.err.println("  - SHADER_PROGRAM_DIRTY");
 
 			shaderProgram = shaderAppearance.shaderProgram;
 		}
 
 		// We need to clone the shaderAttributeSet.
-		if ((componentDirty & SHADER_ATTRIBUTE_SET_DIRTY) != 0)
-		{
+	if ((componentDirty & SHADER_ATTRIBUTE_SET_DIRTY) != 0) {
 			//System.err.println("  - SHADER_ATTRIBUTE_SET_DIRTY");
 			 
 			shaderAttributeSet.clearAttributes();
-			if (shaderAppearance.shaderAttributeSet != null)
-			{
+			if (shaderAppearance.shaderAttributeSet != null) {
 				shaderAttributeSet.replaceAttributes(shaderAppearance.shaderAttributeSet.getAttrs().values());
 			}
 		}

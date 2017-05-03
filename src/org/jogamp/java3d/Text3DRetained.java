@@ -59,7 +59,7 @@ class Text3DRetained extends GeometryRetained {
      * A cached list of geometry arrays for the current settings
      */
     GeometryArrayRetained[] geometryList = new GeometryArrayRetained[0];
-//    GlyphVector[] glyphVecs = new GlyphVector[0];
+//PJ    GlyphVector[] glyphVecs = new GlyphVector[0];
 
     /**
      * Bounding box data for this text string.
@@ -89,7 +89,7 @@ class Text3DRetained extends GeometryRetained {
 
     @Override
     synchronized void computeBoundingBox() {
-	/*Point3d l = new Point3d();
+	/*PJ Point3d l = new Point3d();
 	Point3d u = new Point3d();
         Vector3f location = new Vector3f(this.position);
         int i, k=0, numTotal=0;
@@ -686,7 +686,7 @@ class Text3DRetained extends GeometryRetained {
      * This method will be called whenever string or font3D change.
      */
     final void updateCharacterData() {
-/*	char c[] = new char[1];
+/*PJ	char c[] = new char[1];
 
 	if (geometryList.length != numChars) {
 	    geometryList = new GeometryArrayRetained[numChars];
@@ -712,7 +712,7 @@ class Text3DRetained extends GeometryRetained {
      * else exceptions may be thrown.
      */
     final void updateTransformData(){
- /*       int i, k=0, numTotal=0;
+ /*PJ       int i, k=0, numTotal=0;
         double width = 0, height = 0;
         Vector3f location = new Vector3f(this.position);
         Rectangle2D bounds;

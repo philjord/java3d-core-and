@@ -26,25 +26,29 @@
 
 package org.jogamp.java3d;
 
-import java.text.AttributedCharacterIterator;
-import java.util.Map;
-
+//import java.awt.AlphaComposite;
 import javaawt.Color;
 import javaawt.Composite;
 import javaawt.Font;
+//import java.awt.FontMetrics;
 import javaawt.Graphics;
 import javaawt.Graphics2D;
 import javaawt.GraphicsConfiguration;
 import javaawt.Image;
 import javaawt.Paint;
 import javaawt.Point;
+//import java.awt.Polygon;
 import javaawt.Rectangle;
 import javaawt.RenderingHints;
 import javaawt.RenderingHints.Key;
 import javaawt.Shape;
 import javaawt.Stroke;
+//import java.awt.font.FontRenderContext;
+//import java.awt.font.GlyphVector;
+//import java.awt.font.TextLayout;
 import javaawt.geom.AffineTransform;
 import javaawt.geom.Point2D;
+//import java.awt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 import javaawt.image.BufferedImageOp;
 import javaawt.image.ColorModel;
@@ -53,6 +57,11 @@ import javaawt.image.DataBufferInt;
 import javaawt.image.ImageObserver;
 import javaawt.image.RenderedImage;
 import javaawt.image.WritableRaster;
+//import java.awt.image.renderable.RenderableImage;
+import java.text.AttributedCharacterIterator;
+import java.util.Map;
+
+
 
 /**
  * Implementation class for J3DGraphics2D
@@ -99,8 +108,6 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	}
 
     }
-    
-    
     
     @Override
 	public Object getDelegate()
@@ -454,13 +461,13 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     void copyGraphics2D(Graphics2D oldg) {
 	// restore the original setting of Graphics2D when resizing the windows
 	setColor(oldg.getColor());
-	//TODO: fill these in when available
+	//TODO: PJ fill these in when available
 	//setFont(oldg.getFont());
-//	setClip(oldg.getClip());
+	//setClip(oldg.getClip());
 	//setComposite(oldg.getComposite());
 	setTransform(oldg.getTransform());
-//	setPaint(oldg.getPaint());
-//	setStroke(oldg.getStroke());
+	//setPaint(oldg.getPaint());
+	//setStroke(oldg.getStroke());
 	if (xOrModeColor != null) {
 	    setXORMode(xOrModeColor);
 	}
@@ -475,23 +482,20 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
  
 
-/*    @Override
+/*PJ    @Override
     public FontMetrics getFontMetrics() {
 	return offScreenGraphics2D.getFontMetrics();
     }*/
- 
 
-/*    @Override
+/*PJ    @Override
     public Rectangle getClipBounds(Rectangle r) {
 	return offScreenGraphics2D.getClipBounds(r);
     }*/
- 
 
-/*    @Override
+/*PJ    @Override
     public Rectangle getClipRect() {
 	return offScreenGraphics2D.getClipRect();
     }*/
- 
  
     @Override
     public String toString() {
@@ -510,7 +514,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	return offScreenGraphics2D.getColor();
     }
 
- /*   @Override
+ /*PJ   @Override
     public final Composite getComposite() {
 	return offScreenGraphics2D.getComposite();
     }*/
@@ -520,12 +524,12 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	return offScreenGraphics2D.getFont();
     }
 
-/*    @Override
+/*PJ    @Override
     public final FontMetrics getFontMetrics(Font f) {
 	return offScreenGraphics2D.getFontMetrics(f);
     }*/
 
-/*    @Override
+/*PJ    @Override
     public final FontRenderContext getFontRenderContext() {
 	return offScreenGraphics2D.getFontRenderContext();
     }*/
@@ -705,14 +709,12 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	offScreenGraphics2D.drawArc(x, y, width, height, startAngle, arcAngle);
     }
     
-    /*
-    @Override
+    /*PJ @Override
     public final void drawGlyphVector(GlyphVector g, float x, float y) {
 	// XXXX: call validate with bounding box of primitive
 	validate();
 	offScreenGraphics2D.drawGlyphVector(g, x, y);
-    }
- */
+    } */
  
     @Override
     public final void drawLine(int x1, int y1, int x2, int y2) {
@@ -764,15 +766,13 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	offScreenGraphics2D.drawPolyline(xPoints,  yPoints, nPoints);
     }
      
-/*    
-    @Override
+/* PJ	@Override
     public final void drawRenderableImage(RenderableImage img,
 					  AffineTransform xform) {
 
 	validate(0, 0, img.getWidth(), img.getHeight(), xform);
 	offScreenGraphics2D.drawRenderableImage(img, xform);
     }*/
-  
 
     @Override
     public final void drawRenderedImage(RenderedImage img,
@@ -810,7 +810,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
  
     @Override
     public final void drawString(String s, float x, float y) {
-     /*  TextLayout layout = new TextLayout(s, getFont(),
+     /*PJ  TextLayout layout = new TextLayout(s, getFont(),
 					  getFontRenderContext());
        Rectangle2D bounds = layout.getBounds();
        float x1 = (float) bounds.getX();
@@ -897,12 +897,10 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	offScreenGraphics2D.setColor(c);
     }
  
-/*
-    @Override
+/*PJ @Override
     public final void setComposite(Composite comp) {
 	offScreenGraphics2D.setComposite(comp);
-    }
- */
+    } */
 
     @Override
     public final void setFont(Font font) {
@@ -977,46 +975,39 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     public final void translate(int x, int y) {
 	offScreenGraphics2D.translate(x, y);
     }
-     
-
-/*    @Override
+/*PJ    @Override
     public boolean hitClip(int x, int y, int width, int height) {
 	return offScreenGraphics2D.hitClip(x, y, width, height);
     }*/
  
- 
-/*    @Override
+/*PJ    @Override
     public void draw3DRect(int x, int y, int width, int height,
                            boolean raised) {
 	// XXXX: call validate with bounding box of primitive
 	validate();
 	offScreenGraphics2D.draw3DRect(x, y, width, height, raised);
     }*/
-     
     
-/*    @Override
+/*PJ    @Override
     public void drawBytes(byte data[], int offset, int length, int x, int y) {
 	// XXXX: call validate with bounding box of primitive
 	validate();
 	offScreenGraphics2D.drawBytes(data,  offset, length, x, y);
     }*/
  
- 
-/*    @Override
+/*PJ    @Override
     public void drawChars(char data[], int offset, int length, int x, int y) {
 	// XXXX: call validate with bounding box of primitive
 	validate();
 	offScreenGraphics2D.drawChars(data,  offset, length, x, y);
     }*/
  
-/*
-    @Override
+/*PJ    @Override
     public void drawPolygon(Polygon p) {
 	// XXXX: call validate with bounding box of primitive
 	validate();
 	offScreenGraphics2D.drawPolygon(p);
-    }
- */
+    } */
  
     @Override
     public void drawRect(int x, int y, int width, int height) {
@@ -1026,7 +1017,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	offScreenGraphics2D.drawRect(x, y, width, height);
     }
 
-/*    @Override
+/*PJ    @Override
     public void fill3DRect(int x, int y, int width, int height,
                            boolean raised) {
 	// XXXX: call validate with bounding box of primitive
@@ -1035,14 +1026,12 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	offScreenGraphics2D.fill3DRect(x, y, width, height, raised);
     }*/
     
-    /*
-    @Override
+    /*PJ    @Override
     public void fillPolygon(Polygon p) {
 	// XXXX: call validate with bounding box of primitive
 	validate();
 	offScreenGraphics2D.fillPolygon(p);
-    }
- */
+    } */
  
     @Override
     public final void fillPolygon(int xPoints[], int yPoints[],
@@ -1091,7 +1080,6 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
         }
 
         if (objectId != -1) {
-        	 
         	try{
         	Canvas3D.freeTexture(canvas3d.ctx, objectId);}
         	catch(NullPointerException e)
@@ -1099,7 +1087,6 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
         		//TODO: why is destroyContext being called before this?
         		//fine probably the ctx has been disposed already
         	}
-        			
             objectId = -1;
         }
 
@@ -1166,7 +1153,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	tr.transform(ptSrc, ptDst1);
 	px = (int) ptDst1.x;
 	py = (int) ptDst1.y;
-	px=x;py=y;
+	px=x;py=y; //TODO: what the hell is this here for?? PJ
 
 	// clip to offscreen buffer size
 
@@ -1254,7 +1241,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
 
     void clearOffScreen() {
-	//Composite comp = offScreenGraphics2D.getComposite();
+//PJ	Composite comp = offScreenGraphics2D.getComposite();
 	Color c = offScreenGraphics2D.getColor();
 //	offScreenGraphics2D.setComposite(AlphaComposite.Src);
 	offScreenGraphics2D.setColor(blackTransparent);
@@ -1292,8 +1279,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	    threadWaiting = false;
 	}
     }
-
-
+//PJ
 	@Override
 	public void setComposite(Composite comp)
 	{
@@ -1304,7 +1290,5 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	public Composite getComposite()
 	{
 		throw new UnsupportedOperationException();
-	}
-
-	
+	}	
 }

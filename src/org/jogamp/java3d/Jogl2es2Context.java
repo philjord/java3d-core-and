@@ -109,7 +109,7 @@ public class Jogl2es2Context extends JoglContext
 
 		// vertex array object id for this geom
 		public int vaoId = -1;
-		// the gd.vaoId is only valid for one shader program, if we change shader for a geometry then the vao needs to be reset				
+		//PJ the gd.vaoId is only valid for one shader program, if we change shader for a geometry then the vao needs to be reset				
 		public int shaderIdForCurrentVaoId = -1;
 
 		//used to identify each geometry as we see it

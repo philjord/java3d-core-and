@@ -684,7 +684,7 @@ void disableFocusEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.disableFocusEvents();
 			}
 		}
@@ -702,7 +702,7 @@ void enableFocusEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.enableFocusEvents();
 			}
 		}
@@ -720,7 +720,7 @@ void disableKeyEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.disableKeyEvents();
 			}
 		}
@@ -738,7 +738,7 @@ void enableKeyEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.enableKeyEvents();
 			}
 		}
@@ -756,7 +756,7 @@ void disableMouseEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.disableMouseEvents();
 			}
 		}
@@ -774,7 +774,7 @@ void enableMouseEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.enableMouseEvents();
 			}
 		}
@@ -792,7 +792,7 @@ void disableMouseMotionEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.disableMouseMotionEvents();
 			}
 		}
@@ -810,7 +810,7 @@ void enableMouseMotionEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.enableMouseMotionEvents();
 			}
 		}
@@ -828,7 +828,7 @@ void disableMouseWheelEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.disableMouseWheelEvents();
 			}
 		}
@@ -846,7 +846,7 @@ void enableMouseWheelEvents() {
 			while (cvs.hasNext()) {
 				Canvas3D cv = cvs.next();
 				// offscreen canvas does not have event catcher
-//				if (cv.eventCatcher != null)
+//PJ				if (cv.eventCatcher != null)
 //					cv.eventCatcher.enableMouseWheelEvents();
 			}
 		}

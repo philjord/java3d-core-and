@@ -27,6 +27,7 @@
 package org.jogamp.java3d;
 
 import javaawt.Color;
+//import java.awt.Graphics;
 import javaawt.Graphics2D;
 import javaawt.image.BufferedImage;
 import javaawt.image.ImageObserver;
@@ -94,7 +95,7 @@ public abstract class J3DGraphics2D implements Graphics2D {
      *
      * @see Canvas3D#getGraphics2D
      */
-/*    @Override
+/*PJ    @Override
     public final Graphics create() {
 	throw new UnsupportedOperationException();
     }*/
@@ -107,7 +108,7 @@ public abstract class J3DGraphics2D implements Graphics2D {
      *
      * @see Canvas3D#getGraphics2D
      */
-/*    @Override
+/*PJ    @Override
     public final Graphics create(int x, int y, int width, int height) {
 	throw new UnsupportedOperationException();
     }*/

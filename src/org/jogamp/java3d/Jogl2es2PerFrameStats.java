@@ -129,8 +129,6 @@ public class Jogl2es2PerFrameStats
 
 	public long syncRenderTime;
 
-
-
 	public void outputPerFrameData()
 	{
 		boolean highInterestOnly = true;

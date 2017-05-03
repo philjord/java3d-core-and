@@ -130,28 +130,28 @@ class WakeupCriteriaEnumerator implements Iterator<WakeupCriterion> {
         }
    }
 
-	@Override
+   @Override
 	public boolean hasNext()
 	{
 		if (currentIndex == length)
 		{
-			return false;
+	   		return false;
 		}
 		return true;
-	}
-	
-	@Override
+   }
+
+   @Override
 	public WakeupCriterion next()
 	{
 		if (currentIndex < length)
 		{
-			return criterion[currentIndex++];
+	   		return criterion[currentIndex++];
 		}
 		else
 		{
-			throw new NoSuchElementException(J3dI18N.getString("WakeupCriteriaEnumerator0"));
+	   		throw new NoSuchElementException(J3dI18N.getString("WakeupCriteriaEnumerator0"));
 		}
-	}
+   }
 	
 	@Override
 	public void remove()

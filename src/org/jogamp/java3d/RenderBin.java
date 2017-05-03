@@ -393,8 +393,7 @@ LinkedHashSet<GeometryRetained> lockGeometryList = new LinkedHashSet<GeometryRet
 	 * updateObject
 	 */
 	@Override
-	public void updateObject()
-	{
+	public void updateObject() {
 		int i, j, k;
 		RenderAtomListInfo ra;
 		LightBin tmp;

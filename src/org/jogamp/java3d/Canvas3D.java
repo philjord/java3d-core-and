@@ -300,8 +300,7 @@ import jogamp.common.os.PlatformPropsImpl;
  * @see View
  * @see GraphicsContext3D
  */
-public class Canvas3D //extends Canvas
-{
+public class Canvas3D {//extends Canvas
 	/**
 	 * Specifies the left field of a field-sequential stereo rendering loop.
 	 * A left field always precedes a right field.
@@ -528,8 +527,12 @@ public class Canvas3D //extends Canvas
 
 	// Mask that indicates this Canvas view dependence info. has changed,
 	// and CanvasViewCache may need to recompute the final view matries.
-	static final int VIEW_INFO_DIRTY = (STEREO_DIRTY | MONOSCOPIC_VIEW_POLICY_DIRTY | EYE_IN_IMAGE_PLATE_DIRTY | MOVED_OR_RESIZED_DIRTY
-			| BACKGROUND_DIRTY | BACKGROUND_IMAGE_DIRTY);
+    static final int VIEW_INFO_DIRTY = (STEREO_DIRTY |
+					MONOSCOPIC_VIEW_POLICY_DIRTY |
+					EYE_IN_IMAGE_PLATE_DIRTY |
+					MOVED_OR_RESIZED_DIRTY |
+					BACKGROUND_DIRTY |
+					BACKGROUND_IMAGE_DIRTY);
 
 	// Issue 163: Array of dirty bits is used because the Renderer and
 	// RenderBin run asynchronously. Now that they each have a separate
@@ -606,7 +609,8 @@ public class Canvas3D //extends Canvas
 	// doesn't exist at the time getBestConfiguration() is called, and
 	// X11GraphicsConfig neither maintains this pointer nor provides a public
 	// constructor to allow Java 3D to extend it.
-	static Hashtable<GraphicsConfiguration, GraphicsConfigInfo> graphicsConfigTable = new Hashtable<GraphicsConfiguration, GraphicsConfigInfo>();
+    static Hashtable<GraphicsConfiguration,GraphicsConfigInfo> graphicsConfigTable =
+            new Hashtable<GraphicsConfiguration,GraphicsConfigInfo>();
 
 	// The native graphics version, vendor, and renderer information
 	String nativeGraphicsVersion = "<UNKNOWN>";
@@ -1016,12 +1020,6 @@ public class Canvas3D //extends Canvas
 			this.glwindow.setTitle("GLWindow Canvas3D");
 		}
 
-		//this.glwindow.setRealized(true);
-		//this.glwindow.getContext();
-
-		//this.glwindow.setAlwaysOnTop(true);
-		//this.glwindow.setFullscreen(true);
-
 		this.offScreen = offScreen;
 
 		if (!offScreen)
@@ -1039,15 +1037,13 @@ public class Canvas3D //extends Canvas
 		// canvas3d implements the AutoOffScreenCanvas3D tagging interface.
 		// Eventually, we may replace this with an actual API.
 		boolean autoOffScreenCanvas3D = false;
-		if (this instanceof AutoOffScreenCanvas3D)
-		{
+		if (this instanceof AutoOffScreenCanvas3D) {
 			autoOffScreenCanvas3D = true;
 		}
 
 		// Throw an illegal argument exception if an on-screen canvas is tagged
 		// as an  auto-off-screen canvas
-		if (autoOffScreenCanvas3D && !offScreen)
-		{
+		if (autoOffScreenCanvas3D && !offScreen) {
 			throw new IllegalArgumentException(J3dI18N.getString("Canvas3D25"));
 		}
 
@@ -1057,8 +1053,7 @@ public class Canvas3D //extends Canvas
 
 		requestedStencilSize = cap.getStencilBits();
 
-		if (offScreen)
-		{
+		if (offScreen) {
 
 			// Issue 131: set manual rendering flag based on whether this is
 			// an auto-off-screen Canvas3D.
@@ -1069,8 +1064,7 @@ public class Canvas3D //extends Canvas
 			// QUESTION: keep a list of off-screen Screen3D objects?
 			// Does this list need to be grouped by GraphicsDevice?
 
-			synchronized (dirtyMaskLock)
-			{
+			synchronized (dirtyMaskLock) {
 				cvDirtyMask[0] |= MOVED_OR_RESIZED_DIRTY;
 				cvDirtyMask[1] |= MOVED_OR_RESIZED_DIRTY;
 			}
@@ -1079,8 +1073,7 @@ public class Canvas3D //extends Canvas
 			// so we need to set the necessary flags here
 			firstPaintCalled = true;
 
-			if (manualRendering)
-			{
+			if (manualRendering) {
 				// since this canvas will not receive the addNotify
 				// callback from AWT, set the added flag here for
 				// evaluateActive to work correctly
@@ -1104,21 +1097,18 @@ public class Canvas3D //extends Canvas
 			// eventCatcher = new EventCatcher(this);
 			// canvasViewEventCatcher = new CanvasViewEventCatcher(this);
 			// }
-		}
-		else
-		{
-			GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
+		} else {
+			GraphicsDevice graphicsDevice;
+			graphicsDevice = graphicsConfiguration.getDevice();
 
 			//		eventCatcher = new EventCatcher(this);
 			//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);
 			canvasViewEventCatcherNewt = new CanvasViewEventCatcherNewt(this);
 
-			synchronized (VirtualUniverse.mc.deviceScreenMap)
-			{
+			synchronized (VirtualUniverse.mc.deviceScreenMap) {
 				screen = VirtualUniverse.mc.deviceScreenMap.get(graphicsDevice);
 
-				if (screen == null)
-				{
+				if (screen == null) {
 					screen = new Screen3D(graphicsConfiguration, offScreen);
 					VirtualUniverse.mc.deviceScreenMap.put(graphicsDevice, screen);
 				}
@@ -1127,13 +1117,13 @@ public class Canvas3D //extends Canvas
 
 		lights = new LightRetained[VirtualUniverse.mc.maxLights];
 		frameCount = new int[VirtualUniverse.mc.maxLights];
-		for (int i = 0; i < frameCount.length; i++)
-		{
+		for (int i=0; i<frameCount.length;i++) {
 			frameCount[i] = -1;
 		}
 
 		// Construct the drawing surface object for this Canvas3D
-		drawingSurfaceObject = Pipeline.getPipeline().createDrawingSurfaceObject(this);
+		drawingSurfaceObject = 
+			Pipeline.getPipeline().createDrawingSurfaceObject(this);
 
 		useSharedCtx = VirtualUniverse.mc.isSharedCtx;
 
@@ -1209,22 +1199,20 @@ public class Canvas3D //extends Canvas
 
 	// Issue 458 - evaluate this Canvas3D's visibility whenever we get a
 	// Window or Component Event that could change it.
-	void evaluateVisiblilty()
-	{
+	void evaluateVisiblilty() {
 		//boolean nowVisible = isRecursivelyVisible() && !isIconified();
+		
+		//TODO:!! why am I calling isVisible but not using the return value?
 		boolean nowVisible = false;
 		if (this.glwindow != null)
 			this.glwindow.isVisible();
 
 		// Only need to reevaluate and repaint if visibility has changed
-		if (this.visible != nowVisible)
-		{
+		if (this.visible != nowVisible) {
 			this.visible = nowVisible;
 			evaluateActive();
-			if (nowVisible)
-			{
-				if (view != null)
-				{
+			if (nowVisible) {
+				if (view != null) {
 					view.repaint();
 				}
 			}
@@ -1234,10 +1222,8 @@ public class Canvas3D //extends Canvas
 	/**
 	 * This version looks for the view and notifies it.
 	 */
-	void redraw()
-	{
-		if ((view != null) && active && isRunning)
-		{
+	void redraw() {
+		if ((view != null) && active && isRunning) {
 			view.repaint();
 		}
 	}
@@ -1252,24 +1238,19 @@ public class Canvas3D //extends Canvas
 	//@Override
 	public void paintALike()
 	{
-		if (!firstPaintCalled && added && validCanvas && validGraphicsMode())
-		{
-			//try
-			{
-				newSize = getSize();
-				newPosition = new Point(getLocationOnScreen().x, getLocationOnScreen().y);
+		if (!firstPaintCalled && added && validCanvas &&
+		 validGraphicsMode()) {
+		//try {
+		newSize = getSize();
+		newPosition = new Point(getLocationOnScreen().x, getLocationOnScreen().y);			
+		//} catch (IllegalComponentStateException e) { 
+		//return;
+		//}
+			
+			if (this.glwindow != null)
+				this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
 
-				if (this.glwindow != null)
-					this.glwindow.setSize(this.glwindow.getWidth(), this.glwindow.getHeight());
-
-			}
-			//catch (IllegalComponentStateException e)
-			{
-				//	return;
-			}
-
-			synchronized (drawingSurfaceObject)
-			{
+			synchronized (drawingSurfaceObject) {
 				drawingSurfaceObject.getDrawingSurfaceObjectInfo();
 			}
 
@@ -1341,11 +1322,9 @@ public class Canvas3D //extends Canvas
 	 * to function properly.
 	 */
 	//@Override
-	public void addNotify()
-	{
+	public void addNotify() {
 		// Return immediately if addNotify called twice with no removeNotify
-		if (addNotifyCalled)
-		{
+		if (addNotifyCalled) {
 			return;
 		}
 		addNotifyCalled = true;
@@ -1355,8 +1334,7 @@ public class Canvas3D //extends Canvas
 		// Issue 131: This method is now being called by JCanvas3D for its
 		// off-screen Canvas3D, so we need to handle off-screen properly here.
 		// Do nothing for manually-rendered off-screen canvases
-		if (manualRendering)
-		{
+		if (manualRendering) {
 			return;
 		}
 
@@ -1368,17 +1346,14 @@ public class Canvas3D //extends Canvas
 
 		Renderer rdr = null;
 
-		if (isRunning && (screen != null))
-		{
+		if (isRunning && (screen != null)) {
 			// If there is other Canvas3D in the same screen
 			// rendering, stop it before JDK create new Canvas
 
 			rdr = screen.renderer;
-			if (rdr != null)
-			{
+			if (rdr != null) {
 				VirtualUniverse.mc.postRequest(MasterControl.STOP_RENDERER, rdr);
-				while (!rdr.userStop)
-				{
+				while (!rdr.userStop) {
 					MasterControl.threadYield();
 				}
 			}
@@ -1387,44 +1362,39 @@ public class Canvas3D //extends Canvas
 		
 
 		// Issue 131: Don't call super for off-screen Canvas3D
-		if (!offScreen)
-		{
+		if (!offScreen) {
 			//super.addNotify();
 		}
 		screen.addUser(this);
 
 		// Issue 458 - Add the eventCatcher as a component listener for each
 		// parent container in the window hierarchy
-		//		assert containerParentList.isEmpty();
+		/*		assert containerParentList.isEmpty();
 
-		//		windowParent = null;
-		//Container container = this.getParent();
-		//while (container != null)
-		{
-			//	if (container instanceof Window)
-			{
-				//		windowParent = (Window) container;
+		windowParent = null;
+		Container container = this.getParent();
+		while (container != null) {
+			if (container instanceof Window) {
+				windowParent = (Window) container;
 			}
-			//			container.addComponentListener(eventCatcher);
-			//			container.addComponentListener(canvasViewEventCatcher);
-			//	containerParentList.add(container);
-			//	container = container.getParent();
+			container.addComponentListener(eventCatcher);
+			container.addComponentListener(canvasViewEventCatcher);
+			containerParentList.add(container);
+			container = container.getParent();
 		}
 
-		//		this.addComponentListener(eventCatcher);
-		//		this.addComponentListener(canvasViewEventCatcher);
-		if (this.glwindow != null)
-		{
+		this.addComponentListener(eventCatcher);
+		this.addComponentListener(canvasViewEventCatcher);		
+
+		if (windowParent != null) {
+			windowParent.addWindowListener(eventCatcher);
+		}*/
+		
+		if (this.glwindow != null) {
 			this.glwindow.addWindowListener(canvasViewEventCatcherNewt);
 		}
 
-		//	if (windowParent != null)
-		{
-			//			windowParent.addWindowListener(eventCatcher);
-		}
-
-		synchronized (dirtyMaskLock)
-		{
+		synchronized (dirtyMaskLock) {
 			cvDirtyMask[0] |= MOVED_OR_RESIZED_DIRTY;
 			cvDirtyMask[1] |= MOVED_OR_RESIZED_DIRTY;
 		}
@@ -1437,8 +1407,7 @@ public class Canvas3D //extends Canvas
 		// Since we won't get a paint call for off-screen canvases, we need
 		// to set the first paint and visible flags here. We also need to
 		// call evaluateActive for the same reason.
-		if (offScreen)
-		{
+		if (offScreen) {
 			firstPaintCalled = true;
 			visible = true;
 			evaluateActive();
@@ -1446,14 +1415,12 @@ public class Canvas3D //extends Canvas
 
 		// In case the same canvas is removed and add back,
 		// we have to change isRunningStatus back to true;
-		if (isRunning && !fatalError)
-		{
+		if (isRunning && !fatalError) {
 			isRunningStatus = true;
 		}
 
 		ctxTimeStamp = 0;
-		if ((view != null) && (view.universe != null))
-		{
+		if ((view != null) && (view.universe != null)) {
 			view.universe.checkForEnableEvents();
 		}
 
@@ -1499,15 +1466,13 @@ public class Canvas3D //extends Canvas
 		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
 		useStereo = stereoEnable && stereoAvailable;
 
-		if (rdr != null)
-		{
+		if (rdr != null) {
 			// Issue 84: Send a message to MC to restart renderer
 			// Note that this also obviates the need for the earlier fix to
 			// issue 131 which called redraw() for auto-off-screen Canvas3Ds
 			// (and this is a more robust fix)
 			VirtualUniverse.mc.postRequest(MasterControl.START_RENDERER, rdr);
-			while (rdr.userStop)
-			{
+			while (rdr.userStop) {
 				MasterControl.threadYield();
 			}
 		}
@@ -1523,34 +1488,28 @@ public class Canvas3D //extends Canvas
 	 * method for Java 3D to function properly.
 	 */
 	//@Override
-	public void removeNotify()
-	{
+	public void removeNotify() {
 		// Return immediately if addNotify not called first
-		if (!addNotifyCalled)
-		{
+		if (!addNotifyCalled) {
 			return;
 		}
 		addNotifyCalled = false;
 
 		// Do nothing for manually-rendered off-screen canvases
-		if (manualRendering)
-		{
+		if (manualRendering) {
 			return;
 		}
 
 		Renderer rdr = null;
 
-		if (isRunning && (screen != null))
-		{
+		if (isRunning && (screen != null)) {
 			// If there is other Canvas3D in the same screen
 			// rendering, stop it before JDK create new Canvas
 
 			rdr = screen.renderer;
-			if (rdr != null)
-			{
+			if (rdr != null) {
 				VirtualUniverse.mc.postRequest(MasterControl.STOP_RENDERER, rdr);
-				while (!rdr.userStop)
-				{
+				while (!rdr.userStop) {
 					MasterControl.threadYield();
 				}
 			}
@@ -1564,17 +1523,15 @@ public class Canvas3D //extends Canvas
 		// block waiting until all resources is free before
 		// continue
 
-		synchronized (drawingSurfaceObject)
-		{
+		synchronized (drawingSurfaceObject) {
 			validCtx = false;
 			validCanvas = false;
 		}
 
-		// note the context shouldn't be destoryed if we don't own it by the static noDestroyContext 
+		// note the context shouldn't be destroyed if we don't own it by the static noDestroyContext 
 		removeCtx();
-		// this is a no op of joglepipeline anyway
-		Pipeline.getPipeline().freeDrawingSurface(this, drawingSurfaceObject);
-		
+		// this is a no op of joglepipeline anyway		
+        Pipeline.getPipeline().freeDrawingSurface(this, drawingSurfaceObject);
 
 		// Clear first paint and visible flags
 		firstPaintCalled = false;
@@ -1596,36 +1553,31 @@ public class Canvas3D //extends Canvas
 		//super.removeNotify();
 
 		// Release and clear.
-		//		for (Container container : containerParentList)
-		{
-			//			container.removeComponentListener(eventCatcher);
-			//			container.removeComponentListener(canvasViewEventCatcher);
+		/*	for (Container container : containerParentList) {
+			container.removeComponentListener(eventCatcher);
+			container.removeComponentListener(canvasViewEventCatcher);
 		}
-		//		containerParentList.clear();
-		//		this.removeComponentListener(eventCatcher);
-		//		this.removeComponentListener(canvasViewEventCatcher);
+		containerParentList.clear();
+		this.removeComponentListener(eventCatcher);
+		this.removeComponentListener(canvasViewEventCatcher);*/
 		if (this.glwindow != null)
 		{
 			this.glwindow.removeWindowListener(canvasViewEventCatcherNewt);
 		}
 
-		/*		if (eventCatcher != null)
-				{
-					this.removeFocusListener(eventCatcher);
-					this.removeKeyListener(eventCatcher);
-					this.removeMouseListener(eventCatcher);
-					this.removeMouseMotionListener(eventCatcher);
-					this.removeMouseWheelListener(eventCatcher);
-					eventCatcher.reset();
-				}*/
-
-		//		if (windowParent != null)
-		{
-			//			windowParent.removeWindowListener(eventCatcher);
-			//windowParent.requestFocus();
+		/*		if (eventCatcher != null) {
+			this.removeFocusListener(eventCatcher);
+			this.removeKeyListener(eventCatcher);
+			this.removeMouseListener(eventCatcher);
+			this.removeMouseMotionListener(eventCatcher);
+			this.removeMouseWheelListener(eventCatcher);
+			eventCatcher.reset();
 		}
 
-		added = false;
+		if (windowParent != null) {
+			windowParent.removeWindowListener(eventCatcher);
+			windowParent.requestFocus();
+		}*/
 		
 		// if we own the window set visible false now at the very end
 		if (this.glwindow != null && autoCreateGlwindow && this.glwindow.isVisible())
@@ -1633,13 +1585,12 @@ public class Canvas3D //extends Canvas
 			this.glwindow.setVisible(false);
 		}
 				
+        added = false;
 
-		if (rdr != null)
-		{
+		if (rdr != null) {
 			// Issue 84: Send a message to MC to restart renderer
 			VirtualUniverse.mc.postRequest(MasterControl.START_RENDERER, rdr);
-			while (rdr.userStop)
-			{
+			while (rdr.userStop) {
 				MasterControl.threadYield();
 			}
 		}
@@ -1647,25 +1598,18 @@ public class Canvas3D //extends Canvas
 		// Fix for issue 102 removing strong reference and avoiding memory leak
 		// due retention of parent container
 		//		this.windowParent = null;
-
-		
-		
 	}
 
-	void allocateCanvasId()
-	{
-		if (!canvasIdAlloc)
-		{
+    void allocateCanvasId() {
+        if (!canvasIdAlloc) {
 			canvasId = VirtualUniverse.mc.getCanvasId();
 			canvasBit = 1 << canvasId;
 			canvasIdAlloc = true;
 		}
 	}
 
-	void freeCanvasId()
-	{
-		if (canvasIdAlloc)
-		{
+    void freeCanvasId() {
+        if (canvasIdAlloc) {
 			VirtualUniverse.mc.freeCanvasId(canvasId);
 			canvasBit = 0;
 			canvasId = 0;
@@ -1674,9 +1618,7 @@ public class Canvas3D //extends Canvas
 	}
 
 	// This decides if the canvas is active
-	void evaluateActive()
-	{
-
+    void evaluateActive() {
 		// Note that no need to check for isRunning, we want
 		// view register in order to create scheduler in pure immedite mode
 		// Also we can't use this as lock, otherwise there is a
@@ -1684,55 +1626,41 @@ public class Canvas3D //extends Canvas
 		// get a lock of this component. But Container
 		// remove will get a lock of this component follows by evaluateActive.
 
-		synchronized (evaluateLock)
-		{
-			if ((visible || manualRendering) && firstPaintCalled)
-			{
+	synchronized (evaluateLock) {
+	    if ((visible || manualRendering) && firstPaintCalled) {
 
-				if (!active)
-				{
+		if (!active) {
 					active = true;
-					if (pendingView != null)
-					{
+		    if (pendingView != null) {
+						pendingView.evaluateActive();
+					}
+		} else {
+		    if ((pendingView != null) &&
+			!pendingView.activeStatus) {
 						pendingView.evaluateActive();
 					}
 				}
-				else
-				{
-					if ((pendingView != null) && !pendingView.activeStatus)
-					{
-						pendingView.evaluateActive();
-					}
-				}
-			}
-			else
-			{
-				if (active)
-				{
+	    } else {
+		if (active) {
 					active = false;
-					if (view != null)
-					{
+		    if (view != null) {
 						view.evaluateActive();
 					}
 				}
 			}
 		}
 
-		if ((view != null) && (!active))
-		{
+	if ((view != null) && (!active)) {
 			VirtualUniverse u = view.universe;
-			if ((u != null) && !u.isSceneGraphLock)
-			{
+	    if ((u != null) && !u.isSceneGraphLock) {
 				u.waitForMC();
 			}
 		}
 	}
 
-	void setFrustumPlanes(Vector4d[] planes)
-	{
+    void setFrustumPlanes(Vector4d[] planes) {
 
-		if (VirtualUniverse.mc.viewFrustumCulling)
-		{
+	if(VirtualUniverse.mc.viewFrustumCulling) {
 			/* System.err.println("Canvas3D.setFrustumPlanes()"); */
 			viewFrustum.set(planes);
 		}
@@ -1744,8 +1672,7 @@ public class Canvas3D //extends Canvas
 	 * is created corresponding to the off-screen buffer.
 	 * @return the 3D screen object that this Canvas3D is attached to
 	 */
-	public Screen3D getScreen3D()
-	{
+    public Screen3D getScreen3D() {
 		return screen;
 	}
 
@@ -1756,10 +1683,9 @@ public class Canvas3D //extends Canvas
 	 * @return a GraphicsContext3D object that can be used for immediate
 	 * mode rendering to this Canvas3D.
 	 */
-	public GraphicsContext3D getGraphicsContext3D()
-	{
-		synchronized (gfxCreationLock)
-		{
+    public GraphicsContext3D getGraphicsContext3D() {
+
+	synchronized(gfxCreationLock) {
 			if (graphicsContext3D == null)
 				graphicsContext3D = new GraphicsContext3D(this);
 		}
@@ -1778,11 +1704,8 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-
-	public J3DGraphics2D getGraphics2D()
-	{
-		synchronized (gfxCreationLock)
-		{
+    public J3DGraphics2D getGraphics2D() {
+	synchronized(gfxCreationLock) {
 			if (graphics2D == null)
 				graphics2D = new J3DGraphics2DImpl(this);
 		}
@@ -1803,8 +1726,7 @@ public class Canvas3D //extends Canvas
 	 * <p>
 	 * NOTE: Applications should <i>not</i> call this method.
 	 */
-	public void preRender()
-	{
+    public void preRender() {
 		// Do nothing; the user overrides this to cause some action
 		if (JoglesPipeline.VERBOSE)
 			System.err.println("Canvas3D.preRender()");
@@ -1823,8 +1745,7 @@ public class Canvas3D //extends Canvas
 	 * <p>
 	 * NOTE: Applications should <i>not</i> call this method.
 	 */
-	public void postRender()
-	{
+    public void postRender() {
 		// Do nothing; the user overrides this to cause some action
 		if (JoglesPipeline.VERBOSE)
 			System.err.println("Canvas3D.postRender()");
@@ -1846,8 +1767,7 @@ public class Canvas3D //extends Canvas
 	 * <p>
 	 * NOTE: Applications should <i>not</i> call this method.
 	 */
-	public void postSwap()
-	{
+    public void postSwap() {
 		// Do nothing; the user overrides this to cause some action
 		if (JoglesPipeline.VERBOSE)
 			System.err.println("Canvas3D.postSwap()");
@@ -1878,8 +1798,7 @@ public class Canvas3D //extends Canvas
 	 * If Java 3D calls the renderer with FIELD_ALL then the immediate mode
 	 * rendering only needs to be done once.
 	 */
-	public void renderField(int fieldDesc)
-	{
+    public void renderField(int fieldDesc) {
 		// Do nothing; the user overrides this to cause some action
 		if (JoglesPipeline.VERBOSE)
 			System.err.println("Canvas3D.renderField()");
@@ -1896,15 +1815,13 @@ public class Canvas3D //extends Canvas
 	 * @exception IllegalStateException if this Canvas3D is in
 	 * off-screen mode.
 	 */
-	public final void stopRenderer()
-	{
+    public final void stopRenderer() {
 		// Issue 131: renderer can't be stopped only if it is an offscreen,
 		// manual canvas. Otherwise, it has to be seen as an onscreen canvas.
 		if (manualRendering)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D14"));
 
-		if (isRunning)
-		{
+	if (isRunning) {
 			VirtualUniverse.mc.postRequest(MasterControl.STOP_RENDERER, this);
 			isRunning = false;
 		}
@@ -1919,16 +1836,13 @@ public class Canvas3D //extends Canvas
 	 * Canvas3D is added to an active View object, the rendering loop will
 	 * render the scene graph to the canvas.
 	 */
-	public final void startRenderer()
-	{
+    public final void startRenderer() {
 		// Issue 260 : ignore attempt to start renderer if fatal error
-		if (fatalError)
-		{
+        if (fatalError) {
 			return;
 		}
 
-		if (!isRunning)
-		{
+	if (!isRunning) {
 			VirtualUniverse.mc.postRequest(MasterControl.START_RENDERER, this);
 			isRunning = true;
 			redraw();
@@ -1941,28 +1855,23 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public final boolean isRendererRunning()
-	{
+    public final boolean isRendererRunning() {
 		return isRunning;
 	}
 
 	// Returns the state of the fatal error flag
-	boolean isFatalError()
-	{
+    boolean isFatalError() {
 		return fatalError;
 	}
 
 	// Sets the fatal error flag to true; stop the renderer for this canvas
-	void setFatalError()
-	{
+    void setFatalError() {
 		fatalError = true;
 
-		if (isRunning)
-		{
+	if (isRunning) {
 			isRunning = false;
 
-			if (!manualRendering)
-			{
+            if (!manualRendering) {
 				VirtualUniverse.mc.postRequest(MasterControl.STOP_RENDERER, this);
 			}
 		}
@@ -1977,8 +1886,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public boolean isOffScreen()
-	{
+    public boolean isOffScreen() {
 		return offScreen;
 	}
 
@@ -2033,8 +1941,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void setOffScreenBuffer(ImageComponent2D buffer)
-	{
+    public void setOffScreenBuffer(ImageComponent2D buffer) {
 		int width, height;
 		boolean freeCanvasId = false;
 
@@ -2047,39 +1954,35 @@ public class Canvas3D //extends Canvas
 		// Check that offScreenBufferPending is not already set
 		J3dDebug.doAssert(!offScreenBufferPending, "!offScreenBufferPending");
 
-		if (offScreenBuffer != null && offScreenBuffer != buffer)
-		{
-			ImageComponent2DRetained i2dRetained = (ImageComponent2DRetained) offScreenBuffer.retained;
+        if (offScreenBuffer != null && offScreenBuffer != buffer) {
+            ImageComponent2DRetained i2dRetained =
+                    (ImageComponent2DRetained)offScreenBuffer.retained;
 			i2dRetained.setUsedByOffScreen(false);
 		}
 
-		if (buffer != null)
-		{
-			ImageComponent2DRetained bufferRetained = (ImageComponent2DRetained) buffer.retained;
+	if (buffer != null) {
+	    ImageComponent2DRetained bufferRetained =
+		(ImageComponent2DRetained)buffer.retained;
 
-			if (bufferRetained.byReference && !(bufferRetained.getRefImage(0) instanceof BufferedImage))
-			{
+	    if (bufferRetained.byReference &&
+		!(bufferRetained.getRefImage(0) instanceof BufferedImage)) {
 
 				throw new IllegalArgumentException(J3dI18N.getString("Canvas3D15"));
 			}
 
-			if (bufferRetained.getNumberOfComponents() < 3)
-			{
+	    if (bufferRetained.getNumberOfComponents() < 3 ) {
 				throw new IllegalArgumentException(J3dI18N.getString("Canvas3D16"));
 			}
 
-			if (buffer.isLive())
-			{
+            if (buffer.isLive()) {
 				throw new IllegalSharingException(J3dI18N.getString("Canvas3D26"));
 			}
 
-			if (bufferRetained.getInImmCtx())
-			{
+            if (bufferRetained.getInImmCtx()) {
 				throw new IllegalSharingException(J3dI18N.getString("Canvas3D27"));
 			}
 
-			if (buffer != offScreenBuffer && bufferRetained.getUsedByOffScreen())
-			{
+            if (buffer != offScreenBuffer && bufferRetained.getUsedByOffScreen()) {
 				throw new IllegalSharingException(J3dI18N.getString("Canvas3D28"));
 			}
 
@@ -2089,29 +1992,26 @@ public class Canvas3D //extends Canvas
 			height = bufferRetained.height;
 
 			// Issues 347, 348 - assign a canvasId for off-screen Canvas3D
-			if (manualRendering)
-			{
+            if (manualRendering) {
 				sendAllocateCanvasId();
 			}
 		}
-		else
-		{
+	else {
 			width = height = 0;
 
 			// Issues 347, 348 - release canvasId for off-screen Canvas3D
-			if (manualRendering)
-			{
+            if (manualRendering) {
 				freeCanvasId = true;
 			}
 		}
 
 		// PJ we MUST recreate the drawable when a new offscreen buffer is requested, as the previous is 
 		// already realized and will fail on a createNewContext call
-		//if ((offScreenCanvasSize.width != width) || (offScreenCanvasSize.height != height)) 
+		//if ((offScreenCanvasSize.width != width) ||
+		// (offScreenCanvasSize.height != height)) 
 		{
 
-			if (drawable != null)
-			{
+	    if (drawable != null) {
 				// Fix for Issue 18 and Issue 175
 				// Will do destroyOffScreenBuffer in the Renderer thread.
 				sendDestroyCtxAndOffScreenBuffer();
@@ -2125,26 +2025,22 @@ public class Canvas3D //extends Canvas
 
 			this.setSize(offScreenCanvasSize);
 
-			if (width > 0 && height > 0)
-			{
+	    if (width > 0 && height > 0) {
 				sendCreateOffScreenBuffer();
 			}
 
 		}
-		// else if (ctx != null)
-		// {
+		// else if (ctx != null)  {
 		//	removeCtx();
 		// }
 
-		if (freeCanvasId)
-		{
+        if (freeCanvasId) {
 			sendFreeCanvasId();
 		}
 
 		offScreenBuffer = buffer;
 
-		synchronized (dirtyMaskLock)
-		{
+        synchronized(dirtyMaskLock) {
 			cvDirtyMask[0] |= MOVED_OR_RESIZED_DIRTY;
 			cvDirtyMask[1] |= MOVED_OR_RESIZED_DIRTY;
 		}
@@ -2160,8 +2056,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public ImageComponent2D getOffScreenBuffer()
-	{
+    public ImageComponent2D getOffScreenBuffer() {
 
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
@@ -2199,8 +2094,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void renderOffScreenBuffer()
-	{
+    public void renderOffScreenBuffer() {
 
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
@@ -2210,8 +2104,7 @@ public class Canvas3D //extends Canvas
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D24"));
 
 		// Issue 260 : Cannot render if we already have a fatal error
-		if (fatalError)
-		{
+        if (fatalError) {
 			throw new IllegalRenderingStateException(J3dI18N.getString("Canvas3D30"));
 		}
 
@@ -2239,8 +2132,7 @@ public class Canvas3D //extends Canvas
 			throw new RestrictedAccessException(J3dI18N.getString("Canvas3D11"));
 
 		// Fix to issue 66
-		if ((!active) || (pendingView == null))
-		{
+	if ((!active) || (pendingView == null)) {
 			/* No rendering is performed if this Canvas3D object has not been
 			   added to an active View. */
 			return;
@@ -2256,25 +2148,20 @@ public class Canvas3D //extends Canvas
 		   ((view != null) && (view.inCanvasCallback)) */
 
 		boolean inCanvasCallback = false;
-		try
-		{
+	try {
 			inCanvasCallback = view.inCanvasCallback;
 
-		}
-		catch (NullPointerException npe)
-		{
+	} catch (NullPointerException npe) {
 			/* Do nothing here */
 		}
 
-		if (inCanvasCallback)
-		{
+        if (inCanvasCallback) {
 			// Here we assume that view is stable if inCanvasCallback
 			// is true. This assumption is valid among all j3d threads as
 			// all access to view is synchronized by MasterControl.
 			// Issue : user threads access to view isn't synchronize hence
 			// is model will break.
-			if (screen.renderer == null)
-			{
+	    if (screen.renderer == null) {
 
 				// It is possible that screen.renderer = null when this View
 				// is shared by another onScreen Canvas and this callback
@@ -2289,8 +2176,7 @@ public class Canvas3D //extends Canvas
 			// if called from render call back, send a message directly to
 			// the renderer message queue, and call renderer doWork
 			// to do the offscreen rendering now
-			if (Thread.currentThread() == screen.renderer)
-			{
+	    if (Thread.currentThread() == screen.renderer) {
 
 				J3dMessage createMessage = new J3dMessage();
 				createMessage.threads = J3dThread.RENDER_THREAD;
@@ -2313,9 +2199,7 @@ public class Canvas3D //extends Canvas
 				// call renderer doWork directly since we are already in
 				// the renderer thread
 				screen.renderer.doWork(0);
-			}
-			else
-			{
+	    } else {
 
 				// XXXX:
 				// Now we are in trouble, this will cause deadlock if
@@ -2330,9 +2214,7 @@ public class Canvas3D //extends Canvas
 				VirtualUniverse.mc.setWorkForRequestRenderer();
 			}
 
-		}
-		else if (Thread.currentThread() instanceof BehaviorScheduler)
-		{
+        } else if (Thread.currentThread() instanceof BehaviorScheduler) {
 
 			// If called from behavior scheduler, send a message directly to
 			// the renderer message queue.
@@ -2349,9 +2231,7 @@ public class Canvas3D //extends Canvas
 			screen.renderer.rendererStructure.addMessage(createMessage);
 			VirtualUniverse.mc.setWorkForRequestRenderer();
 
-		}
-		else
-		{
+ 	} else {
 			// send a message to renderBin
 			// Fix for issue 66 : Since view might not been set yet,
 			// we have to use pendingView instead.
@@ -2384,21 +2264,17 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void waitForOffScreenRendering()
-	{
+    public void waitForOffScreenRendering() {
 
-		if (!offScreen)
-		{
+        if (!offScreen) {
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
 		}
 
-		if (Thread.currentThread() instanceof Renderer)
-		{
+        if (Thread.currentThread() instanceof Renderer) {
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D31"));
 		}
 
-		while (offScreenRendering)
-		{
+        while (offScreenRendering) {
 			MasterControl.threadYield();
 		}
 	}
@@ -2421,14 +2297,12 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void setOffScreenLocation(int x, int y)
-	{
+    public void setOffScreenLocation(int x, int y) {
 
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
 
-		synchronized (cvLock)
-		{
+	synchronized(cvLock) {
 			offScreenCanvasLoc.setLocation(x, y);
 		}
 	}
@@ -2449,14 +2323,12 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void setOffScreenLocation(Point p)
-	{
+    public void setOffScreenLocation(Point p) {
 
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
 
-		synchronized (cvLock)
-		{
+	synchronized(cvLock) {
 			offScreenCanvasLoc.setLocation(p);
 		}
 	}
@@ -2477,8 +2349,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public Point getOffScreenLocation()
-	{
+    public Point getOffScreenLocation() {
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
 
@@ -2507,8 +2378,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public Point getOffScreenLocation(Point rv)
-	{
+    public Point getOffScreenLocation(Point rv) {
 
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D1"));
@@ -2516,60 +2386,51 @@ public class Canvas3D //extends Canvas
 		if (rv == null)
 			return (new Point(offScreenCanvasLoc));
 
-		else
-		{
+	else {
 			rv.setLocation(offScreenCanvasLoc);
 			return rv;
 		}
 	}
 
-	void endOffScreenRendering()
-	{
+    void endOffScreenRendering() {
 
 		ImageComponent2DRetained icRetained = (ImageComponent2DRetained) offScreenBuffer.retained;
 		boolean isByRef = icRetained.isByReference();
 		ImageComponentRetained.ImageData imageData = icRetained.getImageData(false);
 
-		if (!isByRef)
-		{
+        if(!isByRef) {
 			// If icRetained has a null image ( BufferedImage)
-			if (imageData == null)
-			{
+            if (imageData == null)  {
 				assert (!isByRef);
 				icRetained.createBlankImageData();
 				imageData = icRetained.getImageData(false);
 			}
 			// Check for possible format conversion in imageData
-			else
-			{
+            else {
 				// Format convert imageData if format is unsupported.
 				icRetained.evaluateExtensions(this);
 			}
 			// read the image from the offscreen buffer
-			readOffScreenBuffer(ctx, icRetained.getImageFormatTypeIntValue(false), icRetained.getImageDataTypeIntValue(), imageData.get(),
+            readOffScreenBuffer(ctx, icRetained.getImageFormatTypeIntValue(false),
+                    icRetained.getImageDataTypeIntValue(), imageData.get(),
 					offScreenCanvasSize.width, offScreenCanvasSize.height);
 
-		}
-		else
-		{
+        } else {
 			icRetained.geomLock.getLock();
 			// Create a copy of format converted image in imageData if format is unsupported.
 			icRetained.evaluateExtensions(this);
 
 			// read the image from the offscreen buffer
-			readOffScreenBuffer(ctx, icRetained.getImageFormatTypeIntValue(false), icRetained.getImageDataTypeIntValue(), imageData.get(),
+            readOffScreenBuffer(ctx, icRetained.getImageFormatTypeIntValue(false),
+                    icRetained.getImageDataTypeIntValue(), imageData.get(),
 					offScreenCanvasSize.width, offScreenCanvasSize.height);
 
 			// For byRef, we might have to copy buffer back into
 			// the user's referenced ImageComponent2D
-			if (!imageData.isDataByRef())
-			{
-				if (icRetained.isImageTypeSupported())
-				{
+            if(!imageData.isDataByRef()) {
+                if(icRetained.isImageTypeSupported()) {
 					icRetained.copyToRefImage(0);
-				}
-				else
-				{
+                } else {
 					// This method only handle RGBA conversion.
 					icRetained.copyToRefImageWithFormatConversion(0);
 				}
@@ -2596,48 +2457,36 @@ public class Canvas3D //extends Canvas
 	 * @see GraphicsContext3D#flush
 	 * @see J3DGraphics2D#flush
 	 */
-	public void swap()
-	{
+    public void swap() {
 		if (offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D14"));
 
 		if (isRunning)
 			throw new RestrictedAccessException(J3dI18N.getString("Canvas3D0"));
 
-		if (!firstPaintCalled)
-		{
+	if (!firstPaintCalled) {
 			return;
 		}
 
-		if (view != null && graphicsContext3D != null)
-		{
-			if ((view.universe != null) && (Thread.currentThread() == view.universe.behaviorScheduler))
-			{
+	if (view != null && graphicsContext3D != null) {
+	    if ((view.universe != null) &&
+		(Thread.currentThread() == view.universe.behaviorScheduler)) {
 				graphicsContext3D.sendRenderMessage(false, GraphicsContext3D.SWAP, null, null);
-			}
-			else
-			{
+	    } else {
 				graphicsContext3D.sendRenderMessage(true, GraphicsContext3D.SWAP, null, null);
 			}
 			graphicsContext3D.runMonitor(J3dThread.WAIT);
 		}
 	}
 
-	void doSwap()
-	{
+    void doSwap() {
 
-		if (firstPaintCalled && useDoubleBuffer)
-		{
-			try
-			{
-				if (validCtx && (ctx != null) && (view != null))
-				{
-					synchronized (drawingSurfaceObject)
-					{
-						if (validCtx)
-						{
-							if (!drawingSurfaceObject.renderLock())
-							{
+	if (firstPaintCalled && useDoubleBuffer) {
+	    try {
+		if (validCtx && (ctx != null) && (view != null)) {
+		    synchronized (drawingSurfaceObject) {
+			if (validCtx) {
+			    if (!drawingSurfaceObject.renderLock()) {
 								graphicsContext3D.runMonitor(J3dThread.NOTIFY);
 								return;
 							}
@@ -2647,9 +2496,7 @@ public class Canvas3D //extends Canvas
 						}
 					}
 				}
-			}
-			catch (NullPointerException ne)
-			{
+	    } catch (NullPointerException ne) {
 				drawingSurfaceObject.unLock();
 			}
 		}
@@ -2662,8 +2509,7 @@ public class Canvas3D //extends Canvas
 	/**
 	 * Wrapper for native createNewContext method.
 	 */
-	Context createNewContext(Context shareCtx, boolean isSharedCtx)
-	{
+	Context createNewContext(Context shareCtx, boolean isSharedCtx) {
 
 		Context retVal = null;
 
@@ -2698,31 +2544,24 @@ public class Canvas3D //extends Canvas
 	/**
 	 * Make the context associated with the specified canvas current.
 	 */
-	final void makeCtxCurrent()
-	{
+    final void makeCtxCurrent() {
 		makeCtxCurrent(ctx, drawable);
 	}
 
 	/**
 	 * Make the specified context current.
 	 */
-	final void makeCtxCurrent(Context ctx)
-	{
+    final void makeCtxCurrent(Context ctx) {
 		makeCtxCurrent(ctx, drawable);
 	}
 
-	final void makeCtxCurrent(Context ctx, Drawable drawable)
-	{
-		if (ctx != screen.renderer.currentCtx || drawable != screen.renderer.currentDrawable)
-		{
-			if (!drawingSurfaceObject.isLocked())
-			{
+    final void makeCtxCurrent(Context ctx, Drawable drawable) {
+        if (ctx != screen.renderer.currentCtx || drawable != screen.renderer.currentDrawable) {
+	    if (!drawingSurfaceObject.isLocked()) {
 				drawingSurfaceObject.renderLock();
 				useCtx(ctx, drawable);
 				drawingSurfaceObject.unLock();
-			}
-			else
-			{
+	    } else {
 				useCtx(ctx, drawable);
 			}
 			screen.renderer.currentCtx = ctx;
@@ -2732,22 +2571,17 @@ public class Canvas3D //extends Canvas
 
 	// Give the pipeline a chance to release the context; the Pipeline may
 	// or may not ignore this call.
-	void releaseCtx()
-	{
-		if (screen.renderer.currentCtx != null)
-		{
+    void releaseCtx() {
+        if (screen.renderer.currentCtx != null) {
 			boolean needLock = !drawingSurfaceObject.isLocked();
-			if (needLock)
-			{
+            if (needLock) {
 				drawingSurfaceObject.renderLock();
 			}
-			if (releaseCtx(screen.renderer.currentCtx))
-			{
+            if (releaseCtx(screen.renderer.currentCtx)) {
 				screen.renderer.currentCtx = null;
 				screen.renderer.currentDrawable = null;
 			}
-			if (needLock)
-			{
+            if (needLock) {
 				drawingSurfaceObject.unLock();
 			}
 		}
@@ -2765,12 +2599,10 @@ public class Canvas3D //extends Canvas
 	 * used.
 	 * @param position the new manual left eye position
 	 */
-	public void setLeftManualEyeInImagePlate(Point3d position)
-	{
+    public void setLeftManualEyeInImagePlate(Point3d position) {
 
 		this.leftManualEyeInImagePlate.set(position);
-		synchronized (dirtyMaskLock)
-		{
+	synchronized(dirtyMaskLock) {
 			cvDirtyMask[0] |= EYE_IN_IMAGE_PLATE_DIRTY;
 			cvDirtyMask[1] |= EYE_IN_IMAGE_PLATE_DIRTY;
 		}
@@ -2789,12 +2621,10 @@ public class Canvas3D //extends Canvas
 	 * used.
 	 * @param position the new manual right eye position
 	 */
-	public void setRightManualEyeInImagePlate(Point3d position)
-	{
+    public void setRightManualEyeInImagePlate(Point3d position) {
 
 		this.rightManualEyeInImagePlate.set(position);
-		synchronized (dirtyMaskLock)
-		{
+	synchronized(dirtyMaskLock) {
 			cvDirtyMask[0] |= EYE_IN_IMAGE_PLATE_DIRTY;
 			cvDirtyMask[1] |= EYE_IN_IMAGE_PLATE_DIRTY;
 		}
@@ -2807,8 +2637,7 @@ public class Canvas3D //extends Canvas
 	 * coordinates and copies that value into the object provided.
 	 * @param position the object that will receive the position
 	 */
-	public void getLeftManualEyeInImagePlate(Point3d position)
-	{
+    public void getLeftManualEyeInImagePlate(Point3d position) {
 		position.set(this.leftManualEyeInImagePlate);
 	}
 
@@ -2818,8 +2647,7 @@ public class Canvas3D //extends Canvas
 	 * coordinates and copies that value into the object provided.
 	 * @param position the object that will receive the position
 	 */
-	public void getRightManualEyeInImagePlate(Point3d position)
-	{
+    public void getRightManualEyeInImagePlate(Point3d position) {
 		position.set(this.rightManualEyeInImagePlate);
 	}
 
@@ -2831,17 +2659,13 @@ public class Canvas3D //extends Canvas
 	 * enable flag, and the manual left eye position.
 	 * @param position the object that will receive the position
 	 */
-	public void getLeftEyeInImagePlate(Point3d position)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+    public void getLeftEyeInImagePlate(Point3d position) {
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				position.set(canvasViewCache.getLeftEyeInImagePlate());
 			}
 		}
-		else
-		{
+	else {
 			position.set(leftManualEyeInImagePlate);
 		}
 	}
@@ -2854,17 +2678,13 @@ public class Canvas3D //extends Canvas
 	 * enable flag, and the manual right eye position.
 	 * @param position the object that will receive the position
 	 */
-	public void getRightEyeInImagePlate(Point3d position)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+    public void getRightEyeInImagePlate(Point3d position) {
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				position.set(canvasViewCache.getRightEyeInImagePlate());
 			}
 		}
-		else
-		{
+	else {
 			position.set(rightManualEyeInImagePlate);
 		}
 	}
@@ -2881,17 +2701,13 @@ public class Canvas3D //extends Canvas
 	 * @see #setMonoscopicViewPolicy
 	 */
 	// XXXX: This might not make sense for field-sequential HMD.
-	public void getCenterEyeInImagePlate(Point3d position)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+    public void getCenterEyeInImagePlate(Point3d position) {
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				position.set(canvasViewCache.getCenterEyeInImagePlate());
 			}
 		}
-		else
-		{
+	else {
 			Point3d cenEye = new Point3d();
 			cenEye.add(leftManualEyeInImagePlate, rightManualEyeInImagePlate);
 			cenEye.scale(0.5);
@@ -2906,17 +2722,13 @@ public class Canvas3D //extends Canvas
 	 * transform
 	 */
 	// TODO: Document -- This will return the transform of left plate.
-	public void getImagePlateToVworld(Transform3D t)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+    public void getImagePlateToVworld(Transform3D t) {
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				t.set(canvasViewCache.getImagePlateToVworld());
 			}
 		}
-		else
-		{
+	else {
 			t.setIdentity();
 		}
 	}
@@ -2934,35 +2746,31 @@ public class Canvas3D //extends Canvas
 	 * corner of the screen).
 	 */
 	// TODO: Document -- This transform the pixel location to the left image plate.
-	public void getPixelLocationInImagePlate(int x, int y, Point3d imagePlatePoint)
-	{
+    public void getPixelLocationInImagePlate(int x, int y,
+					     Point3d imagePlatePoint) {
 
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
-				imagePlatePoint.x = canvasViewCache.getWindowXInImagePlate((double) x);
-				imagePlatePoint.y = canvasViewCache.getWindowYInImagePlate((double) y);
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
+		imagePlatePoint.x =
+		    canvasViewCache.getWindowXInImagePlate((double)x);
+		imagePlatePoint.y =
+		    canvasViewCache.getWindowYInImagePlate((double)y);
 				imagePlatePoint.z = 0.0;
 			}
-		}
-		else
-		{
+	} else {
 			imagePlatePoint.set(0.0, 0.0, 0.0);
 		}
 	}
 
-	void getPixelLocationInImagePlate(double x, double y, double z, Point3d imagePlatePoint)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
-				canvasViewCache.getPixelLocationInImagePlate(x, y, z, imagePlatePoint);
-			}
+
+     void getPixelLocationInImagePlate(double x, double y, double z,
+				       Point3d imagePlatePoint) {
+	 if (canvasViewCache != null) {
+	     synchronized(canvasViewCache) {
+		 canvasViewCache.getPixelLocationInImagePlate(
+                                       x, y, z, imagePlatePoint);
 		}
-		else
-		{
+	 } else {
 			imagePlatePoint.set(0.0, 0.0, 0.0);
 		}
 	}
@@ -2980,20 +2788,19 @@ public class Canvas3D //extends Canvas
 	 * @since Java 3D 1.2
 	 */
 	// TODO: Document -- This transform the pixel location to the left image plate.
-	public void getPixelLocationInImagePlate(Point2d pixelLocation, Point3d imagePlatePoint)
-	{
+    public void getPixelLocationInImagePlate(Point2d pixelLocation,
+						   Point3d imagePlatePoint) {
 
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
-				imagePlatePoint.x = canvasViewCache.getWindowXInImagePlate(pixelLocation.x);
-				imagePlatePoint.y = canvasViewCache.getWindowYInImagePlate(pixelLocation.y);
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
+		imagePlatePoint.x =
+		    canvasViewCache.getWindowXInImagePlate(pixelLocation.x);
+		imagePlatePoint.y =
+		    canvasViewCache.getWindowYInImagePlate(pixelLocation.y);
 				imagePlatePoint.z = 0.0;
 			}
 		}
-		else
-		{
+	else {
 			imagePlatePoint.set(0.0, 0.0, 0.0);
 		}
 	}
@@ -3011,17 +2818,15 @@ public class Canvas3D //extends Canvas
 	 * @since Java 3D 1.2
 	 */
 	// TODO: Document -- This transform the pixel location from the left image plate.
-	public void getPixelLocationFromImagePlate(Point3d imagePlatePoint, Point2d pixelLocation)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
-				canvasViewCache.getPixelLocationFromImagePlate(imagePlatePoint, pixelLocation);
+    public void getPixelLocationFromImagePlate(Point3d imagePlatePoint,
+					       Point2d pixelLocation) {
+ 	if (canvasViewCache != null) {
+ 	    synchronized(canvasViewCache) {
+		canvasViewCache.getPixelLocationFromImagePlate(
+                           imagePlatePoint, pixelLocation);
 			}
 		}
-		else
-		{
+ 	else {
 			pixelLocation.set(0.0, 0.0);
 		}
 	}
@@ -3044,32 +2849,30 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.3
 	 */
-	public void getVworldProjection(Transform3D leftProjection, Transform3D rightProjection)
-	{
-		if (canvasViewCache != null)
-		{
-			ViewPlatformRetained viewPlatformRetained = (ViewPlatformRetained) view.getViewPlatform().retained;
+    public void getVworldProjection(Transform3D leftProjection,
+				    Transform3D rightProjection) {
+        if (canvasViewCache != null) {
+            ViewPlatformRetained viewPlatformRetained =
+               (ViewPlatformRetained)view.getViewPlatform().retained;
 
-			synchronized (canvasViewCache)
-			{
-				leftProjection.mul(canvasViewCache.getLeftProjection(), canvasViewCache.getLeftVpcToEc());
+	    synchronized(canvasViewCache) {
+                leftProjection.mul(canvasViewCache.getLeftProjection(),
+                        canvasViewCache.getLeftVpcToEc());
 				leftProjection.mul(viewPlatformRetained.getVworldToVpc());
 
 				// caluclate right eye if in stereo, otherwise
 				// this is the same as the left eye.
-				if (useStereo)
-				{
-					rightProjection.mul(canvasViewCache.getRightProjection(), canvasViewCache.getRightVpcToEc());
+                if (useStereo) {
+                    rightProjection.mul(canvasViewCache.getRightProjection(),
+                            canvasViewCache.getRightVpcToEc());
 					rightProjection.mul(viewPlatformRetained.getVworldToVpc());
 				}
-				else
-				{
+                else {
 					rightProjection.set(leftProjection);
 				}
 			}
 		}
-		else
-		{
+        else {
 			leftProjection.setIdentity();
 			rightProjection.setIdentity();
 		}
@@ -3094,29 +2897,26 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.3
 	 */
-	public void getInverseVworldProjection(Transform3D leftInverseProjection, Transform3D rightInverseProjection)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
-				leftInverseProjection.set(canvasViewCache.getLeftCcToVworld());
+    public void getInverseVworldProjection(Transform3D leftInverseProjection,
+					   Transform3D rightInverseProjection) {
+        if (canvasViewCache != null) {
+            synchronized(canvasViewCache) {
+                  leftInverseProjection.set(
+                    canvasViewCache.getLeftCcToVworld());
 
 				// caluclate right eye if in stereo, otherwise
 				// this is the same as the left eye.
-				if (useStereo)
-				{
-					rightInverseProjection.set(canvasViewCache.getRightCcToVworld());
+                if (useStereo) {
+                  rightInverseProjection.set(
+                    canvasViewCache.getRightCcToVworld());
 				}
-				else
-				{
+                else {
 					rightInverseProjection.set(leftInverseProjection);
 				}
 			}
 
 		}
-		else
-		{
+        else {
 			leftInverseProjection.setIdentity();
 			rightInverseProjection.setIdentity();
 		}
@@ -3126,14 +2926,11 @@ public class Canvas3D //extends Canvas
 	 * Retrieves the physical width of this canvas window in meters.
 	 * @return the physical window width in meters.
 	 */
-	public double getPhysicalWidth()
-	{
+    public double getPhysicalWidth() {
 		double width = 0.0;
 
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				width = canvasViewCache.getPhysicalWindowWidth();
 			}
 		}
@@ -3145,14 +2942,11 @@ public class Canvas3D //extends Canvas
 	 * Retrieves the physical height of this canvas window in meters.
 	 * @return the physical window height in meters.
 	 */
-	public double getPhysicalHeight()
-	{
+    public double getPhysicalHeight() {
 		double height = 0.0;
 
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				height = canvasViewCache.getPhysicalWindowHeight();
 			}
 		}
@@ -3167,32 +2961,24 @@ public class Canvas3D //extends Canvas
 	 * transform
 	 */
 	// TODO: Document -- This will return the transform of left plate.
-	public void getVworldToImagePlate(Transform3D t)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+    public void getVworldToImagePlate(Transform3D t) {
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				t.set(canvasViewCache.getVworldToImagePlate());
 			}
 		}
-		else
-		{
+	else {
 			t.setIdentity();
 		}
 	}
 
-	void getLastVworldToImagePlate(Transform3D t)
-	{
-		if (canvasViewCache != null)
-		{
-			synchronized (canvasViewCache)
-			{
+     void getLastVworldToImagePlate(Transform3D t) {
+	if (canvasViewCache != null) {
+	    synchronized(canvasViewCache) {
 				t.set(canvasViewCache.getLastVworldToImagePlate());
 			}
 		}
-		else
-		{
+	else {
 			t.setIdentity();
 		}
 	}
@@ -3201,8 +2987,7 @@ public class Canvas3D //extends Canvas
 	 * Sets view that points to this Canvas3D.
 	 * @param view view object that points to this Canvas3D
 	 */
-	void setView(View view)
-	{
+    void setView(View view) {
 		pendingView = view;
 
 		// We can't set View directly here in user thread since
@@ -3214,24 +2999,22 @@ public class Canvas3D //extends Canvas
 		evaluateActive();
 	}
 
-	void computeViewCache()
-	{
-		synchronized (cvLock)
-		{
-			if (view == null)
-			{
+    void computeViewCache() {
+	synchronized(cvLock) {
+	    if (view == null) {
 				canvasViewCache = null;
 				canvasViewCacheFrustum = null;
-			}
-			else
-			{
+	    } else {
 
-				canvasViewCache = new CanvasViewCache(this, screen.screenViewCache, view.viewCache);
+		canvasViewCache = new CanvasViewCache(this,
+						      screen.screenViewCache,
+                                                      view.viewCache);
 				// Issue 109 : construct a separate canvasViewCache for
 				// computing view frustum
-				canvasViewCacheFrustum = new CanvasViewCache(this, screen.screenViewCache, view.viewCache);
-				synchronized (dirtyMaskLock)
-				{
+		canvasViewCacheFrustum = new CanvasViewCache(this,
+						      screen.screenViewCache,
+                                                      view.viewCache);
+		synchronized (dirtyMaskLock) {
 					cvDirtyMask[0] = VIEW_INFO_DIRTY;
 					cvDirtyMask[1] = VIEW_INFO_DIRTY;
 				}
@@ -3243,8 +3026,7 @@ public class Canvas3D //extends Canvas
 	 * Gets view that points to this Canvas3D.
 	 * @return view object that points to this Canvas3D
 	 */
-	public View getView()
-	{
+    public View getView() {
 		return pendingView;
 	}
 
@@ -3262,9 +3044,9 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @return a flag indicating whether stereo is available
 	 */
-	public boolean getStereoAvailable()
-	{
-		return ((Boolean) queryProperties().get("stereoAvailable")).booleanValue();
+    public boolean getStereoAvailable() {
+	return ((Boolean)queryProperties().get("stereoAvailable")).
+	    booleanValue();
 	}
 
 	/**
@@ -3275,12 +3057,10 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @see #queryProperties
 	 */
-	public void setStereoEnable(boolean flag)
-	{
+    public void setStereoEnable(boolean flag) {
 		stereoEnable = flag;
 		useStereo = stereoEnable && stereoAvailable;
-		synchronized (dirtyMaskLock)
-		{
+	synchronized(dirtyMaskLock) {
 			cvDirtyMask[0] |= STEREO_DIRTY;
 			cvDirtyMask[1] |= STEREO_DIRTY;
 		}
@@ -3292,8 +3072,7 @@ public class Canvas3D //extends Canvas
 	 * is enabled.
 	 * @return a flag indicating whether stereo is enabled
 	 */
-	public boolean getStereoEnable()
-	{
+    public boolean getStereoEnable() {
 		return this.stereoEnable;
 	}
 
@@ -3322,17 +3101,18 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void setMonoscopicViewPolicy(int policy)
-	{
+    public void setMonoscopicViewPolicy(int policy) {
 
-		if ((view != null) && (view.viewPolicy == View.HMD_VIEW) && (monoscopicViewPolicy == View.CYCLOPEAN_EYE_VIEW) && (!useStereo))
-		{
-			throw new IllegalStateException(J3dI18N.getString("View31"));
+
+	if((view !=null) && (view.viewPolicy == View.HMD_VIEW) &&
+	   (monoscopicViewPolicy == View.CYCLOPEAN_EYE_VIEW) &&
+	   (!useStereo)) {
+	    throw new
+		IllegalStateException(J3dI18N.getString("View31"));
 		}
 
 		monoscopicViewPolicy = policy;
-		synchronized (dirtyMaskLock)
-		{
+	synchronized(dirtyMaskLock) {
 			cvDirtyMask[0] |= MONOSCOPIC_VIEW_POLICY_DIRTY;
 			cvDirtyMask[1] |= MONOSCOPIC_VIEW_POLICY_DIRTY;
 		}
@@ -3346,8 +3126,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public int getMonoscopicViewPolicy()
-	{
+    public int getMonoscopicViewPolicy() {
 		return this.monoscopicViewPolicy;
 	}
 
@@ -3365,9 +3144,9 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @return a flag indicating whether double buffering is available.
 	 */
-	public boolean getDoubleBufferAvailable()
-	{
-		return ((Boolean) queryProperties().get("doubleBufferAvailable")).booleanValue();
+    public boolean getDoubleBufferAvailable() {
+        return ((Boolean)queryProperties().get("doubleBufferAvailable")).
+	    booleanValue();
 	}
 
 	/**
@@ -3382,12 +3161,10 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @see #queryProperties
 	 */
-	public void setDoubleBufferEnable(boolean flag)
-	{
+    public void setDoubleBufferEnable(boolean flag) {
 		doubleBufferEnable = flag;
 		useDoubleBuffer = doubleBufferEnable && doubleBufferAvailable;
-		if (Thread.currentThread() == screen.renderer)
-		{
+        if (Thread.currentThread() == screen.renderer) {
 			setRenderMode(ctx, FIELD_ALL, useDoubleBuffer);
 		}
 		redraw();
@@ -3398,8 +3175,7 @@ public class Canvas3D //extends Canvas
 	 * buffering is enabled.
 	 * @return a flag indicating if double buffering is enabled.
 	 */
-	public boolean getDoubleBufferEnable()
-	{
+    public boolean getDoubleBufferEnable() {
 		return doubleBufferEnable;
 	}
 
@@ -3417,9 +3193,9 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @return a flag indicating whether scene antialiasing is available.
 	 */
-	public boolean getSceneAntialiasingAvailable()
-	{
-		return ((Boolean) queryProperties().get("sceneAntialiasingAvailable")).booleanValue();
+    public boolean getSceneAntialiasingAvailable() {
+	return ((Boolean)queryProperties().get("sceneAntialiasingAvailable")).
+	    booleanValue();
 	}
 
 	/**
@@ -3436,8 +3212,7 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.4
 	 */
-	public boolean isShadingLanguageSupported(int shadingLanguage)
-	{
+    public boolean isShadingLanguageSupported(int shadingLanguage) {
 		// Call queryProperties to ensure that the shading language flags are valid
 		queryProperties();
 
@@ -3944,22 +3719,17 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public final Map queryProperties()
-	{
-		if (queryProps == null)
-		{
+    public final Map queryProperties() {
+	if (queryProps == null) {
 			boolean createDummyCtx = false;
 
-			synchronized (VirtualUniverse.mc.contextCreationLock)
-			{
-				if (ctx == null)
-				{
+	    synchronized (VirtualUniverse.mc.contextCreationLock) {
+		if (ctx == null) {
 					createDummyCtx = true;
 				}
 			}
 
-			if (createDummyCtx)
-			{
+	    if (createDummyCtx) {
 				GraphicsConfigTemplate3D.setQueryProps(this);
 			}
 
@@ -3967,16 +3737,14 @@ public class Canvas3D //extends Canvas
 			createQueryProps();
 		}
 
-		if (fatalError)
-		{
+        if (fatalError) {
 			throw new IllegalStateException(J3dI18N.getString("Canvas3D29"));
 		}
 
 		return queryProps;
 	}
 
-	void createQueryContext()
-	{
+    void createQueryContext() {
 		// create a dummy context to query for support of certain
 		// extensions, the context will destroy immediately
 		// inside the native code after setting the various
@@ -3989,8 +3757,7 @@ public class Canvas3D //extends Canvas
 	/**
 	 * Creates the query properties for this Canvas.
 	 */
-	private void createQueryProps()
-	{
+    private void createQueryProps() {
 		// Create lists of keys and values
 		ArrayList<String> keys = new ArrayList<String>();
 		ArrayList<Object> values = new ArrayList<Object>();
@@ -4008,21 +3775,18 @@ public class Canvas3D //extends Canvas
 
 		keys.add("sceneAntialiasingNumPasses");
 
-		if (sceneAntialiasingAvailable)
-		{
-			pass = (sceneAntialiasingMultiSamplesAvailable ? 1 : Renderer.NUM_ACCUMULATION_SAMPLES);
+	if (sceneAntialiasingAvailable) {
+	    pass = (sceneAntialiasingMultiSamplesAvailable ?
+		    1: Renderer.NUM_ACCUMULATION_SAMPLES);
 		}
 		values.add(new Integer(pass));
 
 		keys.add("stencilSize");
 		// Return the actual stencil size if the user owns it, otherwise
 		// return 0
-		if (userStencilAvailable)
-		{
+        if (userStencilAvailable) {
 			values.add(new Integer(actualStencilSize));
-		}
-		else
-		{
+        } else {
 			values.add(new Integer(0));
 		}
 
@@ -4041,25 +3805,32 @@ public class Canvas3D //extends Canvas
 		values.add(new Integer(textureColorTableSize));
 
 		keys.add("textureEnvCombineAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_COMBINE) != 0));
+	values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_COMBINE) != 0));
 
 		keys.add("textureCombineDot3Available");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_COMBINE_DOT3) != 0));
+	values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_COMBINE_DOT3) != 0));
 
 		keys.add("textureCombineSubtractAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_COMBINE_SUBTRACT) != 0));
+	values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_COMBINE_SUBTRACT) != 0));
 
 		keys.add("textureCubeMapAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_CUBE_MAP) != 0));
+	values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_CUBE_MAP) != 0));
 
 		keys.add("textureSharpenAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_SHARPEN) != 0));
+        values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_SHARPEN) != 0));
 
 		keys.add("textureDetailAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_DETAIL) != 0));
+        values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_DETAIL) != 0));
 
 		keys.add("textureFilter4Available");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_FILTER4) != 0));
+        values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_FILTER4) != 0));
 
 		keys.add("textureAnisotropicFilterDegreeMax");
 		values.add(new Float(anisotropicDegreeMax));
@@ -4083,16 +3854,20 @@ public class Canvas3D //extends Canvas
 		values.add(new Integer(textureBoundaryWidthMax));
 
 		keys.add("textureLodRangeAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_LOD_RANGE) != 0));
+        values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_LOD_RANGE) != 0));
 
 		keys.add("textureLodOffsetAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_LOD_OFFSET) != 0));
+        values.add(new Boolean(
+		(textureExtendedFeatures & TEXTURE_LOD_OFFSET) != 0));
 
 		keys.add("textureNonPowerOfTwoAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_NON_POWER_OF_TWO) != 0));
+        values.add(new Boolean(
+                (textureExtendedFeatures & TEXTURE_NON_POWER_OF_TWO) != 0));
 
 		keys.add("textureAutoMipMapGenerationAvailable");
-		values.add(new Boolean((textureExtendedFeatures & TEXTURE_AUTO_MIPMAP_GENERATION) != 0));
+        values.add(new Boolean(
+                (textureExtendedFeatures & TEXTURE_AUTO_MIPMAP_GENERATION) != 0));
 
 		keys.add("textureCoordSetsMax");
 		values.add(new Integer(maxTexCoordSets));
@@ -4109,11 +3884,11 @@ public class Canvas3D //extends Canvas
 		keys.add("textureImageUnitsCombinedMax");
 		values.add(new Integer(maxCombinedTextureImageUnits));
 
-		keys.add("vertexAttrsMax");
-		values.add(new Integer(maxVertexAttrs));
-
 		keys.add("maxVaryingVectors");
 		values.add(new Integer(maxVaryingVectors));
+		
+		keys.add("vertexAttrsMax");
+		values.add(new Integer(maxVertexAttrs));		
 
 		keys.add("shadingLanguageGLSL");
 		values.add(new Boolean(shadingLanguageGLSL));
@@ -4134,25 +3909,22 @@ public class Canvas3D //extends Canvas
 	/**
 	 * Update the view cache associated with this canvas.
 	 */
-	void updateViewCache(boolean flag, CanvasViewCache cvc, BoundingBox frustumBBox, boolean doInfinite)
-	{
+    void updateViewCache(boolean flag, CanvasViewCache cvc,
+		BoundingBox frustumBBox, boolean doInfinite) {
 
 		assert cvc == null;
-		synchronized (cvLock)
-		{
-			if (firstPaintCalled && (canvasViewCache != null))
-			{
+	synchronized(cvLock) {
+            if (firstPaintCalled && (canvasViewCache != null)) {
 				assert canvasViewCacheFrustum != null;
 				// Issue 109 : choose the appropriate cvCache
-				if (frustumBBox != null)
-				{
+                if (frustumBBox != null) {
 					canvasViewCacheFrustum.snapshot(true);
-					canvasViewCacheFrustum.computeDerivedData(flag, null, frustumBBox, doInfinite);
-				}
-				else
-				{
+                    canvasViewCacheFrustum.computeDerivedData(flag, null,
+                            frustumBBox, doInfinite);
+                } else {
 					canvasViewCache.snapshot(false);
-					canvasViewCache.computeDerivedData(flag, null, null, doInfinite);
+                    canvasViewCache.computeDerivedData(flag, null,
+                            null, doInfinite);
 				}
 			}
 		}
@@ -4161,32 +3933,28 @@ public class Canvas3D //extends Canvas
 	/**
 	 * Set depthBufferWriteEnableOverride flag
 	 */
-	void setDepthBufferWriteEnableOverride(boolean flag)
-	{
+    void setDepthBufferWriteEnableOverride(boolean flag) {
 		depthBufferWriteEnableOverride = flag;
 	}
 
 	/**
 	 * Set depthBufferEnableOverride flag
 	 */
-	void setDepthBufferEnableOverride(boolean flag)
-	{
+    void setDepthBufferEnableOverride(boolean flag) {
 		depthBufferEnableOverride = flag;
 	}
 
 	// Static initializer for Canvas3D class
-	static
-	{
+    static {
 		VirtualUniverse.loadLibraries();
 	}
 
-	void resetTexture(Context ctx, int texUnitIndex)
-	{
+
+    void resetTexture(Context ctx, int texUnitIndex) {
 		// D3D also need to reset texture attributes
 		this.resetTextureNative(ctx, texUnitIndex);
 
-		if (texUnitIndex < 0)
-		{
+ 	if (texUnitIndex < 0) {
 			texUnitIndex = 0;
 		}
 		texUnitState[texUnitIndex].mirror = null;
@@ -4195,20 +3963,17 @@ public class Canvas3D //extends Canvas
 
 	// reset all attributes so that everything e.g. display list,
 	// texture will recreate again in the next frame
-	void resetRendering()
-	{
+void resetRendering() {
 		reset();
 
-		synchronized (dirtyMaskLock)
-		{
+	synchronized (dirtyMaskLock) {
 			cvDirtyMask[0] |= VIEW_INFO_DIRTY;
 			cvDirtyMask[1] |= VIEW_INFO_DIRTY;
 		}
 
 	}
 
-	void reset()
-	{
+    void reset() {
 		int i;
 		currentAppear = new AppearanceRetained();
 		currentMaterial = new MaterialRetained();
@@ -4230,14 +3995,11 @@ public class Canvas3D //extends Canvas
 		shaderProgram = null;
 		texture = null;
 		texAttrs = null;
-		if (texUnitState != null)
-		{
+	if (texUnitState != null) {
 			TextureUnitStateRetained tus;
-			for (i = 0; i < texUnitState.length; i++)
-			{
+	    for (i=0; i < texUnitState.length; i++) {
 				tus = texUnitState[i];
-				if (tus != null)
-				{
+		if (tus != null) {
 					tus.texAttrs = null;
 					tus.texGen = null;
 				}
@@ -4259,20 +4021,17 @@ public class Canvas3D //extends Canvas
 		fog = null;
 		sceneAmbient = new Color3f();
 
-		for (i = 0; i < frameCount.length; i++)
-		{
+
+	for (i=0; i< frameCount.length;i++) {
 			frameCount[i] = -1;
 		}
 
-		for (i = 0; i < lights.length; i++)
-		{
+	for (i=0; i < lights.length; i++) {
 			lights[i] = null;
 		}
 
-		if (currentLights != null)
-		{
-			for (i = 0; i < currentLights.length; i++)
-			{
+	if (currentLights != null) {
+	    for (i=0; i < currentLights.length; i++) {
 				currentLights[i] = null;
 			}
 		}
@@ -4285,8 +4044,7 @@ public class Canvas3D //extends Canvas
 		vfPlanesValid = false;
 		lightChanged = false;
 
-		for (i = 0; i < curStateToUpdate.length; i++)
-		{
+	for (i=0; i < curStateToUpdate.length; i++) {
 			curStateToUpdate[i] = null;
 		}
 
@@ -4297,12 +4055,11 @@ public class Canvas3D //extends Canvas
 		needToRebuildDisplayList = true;
 		ctxTimeStamp = VirtualUniverse.mc.getContextTimeStamp();
 	}
+	
+	//still called from retained mode in Renderer, which is weird
+	// but if I disable then the world crashes, possibly a generic reset method
 
-	void resetImmediateRendering()
-	{
-		//still called from retained mode in Renderer, which is weird
-		// but if I disable then the world crashes, possibly a generic reset method
-
+void resetImmediateRendering() {
 		canvasDirty = 0xffff;
 		ra = null;
 
@@ -4319,13 +4076,17 @@ public class Canvas3D //extends Canvas
 		resetPolygonAttributes(ctx);
 		resetLineAttributes(ctx);
 		resetPointAttributes(ctx);
-		resetTransparency(ctx, RenderMolecule.SURFACE, PolygonAttributes.POLYGON_FILL, false, false);
-		resetColoringAttributes(ctx, 1.0f, 1.0f, 1.0f, 1.0f, false);
+	resetTransparency(ctx,
+			  RenderMolecule.SURFACE,
+			  PolygonAttributes.POLYGON_FILL,
+			  false, false);
+	resetColoringAttributes(ctx,
+				1.0f, 1.0f,
+				1.0f, 1.0f, false);
 		updateMaterial(ctx, 1.0f, 1.0f, 1.0f, 1.0f);
 		resetRendering();
 		makeCtxCurrent();
-		synchronized (dirtyMaskLock)
-		{
+        synchronized (dirtyMaskLock) {
 			cvDirtyMask[0] |= VIEW_INFO_DIRTY;
 			cvDirtyMask[1] |= VIEW_INFO_DIRTY;
 		}
@@ -4334,26 +4095,21 @@ public class Canvas3D //extends Canvas
 		ctxTimeStamp = VirtualUniverse.mc.getContextTimeStamp();
 	}
 
-	void setProjectionMatrix(Context ctx, Transform3D projTrans)
-	{
+
+    void setProjectionMatrix(Context ctx, Transform3D projTrans) {
 		this.projTrans = projTrans;
 		setProjectionMatrix(ctx, projTrans.mat);
 	}
 
-	void setModelViewMatrix(Context ctx, double[] viewMatrix, Transform3D mTrans)
-	{
+    void setModelViewMatrix(Context ctx, double[] viewMatrix, Transform3D mTrans) {
 		setModelViewMatrix(ctx, viewMatrix, mTrans.mat);
-		if (!useStereo)
-		{
+	if (!useStereo) {
 			this.modelMatrix = mTrans;
-		}
-		else
-		{
+	} else {
 			// TODO : This seems wrong to do only for the right eye.
 			// A possible approach is to invalidate the cache at begin of
 			// each eye.
-			if (rightStereoPass)
-			{
+	    if (rightStereoPass) {
 				//  Only set cache in right stereo pass, otherwise
 				//  if the left stereo pass set the cache value,
 				//  setModelViewMatrix() in right stereo pass will not
@@ -4363,38 +4119,31 @@ public class Canvas3D //extends Canvas
 		}
 	}
 
-	void setDepthBufferWriteEnable(boolean mode)
-	{
+    void setDepthBufferWriteEnable(boolean mode) {
 		depthBufferWriteEnable = mode;
 		setDepthBufferWriteEnable(ctx, mode);
 	}
 
-	void setNumActiveTexUnit(int n)
-	{
+    void setNumActiveTexUnit(int n) {
 		numActiveTexUnit = n;
 	}
 
-	int getNumActiveTexUnit()
-	{
+    int getNumActiveTexUnit() {
 		return numActiveTexUnit;
 	}
 
-	void setLastActiveTexUnit(int n)
-	{
+    void setLastActiveTexUnit(int n) {
 		lastActiveTexUnit = n;
 	}
 
-	int getLastActiveTexUnit()
-	{
+    int getLastActiveTexUnit() {
 		return lastActiveTexUnit;
 	}
 
 	// Create the texture state array
-	void createTexUnitState()
-	{
+    void createTexUnitState() {
 		texUnitState = new TextureUnitStateRetained[maxAvailableTextureUnits];
-		for (int t = 0; t < maxAvailableTextureUnits; t++)
-		{
+        for (int t = 0; t < maxAvailableTextureUnits; t++) {
 			texUnitState[t] = new TextureUnitStateRetained();
 			texUnitState[t].texture = null;
 			texUnitState[t].mirror = null;
@@ -4405,20 +4154,18 @@ public class Canvas3D //extends Canvas
 	 * Enable separate specular color if it is not overriden by the
 	 * property j3d.disableSeparateSpecular.
 	 */
-	void enableSeparateSpecularColor()
-	{
+    void enableSeparateSpecularColor() {
 		boolean enable = !VirtualUniverse.mc.disableSeparateSpecularColor;
 		updateSeparateSpecularColorEnable(ctx, enable);
 	}
 
 	// Send a createOffScreenBuffer message to Renderer (via
 	// MasterControl) and wait for it to be done
-	private void sendCreateOffScreenBuffer()
-	{
+    private void sendCreateOffScreenBuffer() {
 		// Wait for the buffer to be created unless called from
 		// a Behavior or from a Rendering thread
-		if (!(Thread.currentThread() instanceof BehaviorScheduler) && !(Thread.currentThread() instanceof Renderer))
-		{
+	if (!(Thread.currentThread() instanceof BehaviorScheduler) &&
+	    !(Thread.currentThread() instanceof Renderer)) {
 
 			offScreenBufferPending = true;
 		}
@@ -4427,8 +4174,7 @@ public class Canvas3D //extends Canvas
 		VirtualUniverse.mc.sendCreateOffScreenBuffer(this);
 
 		// Wait for off-screen buffer to be created
-		while (offScreenBufferPending)
-		{
+	while (offScreenBufferPending) {
 			// Issue 364: create master control thread if needed
 			VirtualUniverse.mc.createMasterControlThread();
 			MasterControl.threadYield();
@@ -4437,13 +4183,12 @@ public class Canvas3D //extends Canvas
 
 	// Send a destroyOffScreenBuffer message to Renderer (via
 	// MasterControl) and wait for it to be done
-	private void sendDestroyCtxAndOffScreenBuffer()
-	{
+    private void sendDestroyCtxAndOffScreenBuffer() {
 		// Wait for the buffer to be destroyed unless called from
 		// a Behavior or from a Rendering thread
 		Thread currentThread = Thread.currentThread();
-		if (!(currentThread instanceof BehaviorScheduler) && !(currentThread instanceof Renderer))
-		{
+	if (!(currentThread instanceof BehaviorScheduler) &&
+	    !(currentThread instanceof Renderer)) {
 
 			offScreenBufferPending = true;
 		}
@@ -4454,8 +4199,7 @@ public class Canvas3D //extends Canvas
 		VirtualUniverse.mc.sendDestroyCtxAndOffScreenBuffer(this);
 
 		// Wait for ctx and off-screen buffer to be destroyed
-		while (offScreenBufferPending)
-		{
+        while (offScreenBufferPending) {
 			// Issue 364: create master control thread if needed
 			VirtualUniverse.mc.createMasterControlThread();
 			MasterControl.threadYield();
@@ -4464,34 +4208,35 @@ public class Canvas3D //extends Canvas
 
 	// Send a allocateCanvasId message to Renderer (via MasterControl) without
 	// waiting for it to be done
-	private void sendAllocateCanvasId()
-	{
+    private void sendAllocateCanvasId() {
 		// Send message to Renderer thread to allocate a canvasId
 		VirtualUniverse.mc.sendAllocateCanvasId(this);
 	}
 
 	// Send a freeCanvasId message to Renderer (via MasterControl) without
 	// waiting for it to be done
-	private void sendFreeCanvasId()
-	{
+    private void sendFreeCanvasId() {
 		// Send message to Renderer thread to free the canvasId
 		VirtualUniverse.mc.sendFreeCanvasId(this);
 	}
 
-	private void removeCtx()
-	{
+    private void removeCtx() {
 
-		if ((screen != null) && (screen.renderer != null) && (ctx != null))
-		{
-			VirtualUniverse.mc.postRequest(MasterControl.FREE_CONTEXT, new Object[] { this, Long.valueOf(0L), drawable, ctx });
+	if ((screen != null) &&
+	    (screen.renderer != null) &&
+	    (ctx != null)) {
+            VirtualUniverse.mc.postRequest(MasterControl.FREE_CONTEXT,
+                    new Object[]{this,
+                            Long.valueOf(0L),
+                            drawable,
+                            ctx});
 			// Fix for Issue 19
 			// Wait for the context to be freed unless called from
 			// a Behavior or from a Rendering thread
 			Thread currentThread = Thread.currentThread();
-			if (!(currentThread instanceof BehaviorScheduler) && !(currentThread instanceof Renderer))
-			{
-				while (ctxTimeStamp != 0)
-				{
+	    if (!(currentThread instanceof BehaviorScheduler) &&
+		!(currentThread instanceof Renderer)) {
+		while (ctxTimeStamp != 0) {
 					MasterControl.threadYield();
 				}
 			}
@@ -4506,8 +4251,9 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.3
 	 */
-	private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException
-	{
+    private void writeObject(java.io.ObjectOutputStream out)
+	    throws java.io.IOException {
+
 		throw new UnsupportedOperationException(J3dI18N.getString("Canvas3D20"));
 	}
 
@@ -4518,20 +4264,19 @@ public class Canvas3D //extends Canvas
 	 *
 	 * @since Java 3D 1.3
 	 */
-	private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException
-	{
+    private void readObject(java.io.ObjectInputStream in)
+	    throws java.io.IOException, ClassNotFoundException {
+
 		throw new UnsupportedOperationException(J3dI18N.getString("Canvas3D20"));
 	}
 
 	// mark that the current bin specified by the bit is already updated
-	void setStateIsUpdated(int bit)
-	{
+    void setStateIsUpdated(int bit) {
 		stateUpdateMask &= ~(1 << bit);
 	}
 
 	// mark that the bin specified by the bit needs to be updated
-	void setStateToUpdate(int bit, Object bin)
-	{
+    void setStateToUpdate(int bit, Object bin) {
 		stateUpdateMask |= 1 << bit;
 		curStateToUpdate[bit] = bin;
 	}
@@ -4539,32 +4284,33 @@ public class Canvas3D //extends Canvas
 	// update LightBin, EnvironmentSet, AttributeBin & ShaderBin if neccessary
 	// according to the stateUpdateMask
 
-	static int ENV_STATE_MASK = (1 << LIGHTBIN_BIT) | (1 << ENVIRONMENTSET_BIT) | (1 << ATTRIBUTEBIN_BIT) | (1 << SHADERBIN_BIT);
+    static int ENV_STATE_MASK = (1 << LIGHTBIN_BIT) |
+				(1 << ENVIRONMENTSET_BIT) |
+	                        (1 << ATTRIBUTEBIN_BIT) |
+                                (1 << SHADERBIN_BIT);
 
-	void updateEnvState()
-	{
+    void updateEnvState() {
 
 		if ((stateUpdateMask & ENV_STATE_MASK) == 0)
 			return;
 
-		if ((stateUpdateMask & (1 << LIGHTBIN_BIT)) != 0)
-		{
+	if ((stateUpdateMask & (1 << LIGHTBIN_BIT)) != 0) {
 			((LightBin) curStateToUpdate[LIGHTBIN_BIT]).updateAttributes(this);
 		}
 
-		if ((stateUpdateMask & (1 << ENVIRONMENTSET_BIT)) != 0)
-		{
-			((EnvironmentSet) curStateToUpdate[ENVIRONMENTSET_BIT]).updateAttributes(this);
+	if ((stateUpdateMask & (1 << ENVIRONMENTSET_BIT)) != 0) {
+	    ((EnvironmentSet)
+		curStateToUpdate[ENVIRONMENTSET_BIT]).updateAttributes(this);
 		}
 
-		if ((stateUpdateMask & (1 << ATTRIBUTEBIN_BIT)) != 0)
-		{
-			((AttributeBin) curStateToUpdate[ATTRIBUTEBIN_BIT]).updateAttributes(this);
+	if ((stateUpdateMask & (1 << ATTRIBUTEBIN_BIT)) != 0) {
+	    ((AttributeBin)
+		curStateToUpdate[ATTRIBUTEBIN_BIT]).updateAttributes(this);
 		}
 
-		if ((stateUpdateMask & (1 << SHADERBIN_BIT)) != 0)
-		{
-			((ShaderBin) curStateToUpdate[SHADERBIN_BIT]).updateAttributes(this);
+	if ((stateUpdateMask & (1 << SHADERBIN_BIT)) != 0) {
+	    ((ShaderBin)
+		curStateToUpdate[SHADERBIN_BIT]).updateAttributes(this);
 		}
 
 		// reset the state update mask for those environment state bits
@@ -4574,27 +4320,27 @@ public class Canvas3D //extends Canvas
 	/**
 	 * update state if neccessary according to the stateUpdatedMask
 	 */
-	void updateState(int dirtyBits)
-	{
+    void updateState( int dirtyBits) {
+
 
 		if (stateUpdateMask == 0)
 			return;
 
 		updateEnvState();
 
-		if ((stateUpdateMask & (1 << TEXTUREBIN_BIT)) != 0)
-		{
-			((TextureBin) curStateToUpdate[TEXTUREBIN_BIT]).updateAttributes(this);
+	if ((stateUpdateMask & (1 << TEXTUREBIN_BIT)) != 0) {
+	    ((TextureBin)
+		curStateToUpdate[TEXTUREBIN_BIT]).updateAttributes(this);
 		}
 
-		if ((stateUpdateMask & (1 << RENDERMOLECULE_BIT)) != 0)
-		{
-			((RenderMolecule) curStateToUpdate[RENDERMOLECULE_BIT]).updateAttributes(this, dirtyBits);
+	if ((stateUpdateMask & (1 << RENDERMOLECULE_BIT)) != 0) {
+	    ((RenderMolecule)
+	     curStateToUpdate[RENDERMOLECULE_BIT]).updateAttributes(this,
+								    dirtyBits);
 
 		}
 
-		if ((stateUpdateMask & (1 << TRANSPARENCY_BIT)) != 0)
-		{
+        if ((stateUpdateMask & (1 << TRANSPARENCY_BIT)) != 0) {
 			((RenderMolecule) curStateToUpdate[RENDERMOLECULE_BIT]).updateTransparencyAttributes(this);
 			stateUpdateMask &= ~(1 << TRANSPARENCY_BIT);
 		}
@@ -4605,8 +4351,7 @@ public class Canvas3D //extends Canvas
 
 	// This method updates this Texture2D for raster.
 	// Note : No multi-texture is not used.
-	void updateTextureForRaster(Texture2DRetained texture)
-	{
+    void updateTextureForRaster(Texture2DRetained texture) {
 
 		// Setup texture and texture attributes for texture unit 0.
 		Pipeline.getPipeline().updateTextureUnitState(ctx, 0, true);
@@ -4617,8 +4362,7 @@ public class Canvas3D //extends Canvas
 		resetTexCoordGeneration(ctx);
 		resetTextureAttributes(ctx);
 
-		for (int i = 1; i < maxTextureUnits; i++)
-		{
+        for(int i=1; i < maxTextureUnits; i++) {
 			resetTexture(ctx, i);
 		}
 
@@ -4629,19 +4373,17 @@ public class Canvas3D //extends Canvas
 		canvasDirty |= Canvas3D.TEXTUREBIN_DIRTY | Canvas3D.TEXTUREATTRIBUTES_DIRTY;
 	}
 
-	void restoreTextureBin()
-	{
+    void restoreTextureBin() {
 
 		// Need to check TextureBin's shaderBin for null
 		// TextureBin can get clear() if there isn't any RM under it.
-		if ((textureBin != null) && (textureBin.shaderBin != null))
-		{
+        if((textureBin != null) && (textureBin.shaderBin != null)) {
 			textureBin.updateAttributes(this);
 		}
 	}
 
-	void textureFill(RasterRetained raster, Point2d winCoord, float mapZ, float alpha)
-	{
+    void textureFill(RasterRetained raster, Point2d winCoord,
+           float mapZ, float alpha) {
 
 		int winWidth = canvasViewCache.getCanvasWidth();
 		int winHeight = canvasViewCache.getCanvasHeight();
@@ -4666,27 +4408,23 @@ public class Canvas3D //extends Canvas
 		int rasterMinY = rasterSrcOffset.y;
 		int rasterMaxY = rasterSrcOffset.y + rasterSize.height;
 
-		if ((rasterMinX >= rasterImageWidth) || (rasterMinY >= rasterImageHeight) || (rasterMaxX <= 0) || (rasterMaxY <= 0))
-		{
+        if ((rasterMinX >= rasterImageWidth) || (rasterMinY >= rasterImageHeight) ||
+                (rasterMaxX <= 0) || (rasterMaxY <= 0)) {
 			return;
 		}
 
-		if (rasterMinX < 0)
-		{
+        if (rasterMinX < 0) {
 			rasterMinX = 0;
 		}
-		if (rasterMinY < 0)
-		{
+        if (rasterMinY < 0) {
 			rasterMinY = 0;
 		}
 
-		if (rasterMaxX > rasterImageWidth)
-		{
+        if (rasterMaxX > rasterImageWidth) {
 			rasterMaxX = rasterImageWidth;
 		}
 
-		if (rasterMaxY > rasterImageHeight)
-		{
+        if (rasterMaxY > rasterImageHeight) {
 			rasterMaxY = rasterImageHeight;
 		}
 
@@ -4695,13 +4433,10 @@ public class Canvas3D //extends Canvas
 		mapMinX = (float) winCoord.x / (float) winWidth;
 		mapMaxX = (float) (winCoord.x + (rasterMaxX - rasterMinX)) / (float) winWidth;
 
-		if (raster.image.isYUp())
-		{
+        if (raster.image.isYUp()) {
 			texMinV = (float) rasterMinY / (float) rasterImageHeight;
 			texMaxV = (float) rasterMaxY / (float) rasterImageHeight;
-		}
-		else
-		{
+        } else {
 			//  System.err.println("In yUp is false case");
 			texMinV = 1.0f - (float) rasterMaxY / (float) rasterImageHeight;
 			texMaxV = 1.0f - (float) rasterMinY / (float) rasterImageHeight;
@@ -4710,13 +4445,12 @@ public class Canvas3D //extends Canvas
 		mapMinY = 1.0f - ((float) (winCoord.y + (rasterMaxY - rasterMinY)) / (float) winHeight);
 		mapMaxY = 1.0f - ((float) winCoord.y / (float) winHeight);
 
-		textureFillRaster(ctx, texMinU, texMaxU, texMinV, texMaxV, mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ, alpha,
-				raster.image.useBilinearFilter());
+        textureFillRaster(ctx, texMinU, texMaxU, texMinV, texMaxV,
+                mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ, alpha, raster.image.useBilinearFilter());
 
 	}
 
-	void textureFill(BackgroundRetained bg, int winWidth, int winHeight)
-	{
+    void textureFill(BackgroundRetained bg, int winWidth, int winHeight) {
 
 		final int maxX = bg.image.width;
 		final int maxY = bg.image.height;
@@ -4730,8 +4464,7 @@ public class Canvas3D //extends Canvas
 		float mapMinX = 0, mapMinY = 0, mapMaxX = 0, mapMaxY = 0;
 		float halfWidth = 0, halfHeight = 0;
 
-		switch (bg.imageScaleMode)
-		{
+        switch (bg.imageScaleMode) {
 		case Background.SCALE_NONE:
 			texMinU = 0.0f;
 			texMinV = 0.0f;
@@ -4755,13 +4488,10 @@ public class Canvas3D //extends Canvas
 			texMaxV = 1.0f;
 			mapMinX = -1.0f;
 			mapMaxY = 1.0f;
-			if (xzoom < yzoom)
-			{
+                if (xzoom < yzoom) {
 				mapMaxX = 1.0f;
 				mapMinY = -1.0f + 2.0f * (1.0f - zoom * (float) maxY / (float) winHeight);
-			}
-			else
-			{
+                } else {
 				mapMaxX = -1.0f + zoom * (float) maxX / winWidth * 2;
 				mapMinY = -1.0f;
 			}
@@ -4772,15 +4502,12 @@ public class Canvas3D //extends Canvas
 			mapMinY = -1.0f;
 			mapMaxX = 1.0f;
 			mapMaxY = 1.0f;
-			if (xzoom < yzoom)
-			{
+                if (xzoom < yzoom) {
 				texMinU = 0.0f;
 				texMinV = 0.0f;
 				texMaxU = (float) winWidth / maxX / zoom;
 				texMaxV = 1.0f;
-			}
-			else
-			{
+                } else {
 				texMinU = 0.0f;
 				texMinV = 1.0f - (float) winHeight / maxY / zoom;
 				texMaxU = 1.0f;
@@ -4810,29 +4537,23 @@ public class Canvas3D //extends Canvas
 			break;
 		case Background.SCALE_NONE_CENTER:
 			// TODO : Why is there a zoom ?
-			if (xzoom >= 1.0f)
-			{
+                if(xzoom >= 1.0f){
 				texMinU = 0.0f;
 				texMaxU = 1.0f;
 				mapMinX = -(float) maxX / winWidth;
 				mapMaxX = (float) maxX / winWidth;
-			}
-			else
-			{
+                } else {
 				texMinU = 0.5f - (float) winWidth / maxX / 2;
 				texMaxU = 0.5f + (float) winWidth / maxX / 2;
 				mapMinX = -1.0f;
 				mapMaxX = 1.0f;
 			}
-			if (yzoom >= 1.0f)
-			{
+                if (yzoom >= 1.0f) {
 				texMinV = 0.0f;
 				texMaxV = 1.0f;
 				mapMinY = -(float) maxY / winHeight;
 				mapMaxY = (float) maxY / winHeight;
-			}
-			else
-			{
+                } else {
 				texMinV = 0.5f - (float) winHeight / maxY / 2;
 				texMaxV = 0.5f + (float) winHeight / maxY / 2;
 				mapMinY = -1.0f;
@@ -4843,24 +4564,25 @@ public class Canvas3D //extends Canvas
 
 		//        System.err.println("Java 3D : mapMinX " + mapMinX + " mapMinY " + mapMinY +
 		//                           " mapMaxX " + mapMaxX + " mapMaxY " + mapMaxY);
-		textureFillBackground(ctx, texMinU, texMaxU, texMinV, texMaxV, mapMinX, mapMaxX, mapMinY, mapMaxY, bg.image.useBilinearFilter());
+        textureFillBackground(ctx, texMinU, texMaxU, texMinV, texMaxV,
+                mapMinX, mapMaxX, mapMinY, mapMaxY, bg.image.useBilinearFilter());
 
 	}
 
-	void clear(BackgroundRetained bg, int winWidth, int winHeight)
-	{
+
+    void clear(BackgroundRetained bg, int winWidth, int winHeight) {
 
 		// Issue 239 - clear stencil if requested and available
 		// Note that this is a partial solution, since we eventually want an API
 		// to control this.
-		boolean clearStencil = VirtualUniverse.mc.stencilClear && userStencilAvailable;
+        boolean clearStencil = VirtualUniverse.mc.stencilClear &&
+                userStencilAvailable;
 
 		clear(ctx, bg.color.x, bg.color.y, bg.color.z, clearStencil);
 
 		// TODO : This is a bug on not mirror bg. Will fix this as a bug after 1.5 beta.
 		// For now, as a workaround, we will check bg.image and bg.image.imageData not null.
-		if ((bg.image != null) && (bg.image.imageData != null))
-		{
+        if((bg.image != null) && (bg.image.imageData != null)) {
 			// setup Texture pipe.
 			updateTextureForRaster(bg.texture);
 
@@ -4882,30 +4604,22 @@ public class Canvas3D //extends Canvas
 	 * of texture is -1 one time only.
 	 * This is always call from Renderer thread.
 	 */
-	void addTextureResource(int id, TextureRetained obj)
-	{
-		if (id <= 0)
-		{
+void addTextureResource(int id, TextureRetained obj) {
+	if (id <= 0) {
 			return;
 		}
 
-		if (useSharedCtx)
-		{
+	if (useSharedCtx) {
 			screen.renderer.addTextureResource(id, obj);
-		}
-		else
-		{
+	} else {
 			// This will replace the previous key if exists
-			if (textureIDResourceTable.size() <= id)
-			{
-				for (int i = textureIDResourceTable.size(); i < id; i++)
-				{
+	    if (textureIDResourceTable.size() <= id) {
+		for (int i=textureIDResourceTable.size();
+		     i < id; i++) {
 					textureIDResourceTable.add(null);
 				}
 				textureIDResourceTable.add(obj);
-			}
-			else
-			{
+	    } else {
 				textureIDResourceTable.set(id, obj);
 			}
 
@@ -4913,20 +4627,16 @@ public class Canvas3D //extends Canvas
 	}
 
 	// handle free resource in the FreeList
-	void freeResourcesInFreeList(Context ctx)
-	{
+    void freeResourcesInFreeList(Context ctx) {
 		Iterator<Integer> it;
 		int val;
 
 		// free resource for those canvases that
 		// don't use shared ctx
-		if (displayListResourceFreeList.size() > 0)
-		{
-			for (it = displayListResourceFreeList.iterator(); it.hasNext();)
-			{
+	if (displayListResourceFreeList.size() > 0) {
+	    for (it = displayListResourceFreeList.iterator(); it.hasNext();) {
 				val = it.next().intValue();
-				if (val <= 0)
-				{
+		if (val <= 0) {
 					continue;
 				}
 				Canvas3D.freeDisplayList(ctx, val);
@@ -4934,30 +4644,22 @@ public class Canvas3D //extends Canvas
 			displayListResourceFreeList.clear();
 		}
 
-		if (textureIdResourceFreeList.size() > 0)
-		{
-			for (it = textureIdResourceFreeList.iterator(); it.hasNext();)
-			{
+        if (textureIdResourceFreeList.size() > 0) {
+            for (it = textureIdResourceFreeList.iterator(); it.hasNext();) {
 				val = it.next().intValue();
-				if (val <= 0)
-				{
+                if (val <= 0) {
 					continue;
 				}
-				if (val >= textureIDResourceTable.size())
-				{
-					System.err.println(
-							"Error in freeResourcesInFreeList : ResourceIDTableSize = " + textureIDResourceTable.size() + " val = " + val);
-				}
-				else
-				{
+                if (val >= textureIDResourceTable.size()) {
+                    System.err.println("Error in freeResourcesInFreeList : ResourceIDTableSize = " +
+                            textureIDResourceTable.size() +
+                            " val = " + val);
+                } else {
 					TextureRetained tex = textureIDResourceTable.get(val);
-					if (tex != null)
-					{
-						synchronized (tex.resourceLock)
-						{
+				if (tex != null) {
+                        synchronized (tex.resourceLock) {
 							tex.resourceCreationMask &= ~canvasBit;
-							if (tex.resourceCreationMask == 0)
-							{
+                            if (tex.resourceCreationMask == 0) {
 								tex.freeTextureId(val);
 							}
 						}
@@ -4971,30 +4673,25 @@ public class Canvas3D //extends Canvas
 		}
 	}
 
-	void freeContextResources(Renderer rdr, boolean freeBackground, Context ctx)
-	{
+    void freeContextResources(Renderer rdr, boolean freeBackground,
+			      Context ctx) {
 		TextureRetained tex;
 
 		// Just return if we don't have a valid renderer or context
-		if (rdr == null || ctx == null)
-		{
+	if (rdr == null || ctx == null) {
 			return;
 		}
 
-		if (freeBackground)
-		{
+	if (freeBackground) {
 			// Dispose of Graphics2D Texture
-			if (graphics2D != null)
-			{
+            if (graphics2D != null) {
 				graphics2D.dispose();
 			}
 		}
 
-		for (int id = textureIDResourceTable.size() - 1; id >= 0; id--)
-		{
+	for (int id = textureIDResourceTable.size()-1; id >= 0; id--) {
 			tex = textureIDResourceTable.get(id);
-			if (tex == null)
-			{
+		if (tex == null) {
 				continue;
 			}
 
@@ -5002,6 +4699,7 @@ public class Canvas3D //extends Canvas
 			// TODO KCR : determine why this is the case
 			//            assert id == ((TextureRetained)obj).objectId;
 
+			//PJ wrapped in try catch	
 			try{
 			Canvas3D.freeTexture(ctx, id);}
 			catch(NullPointerException e)
@@ -5009,11 +4707,9 @@ public class Canvas3D //extends Canvas
 				//ignore as some times the GL context has been disposed before now
 			}
 			
-			synchronized (tex.resourceLock)
-			{
+			synchronized (tex.resourceLock) {
 				tex.resourceCreationMask &= ~canvasBit;
-				if (tex.resourceCreationMask == 0)
-				{
+		    if (tex.resourceCreationMask == 0) {
 
 					tex.freeTextureId(id);
 				}
@@ -5024,18 +4720,14 @@ public class Canvas3D //extends Canvas
 		freeAllDisplayListResources(ctx);
 	}
 
-	void freeAllDisplayListResources(Context ctx)
-	{
-		if ((view != null) && (view.renderBin != null))
-		{
+    void freeAllDisplayListResources(Context ctx) {
+	if ((view != null) && (view.renderBin != null)) {
 			view.renderBin.freeAllDisplayListResources(this, ctx);
-			if (useSharedCtx)
-			{
+	    if (useSharedCtx) {
 				// We need to rebuild all other Canvas3D resource
 				// shared by this Canvas3D. Since we didn't
 				// remember resource in Renderer but RenderBin only.
-				if ((screen != null) && (screen.renderer != null))
-				{
+		if ((screen != null) && (screen.renderer != null)) {
 					screen.renderer.needToRebuildDisplayList = true;
 				}
 			}
@@ -5048,339 +4740,319 @@ public class Canvas3D //extends Canvas
 	// *****************************************************************
 
 	// This is the native method for creating the underlying graphics context.
-	private Context createNewContext(Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
-	{
-		return Pipeline.getPipeline().createNewContext(this, drawable, shareCtx, isSharedCtx, offScreen);
+    private Context createNewContext(Drawable drawable,
+            Context shareCtx, boolean isSharedCtx,
+            boolean offScreen) {
+        return Pipeline.getPipeline().createNewContext(this, drawable,
+                shareCtx, isSharedCtx,
+                offScreen);
 	}
 
-	private void createQueryContext(Drawable drawable, boolean offScreen, int width, int height)
-	{
-		Pipeline.getPipeline().createQueryContext(this, drawable, offScreen, width, height);
+    private void createQueryContext(Drawable drawable,
+            boolean offScreen, int width, int height) {
+        Pipeline.getPipeline().createQueryContext(this, drawable,
+                offScreen, width, height);
 	}
 
 	// This is the native for creating offscreen buffer
-	Drawable createOffScreenBuffer(Context ctx, int width, int height)
-	{
-		return Pipeline.getPipeline().createOffScreenBuffer(this, ctx, width, height);
+    Drawable createOffScreenBuffer(Context ctx, int width, int height) {
+        return Pipeline.getPipeline().createOffScreenBuffer(this,
+                ctx, width, height);
 	}
 
-	void destroyOffScreenBuffer(Context ctx, Drawable drawable)
-	{
+    void destroyOffScreenBuffer(Context ctx, Drawable drawable) {
 		assert drawable != null;
 		Pipeline.getPipeline().destroyOffScreenBuffer(this, ctx, drawable);
 	}
 
 	// This is the native for reading the image from the offscreen buffer
-	private void readOffScreenBuffer(Context ctx, int format, int type, Object data, int width, int height)
-	{
+    private void readOffScreenBuffer(Context ctx, int format, int type, Object data, int width, int height) {
 		Pipeline.getPipeline().readOffScreenBuffer(this, ctx, format, type, data, width, height);
 	}
 
 	// The native method for swapBuffers
-	void swapBuffers(Context ctx, Drawable drawable)
-	{
+void swapBuffers(Context ctx, Drawable drawable) {
 		Pipeline.getPipeline().swapBuffers(this, ctx, drawable);
 	}
 
 	// -----------------------------------------------------------------------------
 
 	// native method for setting Material when no material is present
-	void updateMaterial(Context ctx, float r, float g, float b, float a)
-	{
+    void updateMaterial(Context ctx, float r, float g, float b, float a) {
 		Pipeline.getPipeline().updateMaterialColor(ctx, r, g, b, a);
 	}
 
-	static void destroyContext(Drawable drawable, Context ctx)
-	{
+    static void destroyContext(Drawable drawable, Context ctx) {
 		Pipeline.getPipeline().destroyContext(drawable, ctx);
 	}
 
 	// This is the native method for doing accumulation.
-	void accum(Context ctx, float value)
-	{
+    void accum(Context ctx, float value) {
 		Pipeline.getPipeline().accum(ctx, value);
 	}
 
 	// This is the native method for doing accumulation return.
-	void accumReturn(Context ctx)
-	{
+    void accumReturn(Context ctx) {
 		Pipeline.getPipeline().accumReturn(ctx);
 	}
 
 	// This is the native method for clearing the accumulation buffer.
-	void clearAccum(Context ctx)
-	{
+    void clearAccum(Context ctx) {
 		Pipeline.getPipeline().clearAccum(ctx);
 	}
 
 	// This is the native method for getting the number of lights the underlying
 	// native library can support.
-	int getNumCtxLights(Context ctx)
-	{
+    int getNumCtxLights(Context ctx) {
 		return Pipeline.getPipeline().getNumCtxLights(ctx);
 	}
 
 	// Native method for decal 1st child setup
-	boolean decal1stChildSetup(Context ctx)
-	{
+    boolean decal1stChildSetup(Context ctx) {
 		return Pipeline.getPipeline().decal1stChildSetup(ctx);
 	}
 
 	// Native method for decal nth child setup
-	void decalNthChildSetup(Context ctx)
-	{
+    void decalNthChildSetup(Context ctx) {
 		Pipeline.getPipeline().decalNthChildSetup(ctx);
 	}
 
 	// Native method for decal reset
-	void decalReset(Context ctx, boolean depthBufferEnable)
-	{
+    void decalReset(Context ctx, boolean depthBufferEnable) {
 		Pipeline.getPipeline().decalReset(ctx, depthBufferEnable);
 	}
 
 	// Native method for decal reset
-	void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable)
-	{
+    void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable) {
 		Pipeline.getPipeline().ctxUpdateEyeLightingEnable(ctx, localEyeLightingEnable);
 	}
 
 	// The following three methods are used in multi-pass case
 
 	// native method for setting blend color
-	void setBlendColor(Context ctx, float red, float green, float blue, float alpha)
-	{
-		Pipeline.getPipeline().setBlendColor(ctx, red, green, blue, alpha);
+    void setBlendColor(Context ctx, float red, float green,
+            float blue, float alpha) {
+        Pipeline.getPipeline().setBlendColor(ctx, red, green,
+                blue, alpha);
 	}
 
 	// native method for setting blend func
-	void setBlendFunc(Context ctx, int src, int dst)
-	{
+    void setBlendFunc(Context ctx, int src, int dst) {
 		Pipeline.getPipeline().setBlendFunc(ctx, src, dst);
 	}
 
 	// native method for setting fog enable flag
-	void setFogEnableFlag(Context ctx, boolean enableFlag)
-	{
+    void setFogEnableFlag(Context ctx, boolean enableFlag) {
 		Pipeline.getPipeline().setFogEnableFlag(ctx, enableFlag);
 	}
 
-	boolean isAntialiasingSet()
-	{
+boolean isAntialiasingSet() {
 		return antialiasingSet;
 	}
 
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
-	void setFullSceneAntialiasing(Context ctx, boolean enable)
-	{
+    void setFullSceneAntialiasing(Context ctx, boolean enable) {
 		Pipeline.getPipeline().setFullSceneAntialiasing(ctx, enable);
 		antialiasingSet = enable;
 	}
 
 	// Native method to update separate specular color control
-	void updateSeparateSpecularColorEnable(Context ctx, boolean control)
-	{
+    void updateSeparateSpecularColorEnable(Context ctx, boolean control) {
 		Pipeline.getPipeline().updateSeparateSpecularColorEnable(ctx, control);
 	}
 
 	// True under Solaris,
 	// False under windows when display mode <= 8 bit
-	private boolean validGraphicsMode()
-	{
+    private boolean validGraphicsMode() {
 		return Pipeline.getPipeline().validGraphicsMode();
 	}
 
 	// native method for setting light enables
-	void setLightEnables(Context ctx, long enableMask, int maxLights)
-	{
+    void setLightEnables(Context ctx, long enableMask, int maxLights) {
 		Pipeline.getPipeline().setLightEnables(ctx, enableMask, maxLights);
 	}
 
 	// native method for setting scene ambient
-	void setSceneAmbient(Context ctx, float red, float green, float blue)
-	{
+    void setSceneAmbient(Context ctx, float red, float green, float blue) {
 		Pipeline.getPipeline().setSceneAmbient(ctx, red, green, blue);
 	}
 
 	// native method for disabling fog
-	void disableFog(Context ctx)
-	{
+    void disableFog(Context ctx) {
 		Pipeline.getPipeline().disableFog(ctx);
 	}
 
 	// native method for disabling modelClip
-	void disableModelClip(Context ctx)
-	{
+    void disableModelClip(Context ctx) {
 		Pipeline.getPipeline().disableModelClip(ctx);
 	}
 
 	// native method for setting default RenderingAttributes
-	void resetRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride)
-	{
-		Pipeline.getPipeline().resetRenderingAttributes(ctx, depthBufferWriteEnableOverride, depthBufferEnableOverride);
+    void resetRenderingAttributes(Context ctx,
+            boolean depthBufferWriteEnableOverride,
+            boolean depthBufferEnableOverride) {
+        Pipeline.getPipeline().resetRenderingAttributes(ctx,
+                depthBufferWriteEnableOverride,
+                depthBufferEnableOverride);
 	}
 
 	// native method for setting default texture
-	void resetTextureNative(Context ctx, int texUnitIndex)
-	{
+    void resetTextureNative(Context ctx, int texUnitIndex) {
 		Pipeline.getPipeline().resetTextureNative(ctx, texUnitIndex);
 	}
 
 	// native method for activating a particular texture unit
-	void activeTextureUnit(Context ctx, int texUnitIndex)
-	{
+    void activeTextureUnit(Context ctx, int texUnitIndex) {
 		Pipeline.getPipeline().activeTextureUnit(ctx, texUnitIndex);
 	}
 
 	// native method for setting default TexCoordGeneration
-	void resetTexCoordGeneration(Context ctx)
-	{
+    void resetTexCoordGeneration(Context ctx) {
 		Pipeline.getPipeline().resetTexCoordGeneration(ctx);
 	}
 
 	// native method for setting default TextureAttributes
-	void resetTextureAttributes(Context ctx)
-	{
+    void resetTextureAttributes(Context ctx) {
 		Pipeline.getPipeline().resetTextureAttributes(ctx);
 	}
 
 	// native method for setting default PolygonAttributes
-	void resetPolygonAttributes(Context ctx)
-	{
+    void resetPolygonAttributes(Context ctx) {
 		Pipeline.getPipeline().resetPolygonAttributes(ctx);
 	}
 
 	// native method for setting default LineAttributes
-	void resetLineAttributes(Context ctx)
-	{
+    void resetLineAttributes(Context ctx) {
 		Pipeline.getPipeline().resetLineAttributes(ctx);
 	}
 
 	// native method for setting default PointAttributes
-	void resetPointAttributes(Context ctx)
-	{
+    void resetPointAttributes(Context ctx) {
 		Pipeline.getPipeline().resetPointAttributes(ctx);
 	}
 
 	// native method for setting default TransparencyAttributes
-	void resetTransparency(Context ctx, int geometryType, int polygonMode, boolean lineAA, boolean pointAA)
-	{
-		Pipeline.getPipeline().resetTransparency(ctx, geometryType, polygonMode, lineAA, pointAA);
+    void resetTransparency(Context ctx, int geometryType,
+            int polygonMode, boolean lineAA,
+            boolean pointAA) {
+        Pipeline.getPipeline().resetTransparency(ctx, geometryType,
+                polygonMode, lineAA,
+                pointAA);
 	}
 
 	// native method for setting default ColoringAttributes
-	void resetColoringAttributes(Context ctx, float r, float g, float b, float a, boolean enableLight)
-	{
-		Pipeline.getPipeline().resetColoringAttributes(ctx, r, g, b, a, enableLight);
+    void resetColoringAttributes(Context ctx,
+            float r, float g,
+            float b, float a,
+            boolean enableLight) {
+        Pipeline.getPipeline().resetColoringAttributes(ctx,
+                r, g,
+                b, a,
+                enableLight);
 	}
 
 	/**
 	 *  This native method makes sure that the rendering for this canvas
 	 *  gets done now.
 	 */
-	void syncRender(Context ctx, boolean wait)
-	{
+    void syncRender(Context ctx, boolean wait) {
 		Pipeline.getPipeline().syncRender(ctx, wait);
 	}
 
 	// The native method that sets this ctx to be the current one
-	static boolean useCtx(Context ctx, Drawable drawable)
-	{
+    static boolean useCtx(Context ctx, Drawable drawable) {
 		return Pipeline.getPipeline().useCtx(ctx, drawable);
 	}
 
 	// Give the Pipeline a chance to release the context. The return
 	// value indicates whether the context was released.
-	private boolean releaseCtx(Context ctx)
-	{
+    private boolean releaseCtx(Context ctx) {
 		return Pipeline.getPipeline().releaseCtx(ctx);
 	}
 
-	void clear(Context ctx, float r, float g, float b, boolean clearStencil)
-	{
+    void clear(Context ctx, float r, float g, float b, boolean clearStencil) {
 		Pipeline.getPipeline().clear(ctx, r, g, b, clearStencil);
 	}
 
-	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
-			float mapMinY, float mapMaxY, boolean useBiliearFilter)
-	{
-		Pipeline.getPipeline().textureFillBackground(ctx, texMinU, texMaxU, texMinV, texMaxV, mapMinX, mapMaxX, mapMinY, mapMaxY,
-				useBiliearFilter);
+    void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
+            float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, boolean useBiliearFilter) {
+        Pipeline.getPipeline().textureFillBackground(ctx, texMinU, texMaxU, texMinV, texMaxV,
+                mapMinX, mapMaxX, mapMinY, mapMaxY, useBiliearFilter);
 	}
 
-	void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
-			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBiliearFilter)
-	{
-		Pipeline.getPipeline().textureFillRaster(ctx, texMinU, texMaxU, texMinV, texMaxV, mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ, alpha,
-				useBiliearFilter);
+    void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
+            float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBiliearFilter)  {
+        Pipeline.getPipeline().textureFillRaster(ctx, texMinU, texMaxU, texMinV, texMaxV,
+                mapMinX, mapMaxX, mapMinY, mapMaxY, mapZ, alpha, useBiliearFilter);
 	}
 
-	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
-			int rasterHeight, int depthWidth, int depthHeight, int depthType, Object depthData)
-	{
-		Pipeline.getPipeline().executeRasterDepth(ctx, posX, posY, posZ, srcOffsetX, srcOffsetY, rasterWidth, rasterHeight, depthWidth,
-				depthHeight, depthType, depthData);
+    void executeRasterDepth(Context ctx, float posX, float posY, float posZ,
+            int srcOffsetX, int srcOffsetY, int rasterWidth, int rasterHeight,
+            int depthWidth, int depthHeight, int depthType, Object depthData) {
+        Pipeline.getPipeline().executeRasterDepth(ctx, posX, posY, posZ,
+                srcOffsetX, srcOffsetY, rasterWidth, rasterHeight, depthWidth, depthHeight, depthType, depthData);
 	}
 
 	// The native method for setting the ModelView matrix.
-	void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix)
-	{
+    void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix) {
 		Pipeline.getPipeline().setModelViewMatrix(ctx, viewMatrix, modelMatrix);
 	}
 
 	// The native method for setting the Projection matrix.
-	void setProjectionMatrix(Context ctx, double[] projMatrix)
-	{
+    void setProjectionMatrix(Context ctx, double[] projMatrix) {
 		Pipeline.getPipeline().setProjectionMatrix(ctx, projMatrix);
 	}
 
 	// The native method for setting the Viewport.
-	void setViewport(Context ctx, int x, int y, int width, int height)
-	{
+    void setViewport(Context ctx, int x, int y, int width, int height) {
 		Pipeline.getPipeline().resizeOffscreenLayer(this, width, height);
 		Pipeline.getPipeline().setViewport(ctx, x, y, width, height);
 	}
 
 	// used for display Lists
-	void newDisplayList(Context ctx, int displayListId)
-	{
+    void newDisplayList(Context ctx, int displayListId) {
 		Pipeline.getPipeline().newDisplayList(ctx, displayListId);
 	}
-
-	void endDisplayList(Context ctx)
-	{
+    void endDisplayList(Context ctx) {
 		Pipeline.getPipeline().endDisplayList(ctx);
 	}
-
-	void callDisplayList(Context ctx, int id, boolean isNonUniformScale)
-	{
+    void callDisplayList(Context ctx, int id, boolean isNonUniformScale) {
 		Pipeline.getPipeline().callDisplayList(ctx, id, isNonUniformScale);
 	}
 
-	static void freeDisplayList(Context ctx, int id)
-	{
+    static void freeDisplayList(Context ctx, int id) {
 		Pipeline.getPipeline().freeDisplayList(ctx, id);
 	}
-
-	static void freeTexture(Context ctx, int id)
-	{
+    static void freeTexture(Context ctx, int id) {
 		Pipeline.getPipeline().freeTexture(ctx, id);
 	}
 
-	static int generateTexID(Context ctx)
-	{
+    static int generateTexID(Context ctx) {
 		return Pipeline.getPipeline().generateTexID(ctx);
 	}
 
-	void texturemapping(Context ctx, int px, int py, int xmin, int ymin, int xmax, int ymax, int texWidth, int texHeight, int rasWidth,
-			int format, int objectId, byte[] image, int winWidth, int winHeight)
-	{
-		Pipeline.getPipeline().texturemapping(ctx, px, py, xmin, ymin, xmax, ymax, texWidth, texHeight, rasWidth, format, objectId, image,
+    void texturemapping(Context ctx,
+            int px, int py,
+            int xmin, int ymin, int xmax, int ymax,
+            int texWidth, int texHeight,
+            int rasWidth,
+            int format, int objectId,
+            byte[] image,
+            int winWidth, int winHeight) {
+        Pipeline.getPipeline().texturemapping(ctx,
+                px, py,
+                xmin, ymin, xmax, ymax,
+                texWidth, texHeight,
+                rasWidth,
+                format, objectId,
+                image,
 				winWidth, winHeight);
 	}
 
-	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
-	{
-		return Pipeline.getPipeline().initTexturemapping(ctx, texWidth, texHeight, objectId);
+    boolean initTexturemapping(Context ctx, int texWidth,
+            int texHeight, int objectId) {
+        return Pipeline.getPipeline().initTexturemapping(ctx, texWidth,
+                texHeight, objectId);
 	}
 
 	// Set internal render mode to one of FIELD_ALL, FIELD_LEFT or
@@ -5388,45 +5060,38 @@ public class Canvas3D //extends Canvas
 	// stereo is available before setting the mode to FIELD_LEFT or
 	// FIELD_RIGHT.  The boolean isTRUE for double buffered mode, FALSE
 	// foe single buffering.
-	void setRenderMode(Context ctx, int mode, boolean doubleBuffer)
-	{
+    void setRenderMode(Context ctx, int mode, boolean doubleBuffer) {
 		Pipeline.getPipeline().setRenderMode(ctx, mode, doubleBuffer);
 	}
 
 	// Set glDepthMask.
-	void setDepthBufferWriteEnable(Context ctx, boolean mode)
-	{
+    void setDepthBufferWriteEnable(Context ctx, boolean mode) {
 		Pipeline.getPipeline().setDepthBufferWriteEnable(ctx, mode);
 	}
 
 	// Methods to get actual capabilities from Canvas3D
 
-	boolean hasDoubleBuffer()
-	{
+	boolean hasDoubleBuffer() {
 		return glwindow.getChosenGLCapabilities().getDoubleBuffered();
 		//Pipeline.getPipeline().hasDoubleBuffer(this);
 	}
 
-	boolean hasStereo()
-	{
+	boolean hasStereo() {
 		return glwindow.getChosenGLCapabilities().getStereo();
 		//Pipeline.getPipeline().hasStereo(this);
 	}
 
-	int getStencilSize()
-	{
+	int getStencilSize() {
 		return glwindow.getChosenGLCapabilities().getStencilBits();
 		//Pipeline.getPipeline().getStencilSize(this);
 	}
 
-	boolean hasSceneAntialiasingMultisample()
-	{
+	boolean hasSceneAntialiasingMultisample() {
 		return glwindow.getChosenGLCapabilities().getSampleBuffers();
 		//Pipeline.getPipeline().hasSceneAntialiasingMultisample(this);
 	}
 
-	boolean hasSceneAntialiasingAccum()
-	{
+	boolean hasSceneAntialiasingAccum() {
 		return false;
 		//Pipeline.getPipeline().hasSceneAntialiasingAccum(this);
 	}

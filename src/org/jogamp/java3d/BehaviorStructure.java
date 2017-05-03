@@ -25,12 +25,12 @@
  */
 
 package org.jogamp.java3d;
-//<AND>
+//PJ
 //import java.awt.AWTEvent;
 //import java.awt.event.ComponentEvent;
 //import java.awt.event.FocusEvent;
 //import java.awt.event.KeyEvent;
-//import java.awt.event.MouseEvent;</AND>
+//import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
 import org.jogamp.vecmath.Point3d;
@@ -98,7 +98,7 @@ class BehaviorStructure extends J3dStructure {
      * The lists of the WakeupCriterion objects that the
      * behavior scheduler keeps.
      */
-    //<AND>WakeupIndexedList wakeupOnAWTEvent;</>
+    //PJ WakeupIndexedList wakeupOnAWTEvent; 
     WakeupIndexedList wakeupOnActivation;
     WakeupIndexedList wakeupOnDeactivation;
     WakeupIndexedList wakeupOnBehaviorPost;
@@ -124,7 +124,7 @@ class BehaviorStructure extends J3dStructure {
      * We did not remove individual element from the following list
      * (except clear()) so the order is still preserve.
      */
-    //<AND>UnorderList awtEventsBuffer = new UnorderList(AWTEvent.class);</>
+    //PJ UnorderList awtEventsBuffer = new UnorderList(AWTEvent.class);
 
     // Use generic integer array to avoid new Integer() for individual element
     int postIDBuffer[] = new int[10]; // size of default UnorderList
@@ -176,10 +176,8 @@ class BehaviorStructure extends J3dStructure {
 						       WakeupOnSensorEntry.SENSORENTRY_IN_BS_LIST, u);
 	currentSensorExitList = new WakeupIndexedList(WakeupOnSensorExit.class,
 						       WakeupOnSensorExit.SENSOREXIT_IN_BS_LIST, u);
-	//<AND>
-	//wakeupOnAWTEvent = new WakeupIndexedList(WakeupOnAWTEvent.class,
+	//PJ wakeupOnAWTEvent = new WakeupIndexedList(WakeupOnAWTEvent.class,
 	//					 WakeupOnAWTEvent.COND_IN_BS_LIST, u);
-	//</AND>
 	wakeupOnActivation = new WakeupIndexedList(WakeupOnActivation.class,
 						   WakeupOnActivation.COND_IN_BS_LIST, u);
 	wakeupOnDeactivation = new WakeupIndexedList(WakeupOnDeactivation.class,
@@ -439,98 +437,98 @@ class BehaviorStructure extends J3dStructure {
 
 	// Since BehaviorScheduler will run after BehaviorStructure
 	// (not in parallel). It is safe to do cleanup here.
-	//<AND>wakeupOnAWTEvent.clearMirror();</>
-	//<AND>awtEventsBuffer.clearMirror();</>
+	//PJ wakeupOnAWTEvent.clearMirror();
+	//awtEventsBuffer.clearMirror();
 	wakeupOnBehaviorPost.clearMirror();
 	behaviorPostBuffer.clearMirror();
 	wakeupOnSensorEntry.clearMirror();
 	wakeupOnSensorExit.clearMirror();
 	branchDetach = true;
-//<AND>
-//	if (behavRemove) {
-//	    // disable AWT Event from Canvas3D
-//	    WakeupOnAWTEvent awtConds[] = (WakeupOnAWTEvent [])
-//		wakeupOnAWTEvent.toArray();
-//	    int eventSize = wakeupOnAWTEvent.arraySize();
-//
-//	    // Component Event always Enable
-//	    boolean focusEnable = false;
-//	    boolean keyEnable = false;
-//	    boolean mouseMotionEnable = false;
-//	    boolean mouseEnable = false;
-//	    boolean mouseWheelEnable = false;
-//	    WakeupOnAWTEvent awtCond;
-//	    int awtId;
-//	    long eventMask;
-//	    boolean incTimestamp = false;
-//
-//	    for (int i=0; i < eventSize; i++) {
-//		awtCond = awtConds[i];
-//		awtId = awtCond.AwtId;
-//		eventMask = awtCond.EventMask;
-//
-//		if ((awtId >= FocusEvent.FOCUS_FIRST && awtId <= FocusEvent.FOCUS_LAST) ||
-//		    (eventMask & AWTEvent.FOCUS_EVENT_MASK) != 0) {
-//		    focusEnable = true;
-//		}
-//		if ((awtId >= KeyEvent.KEY_FIRST && awtId <= KeyEvent.KEY_LAST) ||
-//		    (eventMask & AWTEvent.KEY_EVENT_MASK) != 0) {
-//		    keyEnable = true;
-//		}
-//		if ((awtId >= MouseEvent.MOUSE_FIRST) &&
-//		    (awtId <= MouseEvent.MOUSE_LAST)) {
-//		    if ((awtId == MouseEvent.MOUSE_DRAGGED) ||
-//			(awtId == MouseEvent.MOUSE_MOVED)) {
-//			mouseMotionEnable = true;
-//		    }
-//		    else if ((awtId == MouseEvent.MOUSE_ENTERED) ||
-//			     (awtId == MouseEvent.MOUSE_EXITED)  ||
-//			     (awtId == MouseEvent.MOUSE_CLICKED) ||
-//			     (awtId == MouseEvent.MOUSE_PRESSED) ||
-//			     (awtId == MouseEvent.MOUSE_RELEASED) ) {
-//			mouseEnable = true;
-//		    }
-//		    else if (awtId == MouseEvent.MOUSE_WHEEL) {
-//			mouseWheelEnable = true;
-//		    }
-//		} else {
-//		    if ((eventMask & AWTEvent.MOUSE_EVENT_MASK) != 0) {
-//			mouseEnable = true;
-//		    }
-//		    if ((eventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0) {
-//			mouseMotionEnable = true;
-//		    }
-//		    if ((eventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0) {
-//			mouseWheelEnable = true;
-//		    }
-//		}
-//	    }
-//
-//	    if (!focusEnable && universe.enableFocus) {
-//		incTimestamp = true;
-//		universe.disableFocusEvents();
-//	    }
-//	    if (!keyEnable && universe.enableKey) {
-//		// key event use for toggle to fullscreen/window mode
-//		incTimestamp = true;
-//		universe.disableKeyEvents();
-//	    }
-//	    if (!mouseWheelEnable && universe.enableMouseWheel) {
-//		incTimestamp = true;
-//		universe.disableMouseWheelEvents();
-//	    }
-//	    if (!mouseMotionEnable && universe.enableMouseMotion) {
-//		incTimestamp = true;
-//		universe.disableMouseMotionEvents();
-//	    }
-//	    if (!mouseEnable && universe.enableMouse) {
-//		incTimestamp = true;
-//		universe.disableMouseEvents();
-//	    }
-//	    if (incTimestamp) {
-//		awtEventTimestamp++;
-//	    }
-//	}</AND>
+//PJ
+/*	if (behavRemove) {
+	    // disable AWT Event from Canvas3D
+	    WakeupOnAWTEvent awtConds[] = (WakeupOnAWTEvent [])
+		wakeupOnAWTEvent.toArray();
+	    int eventSize = wakeupOnAWTEvent.arraySize();
+
+	    // Component Event always Enable
+	    boolean focusEnable = false;
+	    boolean keyEnable = false;
+	    boolean mouseMotionEnable = false;
+	    boolean mouseEnable = false;
+	    boolean mouseWheelEnable = false;
+	    WakeupOnAWTEvent awtCond;
+	    int awtId;
+	    long eventMask;
+	    boolean incTimestamp = false;
+
+	    for (int i=0; i < eventSize; i++) {
+		awtCond = awtConds[i];
+		awtId = awtCond.AwtId;
+		eventMask = awtCond.EventMask;
+
+		if ((awtId >= FocusEvent.FOCUS_FIRST && awtId <= FocusEvent.FOCUS_LAST) ||
+		    (eventMask & AWTEvent.FOCUS_EVENT_MASK) != 0) {
+		    focusEnable = true;
+		}
+		if ((awtId >= KeyEvent.KEY_FIRST && awtId <= KeyEvent.KEY_LAST) ||
+		    (eventMask & AWTEvent.KEY_EVENT_MASK) != 0) {
+		    keyEnable = true;
+		}
+		if ((awtId >= MouseEvent.MOUSE_FIRST) &&
+		    (awtId <= MouseEvent.MOUSE_LAST)) {
+		    if ((awtId == MouseEvent.MOUSE_DRAGGED) ||
+			(awtId == MouseEvent.MOUSE_MOVED)) {
+			mouseMotionEnable = true;
+		    }
+		    else if ((awtId == MouseEvent.MOUSE_ENTERED) ||
+			     (awtId == MouseEvent.MOUSE_EXITED)  ||
+			     (awtId == MouseEvent.MOUSE_CLICKED) ||
+			     (awtId == MouseEvent.MOUSE_PRESSED) ||
+			     (awtId == MouseEvent.MOUSE_RELEASED) ) {
+			mouseEnable = true;
+		    }
+		    else if (awtId == MouseEvent.MOUSE_WHEEL) {
+			mouseWheelEnable = true;
+		    }
+		} else {
+		    if ((eventMask & AWTEvent.MOUSE_EVENT_MASK) != 0) {
+			mouseEnable = true;
+		    }
+		    if ((eventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0) {
+			mouseMotionEnable = true;
+		    }
+		    if ((eventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0) {
+			mouseWheelEnable = true;
+		    }
+		}
+	    }
+
+	    if (!focusEnable && universe.enableFocus) {
+		incTimestamp = true;
+		universe.disableFocusEvents();
+	    }
+	    if (!keyEnable && universe.enableKey) {
+		// key event use for toggle to fullscreen/window mode
+		incTimestamp = true;
+		universe.disableKeyEvents();
+	    }
+	    if (!mouseWheelEnable && universe.enableMouseWheel) {
+		incTimestamp = true;
+		universe.disableMouseWheelEvents();
+	    }
+	    if (!mouseMotionEnable && universe.enableMouseMotion) {
+		incTimestamp = true;
+		universe.disableMouseMotionEvents();
+	    }
+	    if (!mouseEnable && universe.enableMouse) {
+		incTimestamp = true;
+		universe.disableMouseEvents();
+	    }
+	    if (incTimestamp) {
+		awtEventTimestamp++;
+	    }
+	}*/
     }
 
     void removeViewPlatform(ViewPlatformRetained vp) {
@@ -653,87 +651,86 @@ class BehaviorStructure extends J3dStructure {
 
     }
 
-//<AND>
-//    void handleAWTEvent(AWTEvent evt) {
-//	awtEventsBuffer.add(evt);
-//	VirtualUniverse.mc.sendRunMessage(universe,
-//					  J3dThread.BEHAVIOR_SCHEDULER);
-//    }
-//</AND>
+
+/*PJ void handleAWTEvent(AWTEvent evt) {
+	awtEventsBuffer.add(evt);
+	VirtualUniverse.mc.sendRunMessage(universe,
+					  J3dThread.BEHAVIOR_SCHEDULER);
+    }*/
+
    /**
      * This routine takes the awt event list and gives then to the awt event
      * conditions
      */
-//<AND>    
-//    void handleAWTEvent() {
-//	WakeupOnAWTEvent awtConds[] = (WakeupOnAWTEvent [])
-//	                                   wakeupOnAWTEvent.toArray();
-//	AWTEvent events[];
-//	int eventSize = wakeupOnAWTEvent.arraySize();
-//	int awtBufferSize;
-//
-//	synchronized (awtEventsBuffer) {
-//	    events = (AWTEvent []) awtEventsBuffer.toArray();
-//	    awtBufferSize = awtEventsBuffer.size();
-//	    awtEventsBuffer.clear();
-//	}
-//	WakeupOnAWTEvent awtCond;
-//	AWTEvent evt;
-//	int id;
-//
-//	for (int i=0; i < eventSize; i++) {
-//	    awtCond = awtConds[i];
-//	    for (int j=0; j < awtBufferSize; j++) {
-//		evt = events[j];
-//		id = evt.getID();
-//
-//		if (awtCond.AwtId != 0) {
-//		    if (awtCond.AwtId == id) {
-//			// XXXX: how do we clone this event (do we need to?)
-//			// Bug: 4181321
-//			awtCond.addAWTEvent(evt);
-//		    }
-//		} else {
-//		    if (id >= ComponentEvent.COMPONENT_FIRST &&
-//			id <= ComponentEvent.COMPONENT_LAST &&
-//			(awtCond.EventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0) {
-//		        awtCond.addAWTEvent(evt);
-//		    }
-//		    else if (id >= FocusEvent.FOCUS_FIRST &&
-//			     id <= FocusEvent.FOCUS_LAST &&
-//			     (awtCond.EventMask & AWTEvent.FOCUS_EVENT_MASK) != 0) {
-//			awtCond.addAWTEvent(evt);
-//		    }
-//		    else if (id >= KeyEvent.KEY_FIRST &&
-//			     id <= KeyEvent.KEY_LAST &&
-//			     (awtCond.EventMask & AWTEvent.KEY_EVENT_MASK) != 0) {
-//			awtCond.addAWTEvent(evt);
-//		    }
-//		    else if ((id == MouseEvent.MOUSE_CLICKED ||
-//			      id == MouseEvent.MOUSE_ENTERED ||
-//			      id == MouseEvent.MOUSE_EXITED ||
-//			      id == MouseEvent.MOUSE_PRESSED ||
-//			      id == MouseEvent.MOUSE_RELEASED) &&
-//			     (awtCond.EventMask & AWTEvent.MOUSE_EVENT_MASK) != 0) {
-//			awtCond.addAWTEvent(evt);
-//		    }
-//		    else if ((id == MouseEvent.MOUSE_DRAGGED ||
-//			      id == MouseEvent.MOUSE_MOVED) &&
-//			     (awtCond.EventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0) {
-//			awtCond.addAWTEvent(evt);
-//		    }
-//		    else if ((id == MouseEvent.MOUSE_WHEEL) &&
-//			     (awtCond.EventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0) {
-//			awtCond.addAWTEvent(evt);
-//		    }
-//		}
-//	    }
-//	}
-//
-//
-//
-//    }
-//</AND>
+/* PJ   void handleAWTEvent() {
+	WakeupOnAWTEvent awtConds[] = (WakeupOnAWTEvent [])
+	                                   wakeupOnAWTEvent.toArray();
+	AWTEvent events[];
+	int eventSize = wakeupOnAWTEvent.arraySize();
+	int awtBufferSize;
+
+	synchronized (awtEventsBuffer) {
+	    events = (AWTEvent []) awtEventsBuffer.toArray();
+	    awtBufferSize = awtEventsBuffer.size();
+	    awtEventsBuffer.clear();
+	}
+	WakeupOnAWTEvent awtCond;
+	AWTEvent evt;
+	int id;
+
+	for (int i=0; i < eventSize; i++) {
+	    awtCond = awtConds[i];
+	    for (int j=0; j < awtBufferSize; j++) {
+		evt = events[j];
+		id = evt.getID();
+
+		if (awtCond.AwtId != 0) {
+		    if (awtCond.AwtId == id) {
+			// XXXX: how do we clone this event (do we need to?)
+			// Bug: 4181321
+			awtCond.addAWTEvent(evt);
+		    }
+		} else {
+		    if (id >= ComponentEvent.COMPONENT_FIRST &&
+			id <= ComponentEvent.COMPONENT_LAST &&
+			(awtCond.EventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0) {
+		        awtCond.addAWTEvent(evt);
+		    }
+		    else if (id >= FocusEvent.FOCUS_FIRST &&
+			     id <= FocusEvent.FOCUS_LAST &&
+			     (awtCond.EventMask & AWTEvent.FOCUS_EVENT_MASK) != 0) {
+			awtCond.addAWTEvent(evt);
+		    }
+		    else if (id >= KeyEvent.KEY_FIRST &&
+			     id <= KeyEvent.KEY_LAST &&
+			     (awtCond.EventMask & AWTEvent.KEY_EVENT_MASK) != 0) {
+			awtCond.addAWTEvent(evt);
+		    }
+		    else if ((id == MouseEvent.MOUSE_CLICKED ||
+			      id == MouseEvent.MOUSE_ENTERED ||
+			      id == MouseEvent.MOUSE_EXITED ||
+			      id == MouseEvent.MOUSE_PRESSED ||
+			      id == MouseEvent.MOUSE_RELEASED) &&
+			     (awtCond.EventMask & AWTEvent.MOUSE_EVENT_MASK) != 0) {
+			awtCond.addAWTEvent(evt);
+		    }
+		    else if ((id == MouseEvent.MOUSE_DRAGGED ||
+			      id == MouseEvent.MOUSE_MOVED) &&
+			     (awtCond.EventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0) {
+			awtCond.addAWTEvent(evt);
+		    }
+		    else if ((id == MouseEvent.MOUSE_WHEEL) &&
+			     (awtCond.EventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0) {
+			awtCond.addAWTEvent(evt);
+		    }
+		}
+	    }
+	}
+
+
+
+    }*/
+
 
     void handleBehaviorPost(Behavior behav, int postid) {
 
@@ -1591,7 +1588,7 @@ Sensor sensorIntersect(Bounds behregion) {
      * when view deactivate/unregister.
      */
     void resetConditionMet() {
-    	//<AND>resetConditionMet(wakeupOnAWTEvent);</>
+    //PJ resetConditionMet(wakeupOnAWTEvent);
 	resetConditionMet(wakeupOnActivation);
 	resetConditionMet(wakeupOnDeactivation);
 	resetConditionMet(wakeupOnBehaviorPost);
@@ -1665,7 +1662,7 @@ Sensor sensorIntersect(Bounds behregion) {
 	boundsExitList.clear();
 	currentSensorEntryList.clear();
 	currentSensorExitList.clear();
-	//<AND>wakeupOnAWTEvent.clear();</>
+	//PJ wakeupOnAWTEvent.clear();
 	wakeupOnActivation.clear();
 	wakeupOnDeactivation.clear();
 	wakeupOnBehaviorPost.clear();

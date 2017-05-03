@@ -26,6 +26,8 @@
 
 package org.jogamp.java3d;
 
+import javaawt.Dimension;
+import javaawt.Point;
 import java.util.ArrayList;
 
 import org.jogamp.vecmath.Point2d;
@@ -33,9 +35,6 @@ import org.jogamp.vecmath.Point2i;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.Point4d;
-
-import javaawt.Dimension;
-import javaawt.Point;
 
 /**
  * A Retained Raster.

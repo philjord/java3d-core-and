@@ -289,7 +289,7 @@ AppearanceRetained getAppearance(AppearanceRetained app) {
 		    // add the shape to the dest
 		}
 	    }
-	    }
+	}
 	}
 
 	// Clear the shapelists for the next merge

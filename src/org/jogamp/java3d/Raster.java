@@ -26,10 +26,12 @@
 
 package org.jogamp.java3d;
 
-import org.jogamp.vecmath.Point3f;
-
 import javaawt.Dimension;
 import javaawt.Point;
+
+import org.jogamp.vecmath.Point3f;
+
+
 
 
 /**

@@ -24,7 +24,7 @@
  *
  */
 
-package org.jogamp.java3d ;
+package org.jogamp.java3d;
 
 /**
  * The RenderMethod interface is used to create various ways to render

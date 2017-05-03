@@ -26,6 +26,7 @@
 
 package org.jogamp.java3d;
 
+
 /**
  * The ShaderAttributeValue object encapsulates a uniform shader
  * attribute whose value is specified explicitly. The shader variable
@@ -55,64 +56,64 @@ package org.jogamp.java3d;
  */
 
 public class ShaderAttributeValue extends ShaderAttributeObject {
-	/**
-	 * Constructs a new ShaderAttributeValue object with the specified
-	 * <code>(attrName,&nbsp;value)</code> pair.
-	 * A copy of the object is stored.
-	 *
-	 * @param attrName the name of the shader attribute
-	 * @param value the value of the shader attribute
-	 *
-	 * @exception NullPointerException if attrName or value is null
-	 *
-	 * @exception ClassCastException if value is not an instance of
-	 * one of the allowed classes
-	 */
+    /**
+     * Constructs a new ShaderAttributeValue object with the specified
+     * <code>(attrName,&nbsp;value)</code> pair.
+     * A copy of the object is stored.
+     *
+     * @param attrName the name of the shader attribute
+     * @param value the value of the shader attribute
+     *
+     * @exception NullPointerException if attrName or value is null
+     *
+     * @exception ClassCastException if value is not an instance of
+     * one of the allowed classes
+     */
     public ShaderAttributeValue(String attrName, Object value) {
-		super(attrName, value);
-	}
+	super(attrName, value);
+    }
 
-	// Implement abstract getValue method
-	@Override
+    // Implement abstract getValue method
+    @Override
     public Object getValue() {
 
-		if (isLiveOrCompiled())
-			if (!this.getCapability(ALLOW_VALUE_READ))
-				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
+        if (isLiveOrCompiled())
+	    if (!this.getCapability(ALLOW_VALUE_READ))
+		throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject0"));
 
-		return ((ShaderAttributeValueRetained) this.retained).getValue();
-	}
+ 	return ((ShaderAttributeValueRetained)this.retained).getValue();
+    }
 
-	// Implement abstract setValue method
-	@Override
+    // Implement abstract setValue method
+    @Override
     public void setValue(Object value) {
 
         if (value == null) {
-			throw new NullPointerException();
-		}
-
-		if (isLiveOrCompiled())
-			if (!this.getCapability(ALLOW_VALUE_WRITE))
-				throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject1"));
-
-		if (isLive())
-			((ShaderAttributeValueRetained) this.retained).setValue(value);
-		else
-			((ShaderAttributeValueRetained) this.retained).initValue(value);
-
+	    throw new NullPointerException();
 	}
 
-	/**
-	 * Creates a retained mode ShaderAttributeValueRetained object that this
-	 * ShaderAttributeValue component object will point to.
-	 */
-	@Override
+        if (isLiveOrCompiled())
+	    if (!this.getCapability(ALLOW_VALUE_WRITE))
+		throw new CapabilityNotSetException(J3dI18N.getString("ShaderAttributeObject1"));
+
+	if (isLive())
+	    ((ShaderAttributeValueRetained)this.retained).setValue(value);
+	else
+	    ((ShaderAttributeValueRetained)this.retained).initValue(value);
+
+    }
+
+    /**
+     * Creates a retained mode ShaderAttributeValueRetained object that this
+     * ShaderAttributeValue component object will point to.
+     */
+    @Override
     void createRetained() {
-		this.retained = new ShaderAttributeValueRetained();
-		this.retained.setSource(this);
-	}
-
-	@Override
+	this.retained = new ShaderAttributeValueRetained();
+	this.retained.setSource(this);
+    }
+    
+    @Override
 	public boolean equals(Object anObject)
 	{
 		if (this == anObject)

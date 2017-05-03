@@ -33,8 +33,7 @@ import java.util.ArrayList;
  * All objects in the AttributeBin share the same RenderingAttributes
  */
 
-class AttributeBin extends Object implements ObjectUpdate
-{
+class AttributeBin extends Object implements ObjectUpdate {
 
 	/**
 	 * The RenderingAttributes for this AttributeBin
@@ -89,17 +88,14 @@ class AttributeBin extends Object implements ObjectUpdate
 	// when sole user is completely implement
 	RenderingAttributesRetained renderingAttrs;
 
-	AttributeBin(AppearanceRetained app, RenderingAttributesRetained renderingAttributes, RenderBin rBin)
-	{
+	AttributeBin(AppearanceRetained app, RenderingAttributesRetained renderingAttributes, RenderBin rBin) {
 
 		reset(app, renderingAttributes, rBin);
 	}
 
-	void reset(AppearanceRetained app, RenderingAttributesRetained renderingAttributes, RenderBin rBin)
-	{
+	void reset(AppearanceRetained app, RenderingAttributesRetained renderingAttributes, RenderBin rBin) {
 		prev = null;
 		next = null;
-
 		textureBinList = null;
 		onUpdateList = 0;
 		numEditingTextureBins = 0;
@@ -110,10 +106,8 @@ class AttributeBin extends Object implements ObjectUpdate
 
 		// Issue 249 - check for sole user only if property is set
 		soleUser = false;
-		if (VirtualUniverse.mc.allowSoleUser)
-		{
-			if (app != null)
-			{
+		if (VirtualUniverse.mc.allowSoleUser) {
+			if (app != null) {
 				soleUser = ((app.changedFrequent & AppearanceRetained.RENDERING) != 0);
 			}
 		}
@@ -125,32 +119,24 @@ class AttributeBin extends Object implements ObjectUpdate
 		else
 			app = null;
 
-		if (renderingAttributes != null)
-		{
-			if (renderingAttributes.changedFrequent != 0)
-			{
+	if (renderingAttributes != null) {
+	    if (renderingAttributes.changedFrequent != 0) {
 				definingRenderingAttributes = renderingAttributes;
-				if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) == 0)
-				{
+		if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) == 0 ) {
 					renderBin.aBinUpdateList.add(this);
 					onUpdateList |= AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
 				}
 			}
-			else
-			{
-				if (definingRenderingAttributes != null)
-				{
+	    else {
+		if (definingRenderingAttributes != null) {
 					definingRenderingAttributes.set(renderingAttributes);
 				}
-				else
-				{
+		else {
 					definingRenderingAttributes = (RenderingAttributesRetained) renderingAttributes.clone();
 				}
 			}
 			ignoreVertexColors = definingRenderingAttributes.ignoreVertexColors;
-		}
-		else
-		{
+	} else {
 			definingRenderingAttributes = null;
 			ignoreVertexColors = false;
 		}
@@ -159,16 +145,14 @@ class AttributeBin extends Object implements ObjectUpdate
 	/**
 	 * This tests if the given attributes match this AttributeBin
 	 */
-	boolean equals(RenderingAttributesRetained renderingAttributes, RenderAtom ra)
-	{
+    boolean equals(RenderingAttributesRetained renderingAttributes, RenderAtom ra) {
 
 		// If the any reference to the appearance components  that is cached renderMolecule
 		// can change frequently, make a separate bin
-		if (soleUser || (ra.geometryAtom.source.appearance != null
-				&& ((ra.geometryAtom.source.appearance.changedFrequent & AppearanceRetained.RENDERING) != 0)))
-		{
-			if (app == ra.geometryAtom.source.appearance)
-			{
+	if (soleUser || (ra.geometryAtom.source.appearance != null &&
+			 ((ra.geometryAtom.source.appearance.changedFrequent &
+			   AppearanceRetained.RENDERING) != 0))) {
+		if (app == ra.geometryAtom.source.appearance) {
 
 				// if this AttributeBin is currently on a zombie state,
 				// we'll need to put it on the update list to reevaluate
@@ -180,18 +164,16 @@ class AttributeBin extends Object implements ObjectUpdate
 				// attributes reference change would not have reflected to
 				// the AttributeBin
 
-				if (numEditingTextureBins == 0)
-				{
-					if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) == 0)
-					{
+                if (numEditingTextureBins == 0) {
+		    if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) == 0) {
 						renderBin.aBinUpdateList.add(this);
-						onUpdateList |= AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
+			onUpdateList |=
+				AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
 					}
 				}
 				return true;
 			}
-			else
-			{
+	    else {
 				return false;
 			}
 
@@ -200,32 +182,25 @@ class AttributeBin extends Object implements ObjectUpdate
 		// and the incoming one is not equal or null
 		// then return;
 		// This check also handles null == null case
-		if (definingRenderingAttributes != null)
-		{
-			if ((this.definingRenderingAttributes.changedFrequent != 0)
-					|| (renderingAttributes != null && renderingAttributes.changedFrequent != 0))
-				if (definingRenderingAttributes == renderingAttributes)
-				{
-					if (definingRenderingAttributes.compChanged != 0)
-					{
-						if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) == 0)
-						{
+	if (definingRenderingAttributes != null) {
+	    if ((this.definingRenderingAttributes.changedFrequent != 0) ||
+		(renderingAttributes !=null && renderingAttributes.changedFrequent != 0))
+		if (definingRenderingAttributes == renderingAttributes) {
+		    if (definingRenderingAttributes.compChanged != 0) {
+			if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) == 0 ) {
 							renderBin.aBinUpdateList.add(this);
 							onUpdateList |= AttributeBin.ON_CHANGED_FREQUENT_UPDATE_LIST;
 						}
 					}
 				}
-				else
-				{
+		else {
 					return false;
 				}
-			else if (!definingRenderingAttributes.equivalent(renderingAttributes))
-			{
+	    else if (!definingRenderingAttributes.equivalent(renderingAttributes)) {
 				return false;
 			}
 		}
-		else if (renderingAttributes != null)
-		{
+	else if (renderingAttributes != null) {
 			return false;
 		}
 
@@ -233,29 +208,26 @@ class AttributeBin extends Object implements ObjectUpdate
 	}
 
 	@Override
-	public void updateObject()
-	{
-		TextureBin t;
+	public void updateObject() {
+		TextureBin tb;
 		int i;
 
-		if (addTextureBins.size() > 0)
-		{
-			t = addTextureBins.get(0);
+		if (addTextureBins.size() > 0) {
+			tb = addTextureBins.get(0);
 			if (textureBinList == null)
 			{
-				textureBinList = t;
+				textureBinList = tb;
 
 			}
-			else
-			{
+			else {
 				// Look for a TextureBin that has the same texture
-				insertTextureBin(t);
+				insertTextureBin(tb);
 			}
 			for (i = 1; i < addTextureBins.size(); i++)
 			{
-				t = addTextureBins.get(i);
+				tb = addTextureBins.get(i);
 				// Look for a TextureBin that has the same texture
-				insertTextureBin(t);
+				insertTextureBin(tb);
 
 			}
 		}
@@ -318,8 +290,7 @@ class AttributeBin extends Object implements ObjectUpdate
 	 * reInsert textureBin if the first texture is different from
 	 * the previous bin and different from the next bin
 	 */
-	void reInsertTextureBin(TextureBin tb)
-	{
+	void reInsertTextureBin(TextureBin tb) {
 
 		TextureRetained texture = null, prevTexture = null, nextTexture = null;
 
@@ -372,32 +343,24 @@ class AttributeBin extends Object implements ObjectUpdate
 	}
 
 	/**
-	 * Removes the given TextureBin from this ShaderBin.
+     * Removes the given TextureBin from this ShaderBin.
 	 */
-	void removeTextureBin(TextureBin t)
-	{
+	void removeTextureBin(TextureBin t) {
 
-		// If the TextureBin being remove is contained in addTextureBins,
-		// then remove the TextureBin from the addList
-		if (addTextureBins.contains(t))
-		{
-			addTextureBins.remove(addTextureBins.indexOf(t));
-		}
-		else
-		{
-			if (t.prev == null)
-			{ // At the head of the list
+	// If the TextureBin being remove is contained in addTextureBins,
+	// then remove the TextureBin from the addList
+	if (addTextureBins.contains(t)) {
+		addTextureBins.remove(addTextureBins.indexOf(t));
+	}
+	else {
+			if (t.prev == null) { // At the head of the list
 				textureBinList = t.next;
-				if (t.next != null)
-				{
+				if (t.next != null) {
 					t.next.prev = null;
 				}
-			}
-			else
-			{ // In the middle or at the end.
+			} else { // In the middle or at the end.
 				t.prev.next = t.next;
-				if (t.next != null)
-				{
+				if (t.next != null) {
 					t.next.prev = t.prev;
 				}
 			}
@@ -409,8 +372,7 @@ class AttributeBin extends Object implements ObjectUpdate
 
 		t.clear();
 
-		if (textureBinList == null && addTextureBins.size() == 0)
-		{
+		if (textureBinList == null && addTextureBins.size() == 0) {
 			// Note: Removal of this attributebin as a user of the rendering
 			// atttrs is done during removeRenderAtom() in RenderMolecule.java
 			shaderBin.removeAttributeBin(this);
@@ -420,57 +382,60 @@ class AttributeBin extends Object implements ObjectUpdate
 	/**
 	 * Renders this AttributeBin
 	 */
-	void render(Canvas3D cv)
-	{
-		//System.out.println("			AttributeBin.render " + this);
+	void render(Canvas3D cv) {
 
-		boolean visible = (definingRenderingAttributes == null || definingRenderingAttributes.visible);
+		TextureBin tb;
+		
+		boolean visible = (definingRenderingAttributes == null ||
+						   definingRenderingAttributes.visible);
 
-		if ((renderBin.view.viewCache.visibilityPolicy == View.VISIBILITY_DRAW_VISIBLE && !visible)
-				|| (renderBin.view.viewCache.visibilityPolicy == View.VISIBILITY_DRAW_INVISIBLE && visible))
-		{
+		if ((renderBin.view.viewCache.visibilityPolicy 
+				== View.VISIBILITY_DRAW_VISIBLE && !visible) ||
+				(renderBin.view.viewCache.visibilityPolicy 
+					== View.VISIBILITY_DRAW_INVISIBLE && visible)) {
 			return;
 		}
 
 		// include this AttributeBin to the to-be-updated list in Canvas
 		cv.setStateToUpdate(Canvas3D.ATTRIBUTEBIN_BIT, this);
 
-		TextureBin tb = textureBinList;
-		while (tb != null)
-		{
+		tb = textureBinList;
+		while (tb != null) {
 			tb.render(cv);
 			tb = tb.next;
 		}
-
 	}
 
-	void updateAttributes(Canvas3D cv)
-	{
+	void updateAttributes(Canvas3D cv) {
 
-		if ((cv.canvasDirty & Canvas3D.ATTRIBUTEBIN_DIRTY) != 0)
-		{
+	if ((cv.canvasDirty & Canvas3D.ATTRIBUTEBIN_DIRTY) != 0) {
 			// Update Attribute Bundles
-			if (definingRenderingAttributes == null)
-			{
-				cv.resetRenderingAttributes(cv.ctx, cv.depthBufferWriteEnableOverride, cv.depthBufferEnableOverride);
-			}
-			else
-			{
-				definingRenderingAttributes.updateNative(cv, cv.depthBufferWriteEnableOverride, cv.depthBufferEnableOverride);
+	    if (definingRenderingAttributes == null) {
+	        cv.resetRenderingAttributes(cv.ctx,
+					    cv.depthBufferWriteEnableOverride,
+					    cv.depthBufferEnableOverride);
+	    } else {
+	        definingRenderingAttributes.updateNative(
+				    cv,
+				    cv.depthBufferWriteEnableOverride,
+				    cv.depthBufferEnableOverride);
 			}
 			cv.renderingAttrs = renderingAttrs;
 		}
 
-		else if (cv.renderingAttrs != renderingAttrs && cv.attributeBin != this)
-		{
+	else if (cv.renderingAttrs != renderingAttrs &&
+			cv.attributeBin != this) {
 			// Update Attribute Bundles
-			if (definingRenderingAttributes == null)
-			{
-				cv.resetRenderingAttributes(cv.ctx, cv.depthBufferWriteEnableOverride, cv.depthBufferEnableOverride);
-			}
-			else
-			{
-				definingRenderingAttributes.updateNative(cv, cv.depthBufferWriteEnableOverride, cv.depthBufferEnableOverride);
+	    if (definingRenderingAttributes == null) {
+		cv.resetRenderingAttributes(
+					cv.ctx,
+					cv.depthBufferWriteEnableOverride,
+					cv.depthBufferEnableOverride);
+	    } else {
+		definingRenderingAttributes.updateNative(
+				        cv,
+					cv.depthBufferWriteEnableOverride,
+				    	cv.depthBufferEnableOverride);
 			}
 			cv.renderingAttrs = renderingAttrs;
 		}
@@ -478,44 +443,34 @@ class AttributeBin extends Object implements ObjectUpdate
 		cv.canvasDirty &= ~Canvas3D.ATTRIBUTEBIN_DIRTY;
 	}
 
-	void updateNodeComponent()
-	{
+    void updateNodeComponent() {
 		// May be in the freelist already (due to freq bit changing)
 		// if so, don't update anything
-		if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) != 0)
-		{
-			if (soleUser)
-			{
+	if ((onUpdateList & ON_CHANGED_FREQUENT_UPDATE_LIST) != 0) {
+	    if (soleUser) {
 				boolean cloned = definingRenderingAttributes != null && definingRenderingAttributes != renderingAttrs;
 				renderingAttrs = app.renderingAttributes;
 
-				if (renderingAttrs == null)
-				{
+		if (renderingAttrs == null) {
 					definingRenderingAttributes = null;
 					ignoreVertexColors = false;
 				}
-				else
-				{
-					if (renderingAttrs.changedFrequent != 0)
-					{
+		else {
+		    if (renderingAttrs.changedFrequent != 0) {
 						definingRenderingAttributes = renderingAttrs;
 					}
-					else
-					{
-						if (cloned)
-						{
+		    else {
+			if (cloned) {
 							definingRenderingAttributes.set(renderingAttrs);
 						}
-						else
-						{
+			else {
 							definingRenderingAttributes = (RenderingAttributesRetained) renderingAttrs.clone();
 						}
 					}
 					ignoreVertexColors = definingRenderingAttributes.ignoreVertexColors;
 				}
 			}
-			else
-			{
+	    else {
 				ignoreVertexColors = definingRenderingAttributes.ignoreVertexColors;
 			}
 		}
@@ -523,26 +478,24 @@ class AttributeBin extends Object implements ObjectUpdate
 		onUpdateList &= ~ON_CHANGED_FREQUENT_UPDATE_LIST;
 	}
 
-	void updateFromShaderBin(RenderAtom ra)
-	{
+	void incrActiveTextureBin() {
+		numEditingTextureBins++;
+	}
+
+	void decrActiveTextureBin() {
+		numEditingTextureBins--;
+	}
+	
+	void updateFromShaderBin(RenderAtom ra) {
 
 		AppearanceRetained raApp = ra.geometryAtom.source.appearance;
-		RenderingAttributesRetained rAttrs = (raApp == null) ? null : raApp.renderingAttributes;
+		RenderingAttributesRetained rAttrs = 
+			(raApp == null) ? null : raApp.renderingAttributes;
 
-		if (!soleUser && renderingAttrs != rAttrs)
-		{
+		if (!soleUser && renderingAttrs != rAttrs) {
 			// no longer sole user
 			renderingAttrs = definingRenderingAttributes;
 		}
 	}
 
-	void incrActiveTextureBin()
-	{
-		numEditingTextureBins++;
-	}
-
-	void decrActiveTextureBin()
-	{
-		numEditingTextureBins--;
-	}
 }

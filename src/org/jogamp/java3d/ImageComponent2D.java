@@ -26,10 +26,11 @@
 
 package org.jogamp.java3d;
 
-import java.util.logging.Level;
-
 import javaawt.image.BufferedImage;
 import javaawt.image.RenderedImage;
+import java.util.logging.Level;
+
+
 
 /**
  * This class defines a 2D image component.  This is used for texture

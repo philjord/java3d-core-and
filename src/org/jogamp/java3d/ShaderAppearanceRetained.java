@@ -56,8 +56,8 @@ class ShaderAppearanceRetained extends AppearanceRetained {
     void setShaderProgram(ShaderProgram sp) {
 	synchronized(liveStateLock) {
 	    if (source.isLive()) {
-		 //System.err.println("**** ShaderAppearceRetained.setShaderProgram()");
-	    	
+		// System.err.println("**** ShaderAppearceRetained.setShaderProgram()");
+
 		if (this.shaderProgram != null) {
 		    this.shaderProgram.clearLive(refCount);
 		    this.shaderProgram.removeMirrorUsers(this);
@@ -174,7 +174,6 @@ class ShaderAppearanceRetained extends AppearanceRetained {
 	// System.err.println("ShaderAppearanceRetained : createMirrorObject()");
 
 	if (mirror == null) {
-		
 	    // we can't check isStatic() since it sub-NodeComponent
 	    // create a new one, we should create a
 	    // new AppearanceRetained() even though isStatic() = true.
@@ -213,7 +212,7 @@ class ShaderAppearanceRetained extends AppearanceRetained {
 	    // System.err.println("shaderAttributeSet is null");
 	    mirrorApp.shaderAttributeSet = null;
 	}
-            
+
     }
 
   /**

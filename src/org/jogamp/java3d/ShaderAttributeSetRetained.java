@@ -70,10 +70,7 @@ private Map<String, ShaderAttributeRetained> attrs = new HashMap<String, ShaderA
      */
     void put(ShaderAttribute attr) {
 	synchronized(liveStateLock) {
-	    // System.err.println("ShaderAttributeSetRetained : put()");
 	    ShaderAttributeRetained sAttr = (ShaderAttributeRetained)attr.retained;
-	    // System.err.println("attr is " + attr );
-	    // System.err.println("attrName is " + sAttr.attrName + " attr.Retained is "+ sAttr );
 	    assert(sAttr != null);
 	    attrs.put(sAttr.attrName, sAttr);
 	    attrsValues.add(sAttr);
@@ -243,7 +240,6 @@ List< ShaderAttributeRetained> getAttrValues() {
     @Override
     void setLive(boolean backgroundGroup, int refCount) {
 
-	// System.err.println("ShaderAttributeSetRetained.setLive()");
 	ShaderAttributeRetained[] sAttrsRetained = new ShaderAttributeRetained[attrs.size()];
 	sAttrsRetained = attrs.values().toArray(sAttrsRetained);
 	for(int i=0; i < sAttrsRetained.length; i++) {
@@ -302,7 +298,6 @@ List< ShaderAttributeRetained> getAttrValues() {
 
     @Override
     void clearLive(int refCount) {
-	// System.err.println("ShaderAttributeSetRetained.clearLive()");
 
 	super.clearLive(refCount);
 
@@ -315,7 +310,6 @@ List< ShaderAttributeRetained> getAttrValues() {
 
     @Override
     synchronized void createMirrorObject() {
-	// System.err.println("ShaderAttributeSetRetained : createMirrorObject");
         // This method should only call by setLive().
 	if (mirror == null) {
             ShaderAttributeSetRetained mirrorSAS = new ShaderAttributeSetRetained();
@@ -346,24 +340,19 @@ List< ShaderAttributeRetained> getAttrValues() {
     @Override
     synchronized void updateMirrorObject(int component, Object value) {
 
-	// System.err.println("ShaderAttributeSetRetained : updateMirrorObject");
-
 	ShaderAttributeSetRetained mirrorSAS = (ShaderAttributeSetRetained)mirror;
 
 	if ((component & ShaderConstants.ATTRIBUTE_SET_PUT) != 0) {
-	    // System.err.println("     -- ATTRIBUTE_SET_PUT");
 	    ShaderAttributeRetained mirrorSA = (ShaderAttributeRetained)value;
  	    assert(mirrorSA != null);
 	    ((ShaderAttributeSetRetained)mirror).attrs.put(mirrorSA.attrName, mirrorSA);
 	    ((ShaderAttributeSetRetained)mirror).attrsValues.add(mirrorSA);
 	}
 	else if((component & ShaderConstants.ATTRIBUTE_SET_REMOVE) != 0) {
-	    // System.err.println("     -- ATTRIBUTE_SET_REMOVE");
 		 ((ShaderAttributeSetRetained)mirror).attrsValues.remove(((ShaderAttributeSetRetained)mirror).attrs.remove((String)value));
 	    
 	}
 	else if((component & ShaderConstants.ATTRIBUTE_SET_CLEAR) != 0) {
-	    // System.err.println("     -- ATTRIBUTE_SET_CLEAR");
 	    ((ShaderAttributeSetRetained)mirror).attrs.clear();
 	    ((ShaderAttributeSetRetained)mirror).attrsValues.clear();
 	}
@@ -386,11 +375,9 @@ List< ShaderAttributeRetained> getAttrValues() {
 	createMessage.args[0] = this;
 	createMessage.args[1]= new Integer(attrMask);
 	createMessage.args[2] = attr;
-	//	System.err.println("changedFreqent1 = "+changedFrequent);
 	createMessage.args[3] = new Integer(changedFrequent);
 	VirtualUniverse.mc.processMessage(createMessage);
 
-	// System.err.println("univList.size is " + univList.size());
 	for(int i=0; i<univList.size(); i++) {
 	    createMessage = new J3dMessage();
 	    createMessage.threads = J3dThread.UPDATE_RENDER;

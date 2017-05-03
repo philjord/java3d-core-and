@@ -26,14 +26,9 @@
 
 package org.jogamp.java3d;
 
- 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.logging.Level;
-
 import javaawt.color.ColorSpace;
+//import java.awt.geom.AffineTransform;
+//import java.awt.image.AffineTransformOp;
 import javaawt.image.BufferedImage;
 import javaawt.image.ColorModel;
 import javaawt.image.ComponentColorModel;
@@ -44,6 +39,13 @@ import javaawt.image.PixelInterleavedSampleModel;
 import javaawt.image.RenderedImage;
 import javaawt.image.SampleModel;
 import javaawt.image.WritableRaster;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.logging.Level;
+
+
 
 
 /**
@@ -124,11 +126,7 @@ abstract class ImageComponentRetained extends NodeComponentRetained {
     // and imageData is a non power of 2 image
     // and graphics driver doesn't support NPOT extension.
     private ImageData imageDataPowerOfTwo;
-    
-    // <AND> removed only for NPOT which is old
-    //private AffineTransformOp powerOfTwoATOp;
-    
-    
+    //PJ removed only for NPOT which is old: private AffineTransformOp powerOfTwoATOp;
     // The following flag means that if the image is non-power-of-two and the
     // card doesn't support NPOT texture, we will scale the image to a power
     // of two.
@@ -863,9 +861,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
         BufferedImage bufImage = imageData.createBufferedImage(depthIndex);
         BufferedImage scaledImg = powerOfTwoATOp.filter(bufImage, null);
         copySupportedImageToImageData(scaledImg, 0, imageDataPowerOfTwo);*/
-    	 
-    		throw new UnsupportedOperationException();
-    	 
+    	throw new UnsupportedOperationException();
     }
 
     /*
@@ -1886,7 +1882,7 @@ private ArrayList<NodeComponentRetained> userList = new ArrayList<NodeComponentR
         // scale if scales aren't 1.0
         if (!(xScale == 1.0f && yScale == 1.0f)) {
 
-        	/*     if (imageData == null) {
+        	/*PJ     if (imageData == null) {
                 // This is a byRef, support format and is a RenderedImage case.
                 // See ImageComponent2DRetained.set(RenderedImage image)
                 RenderedImage ri = (RenderedImage) getRefImage(0);

@@ -44,8 +44,7 @@ import javaawt.GraphicsDevice;
  * @see GraphicsDevice
  * @see GraphicsConfiguration
  */
-public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
-{
+public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate {
 
 	int depthSize;
 	int doubleBuffer;
@@ -77,8 +76,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * stencilSize : 0<br>
 	 * </ul>
 	 */
-	public GraphicsConfigTemplate3D()
-	{
+    public GraphicsConfigTemplate3D() {
 		doubleBuffer = REQUIRED;
 		stereo = UNNECESSARY;
 		depthSize = 16;
@@ -97,8 +95,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * that meets this requirement, null will be returned in getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setDoubleBuffer(int value)
-	{
+    public void setDoubleBuffer(int value) {
 		if (value < REQUIRED && value > UNNECESSARY)
 			return;
 
@@ -109,8 +106,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the double buffering value.
 	 * @return the current value of the doubleBuffer attribute
 	 */
-	public int getDoubleBuffer()
-	{
+    public int getDoubleBuffer() {
 		return doubleBuffer;
 	}
 
@@ -123,8 +119,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * that meets this requirement, null will be returned in getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setStereo(int value)
-	{
+    public void setStereo(int value) {
 		if (value < REQUIRED && value > UNNECESSARY)
 			return;
 
@@ -135,8 +130,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the stereo value.
 	 * @return the current value of the stereo attribute.
 	 */
-	public int getStereo()
-	{
+    public int getStereo() {
 		return stereo;
 	}
 
@@ -149,8 +143,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * that meets this requirement, null will be returned in getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setSceneAntialiasing(int value)
-	{
+    public void setSceneAntialiasing(int value) {
 		if (value < REQUIRED && value > UNNECESSARY)
 			return;
 
@@ -161,8 +154,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the scene antialiasing value.
 	 * @return the current value of the scene antialiasing attribute.
 	 */
-	public int getSceneAntialiasing()
-	{
+    public int getSceneAntialiasing() {
 		return sceneAntialiasing;
 	}
 
@@ -173,8 +165,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setDepthSize(int value)
-	{
+    public void setDepthSize(int value) {
 		if (value < 0)
 			return;
 
@@ -185,8 +176,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the size of the depth buffer.
 	 * @return the current value of the depthSize attribute
 	 */
-	public int getDepthSize()
-	{
+    public int getDepthSize() {
 		return depthSize;
 	}
 
@@ -201,8 +191,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 *
 	 * @since Java 3D 1.4
 	 */
-	public void setStencilSize(int value)
-	{
+    public void setStencilSize(int value) {
 		if (value < 0)
 			return;
 
@@ -216,8 +205,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 *
 	 * @since Java 3D 1.4
 	 */
-	public int getStencilSize()
-	{
+    public int getStencilSize() {
 		return stencilSize;
 	}
 
@@ -228,8 +216,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setRedSize(int value)
-	{
+    public void setRedSize(int value) {
 		if (value < 0)
 			return;
 
@@ -240,8 +227,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the number of red bits requested by this template.
 	 * @return the current value of the redSize attribute.
 	 */
-	public int getRedSize()
-	{
+    public int getRedSize() {
 		return redSize;
 	}
 
@@ -252,8 +238,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setGreenSize(int value)
-	{
+    public void setGreenSize(int value) {
 		if (value < 0)
 			return;
 
@@ -264,8 +249,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the number of green bits requested by this template.
 	 * @return the current value of the greenSize attribute.
 	 */
-	public int getGreenSize()
-	{
+    public int getGreenSize() {
 		return greenSize;
 	}
 
@@ -276,8 +260,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * getBestConfiguration().
 	 * @param value the value to set this field to
 	 */
-	public void setBlueSize(int value)
-	{
+    public void setBlueSize(int value) {
 		if (value < 0)
 			return;
 
@@ -288,8 +271,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * Retrieves the number of blue bits requested by this template.
 	 * @return the current value of the blueSize attribute.
 	 */
-	public int getBlueSize()
-	{
+    public int getBlueSize() {
 		return blueSize;
 	}
 
@@ -308,15 +290,13 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * @see GraphicsDevice
 	 */
 	@Override
-	public GraphicsConfiguration getBestConfiguration(GraphicsConfiguration[] gc)
-	{
-		if ((gc == null) || (gc.length == 0) || (gc[0] == null))
-		{
+    public GraphicsConfiguration
+      getBestConfiguration(GraphicsConfiguration[] gc) {
+	if ((gc == null) || (gc.length == 0) || (gc[0] == null)) {
 			return null;
 		}
 
-		synchronized (globalLock)
-		{
+	synchronized (globalLock) {
 			testCfg = gc;
 
 			// It is possible that the followign postRequest will
@@ -329,12 +309,10 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 			// this thread has to wait Renderer thread to finish but
 			// MC can only handle postRequest and put it in Renderer
 			// queue when free.
-			if (Thread.currentThread() instanceof BehaviorScheduler)
-			{
-				VirtualUniverse.mc.sendRenderMessage(gc[0], this, MasterControl.GETBESTCONFIG);
-			}
-			else
-			{
+	    if (Thread.currentThread() instanceof BehaviorScheduler) {
+		VirtualUniverse.mc.sendRenderMessage(gc[0], this,
+						     MasterControl.GETBESTCONFIG);
+	    } else {
 				VirtualUniverse.mc.postRequest(MasterControl.GETBESTCONFIG, this);
 			}
 			runMonitor(J3dThread.WAIT);
@@ -355,8 +333,7 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 *  to create a drawing surface usable by this API.
 	 */
 	@Override
-	public boolean isGraphicsConfigSupported(GraphicsConfiguration gc)
-	{
+	public boolean isGraphicsConfigSupported(GraphicsConfiguration gc) {
 		return true;
 		/*	if (gc == null) {
 		return false;
@@ -372,24 +349,20 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 		}
 		runMonitor(J3dThread.WAIT);
 		return ((Boolean) testCfg).booleanValue();
-			}*/
+	}*/
 	}
 
 	/**
 	 * Set the stereo/doubleBuffer/sceneAntialiasingAccum
 	 * and hasSceneAntialiasingMultiSamples flags in Canvas3D
 	 */
-	static void getGraphicsConfigFeatures(Canvas3D c)
-	{
-		synchronized (globalLock)
-		{
+    static void getGraphicsConfigFeatures(Canvas3D c) {
+	synchronized (globalLock) {
 			threadWaiting = true;
-			if (Thread.currentThread() instanceof BehaviorScheduler)
-			{
-				VirtualUniverse.mc.sendRenderMessage(c.graphicsConfiguration, c, MasterControl.SET_GRAPHICSCONFIG_FEATURES);
-			}
-			else
-			{
+	    if (Thread.currentThread() instanceof BehaviorScheduler) {
+		VirtualUniverse.mc.sendRenderMessage(c.graphicsConfiguration, c,
+						     MasterControl.SET_GRAPHICSCONFIG_FEATURES);
+	    } else {
 				VirtualUniverse.mc.postRequest(MasterControl.SET_GRAPHICSCONFIG_FEATURES, c);
 			}
 			runMonitor(J3dThread.WAIT);
@@ -399,42 +372,32 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	/**
 	 * Set the queryProperties() map in Canvas3D
 	 */
-	static void setQueryProps(Canvas3D c)
-	{
-		synchronized (globalLock)
-		{
+    static void setQueryProps(Canvas3D c) {
+	synchronized (globalLock) {
 			threadWaiting = true;
-			if (Thread.currentThread() instanceof BehaviorScheduler)
-			{
-				VirtualUniverse.mc.sendRenderMessage(c.graphicsConfiguration, c, MasterControl.SET_QUERYPROPERTIES);
-			}
-			else
-			{
+	    if (Thread.currentThread() instanceof BehaviorScheduler) {
+		VirtualUniverse.mc.sendRenderMessage(c.graphicsConfiguration, c,
+						     MasterControl.SET_QUERYPROPERTIES);
+	    } else {
 				VirtualUniverse.mc.postRequest(MasterControl.SET_QUERYPROPERTIES, c);
 			}
 			runMonitor(J3dThread.WAIT);
 		}
 	}
 
-	static void runMonitor(int action)
-	{
+
+    static void runMonitor(int action) {
 		// user thread will locked the globalLock when Renderer
 		// thread invoke this function so we can't use
 		// the same lock.
-		synchronized (monitorLock)
-		{
-			switch (action)
-			{
+	synchronized (monitorLock) {
+	    switch (action) {
 			case J3dThread.WAIT:
 				// Issue 279 - loop until ready
-				while (threadWaiting)
-				{
-					try
-					{
+		while (threadWaiting) {
+		    try {
 						monitorLock.wait();
-					}
-					catch (InterruptedException e)
-					{
+		    } catch (InterruptedException e) {
 						System.err.println(e);
 					}
 				}
@@ -449,10 +412,8 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 
 	// Return a string representing the value, one of:
 	// REQUIRED, PREFERRED, or UNNECESSARY
-	private static final String enumStr(int val)
-	{
-		switch (val)
-		{
+    private static final String enumStr(int val) {
+	switch (val) {
 		case REQUIRED:
 			return "REQUIRED";
 		case PREFERRED:
@@ -469,10 +430,14 @@ public class GraphicsConfigTemplate3D extends GraphicsConfigTemplate
 	 * @return a string representation of this object.
 	 */
 	@Override
-	public String toString()
-	{
-		return "redSize : " + redSize + ", " + "greenSize : " + greenSize + ", " + "blueSize : " + blueSize + ", " + "depthSize : "
-				+ depthSize + ", " + "doubleBuffer : " + enumStr(doubleBuffer) + ", " + "sceneAntialiasing : " + enumStr(sceneAntialiasing)
-				+ ", " + "stereo : " + enumStr(stereo);
+    public String toString() {
+	return
+	    "redSize : " + redSize + ", " +
+	    "greenSize : " + greenSize + ", " +
+	    "blueSize : " + blueSize + ", " +
+	    "depthSize : " + depthSize + ", " +
+	    "doubleBuffer : " + enumStr(doubleBuffer) + ", " +
+	    "sceneAntialiasing : " + enumStr(sceneAntialiasing) + ", " +
+	    "stereo : " + enumStr(stereo);
 	}
 }

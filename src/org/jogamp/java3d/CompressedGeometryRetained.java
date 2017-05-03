@@ -24,7 +24,7 @@
  *
  */
 
-package org.jogamp.java3d ;
+package org.jogamp.java3d;
 import org.jogamp.vecmath.Point3d;
 
 /**

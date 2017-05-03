@@ -26,8 +26,8 @@
 
 package org.jogamp.java3d;
 
-//<AND>import java.awt.AWTEvent;
-//import java.awt.event.WindowEvent;</AND>
+//PJ import java.awt.AWTEvent;
+//import java.awt.event.WindowEvent;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -172,7 +172,7 @@ class SoundScheduler extends J3dStructure {
 
     private boolean     stallThread = false;
 
-  //<AND>int lastEventReceived = 0;WindowEvent.WINDOW_CLOSED;</>
+  //PJ int lastEventReceived = 0;WindowEvent.WINDOW_CLOSED;
 
     /**
      * Constructs a new SoundScheduler
@@ -932,22 +932,22 @@ class SoundScheduler extends J3dStructure {
 	return;
     }
 
-//<AND>
-//    void receiveAWTEvent(AWTEvent evt) {
-//	int eventId = evt.getID();
-//	if (debugFlag)
-//	    debugPrint(".receiveAWTEvent " + eventId);
-//	if (ready && eventId == WindowEvent.WINDOW_ICONIFIED) {
-//	    lastEventReceived = eventId;
-//	}
-//	else if (ready &&
-//		 (lastEventReceived == WindowEvent.WINDOW_ICONIFIED &&
-//		  eventId == WindowEvent.WINDOW_DEICONIFIED) ) {
-//	    lastEventReceived = eventId;
-//	    // used to notify
-//	}
-//    }
-//</AND>
+/*PJ
+    void receiveAWTEvent(AWTEvent evt) {
+	int eventId = evt.getID();
+	if (debugFlag)
+	    debugPrint(".receiveAWTEvent " + eventId);
+	if (ready && eventId == WindowEvent.WINDOW_ICONIFIED) {
+	    lastEventReceived = eventId;
+	}
+	else if (ready &&
+		 (lastEventReceived == WindowEvent.WINDOW_ICONIFIED &&
+		  eventId == WindowEvent.WINDOW_DEICONIFIED) ) {
+	    lastEventReceived = eventId;
+	    // used to notify
+	}
+    }*/
+
 
     /**
      * The main loop for the Sound Scheduler.
@@ -2543,11 +2543,10 @@ class SoundScheduler extends J3dStructure {
 
 	if (audioDevice3D == null)
 	    return;
-//<AND>
+//PJ
 //	if (lastEventReceived == WindowEvent.WINDOW_ICONIFIED) {
 //	    return;  // leave sounds playing
 //	}
-//</AND>
 	
 	// sync this method from interrupting run() while loop
 	synchronized (prioritizedSounds) {

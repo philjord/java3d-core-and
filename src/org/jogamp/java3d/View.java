@@ -26,7 +26,7 @@
 
 package org.jogamp.java3d;
 
-//<AND>import java.awt.AWTEvent;</>
+//PJ import java.awt.AWTEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -3307,12 +3307,12 @@ private ArrayList<ArrayList<Canvas3D>> canvasList = new ArrayList<ArrayList<Canv
     /**
      * This method passes window event to SoundScheduler
      */
-    //<AND>
+    //PJ
 //    void sendEventToSoundScheduler(AWTEvent evt) {
 //        if (soundScheduler != null) {
 //            soundScheduler.receiveAWTEvent(evt);
 //        }
-//    }</AND>
+//    }
 
     void reset() {
 

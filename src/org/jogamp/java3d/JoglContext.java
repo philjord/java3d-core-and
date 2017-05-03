@@ -36,30 +36,30 @@ import com.jogamp.opengl.GLContext;
  * Graphics context objects for Jogl rendering pipeline.
  */
 class JoglContext implements Context {
-	protected GLContext context;
+  protected GLContext  context;
 
-	// Properties we need to keep track of for efficiency
-	private int maxTexCoordSets;
-	private float alphaClearValue;
-	private int currentTextureUnit;
-	private int currentCombinerUnit;
-	private boolean hasMultisample;
+  // Properties we need to keep track of for efficiency
+  private int maxTexCoordSets;
+  private float alphaClearValue;
+  private int currentTextureUnit;
+  private int currentCombinerUnit;
+  private boolean hasMultisample;
 
-	// Needed for vertex attribute implementation
-	private JoglShaderObject shaderProgram;
+  // Needed for vertex attribute implementation
+  private JoglShaderObject shaderProgram;
 
-	// Only used when GLSL shader library is active
-	private int glslVertexAttrOffset;
+  // Only used when GLSL shader library is active
+  private int        glslVertexAttrOffset;
 
   JoglContext(GLContext context) {
-		this.context = context;
-	}
+    this.context = context;
+  }
 
   GLContext getGLContext() {
-		return context;
-	}
+    return context;
+  }
 
- int   getMaxTexCoordSets()            { return maxTexCoordSets;     }
+  int   getMaxTexCoordSets()            { return maxTexCoordSets;     }
   void  setMaxTexCoordSets(int val)     { maxTexCoordSets = val;      }
   float getAlphaClearValue()            { return alphaClearValue;     }
   void  setAlphaClearValue(float val)   { alphaClearValue = val;      }
@@ -99,11 +99,11 @@ void vertexAttr4fv(GL gl, int index, FloatBuffer buf) {
 	gl.getGL2().glVertexAttrib4fvARB(index + glslVertexAttrOffset, buf);
 }
 
-	// Used in vertex attribute implementation
+  // Used in vertex attribute implementation
   JoglShaderObject getShaderProgram()                        { return shaderProgram;   }
   void             setShaderProgram(JoglShaderObject object) { shaderProgram = object; }
 
-	// Only used when GLSL shaders are in use
+  // Only used when GLSL shaders are in use
   int  getGLSLVertexAttrOffset()           { return glslVertexAttrOffset;   }
   void setGLSLVertexAttrOffset(int offset) { glslVertexAttrOffset = offset; }
 }

@@ -26,12 +26,21 @@
 
 package org.jogamp.java3d;
 
-import com.jogamp.opengl.GLCapabilities;
-
+//import java.awt.AWTException;
 import javaawt.DisplayMode;
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
+//import java.awt.ImageCapabilities;
 import javaawt.Rectangle;
+//import java.awt.geom.AffineTransform;
+//import java.awt.image.BufferedImage;
+//import java.awt.image.ColorModel;
+//import java.awt.image.VolatileImage;
+
+//import com.jogamp.nativewindow.awt.AWTGraphicsDevice;
+import com.jogamp.opengl.GLCapabilities;
+
+
 
 /**
  * Class implementing the GraphicsConfiguration API, but not a "real"
@@ -40,58 +49,100 @@ import javaawt.Rectangle;
  * selection depending on which platform we are running.
  */
 
-class JoglGraphicsConfiguration extends GraphicsConfiguration
-{
+class JoglGraphicsConfiguration extends GraphicsConfiguration {
 	private GLCapabilities caps;
 	private int chosenIndex;
 	private GraphicsDevice device;
-//	private AWTGraphicsDevice awtGraphicsDevice;
+//PJ	private AWTGraphicsDevice awtGraphicsDevice;
 	// Needed for Screen3D
 	private int width;
 	private int height;
 
-	JoglGraphicsConfiguration(GLCapabilities caps, int chosenIndex, GraphicsDevice device)
-	{
-		super(null);//TODO: is this class dead now?
-		this.caps = caps;
-		this.chosenIndex = chosenIndex;
-		this.device = device;
+	JoglGraphicsConfiguration(GLCapabilities caps, int chosenIndex, GraphicsDevice device) {
+	super(null);//TODO: is this class dead now?
+	this.caps = caps;
+	this.chosenIndex = chosenIndex;
+	this.device = device;
 
-//		this.awtGraphicsDevice = new AWTGraphicsDevice(this.device, 0);
-		DisplayMode m = device.getDisplayMode();
-		width = m.getWidth();
-		height = m.getHeight();
-	}
+//PJ	this.awtGraphicsDevice = new AWTGraphicsDevice(this.device, 0);
+	DisplayMode m = device.getDisplayMode();
+	width = m.getWidth();
+	height = m.getHeight();
+  }
 
-	GLCapabilities getGLCapabilities()
-	{
+  GLCapabilities getGLCapabilities() {
 		return caps;
 	}
 
-	int getChosenIndex()
-	{
+  int getChosenIndex() {
 		return chosenIndex;
 	}
+/*PJ
+@Override
+  public BufferedImage createCompatibleImage(int width, int height) {
+    throw new RuntimeException("Unimplemented");
+  }
 
+  @Override
+  public BufferedImage createCompatibleImage(int width, int height,
+                                             int transparency) {
+    throw new RuntimeException("Unimplemented");
+  }
 
+  @Override
+  public VolatileImage createCompatibleVolatileImage(int width, int height) {
+    throw new RuntimeException("Unimplemented");
+  }
+
+  @Override
+  public VolatileImage createCompatibleVolatileImage(int width, int height, int transparency) {
+    throw new RuntimeException("Unimplemented");
+  }
+
+  @Override
+  public VolatileImage createCompatibleVolatileImage(int width, int height,
+                                                     ImageCapabilities caps) throws AWTException {
+    throw new RuntimeException("Unimplemented");
+  }
+
+  @Override
+  public VolatileImage createCompatibleVolatileImage(int width, int height,
+                                                     ImageCapabilities caps, int transparency) throws AWTException {
+    throw new RuntimeException("Unimplemented");
+  }*/
 
 	@Override
-	public Rectangle getBounds()
-	{
+  public Rectangle getBounds() {
 		return new Rectangle(0, 0, width, height);
 	}
+	
+	/* PJ
+ @Override
+  public ColorModel getColorModel() {
+    throw new RuntimeException("Unimplemented");
+  }
 
+  @Override
+  public ColorModel getColorModel(int transparency) {
+    throw new RuntimeException("Unimplemented");
+  }
+
+  @Override
+  public AffineTransform getDefaultTransform() {
+    throw new RuntimeException("Unimplemented");
+  }*/
 
 	@Override
-	public GraphicsDevice getDevice()
-	{
+  public GraphicsDevice getDevice() {
 		return device;
 	}
 
-//	public AWTGraphicsDevice getAwtGraphicsDevice()
-//	{
-//		return awtGraphicsDevice;
-//	}
+/*PJ	public AWTGraphicsDevice getAwtGraphicsDevice() {
+		return awtGraphicsDevice;
+	}
 
-
+  @Override
+  public AffineTransform getNormalizingTransform() {
+    throw new RuntimeException("Unimplemented");
+  } */
 }

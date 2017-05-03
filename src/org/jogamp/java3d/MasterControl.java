@@ -32,15 +32,14 @@
 
 package org.jogamp.java3d;
 
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsDevice;
+import javaawt.GraphicsEnvironment;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javaawt.GraphicsConfiguration;
-import javaawt.GraphicsDevice;
-import javaawt.GraphicsEnvironment;
 
 class MasterControl {
 

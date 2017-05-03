@@ -26,13 +26,14 @@
 
 package org.jogamp.java3d;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
-
 import javaawt.Dimension;
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
 import javaawt.Rectangle;
+import java.util.ArrayList;
+import java.util.Hashtable;
+
+
 
 /**
  * The Screen3D Object contains all information about a particular screen.
@@ -98,8 +99,7 @@ import javaawt.Rectangle;
  * @see Canvas3D#getScreen3D
  */
 
-public class Screen3D extends Object
-{
+public class Screen3D extends Object {
 	private static final boolean debug = false;
 
 	// Assume a default of 90 DPI: 90 pix/inch = 1/90 inch/pix =
@@ -152,7 +152,8 @@ public class Screen3D extends Object
 
 	// Mask that indicates this Screen3D view dependence info. has changed,
 	// and CanvasViewCache may need to recompute the final view matries.
-	int scrDirtyMask = (PHYSICAL_SCREEN_SIZE_DIRTY | SCREEN_SIZE_DIRTY_DIRTY | TRACKER_BASE_TO_IMAGE_PLATE_DIRTY
+    int scrDirtyMask = (PHYSICAL_SCREEN_SIZE_DIRTY | SCREEN_SIZE_DIRTY_DIRTY
+			| TRACKER_BASE_TO_IMAGE_PLATE_DIRTY
 			| HEAD_TRACKER_TO_IMAGE_PLATE_DIRTY);
 
 	//
@@ -173,23 +174,19 @@ public class Screen3D extends Object
 	private final ArrayList<Canvas3D> users = new ArrayList<Canvas3D>();
 
 	// Add a user to the list of users
-	synchronized void removeUser(Canvas3D c)
-	{
+synchronized void removeUser(Canvas3D c) {
 		users.remove(c);
 	}
 
 	// Add a user to the list of users
-	synchronized void addUser(Canvas3D c)
-	{
+synchronized void addUser(Canvas3D c) {
 		if (!users.contains(c))
 			users.add(c);
 	}
 
 	// Add a user to the list of users
-	synchronized void notifyUsers()
-	{
-		for (int i = 0; i < users.size(); i++)
-		{
+synchronized void notifyUsers() {
+	for (int i = 0; i < users.size(); i++) {
 			users.get(i).redraw();
 		}
 	}
@@ -200,8 +197,7 @@ public class Screen3D extends Object
 	 * @return a new Dimension object containing the width and height
 	 * of this Screen3D.
 	 */
-	public Dimension getSize()
-	{
+    public Dimension getSize() {
 		return new Dimension(screenSize);
 	}
 
@@ -217,14 +213,11 @@ public class Screen3D extends Object
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public Dimension getSize(Dimension rv)
-	{
-		if (rv == null)
-		{
+    public Dimension getSize(Dimension rv) {
+	if (rv == null) {
 			return new Dimension(screenSize);
 		}
-		else
-		{
+	else {
 			rv.setSize(screenSize);
 			return rv;
 		}
@@ -246,14 +239,12 @@ public class Screen3D extends Object
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void setSize(int width, int height)
-	{
+    public void setSize(int width, int height) {
 
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Screen3D1"));
 
-		synchronized (this)
-		{
+	synchronized(this) {
 			screenSize.width = width;
 			screenSize.height = height;
 			scrDirtyMask |= SCREEN_SIZE_DIRTY_DIRTY;
@@ -275,13 +266,11 @@ public class Screen3D extends Object
 	 *
 	 * @since Java 3D 1.2
 	 */
-	public void setSize(Dimension d)
-	{
+    public void setSize(Dimension d) {
 		if (!offScreen)
 			throw new IllegalStateException(J3dI18N.getString("Screen3D1"));
 
-		synchronized (this)
-		{
+	synchronized(this) {
 			screenSize.width = d.width;
 			screenSize.height = d.height;
 			scrDirtyMask |= SCREEN_SIZE_DIRTY_DIRTY;
@@ -294,10 +283,8 @@ public class Screen3D extends Object
 	 * at the focal plane.
 	 * @param width the screen's physical width in meters
 	 */
-	public void setPhysicalScreenWidth(double width)
-	{
-		synchronized (this)
-		{
+    public void setPhysicalScreenWidth(double width) {
+	synchronized(this) {
 			physicalScreenWidth = width;
 			scrDirtyMask |= PHYSICAL_SCREEN_SIZE_DIRTY;
 		}
@@ -308,8 +295,7 @@ public class Screen3D extends Object
 	 * Retrieves the screen's physical width in meters.
 	 * @return the screen's physical width in meters
 	 */
-	public double getPhysicalScreenWidth()
-	{
+    public double getPhysicalScreenWidth() {
 		return physicalScreenWidth;
 	}
 
@@ -319,10 +305,8 @@ public class Screen3D extends Object
 	 * at the focal plane.
 	 * @param height the screen's physical height in meters
 	 */
-	public void setPhysicalScreenHeight(double height)
-	{
-		synchronized (this)
-		{
+    public void setPhysicalScreenHeight(double height) {
+	synchronized(this) {
 			physicalScreenHeight = height;
 			scrDirtyMask |= PHYSICAL_SCREEN_SIZE_DIRTY;
 		}
@@ -333,21 +317,21 @@ public class Screen3D extends Object
 	 * Retrieves the the screen's physical height in meters.
 	 * @return the screen's physical height in meters
 	 */
-	public double getPhysicalScreenHeight()
-	{
+    public double getPhysicalScreenHeight() {
 		return physicalScreenHeight;
 	}
 
 	@Override
-	public String toString()
-	{
-		return "Screen3D: size = " + "(" + getSize().width + " x " + getSize().height + ")" + ", physical size = " + "("
-				+ getPhysicalScreenWidth() + "m x " + getPhysicalScreenHeight() + "m)";
+    public String toString() {
+	return "Screen3D: size = " +
+	    "(" + getSize().width + " x " + getSize().height + ")" +
+	    ", physical size = " +
+	    "(" + getPhysicalScreenWidth() + "m x " +
+	    getPhysicalScreenHeight() + "m)";
 	}
 
 	// Static initializer for Screen3D class
-	static
-	{
+    static {
 		VirtualUniverse.loadLibraries();
 	}
 
@@ -361,8 +345,7 @@ public class Screen3D extends Object
 	 * @param offScreen a flag that indicates whether this Screen3D is
 	 * associated with an off-screen Canvas3D
 	 */
-	Screen3D(GraphicsConfiguration graphicsConfiguration, boolean offScreen)
-	{
+    Screen3D(GraphicsConfiguration graphicsConfiguration, boolean offScreen) {
 		this.offScreen = offScreen;
 		this.graphicsDevice = graphicsConfiguration.getDevice();
 
@@ -372,15 +355,13 @@ public class Screen3D extends Object
 		screen = Pipeline.getPipeline().getScreen(graphicsDevice);
 
 		if (debug)
-			System.err.println("Screen3D: screen " + screen + " hashcode " + this.hashCode());
+	    System.err.println("Screen3D: screen " + screen + " hashcode " +
+			       this.hashCode());
 
-		if (!offScreen)
-		{
+	if (!offScreen) {
 			// Store the information in this screen object
 			Rectangle bounds = new Rectangle((int) graphicsConfiguration.getBounds().getX(), (int) graphicsConfiguration.getBounds().getY(),
-					(int) graphicsConfiguration.getBounds().getWidth(), (int) graphicsConfiguration.getBounds().getHeight()
-
-			);
+					(int) graphicsConfiguration.getBounds().getWidth(), (int) graphicsConfiguration.getBounds().getHeight());
 			screenSize.width = bounds.width;
 			screenSize.height = bounds.height;
 		}
@@ -398,12 +379,9 @@ public class Screen3D extends Object
 	 * @param t the new transform
 	 * @exception BadTransformException if the transform is not rigid
 	 */
-	public void setTrackerBaseToImagePlate(Transform3D t)
-	{
-		synchronized (this)
-		{
-			if (!t.isRigid())
-			{
+    public void setTrackerBaseToImagePlate(Transform3D t) {
+	synchronized(this) {
+	    if (!t.isRigid()) {
 				throw new BadTransformException(J3dI18N.getString("Screen3D0"));
 			}
 			trackerBaseToImagePlate.setWithLock(t);
@@ -418,8 +396,7 @@ public class Screen3D extends Object
 	 * Transform3D object.
 	 * @param t the object that will receive the transform
 	 */
-	public void getTrackerBaseToImagePlate(Transform3D t)
-	{
+    public void getTrackerBaseToImagePlate(Transform3D t) {
 		t.set(trackerBaseToImagePlate);
 	}
 
@@ -431,12 +408,9 @@ public class Screen3D extends Object
 	 * @param t the new transform
 	 * @exception BadTransformException if the transform is not rigid
 	 */
-	public void setHeadTrackerToLeftImagePlate(Transform3D t)
-	{
-		synchronized (this)
-		{
-			if (!t.isRigid())
-			{
+    public void setHeadTrackerToLeftImagePlate(Transform3D t) {
+	synchronized(this) {
+	    if (!t.isRigid()) {
 				throw new BadTransformException(J3dI18N.getString("Screen3D0"));
 			}
 			headTrackerToLeftImagePlate.setWithLock(t);
@@ -451,8 +425,7 @@ public class Screen3D extends Object
 	 * Transform3D object.
 	 * @param t the object that will receive the transform
 	 */
-	public void getHeadTrackerToLeftImagePlate(Transform3D t)
-	{
+    public void getHeadTrackerToLeftImagePlate(Transform3D t) {
 		t.set(headTrackerToLeftImagePlate);
 	}
 
@@ -464,12 +437,9 @@ public class Screen3D extends Object
 	 * @param t the new transform
 	 * @exception BadTransformException if the transform is not rigid
 	 */
-	public void setHeadTrackerToRightImagePlate(Transform3D t)
-	{
-		synchronized (this)
-		{
-			if (!t.isRigid())
-			{
+    public void setHeadTrackerToRightImagePlate(Transform3D t) {
+	synchronized(this) {
+	    if (!t.isRigid()) {
 				throw new BadTransformException(J3dI18N.getString("Screen3D0"));
 			}
 			headTrackerToRightImagePlate.setWithLock(t);
@@ -484,18 +454,15 @@ public class Screen3D extends Object
 	 * Transform3D object.
 	 * @param t the object that will receive the transform
 	 */
-	public void getHeadTrackerToRightImagePlate(Transform3D t)
-	{
+    public void getHeadTrackerToRightImagePlate(Transform3D t) {
 		t.set(headTrackerToRightImagePlate);
 	}
 
 	/**
 	 * Update the view cache associated with this screen.
 	 */
-	void updateViewCache()
-	{
-		synchronized (this)
-		{
+    void updateViewCache() {
+	synchronized(this) {
 			screenViewCache.snapshot();
 		}
 	}
