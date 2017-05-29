@@ -7504,6 +7504,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		System.out.println("GL_MAX_FRAGMENT_UNIFORM_VECTORS " + tmp[0]);
 		System.out.println("GL_VERSION " + gl.glGetString(GL2ES2.GL_VERSION ));
 		System.out.println("GL_SHADING_LANGUAGE_VERSION " + gl.glGetString(GL2ES2.GL_SHADING_LANGUAGE_VERSION ));
+		gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_SIZE, tmp, 0);
+		System.out.println("GL_MAX_TEXTURE_SIZE " + tmp[0]);
 					 
 					
 					
