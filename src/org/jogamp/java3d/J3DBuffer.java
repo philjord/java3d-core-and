@@ -69,7 +69,8 @@ enum Type {
 }
 
     private Buffer originalBuffer = null;
-    private Buffer readonlyBuffer = null;
+    //PJ removed due to fatal bug in some OS's
+    //private Buffer readonlyBuffer = null;
     Type bufferType = Type.NULL;
 
     /**
@@ -177,9 +178,27 @@ enum Type {
 	bufferType = bType;
 	originalBuffer = buffer;
 
+	
+	/* PJ BUG !
+	 * This may seem far-fetched, and the test cases to prove it is painful and extremely difficult to reproduce unless 
+	 * you have the setup that has the bug, in which case any geometry involving nio will be corrupted
+	 * It has only occurred on one setup a Samsung Galaxy Tab A 10.1 after OS upgrade to Android sdk 24 (Android N/7.0)
+	 * However the bug was present consistently and the system could not run Java3D
+	 * 
+	 * The returned read-only buffer should be a view of the original, sharing data and byte order
+	 * however the OS returned a copy of the data with a non-native byte order.
+	 * Suffice to say the read buffer in that case is useless and almost guaranteed fatal as it
+	 * hands out garbage data to any requests.
+	 * The lack of mutability and introspection allowed by the read-only buffer means 
+	 * the issue can't be discovered nor remedied at run time.
+	 * 
+	 * This read-only mechanism doesn't appear to add a great deal of encapsulation anyway.
+	 * I think this removal won't cause any particular problems.
+	 */
+	
 	// Make a read-only view of the buffer if the type is one
 	// of the internally supported types: byte, float, or double
-	switch (bufferType) {
+/*	switch (bufferType) {
 	case BYTE:
 	    ByteBuffer byteBuffer =	((ByteBuffer)buffer).asReadOnlyBuffer();
 	    byteBuffer.rewind();
@@ -197,7 +216,9 @@ enum Type {
 	    break;
 	default:
 		readonlyBuffer = null;
-	}
+	} 
+	*/
+	 
     }
 
 
@@ -212,9 +233,12 @@ enum Type {
 
 /**
  * Gets the readonly view of the nio buffer we wrapped with J3DBuffer
+ * NOTE! this now returns the normal writable buffer due a bug seen in android sdk 24
  * @return
  */
 Buffer getROBuffer() {
-	return readonlyBuffer;
+	//PJ see bug description above in setBuffer
+	//return readonlyBuffer;
+	return originalBuffer;
 }
 }
