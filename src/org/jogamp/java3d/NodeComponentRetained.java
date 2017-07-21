@@ -103,36 +103,47 @@ class NodeComponentRetained extends SceneGraphObjectRetained {
 
     // remove mirror shape from the list of users
     void removeAMirrorUser(Shape3DRetained ms) {
-	synchronized(mirror.users) {
-	    mirror.users.remove(ms);
-	}
+    	if(mirror!=null)
+    	{
+	    	synchronized(mirror.users) {
+		    mirror.users.remove(ms);
+	    	}
+    	}
     }
 
     // Add a mirror shape to the list of users
     void addAMirrorUser(Shape3DRetained ms) {
-	synchronized(mirror.users) {
-	    mirror.users.add(ms);
-	}
+    	if(mirror!=null)
+    	{
+			synchronized(mirror.users) {
+			    mirror.users.add(ms);
+			}
+    	}
     }
 
     // Copy the list of users passed in into this
-    void copyMirrorUsers(NodeComponentRetained node) {
-	synchronized(mirror.users) {
-	  synchronized(node.mirror.users) {
-		  mirror.users.addAll(node.mirror.users);
-	    }
-	}
+    void copyMirrorUsers(NodeComponentRetained node) {	
+    	if(mirror != null && node.mirror != null)
+    	{
+    		synchronized(mirror.users) {    	 
+			  synchronized(node.mirror.users) {
+				  mirror.users.addAll(node.mirror.users);
+			    }
+			}
+    	}
     }
 
 
     // Remove the users of "node" from "this" node component
     void removeMirrorUsers(NodeComponentRetained node) {
-
-	synchronized(mirror.users) {
-	  synchronized(node.mirror.users) {
-		  mirror.users.removeAll(node.mirror.users);
-	    }
-	}
+    	if(mirror != null && node.mirror != null)
+    	{
+			synchronized(mirror.users) {
+			  synchronized(node.mirror.users) {
+				  mirror.users.removeAll(node.mirror.users);
+			    }
+			}
+    	}
     }
 
     // Add a user to the list of users
