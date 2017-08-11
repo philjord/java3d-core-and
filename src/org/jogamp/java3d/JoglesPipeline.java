@@ -7148,13 +7148,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// examples
 		// OpenGL ES 3.0 V@136.0 AU@ (GIT@I3fa967cfef)
 		// 4.5.0 NVIDIA 353.82
-		// System.err.println("versionString: " + versionString);
+		// Kindle Fire HDX 8.9 returns the below so V is also a separator
+		// OpenGL ES 3.1V@104.0 (GIT@I7e535e0385)
+		 //System.err.println("versionString: " + versionString);
 		if (versionString.startsWith("OpenGL ES "))
 			versionString = versionString.substring("OpenGL ES ".length());
-		StringTokenizer tok = new StringTokenizer(versionString, ". ");
+		StringTokenizer tok = new StringTokenizer(versionString, ". V");
 		int major = Integer.valueOf(tok.nextToken()).intValue();
 		int minor = Integer.valueOf(tok.nextToken()).intValue();
 
+	
 		// See if there's vendor-specific information which might
 		// imply a more recent OpenGL version
 		tok = new StringTokenizer(versionString, " ");
@@ -7178,6 +7181,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 			}
 		}
+		
+
 		return new int[] { major, minor };
 	}
 
