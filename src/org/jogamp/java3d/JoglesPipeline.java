@@ -3645,19 +3645,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			if (gd.geoToColorBuf == -1)
 			{
-				if (cfarray != null)
+				if((vformat & GeometryArray.COLOR) != 0)
 				{
-					fclrs = getColorArrayBuffer(cfarray);
-				}
-				if (fclrs != null)
-				{
-					if (fclrs != fverts)
+					if (cfarray != null)
+					{
+						fclrs = getColorArrayBuffer(cfarray);
+					}
+					if (fclrs != null && (fclrs != fverts))
 					{
 						fclrs.position(startClrs);
 						int[] tmp = new int[1];
 						gl.glGenBuffers(1, tmp, 0);
 						gd.geoToColorBuf = tmp[0];
-
+	
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
 					}
@@ -3667,11 +3667,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-
+	
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glBufferData++;
 				}
 			}
+			
 		}
 
 		if (DO_OUTPUT_ERRORS)
