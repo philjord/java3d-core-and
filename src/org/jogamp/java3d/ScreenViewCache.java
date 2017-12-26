@@ -33,6 +33,8 @@ package org.jogamp.java3d;
  */
 class ScreenViewCache extends Object {
     // The screen associated with this screen view cache
+	
+	//NOTE because the Screen3D below use the javaawt package this class ScreenViewCache cannot be removed
     Screen3D screen;
 
     //
