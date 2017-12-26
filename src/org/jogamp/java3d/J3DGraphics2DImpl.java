@@ -28,21 +28,21 @@ package org.jogamp.java3d;
 
 //import java.awt.AlphaComposite;
 import javaawt.Color;
-import javaawt.Composite;
+//import javaawt.Composite;
 import javaawt.Font;
 //import java.awt.FontMetrics;
 import javaawt.Graphics;
 import javaawt.Graphics2D;
 import javaawt.GraphicsConfiguration;
 import javaawt.Image;
-import javaawt.Paint;
+//import javaawt.Paint;
 import javaawt.Point;
 //import java.awt.Polygon;
 import javaawt.Rectangle;
-import javaawt.RenderingHints;
-import javaawt.RenderingHints.Key;
+//import javaawt.RenderingHints;
+//import javaawt.RenderingHints.Key;
 import javaawt.Shape;
-import javaawt.Stroke;
+//import javaawt.Stroke;
 //import java.awt.font.FontRenderContext;
 //import java.awt.font.GlyphVector;
 //import java.awt.font.TextLayout;
@@ -50,7 +50,7 @@ import javaawt.geom.AffineTransform;
 import javaawt.geom.Point2D;
 //import java.awt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
-import javaawt.image.BufferedImageOp;
+//import javaawt.image.BufferedImageOp;
 import javaawt.image.ColorModel;
 import javaawt.image.DataBufferByte;
 import javaawt.image.DataBufferInt;
@@ -276,7 +276,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 
         int biType = bi.getType();
 	int w, h, i, j;
-	int row, rowBegin, rowInc, dstBegin;
+	int rowBegin, rowInc, dstBegin;
 
 	dstBegin = 0;
 	rowInc = 1;
@@ -540,16 +540,16 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
     
 
-    @Override
+/*    @Override
     public final Object getRenderingHint(Key hintKey) {
 	return offScreenGraphics2D.getRenderingHint(hintKey);
-    }
+    }*/
  
 
-    @Override
+/*    @Override
     public final Paint getPaint() {
 	return offScreenGraphics2D.getPaint();
-    }
+    }*/
  
 
     @Override
@@ -559,10 +559,10 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
   
 
  
-    @Override
+/*    @Override
     public final RenderingHints getRenderingHints() {
 	return offScreenGraphics2D.getRenderingHints();
-    }
+    }*/
  
 
     @Override
@@ -571,10 +571,10 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
  
 
-    @Override
+/*    @Override
     public final Stroke getStroke() {
 	return offScreenGraphics2D.getStroke();
-    }
+    }*/
  
 
     @Override
@@ -585,7 +585,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	return offScreenGraphics2D.drawImage(img, xform, obs);
     }
 
-    @Override
+/*    @Override
     public final void drawImage(BufferedImage img, BufferedImageOp op,
 				int x, int y) {
 	if (op != null) {
@@ -593,7 +593,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	}
 	validate(x, y, x+img.getWidth(), y+img.getHeight());
 	offScreenGraphics2D.drawImage(img, null, x, y);
-    }
+    }*/
  
  
     @Override
@@ -672,7 +672,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
  
 
     @Override
-    public final void addRenderingHints(Map hints) {
+    public final void addRenderingHints(Map<?, ?> hints) {
 	offScreenGraphics2D.addRenderingHints(hints);
     }
  
@@ -908,10 +908,10 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
  
 
-    @Override
+/*    @Override
     public final void setPaint( Paint paint ) {
 	offScreenGraphics2D.setPaint(paint);
-    }
+    }*/
  
 
     @Override
@@ -921,23 +921,23 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
  
 
-    @Override
+/*    @Override
     public final void setRenderingHint(Key hintKey, Object hintValue) {
 	offScreenGraphics2D.setRenderingHint(hintKey, hintValue);
     }
- 
+ */
 
     @Override
-    public final void setRenderingHints(Map hints) {
+    public final void setRenderingHints(Map<?, ?> hints) {
 	offScreenGraphics2D.setRenderingHints(hints);
     }
  
 
-    @Override
+/*    @Override
     public final void setStroke(Stroke s) {
 	strokeSet = (s != null);
 	offScreenGraphics2D.setStroke(s);
-    }
+    }*/
  
 
     @Override
@@ -1280,15 +1280,15 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	}
     }
 //PJ
-	@Override
+/*	@Override
 	public void setComposite(Composite comp)
 	{
 		throw new UnsupportedOperationException();
-	}
+	}*/
 
-	@Override
+/*	@Override
 	public Composite getComposite()
 	{
 		throw new UnsupportedOperationException();
-	}	
+	}*/	
 }
