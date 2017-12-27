@@ -78,7 +78,6 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderProgramRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupCondition.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ViewSpecificGroup.java"/>
-        <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupOnAWTEvent.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{DepthComponentIntRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{NodeReferenceTable.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PointLight.java"/>
@@ -249,6 +248,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{RendererStructure.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{TextureRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ClipRetained.java"/>
+        <javaElement handleIdentifier="=j3dcore/target\/generated-sources\/java-templates"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{IndexedTriangleFanArray.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{TransformStructure.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupOnSensorExit.java"/>
@@ -384,7 +384,6 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PointLightRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{SparseArray.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderErrorListener.java"/>
-        <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{EventCatcher.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupOrOfAnds.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{GeneralizedVertexList.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{BoundingSphere.java"/>
