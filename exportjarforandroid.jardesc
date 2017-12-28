@@ -21,6 +21,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Drawable.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{RenderBin.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{IndexedLineArrayRetained.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;javaawt.geom"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{TransparencyAttributes.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{CanvasViewCache.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ConeSoundRetained.java"/>
@@ -104,6 +105,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{NodeComponent.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{JoglesIndexedTriangleArray.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{ShaderBin.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;javaawt.sun"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{LinearFog.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{LineStripArray.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{DistanceLOD.java"/>
@@ -161,6 +163,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderId.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{GraphicsContext3D.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{View.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;compressedtexture.dktxtools.ktx"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{AutoOffScreenCanvas3D.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickShape.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{IllegalSceneGraphException.java"/>
@@ -172,6 +175,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{J3dClock.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{HiResCoord.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{ImageComponentRetained.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;compressedtexture.dktxtools"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Link.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{JoglesPipeline.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{GeometryService.java"/>
@@ -183,6 +187,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Texture2D.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{FontExtrusion.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{JoglesIndexedTriangleStripArrayRetained.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;javaawt"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{JoglesFastVertexArrayRenderMethod.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{BranchGroupRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{DepthComponentFloat.java"/>
@@ -220,6 +225,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupOnBehaviorPost.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{CompressedGeometryRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{RenderAtom.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;compressedtexture"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{MediaContainerRetained.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{J3DGraphics2D.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{AuralAttributesRetained.java"/>
@@ -237,8 +243,10 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{GLSLShaderProgramRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickCylinderSegment.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{Font3D.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;javaawt.image"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickConeRay.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PositionPathInterpolator.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;javaawt.color"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{LineArrayRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{LineAttributes.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{MediaContainer.java"/>
@@ -297,6 +305,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{J3dHash.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{TextureAttributes.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{RenderingError.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;javaawt.imageio"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{JoglContext.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Fog.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{TextureBin.java"/>
@@ -331,6 +340,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{AudioDevice.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{SwitchRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderRetained.java"/>
+        <javaElement handleIdentifier="=java3d-core-and/src&lt;compressedtexture.dktxtools.utils"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ObjectUpdate.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{GraphicsConfigInfo.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{RestrictedAccessException.java"/>
