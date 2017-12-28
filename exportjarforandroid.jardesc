@@ -158,7 +158,6 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupOnViewPlatformExit.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ExponentialFog.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{JoglesIndexedTriangleStripArray.java"/>
-        <javaElement handleIdentifier="=java3d-awtfacade/src"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderId.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{GraphicsContext3D.java"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{View.java"/>
@@ -205,6 +204,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ViewSpecificGroupRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickInfo.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickCylinder.java"/>
+        <javaElement handleIdentifier="=vecmath/src"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{RenderMolecule.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Background.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{TriangleFanArrayRetained.java"/>
@@ -311,7 +311,6 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Alpha.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{IndexedObject.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{OrderedGroupRetained.java"/>
-        <javaElement handleIdentifier="=java3d-compressedtexture/src"/>
         <javaElement handleIdentifier="=java3d-core-and/src&lt;org.jogamp.java3d{GeometryArray.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupOnElapsedFrames.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{J3dThread.java"/>
@@ -376,6 +375,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{WakeupCriterion.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{BHTree.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{LineStripArrayRetained.java"/>
+        <javaElement handleIdentifier="=java3d-utils-and/src\/classes\/share"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Targets.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{OrderedCollection.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{J3dMessage.java"/>
