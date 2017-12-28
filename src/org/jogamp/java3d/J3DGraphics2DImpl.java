@@ -39,8 +39,8 @@ import javaawt.Image;
 import javaawt.Point;
 //import java.awt.Polygon;
 import javaawt.Rectangle;
-//import javaawt.RenderingHints;
-//import javaawt.RenderingHints.Key;
+import javaawt.RenderingHints;
+import javaawt.RenderingHints.Key;
 import javaawt.Shape;
 //import javaawt.Stroke;
 //import java.awt.font.FontRenderContext;
@@ -50,7 +50,7 @@ import javaawt.geom.AffineTransform;
 import javaawt.geom.Point2D;
 //import java.awt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
-//import javaawt.image.BufferedImageOp;
+import javaawt.image.BufferedImageOp;
 import javaawt.image.ColorModel;
 import javaawt.image.DataBufferByte;
 import javaawt.image.DataBufferInt;
@@ -540,10 +540,10 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
     
 
-/*    @Override
+    @Override
     public final Object getRenderingHint(Key hintKey) {
 	return offScreenGraphics2D.getRenderingHint(hintKey);
-    }*/
+    }
  
 
 /*    @Override
@@ -557,12 +557,11 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	return offScreenGraphics2D.getClipBounds();
     }
   
-
  
-/*    @Override
+    @Override
     public final RenderingHints getRenderingHints() {
 	return offScreenGraphics2D.getRenderingHints();
-    }*/
+    }
  
 
     @Override
@@ -585,7 +584,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	return offScreenGraphics2D.drawImage(img, xform, obs);
     }
 
-/*    @Override
+    @Override
     public final void drawImage(BufferedImage img, BufferedImageOp op,
 				int x, int y) {
 	if (op != null) {
@@ -593,7 +592,7 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	}
 	validate(x, y, x+img.getWidth(), y+img.getHeight());
 	offScreenGraphics2D.drawImage(img, null, x, y);
-    }*/
+    }
  
  
     @Override
@@ -921,11 +920,11 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
     }
  
 
-/*    @Override
+    @Override
     public final void setRenderingHint(Key hintKey, Object hintValue) {
 	offScreenGraphics2D.setRenderingHint(hintKey, hintValue);
     }
- */
+ 
 
     @Override
     public final void setRenderingHints(Map<?, ?> hints) {

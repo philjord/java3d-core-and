@@ -25,11 +25,11 @@
 
 package javaawt;
 
-//import javaawt.RenderingHints.Key;
+import javaawt.RenderingHints.Key;
 import javaawt.geom.AffineTransform;
+import javaawt.image.BufferedImage;
+import javaawt.image.BufferedImageOp;
 import javaawt.image.ImageObserver;
-//import javaawt.image.BufferedImageOp;
-//import javaawt.image.BufferedImage;
 import javaawt.image.RenderedImage;
 ///import javaawt.image.renderable.RenderableImage;
 //import javaawt.font.GlyphVector;
@@ -99,11 +99,11 @@ public interface Graphics2D extends Graphics {
                                       ImageObserver obs);
 
     
-/*    public abstract void drawImage(BufferedImage img,
+    public abstract void drawImage(BufferedImage img,
                                    BufferedImageOp op,
                                    int x,
                                    int y);
-*/
+
     
     public abstract void drawRenderedImage(RenderedImage img,
                                            AffineTransform xform);
@@ -145,10 +145,10 @@ public interface Graphics2D extends Graphics {
  //   public abstract void setStroke(Stroke s);
 
     
- //   public abstract void setRenderingHint(Key hintKey, Object hintValue);
+    public abstract void setRenderingHint(Key hintKey, Object hintValue);
 
     
- //   public abstract Object getRenderingHint(Key hintKey);
+    public abstract Object getRenderingHint(Key hintKey);
 
     
     public abstract void setRenderingHints(Map<?,?> hints);
@@ -157,7 +157,7 @@ public interface Graphics2D extends Graphics {
     public abstract void addRenderingHints(Map<?,?> hints);
 
     
-//    public abstract RenderingHints getRenderingHints();
+    public abstract RenderingHints getRenderingHints();
 
      
     public abstract void translate(double tx, double ty);
