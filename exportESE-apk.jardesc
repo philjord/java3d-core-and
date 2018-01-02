@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
 <jardesc>
-    <jar path="java3d-core-and/dist/java3d-core-and.jar"/>
+    <jar path="C:/Users/phil/AndroidStudioProjects/ElderScrollsExplorer-apk/app/libs/java3d-core-and.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/java3d-core-and/exportjarforandroid.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
@@ -292,6 +292,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{BHTree.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickShape.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{LineStripArrayRetained.java"/>
+        <javaElement handleIdentifier="=java3d-utils-and/src\/classes\/share"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{IllegalSceneGraphException.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Targets.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{OrderedCollection.java"/>
