@@ -14,6 +14,7 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{TextureAttributesRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{PickCylinder.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ColorInterpolator.java"/>
+        <javaElement handleIdentifier="=vecmath/src"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Switch.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{Billboard.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderAttributeArrayRetained.java"/>
@@ -190,7 +191,6 @@
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{SpotLightRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ColoringAttributesRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{IndexedObject.java"/>
-        <javaElement handleIdentifier="=vecmath/src\/main\/java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{OrderedGroupRetained.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{GeometryUpdater.java"/>
         <javaElement handleIdentifier="=j3dcore/src\/main\/java&lt;org.jogamp.java3d{ShaderAttributeValue.java"/>
