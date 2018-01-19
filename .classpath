@@ -4,6 +4,8 @@
 	<classpathentry kind="src" path="build-tools"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/vecmath"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/j3dcore"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/java3d-core"/>
+	<classpathentry exported="true" kind="lib" path="lib/gluegen-rt-2.3.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jogl-all-2.3.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
