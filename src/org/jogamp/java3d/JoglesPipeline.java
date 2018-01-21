@@ -2553,12 +2553,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 					texCoords = getTexCoordSetBuffer(texCoords);
 				}
-				boolean[] texSetsBound = new boolean[texCoords.length];
+				//boolean[] texSetsBound = new boolean[texCoords.length];
 				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
 				{
 					int texSet = texCoordSetMap[texUnit];
-					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
+					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 )//&& !texSetsBound[texSet])
 					{
+						//texSetsBound[texSet] = true;
 						boolean changable = geo.source.getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
 						if (changable)
 						{

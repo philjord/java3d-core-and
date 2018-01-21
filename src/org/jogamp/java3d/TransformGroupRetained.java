@@ -79,9 +79,9 @@ class TransformGroupRetained extends GroupRetained implements TargetsInterface
      */
     WakeupIndexedList transformChange = null;
 
-// The current list of child transform group nodes or link nodes
-// under a transform group
-ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
+    // The current list of child transform group nodes or link nodes
+    // under a transform group
+    ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
 
     // working area while compile
     boolean needNormalsTransform = false; // true if normals transformation
@@ -125,24 +125,23 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
 	// re-use previous to avoid object creation, if nothing is still using it
 	private J3dMessage prevMessage;
 	private Transform3D trans = new Transform3D();
-  void setTransform(Transform3D t1) {
-       
-      //int i, j;
-	  J3dMessage tchangeMessage = null;
-	  if (prevMessage != null && prevMessage.getRefcount() == 0)
-	  {
-		  tchangeMessage = prevMessage;
-	  }
-	  else
-	  {
-		  tchangeMessage = new J3dMessage();
-		  // trans will still be in use as well in prev message re-create
-		  trans = new Transform3D();
-	  }
+	void setTransform(Transform3D t1) {
+	
+		//int i, j;
+		J3dMessage tchangeMessage = null;
+		if (source.isLive()) {
+		  if (prevMessage != null && prevMessage.getRefcount() == 0) {
+			  tchangeMessage = prevMessage;
+		  } else {
+			  tchangeMessage = new J3dMessage();
+			  // trans will still be in use as well in prev message re-create
+			  trans = new Transform3D();
+		  }
+		}
 
       if (staticTransform != null) {
-	  // this writeable transformGroup has a static transform
-	  // merged into this node
+    	  // this writeable transformGroup has a static transform
+    	  // merged into this node
 
       	  trans.set(staticTransform.transform);
       	  trans.mul(t1);
@@ -158,22 +157,23 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
     	  notifyConditions();
       }
 
+      
       if (source.isLive()) {
-
-	  if (aboveAViewPlatform && !t1.isCongruent()) {
-	      throw new BadTransformException(J3dI18N.getString("ViewPlatformRetained0"));
-	  }	  
+		  if (aboveAViewPlatform && !t1.isCongruent()) {
+		      throw new BadTransformException(J3dI18N.getString("ViewPlatformRetained0"));
+		  }	  
 	  
-	  tchangeMessage.type = J3dMessage.TRANSFORM_CHANGED;
-	  tchangeMessage.threads = targetThreads;
-	  tchangeMessage.args[1] = this;
-	  tchangeMessage.args[2] = trans;
-
-	  tchangeMessage.universe = universe;
-	  //System.err.println("TransformGroupRetained --- TRANSFORM_CHANGED " + this);
-	  VirtualUniverse.mc.processMessage(tchangeMessage);
-	  prevMessage = tchangeMessage;
+		  tchangeMessage.type = J3dMessage.TRANSFORM_CHANGED;
+		  tchangeMessage.threads = targetThreads;
+		  tchangeMessage.args[1] = this;
+		  tchangeMessage.args[2] = trans;
+	
+		  tchangeMessage.universe = universe;
+		  //System.err.println("TransformGroupRetained --- TRANSFORM_CHANGED " + this);
+		  VirtualUniverse.mc.processMessage(tchangeMessage);
+		  prevMessage = tchangeMessage;
       }
+		 
       dirtyBoundsCache();
   }
 
@@ -183,7 +183,7 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
      * @param t1 the transform object to be copied into
      */
     void getTransform(Transform3D t1) {
-	transform.getWithLock(t1);
+    	transform.getWithLock(t1);
 
         // if staticTransform exists for this node, need to
         // redetermine the original user specified transform
@@ -203,7 +203,7 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
             invTransform = new Transform3D(transform);
             invTransform.invert();
         }
-	return invTransform;
+        return invTransform;
     }
 
 
@@ -216,13 +216,13 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
 	    normalTransform.invert();
 	    normalTransform.transpose();
         }
-	return normalTransform;
+		return normalTransform;
     }
 
     // synchronized with TransformStructure
     @Override
     synchronized void setNodeData(SetLiveState s) {
-	int i;
+    	int i;
 
         super.setNodeData(s);
 
@@ -363,8 +363,8 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
             }
         }
 
-	s.localToVworld = childLocalToVworld;
-	s.localToVworldIndex = childLocalToVworldIndex;
+        s.localToVworld = childLocalToVworld;
+        s.localToVworldIndex = childLocalToVworldIndex;
         s.currentTransforms = childTrans;
         s.currentTransformsIndex = childTransIndex;
 
@@ -376,69 +376,68 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
     void setAuxData(SetLiveState s, int index, int hkIndex) {
         super.setAuxData(s, index, hkIndex);
         perPathData[hkIndex] = new TransformGroupData();
-	perPathData[hkIndex].switchState = s.switchStates.get(hkIndex);
+        perPathData[hkIndex].switchState = s.switchStates.get(hkIndex);
     }
 
 
     // Add a WakeupOnTransformChange to the list
     void removeCondition(WakeupOnTransformChange wakeup) {
-	synchronized (transformChange) {
-	    transformChange.remove(wakeup);
-	}
+		synchronized (transformChange) {
+		    transformChange.remove(wakeup);
+		}
     }
 
     // Add a WakeupOnTransformChange to the list
     void addCondition(WakeupOnTransformChange wakeup) {
-	synchronized (transformChange) {
-	    transformChange.add(wakeup);
-	}
+		synchronized (transformChange) {
+		    transformChange.add(wakeup);
+		}
     }
 
     void notifyConditions() {
-	synchronized (transformChange) {
-	    WakeupOnTransformChange list[] = (WakeupOnTransformChange [])
-		transformChange.toArray(false);
-	    for (int i=transformChange.size()-1; i >=0; i--) {
-		list[i].setTriggered();
-	    }
-	}
+		synchronized (transformChange) {
+		    WakeupOnTransformChange list[] = (WakeupOnTransformChange [])
+			transformChange.toArray(false);
+		    for (int i=transformChange.size()-1; i >=0; i--) {
+		    	list[i].setTriggered();
+		    }
+		}
     }
 
     @Override
     boolean isStatic() {
-	if (!super.isStatic() ||
-	    source.getCapability(TransformGroup.ALLOW_TRANSFORM_READ) ||
-	    source.getCapability(TransformGroup.ALLOW_TRANSFORM_WRITE)) {
-	    return false;
-	} else {
-	    return true;
-	}
+		if (!super.isStatic() ||
+		    source.getCapability(TransformGroup.ALLOW_TRANSFORM_READ) ||
+		    source.getCapability(TransformGroup.ALLOW_TRANSFORM_WRITE)) {
+		    return false;
+		} else {
+		    return true;
+		}
     }
 
     @Override
     void mergeTransform(TransformGroupRetained xform) {
-	super.mergeTransform(xform);
-	transform.mul(xform.transform, transform);
+		super.mergeTransform(xform);
+		transform.mul(xform.transform, transform);
     }
 
     @Override
     void traverse(boolean sameLevel, int level) {
-
-	System.err.println();
-	for (int i = 0; i < level; i++) {
-	     System.err.print(".");
-	}
-	System.err.print(
-			this.source.getName() + " ret:" + this.getClass().getSimpleName() + " source:" + this.source.getClass().getSimpleName());
-
-	if (isStatic()) {
-	    System.err.print(" (s)");
-	} else {
-	    System.err.print(" (non-s)");
-	}
-	System.err.println();
-	System.err.println(transform.toString());
-	super.traverse(true, level);
+		System.err.println();
+		for (int i = 0; i < level; i++) {
+		     System.err.print(".");
+		}
+		System.err.print(
+				this.source.getName() + " ret:" + this.getClass().getSimpleName() + " source:" + this.source.getClass().getSimpleName());
+	
+		if (isStatic()) {
+		    System.err.print(" (s)");
+		} else {
+		    System.err.print(" (non-s)");
+		}
+		System.err.println();
+		System.err.println(transform.toString());
+		super.traverse(true, level);
     }
 
     @Override
@@ -807,54 +806,53 @@ ArrayList<NodeRetained> childTransformLinks = new ArrayList<NodeRetained>(1);
     }
 
 
+    private Bounds boundingObject = null;//to avoid gc
     @Override
     void computeCombineBounds(Bounds bounds) {
-        // Issue 514 : NPE in Wonderland : triggered in cached bounds computation
-        if (validCachedBounds && boundsAutoCompute) {
-            Bounds b = (Bounds) cachedBounds.clone();
-            // Should this be lock too ? ( MT safe  ? )
-            // Thoughts :
-            // Make a temp copy with lock :  transform.getWithLock(trans);, but this will cause gc ...
-            synchronized(transform) {
-                b.transform(transform);
-            }
-            bounds.combine(b);
-            return;
+    	
+    	//issue 544
+        if(boundingObject == null) {
+			if (VirtualUniverse.mc.useBoxForGroupBounds) {
+				boundingObject = new BoundingBox((Bounds) null);
+			} else {
+				boundingObject = new BoundingSphere((Bounds) null);
+			}
         }
+        
+        synchronized(boundingObject) {
+			// Issue 514 : NPE in Wonderland : triggered in cached bounds computation
+			if (validCachedBounds && boundsAutoCompute) {
+				boundingObject.set(cachedBounds);
+				 
+			} else if (boundsAutoCompute) {
+				for (int i = children.size() - 1; i >= 0; i--) {
+					NodeRetained child = children.get(i);
+					if (child != null)
+						child.computeCombineBounds(boundingObject);
+				}
 
-        //issue 544
-        Bounds boundingObject = null;
-        if (VirtualUniverse.mc.useBoxForGroupBounds) {
-            boundingObject = new BoundingBox((Bounds) null);
-        } else {
-		boundingObject = new BoundingSphere((Bounds)null);
+				if (VirtualUniverse.mc.cacheAutoComputedBounds) {
+					if(cachedBounds == null) {
+						cachedBounds = (Bounds) boundingObject.clone();   
+	            	} else {
+	            		cachedBounds.set(boundingObject);
+	            	}
+				}
+			} else {
+				// Should this be lock too ? ( MT safe  ? )
+				synchronized (localBounds) {
+					boundingObject.set(localBounds);
+				}
+			}
+
+			// Should this be lock too ? ( MT safe  ? )
+			// Thoughts :
+			// Make a temp copy with lock :  transform.getWithLock(trans);, but this will cause gc ...
+			synchronized (transform) {
+				boundingObject.transform(transform);
+			}
+			bounds.combine(boundingObject);
         }
-	if(boundsAutoCompute) {
-	    for (int i=children.size()-1; i>=0; i--) {
-			NodeRetained child = children.get(i);
-		if(child != null)
-		    child.computeCombineBounds(boundingObject);
-	    }
-
-            if (VirtualUniverse.mc.cacheAutoComputedBounds) {
-                cachedBounds = (Bounds) boundingObject.clone();
-            }
-	}
-	else {
-	    // Should this be lock too ? ( MT safe  ? )
-	    synchronized(localBounds) {
-		boundingObject.set(localBounds);
-	    }
-	}
-
-        // Should this be lock too ? ( MT safe  ? )
-	// Thoughts :
-	// Make a temp copy with lock :  transform.getWithLock(trans);, but this will cause gc ...
-	synchronized(transform) {
-	    boundingObject.transform(transform);
-	}
-	bounds.combine(boundingObject);
-
     }
 
     void processChildLocalToVworld(ArrayList<TransformGroupRetained> dirtyTransformGroups,

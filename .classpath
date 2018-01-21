@@ -6,6 +6,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/java3d-core"/>
 	<classpathentry exported="true" kind="lib" path="lib/gluegen-rt-2.3.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jogl-all-2.3.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jogl-all-2.3.2.jar" sourcepath="C:/Users/phil/.m2/repository/org/jogamp/jogl/jogl-all/2.3.2/jogl-all-2.3.2-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
