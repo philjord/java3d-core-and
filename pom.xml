@@ -58,15 +58,16 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>java3d-core</artifactId>
 			<version>${project.version}</version>
+			<optional>true</optional> <!-- otherwise dependent project will pull this in, but we actually merge it into the output -->			
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-main</artifactId>
+			<artifactId>gluegen-rt-android</artifactId>
 			<version>${jogamp.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-main</artifactId>
+			<artifactId>jogl-all-android</artifactId>
 			<version>${jogamp.version}</version>
 		</dependency>
 	</dependencies>
@@ -74,15 +75,19 @@
   <build>
     <defaultGoal>install</defaultGoal>
 
-		<sourceDirectory>${basedir}/src</sourceDirectory>
+	<sourceDirectory>${basedir}/src</sourceDirectory>
+	
     <resources>
       <resource>
-        <directory>>${project.basedir}/src</directory>
+        <directory>${project.basedir}/src</directory>           	
         <excludes>
           <exclude>**/*.java</exclude>
           <exclude>**/package.html</exclude>
         </excludes>
       </resource>
+      <resource>
+      	<directory>${project.basedir}/lib</directory>  
+      </resource>      
     </resources>
     <plugins>
       <plugin>
@@ -91,7 +96,29 @@
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
-        </configuration>
+        </configuration>        
+      </plugin>      
+      <!-- This project overrides a few of the classes in it's parent, but must publish the merged jar as an artifact -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>         
+            <configuration>	        	                          
+		        <artifactSet>
+	                <includes>
+	               		<include>${project.groupId}:java3d-core-and:jar:</include>
+	                    <include>${project.groupId}:java3d-core:jar:</include>      	
+	                </includes>
+	            </artifactSet>   
+	            <createDependencyReducedPom>false</createDependencyReducedPom>                      
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
