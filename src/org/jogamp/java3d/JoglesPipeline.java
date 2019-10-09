@@ -769,7 +769,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					System.err.println("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+					//QUADS not supported render as triangles just to get something on screen
+					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
 				case GeometryRetained.GEO_TYPE_TRI_SET:
 					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
 					break;
@@ -1476,7 +1477,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					System.err.println("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+					//QUADS not supported render as triangles just to get something on screen
+					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
 				case GeometryRetained.GEO_TYPE_TRI_SET:
 					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
 					break;
@@ -2119,7 +2121,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+					//QUADS not supported render as triangles just to get something on screen
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
 					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
@@ -2909,7 +2912,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+					//QUADS not supported render as triangles just to get something on screen
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
 					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
@@ -10269,7 +10273,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				switch (geo_type)
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					throw new UnsupportedOperationException("QuadArray.\n" + VALID_FORMAT_MESSAGE);
+					//QUADS not supported render as triangles just to get something on screen
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
 					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
 					break;
