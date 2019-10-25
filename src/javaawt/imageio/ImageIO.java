@@ -1,8 +1,11 @@
 package javaawt.imageio;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
+
 
 import javaawt.image.BufferedImage;
 
@@ -49,5 +52,25 @@ public class ImageIO
 		return null;
 
 	}
+	
+    public static BufferedImage read(URL input) throws IOException {
+        if (input == null) {
+            throw new IllegalArgumentException("input == null!");
+        }
 
+        InputStream istream = null;
+        try {
+            istream = input.openStream();
+        } catch (IOException e) {
+            throw new IOException("Can't get input stream from URL!", e);
+        }
+        
+        BufferedImage bi;
+        try {
+            bi = read(istream);            
+        } finally {
+            istream.close();
+        }
+        return bi;
+    }
 }
