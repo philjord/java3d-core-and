@@ -7381,7 +7381,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 
 				if (Platform.getOSName().equalsIgnoreCase("Windows 10") && //win10
-						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version19) >= 0) || // 1.9 or 1.8 > 51
+						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) > 0) || // 1.9 or 1.8 > 51 //Version 19 was swapped to version 9 due to JEP 223 in jogl 2.4.0
 						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) >= 0 && Platform.JAVA_VERSION_UPDATE > 51) && //
 								Platform.getJavaVMName().toLowerCase().startsWith("java hotspot(tm)"))// e.g. Java HotSpot(TM) 64-Bit Server VM ; OpenJDK would give OpenJDK 64-Bit Server VM
 				{
