@@ -4,7 +4,7 @@
   
   <groupId>org.jogamp.java3d</groupId>
   <artifactId>java3d-core-and</artifactId>
-  <version>1.7.0</version>
+  <version>1.7.1</version>
   
   <name>Java 3D Core 4 Android</name>
   <description>Extension of the Java 3D Graphics API</description>
@@ -64,11 +64,13 @@
 			<groupId>org.jogamp.gluegen</groupId>
 			<artifactId>gluegen-rt-android</artifactId>
 			<version>${jogamp.version}</version>
+			<scope>runtime</scope><!-- not needed to compile, but needed in an android project to run-->
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all-android</artifactId>
 			<version>${jogamp.version}</version>
+			<scope>runtime</scope><!-- not needed to compile, but needed in an android project to run-->
 		</dependency>
 	</dependencies>
 	
