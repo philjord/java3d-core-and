@@ -578,7 +578,8 @@ public Pipeline run() {
 
     abstract void updateDirectionalLight(Context ctx,
             int lightSlot, float red, float green,
-            float blue, float x, float y, float z);
+            float blue, float x, float y, float z, 
+            int shadowMapSamplerId, double[] projMatrix);
 
 
     // ---------------------------------------------------------------------
@@ -590,7 +591,8 @@ public Pipeline run() {
     abstract void updatePointLight(Context ctx,
             int lightSlot, float red, float green,
             float blue, float ax, float ay, float az,
-            float px, float py, float pz);
+            float px, float py, float pz,
+            int shadowMapSamplerId, double[] projMatrix);
 
 
     // ---------------------------------------------------------------------
@@ -604,7 +606,7 @@ public Pipeline run() {
             float blue, float ax, float ay, float az,
             float px, float py, float pz, float spreadAngle,
             float concentration, float dx, float dy,
-            float dz);
+            float dz, int shadowMapSamplerId, double[] projMatrix);
 
 
     // ---------------------------------------------------------------------

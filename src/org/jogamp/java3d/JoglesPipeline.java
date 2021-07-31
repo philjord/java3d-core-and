@@ -1,22 +1,17 @@
 /*
- * Copyright (c) 2016 JogAmp Community. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2016 JogAmp Community. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE
+ * HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation. Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation. Sun designates this particular file as subject
+ * to the "Classpath" exception as provided by Sun in the LICENSE file that accompanied this code.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
 
@@ -70,66 +65,54 @@ import com.jogamp.opengl.Threading;
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
 
-
 /**
  * Concrete implementation of Pipeline class for the GL2ES2 rendering pipeline.
  * 
- * Note the order of calls in this pipeline depends on the Renderer used
- * Currently a renderer (and EnvironmentSet and ShaderBin etc) called "renderer_shader" is used
+ * Note the order of calls in this pipeline depends on the Renderer used Currently a renderer (and EnvironmentSet and
+ * ShaderBin etc) called "renderer_shader" is used
  * 
- * These calls set up various factors and as you traverse the tree each will force
- * the values to be recall, though in fact the Canvas3D.updateState actually does the pipeline calls
- * and therefore dictates the order of calls (though many can be skipped)
- * Obviously Renderer calls render Opaque, Sorted, Transparent
- * Then
- * RenderBin sorts out background calls and projection and view
- * EnvironmentSet calls lights
- * ShaderBin call shader program use
- * AttributeBin renderattributes
- * TextureBin sets textures up
- * RenderMolecule
- * RenderAtom
- * Canvas3D.updateSate
- * Execute geometries
+ * These calls set up various factors and as you traverse the tree each will force the values to be recall, though in
+ * fact the Canvas3D.updateState actually does the pipeline calls and therefore dictates the order of calls (though many
+ * can be skipped) Obviously Renderer calls render Opaque, Sorted, Transparent Then RenderBin sorts out background calls
+ * and projection and view EnvironmentSet calls lights ShaderBin call shader program use AttributeBin renderattributes
+ * TextureBin sets textures up RenderMolecule RenderAtom Canvas3D.updateSate Execute geometries
  * 
  * 
  * 
  * 
  */
-public class JoglesPipeline extends Jogl2es2DEPPipeline
-{
+public class JoglesPipeline extends Jogl2es2DEPPipeline {
 	//Note this is VERY expensive and should be false unless debugging
-	public static boolean DO_OUTPUT_ERRORS = false;
+	public static boolean			DO_OUTPUT_ERRORS					= false;
 	// Currently prints for entry points already implemented
-	public static  boolean VERBOSE = false;
+	public static boolean			VERBOSE								= false;
 	// Prints extra debugging information
-	private static final boolean EXTRA_DEBUGGING = false;
+	private static final boolean	EXTRA_DEBUGGING						= false;
 
-	private static final boolean OUTPUT_PER_FRAME_STATS = false;
+	private static final boolean	OUTPUT_PER_FRAME_STATS				= false;
 
-	public static boolean MINIMISE_NATIVE_CALLS_FFP = true;
+	public static boolean			MINIMISE_NATIVE_CALLS_FFP			= true;
 
-	public static boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
-	public static boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
+	public static boolean			MINIMISE_NATIVE_CALLS_TRANSPARENCY	= true;
+	public static boolean			MINIMISE_NATIVE_CALLS_TEXTURE		= true;
 
-	public static boolean MINIMISE_NATIVE_SHADER = true;
-	public static boolean MINIMISE_NATIVE_CALLS_OTHER = true;
+	public static boolean			MINIMISE_NATIVE_SHADER				= true;
+	public static boolean			MINIMISE_NATIVE_CALLS_OTHER			= true;
 
 	// This MUST be true on android fullscreen 
 	// setPosition on a GLWindow can lock-up if true
 	// also with on and offscreen must be false too
 	// possibly must be false as preserve/restore fail otherwise
-	public static boolean LATE_RELEASE_CONTEXT = true;
+	public static boolean			LATE_RELEASE_CONTEXT				= true;
 
 	// interleave and compressed to half floats and bytes
-	public static boolean ATTEMPT_OPTIMIZED_VERTICES = true;
-	public static boolean COMPRESS_OPTIMIZED_VERTICES = true;
+	public static boolean			ATTEMPT_OPTIMIZED_VERTICES			= true;
+	public static boolean			COMPRESS_OPTIMIZED_VERTICES			= true;
 
 	/**
 	 * Constructor for singleton JoglPipeline instance
 	 */
-	protected JoglesPipeline()
-	{
+	protected JoglesPipeline() {
 
 	}
 
@@ -137,8 +120,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	 * Initialize the pipeline
 	 */
 	@Override
-	void initialize(Pipeline.Type pipelineType)
-	{
+	void initialize(Pipeline.Type pipelineType) {
 		super.initialize(pipelineType);
 
 		// Java3D maintains strict control over which threads perform OpenGL work
@@ -150,84 +132,78 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	// FIXME: ugly hack for buffer clearing on removal of a geometry
-	public void registerClearBuffers(Context ctx, GeometryArrayRetained geo)
-	{
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
-		synchronized (joglesctx.geoToClearBuffers)
-		{
+	public void registerClearBuffers(Context ctx, GeometryArrayRetained geo) {
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
+		synchronized (joglesctx.geoToClearBuffers) {
 			joglesctx.geoToClearBuffers.add(geo);
 		}
 	}
 
-	private static void doClearBuffers(Context ctx)
-	{
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
-		
-		if (joglesctx.geoToClearBuffers.size() > 0)
-		{
-			synchronized (joglesctx.geoToClearBuffers)
-			{
+	private static void doClearBuffers(Context ctx) {
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
+
+		if (joglesctx.geoToClearBuffers.size() > 0) {
+			synchronized (joglesctx.geoToClearBuffers) {
 				GL2ES2 gl = joglesctx.gl2es2();
-				for (GeometryArrayRetained geo : joglesctx.geoToClearBuffers)
-				{
+				for (GeometryArrayRetained geo : joglesctx.geoToClearBuffers) {
 					GeometryData gd = joglesctx.allGeometryData.get(geo.nativeId);
 					joglesctx.allGeometryData.remove(geo.nativeId);
 					geo.nativeId = -1;
 
 					// TODO: why exactly is the same geo being removed twice?
-					if (gd != null)
-					{
+					if (gd != null) {
 						if (gd.geoToIndBuf != -1)
-							gl.glDeleteBuffers(1, new int[] { gd.geoToIndBuf }, 0);
-						
+							gl.glDeleteBuffers(1, new int[] {gd.geoToIndBuf}, 0);
+
 						if (gd.geoToCoordBuf != -1)
-							gl.glDeleteBuffers(1, new int[] { gd.geoToCoordBuf }, 0);
-						
+							gl.glDeleteBuffers(1, new int[] {gd.geoToCoordBuf}, 0);
+
 						// note possible interleaved using one buffer
 						if (gd.geoToColorBuf != -1 && gd.geoToColorBuf != gd.geoToCoordBuf)
-							gl.glDeleteBuffers(1, new int[] { gd.geoToColorBuf }, 0);
-						
+							gl.glDeleteBuffers(1, new int[] {gd.geoToColorBuf}, 0);
+
 						// note possible interleaved using one buffer
 						if (gd.geoToNormalBuf != -1 && gd.geoToNormalBuf != gd.geoToCoordBuf)
-							gl.glDeleteBuffers(1, new int[] { gd.geoToNormalBuf }, 0);
+							gl.glDeleteBuffers(1, new int[] {gd.geoToNormalBuf}, 0);
 
 						int[] bufIds = gd.geoToIndStripBuf;
-						if (bufIds != null && bufIds.length > 0)
-						{
+						if (bufIds != null && bufIds.length > 0) {
 							gl.glDeleteBuffers(bufIds.length, bufIds, 0);
 						}
 
 						SparseArray<Integer> tcBufIds = gd.geoToTexCoordsBuf;
-						if (tcBufIds != null)
-						{
-							for (int i = 0; i < tcBufIds.size(); i++)
-							{
+						if (tcBufIds != null) {
+							for (int i = 0; i < tcBufIds.size(); i++) {
 								Integer tcBufId = tcBufIds.get(tcBufIds.keyAt(i));
 								// note possible interleaved using one buffer
 								if (tcBufId != null && tcBufId.intValue() != gd.geoToCoordBuf)
-									gl.glDeleteBuffers(1, new int[] { tcBufId.intValue() }, 0);
+									gl.glDeleteBuffers(1, new int[] {tcBufId.intValue()}, 0);
 							}
 							tcBufIds.clear();
 						}
 
 						SparseArray<Integer> vaBufIds = gd.geoToVertAttribBuf;
-						if (vaBufIds != null)
-						{
-							for (int i = 0; i < vaBufIds.size(); i++)
-							{
+						if (vaBufIds != null) {
+							for (int i = 0; i < vaBufIds.size(); i++) {
 								Integer vaBufId = vaBufIds.get(vaBufIds.keyAt(i));
 								// note possible interleaved using one buffer
 								if (vaBufId != null && vaBufId.intValue() != gd.geoToCoordBuf)
-									gl.glDeleteBuffers(1, new int[] { vaBufId.intValue() }, 0);
+									gl.glDeleteBuffers(1, new int[] {vaBufId.intValue()}, 0);
 							}
 							vaBufIds.clear();
 						}
 
 						if (gd.interleavedBufId != -1)
-							gl.glDeleteBuffers(1, new int[] { gd.interleavedBufId }, 0);
-						
-						if (gd.vaoId != -1)
-							((GL2ES3) gl).glDeleteVertexArrays(1, new int[] { gd.vaoId }, 0);
+							gl.glDeleteBuffers(1, new int[] {gd.interleavedBufId}, 0);
+
+						if (gd.geoToVaoId != null) {
+							for (int i = 0; i < gd.geoToVaoId.size(); i++) {
+								Integer vaoId = gd.geoToVaoId.get(gd.geoToVaoId.keyAt(i));
+								if (vaoId != null)
+									((GL2ES3)gl).glDeleteVertexArrays(1, new int[] {vaoId.intValue()}, 0);
+							}
+							gd.geoToVaoId.clear();
+						}
 					}
 
 				}
@@ -251,45 +227,46 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// used for GeometryArrays by Copy or interleaved
 	@Override
-	void execute(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
-			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
-			float[] varray, float[] carray, int cDirty)
-	{
+	void execute(	Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
+					boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount,
+					int[] texCoordSetMap, int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnitState,
+					int vertexAttrCount, int[] vertexAttrSizes, float[] varray, float[] carray, int cDirty) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.execute()");
 
-		executeGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, startVIndex, vcount, vformat,
-				texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texUnitOffset, numActiveTexUnitState, vertexAttrCount, vertexAttrSizes,
-				varray, null, carray, cDirty);
+		executeGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, startVIndex, vcount,
+				vformat, texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texUnitOffset, numActiveTexUnitState,
+				vertexAttrCount, vertexAttrSizes, varray, null, carray, cDirty);
 	}
 
 	// used by GeometryArray by Reference in interleaved format with NIO buffer
 	@Override
-	void executeInterleavedBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
-			int texCoordSetMapLen, int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata, int cdirty)
-	{
+	void executeInterleavedBuffer(	Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+									boolean useAlpha, boolean ignoreVertexColors, int startVIndex, int vcount,
+									int vformat, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
+									int[] texUnitOffset, int numActiveTexUnit, FloatBuffer varray, float[] cdata,
+									int cdirty) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeInterleavedBuffer()");
 
-		executeGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, startVIndex, vcount, vformat,
-				texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texUnitOffset, numActiveTexUnit, 0, null, null, varray, cdata, cdirty);
+		executeGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, startVIndex, vcount,
+				vformat, texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texUnitOffset, numActiveTexUnit, 0, null,
+				null, varray, cdata, cdirty);
 	}
 
-	private void executeGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int startVIndex, int vcount, int vformat, int texCoordSetCount, int[] texCoordSetMap,
-			int texCoordSetMapLen, int[] texCoordSetMapOffset, int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
-			float[] varray, FloatBuffer varrayBuffer, float[] carray, int cDirty)
-	{
+	private void executeGeometryArray(	Context absCtx, GeometryArrayRetained geo, int geo_type,
+										boolean isNonUniformScale, boolean useAlpha, boolean ignoreVertexColors,
+										int startVIndex, int vcount, int vformat, int texCoordSetCount,
+										int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetMapOffset,
+										int numActiveTexUnitState, int vertexAttrCount, int[] vertexAttrSizes,
+										float[] varray, FloatBuffer varrayBuffer, float[] carray, int cDirty) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeGeometryArray()");
 
-		Jogl2es2Context ctx = (Jogl2es2Context) absCtx;
+		Jogl2es2Context ctx = (Jogl2es2Context)absCtx;
 		int shaderProgramId = ctx.shaderProgramId;
 
-		if (shaderProgramId != -1)
-		{
+		if (shaderProgramId != -1) {
 			GL2ES2 gl = ctx.gl2es2();
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
@@ -305,63 +282,46 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			int[] sarray = null;
 			int[] start_array = null;
 
-			if (EXTRA_DEBUGGING)
-			{
+			if (EXTRA_DEBUGGING) {
 				System.err.println("Vertex format: " + getVertexDescription(vformat));
 				System.err.println("Geometry type: " + getGeometryDescription(geo_type));
-				if (carray != null)
-				{
+				if (carray != null) {
 					System.err.println("  Separate color array");
-				}
-				else
-				{
+				} else {
 					System.err.println("  Colors (if any) interleaved");
 				}
 			}
 
-			if ((vformat & GeometryArray.COORDINATES) != 0)
-			{
+			if ((vformat & GeometryArray.COORDINATES) != 0) {
 				stride += 3;
 			}
-			if ((vformat & GeometryArray.NORMALS) != 0)
-			{
+			if ((vformat & GeometryArray.NORMALS) != 0) {
 				stride += 3;
 				coordoff += 3;
 			}
-			if ((vformat & GeometryArray.COLOR) != 0)
-			{
-				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-				{
+			if ((vformat & GeometryArray.COLOR) != 0) {
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0) {
 					stride += 4;
 					normoff += 4;
 					coordoff += 4;
-				}
-				else
-				{
+				} else {
 					// Handle the case of executeInterleaved 3f 
 					stride += 3;
 					normoff += 3;
 					coordoff += 3;
 				}
 			}
-			if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-			{
-				if (EXTRA_DEBUGGING)
-				{
+			if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0) {
+				if (EXTRA_DEBUGGING) {
 					System.err.println("Number of tex coord sets: " + texCoordSetCount);
 				}
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
-				{
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
 					texSize = 2;
 					texStride = 2 * texCoordSetCount;
-				}
-				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
-				{
+				} else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0) {
 					texSize = 3;
 					texStride = 3 * texCoordSetCount;
-				}
-				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
-				{
+				} else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0) {
 					texSize = 4;
 					texStride = 4 * texCoordSetCount;
 				}
@@ -370,11 +330,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				coloroff += texStride;
 				coordoff += texStride;
 			}
-			if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-			{
-				for (int i = 0; i < vertexAttrCount; i++)
-				{
-					vAttrStride += vertexAttrSizes[i];
+			if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0) {
+				for (int i = 0; i < vertexAttrCount; i++) {
+					vAttrStride += vertexAttrSizes [i];
 				}
 				stride += vAttrStride;
 				normoff += vAttrStride;
@@ -386,16 +344,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			bstride = stride * Buffers.SIZEOF_FLOAT;
 
 			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-			{
-				sarray = ((GeometryStripArrayRetained) geo).stripVertexCounts;
-				start_array = ((GeometryStripArrayRetained) geo).stripStartOffsetIndices;
+				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET) {
+				sarray = ((GeometryStripArrayRetained)geo).stripVertexCounts;
+				start_array = ((GeometryStripArrayRetained)geo).stripStartOffsetIndices;
 			}
 
 			// using byRef interleaved array and has a separate pointer, then ..
 			int cstride = stride;
-			if (carray != null)
-			{
+			if (carray != null) {
 				cstride = 4;
 			}
 
@@ -403,13 +359,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			int startVertex = stride * startVIndex;
 			int startClrs = cstride * startVIndex;
-			if (carray == null)
-			{
+			if (carray == null) {
 				startClrs += coloroff;
 			}
 
-			if (EXTRA_DEBUGGING)
-			{
+			if (EXTRA_DEBUGGING) {
 				System.err.println("  startVertex: " + startVertex);
 				System.err.println("  stride: " + stride);
 				System.err.println("  bstride: " + bstride);
@@ -419,82 +373,77 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				System.err.println("  texCoordoff: " + texCoordoff);
 			}
 
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, varrayBuffer, varray, startVertex,
-					varrayBuffer, carray, startClrs);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, varrayBuffer,
+					varray, startVertex, varrayBuffer, carray, startClrs);
 
 			// GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of changeability
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+								|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (gl.isGL2ES3())
-			{
+			if (gl.isGL2ES3()) {
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
-				{
+				Integer vaoIdI = gd.geoToVaoId.get(shaderProgramId);
+				int vaoId = vaoIdI == null ? -1 : vaoIdI.intValue();
+				if (vaoId == -1) {
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
-					gd.vaoId = tmp[0];
-					gd.shaderIdForCurrentVaoId = shaderProgramId;
+					gl2es3.glGenVertexArrays(1, tmp, 0);					
+					vaoId = tmp [0];
+					gd.geoToVaoId.put(shaderProgramId, new Integer(vaoId));
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
+				} else {
+					// don't rebind if this vao was used last time for this geometry
+					if(gd.currentVaoId == vaoId)
+						bindingRequired = false;
 				}
-				else
-				{
-					bindingRequired = false;
-				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(vaoId);
+				gd.currentVaoId = vaoId;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 
 			// refill the buffers in case of writeable data (morphable)
-			if (locs.glVertex != -1)
-			{
-				if (gd.geoToCoordBuf == -1)
-				{
+			if (locs.glVertex != -1) {
+				if (gd.geoToCoordBuf == -1) {
 					new Throwable("Buffer load issue!").printStackTrace();
-				}
-				else
-				{
+				} else {
 					// rather than the morphable system above we should be able to use cDirty, but it appears to be wrong
 					// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
-					if (morphable)
-					{
+					if (morphable) {
 						FloatBuffer verts = null;
 						// do we need to covert a float[]
-						if (varray != null)
-						{
+						if (varray != null) {
 							verts = getVertexArrayBuffer(varray);
-						}
-						else
-						{
+						} else {
 							verts = varrayBuffer;
 						}
 
 						verts.position(startVertex);
 						// Sometime the FloatBuffer is swapped out for bigger or smaller
-						if (gd.geoToCoordBufSize != verts.remaining())
-						{
-							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + verts.remaining()
-									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
-									+ geo.source + ", this is not nessasarily a problem");
+						if (gd.geoToCoordBufSize != verts.remaining()) {
+							System.err.println("Morphable buffer changed "	+ gd.geoToCoordBufSize + " != "
+												+ verts.remaining() + " un indexed ((GeometryArray) geo.source) "
+												+ ((GeometryArray)geo.source).getName() + " " + geo.source
+												+ ", this is not nessasarily a problem");
 
 							int prevBufId1 = gd.geoToCoordBuf1;// record these in order to delete after re-bind
 							int prevBufId2 = gd.geoToCoordBuf2;
 
 							int[] tmp = new int[2];
 							gl.glGenBuffers(2, tmp, 0);
-							gd.geoToCoordBuf = tmp[0];
-							gd.geoToCoordBuf1 = tmp[0];
-							gd.geoToCoordBuf2 = tmp[1];
+							gd.geoToCoordBuf = tmp [0];
+							gd.geoToCoordBuf1 = tmp [0];
+							gd.geoToCoordBuf2 = tmp [1];
 
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts,
+									GL2ES2.GL_DYNAMIC_DRAW);
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts,
+									GL2ES2.GL_DYNAMIC_DRAW);
 
 							gd.geoToCoordBufSize = verts.remaining();
 
@@ -519,25 +468,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-							gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
+							gl.glDeleteBuffers(1, new int[] {prevBufId1, prevBufId2}, 0);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
-						}
-						else
-						{
+						} else {
 							// work out the buffer to update and buffer to swap to
-							if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
-							{
+							if (gd.geoToCoordBuf == gd.geoToCoordBuf1) {
 								// update 1 but set to draw 2
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8),
+										verts);
 								gd.geoToCoordBuf = gd.geoToCoordBuf2;
-							}
-							else
-							{
+							} else {
 								// update 2 but set to draw 1
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8),
+										verts);
 								gd.geoToCoordBuf = gd.geoToCoordBuf1;
 							}
 
@@ -549,36 +495,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						}
 					}
 				}
-			}
-			else
-			{
+			} else {
 				throw new UnsupportedOperationException("Shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
 			}
 
 			// update other attributes if required
-			if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
-			{
+			if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors) {
 				// if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
-				if (changable)
-				{
+				if (changable) {
 					FloatBuffer verts = null;
 					FloatBuffer clrs = null;
 					// do we need to covert a float[]
-					if (varray != null)
-					{
+					if (varray != null) {
 						verts = getVertexArrayBuffer(varray);
-					}
-					else
-					{
+					} else {
 						verts = varrayBuffer;
 					}
-					if (carray != null)
-					{
+					if (carray != null) {
 						verts = getColorArrayBuffer(carray);
-					}
-					else
-					{
+					} else {
 						clrs = verts;
 					}
 
@@ -590,8 +526,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			// notice morphables must always rebind each frame as coord buffers are swapped, so the vao 
 			// (if it is bound points to the previous buffer)
-			if (bindingRequired || morphable)
-			{
+			if (bindingRequired || morphable) {
 				// always do coords 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, bstride,
@@ -607,16 +542,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 			}
 
-			if (bindingRequired)
-			{
-				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
-				{
-					if (gd.geoToColorBuf == -1)
-					{
+			if (bindingRequired) {
+				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors) {
+					if (gd.geoToColorBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
@@ -629,23 +559,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerColor++;
 					}
-				}
-				else if (locs.glColor != -1)
-				{
+				} else if (locs.glColor != -1) {
 					// ignoreVertexcolors will have been set in FFP, now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
 
-				if (((vformat & GeometryArray.NORMALS) != 0) && locs.glNormal != -1)
-				{
-					if (gd.geoToCoordBuf == -1)
-					{
+				if (((vformat & GeometryArray.NORMALS) != 0) && locs.glNormal != -1) {
+					if (gd.geoToCoordBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, bstride,
 								(startVertex + normoff) * Buffers.SIZEOF_FLOAT);
@@ -656,32 +580,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerNormals++;
 					}
-				}
-				else
-				{
-					if (locs.glNormal != -1)
-					{
+				} else {
+					if (locs.glNormal != -1) {
 						gl.glDisableVertexAttribArray(locs.glNormal);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
 
-				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-				{
+				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0) {
 					int vAttrOffset = startVertex + vAttrOff;
-					for (int index = 0; index < vertexAttrCount; index++)
-					{
+					for (int index = 0; index < vertexAttrCount; index++) {
 						Integer attribLoc = locs.genAttIndexToLoc.get(index);
-						if (attribLoc != null && attribLoc.intValue() != -1)
-						{
-							int sz = vertexAttrSizes[index];
+						if (attribLoc != null && attribLoc.intValue() != -1) {
+							int sz = vertexAttrSizes [index];
 
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, bstride,
 									vAttrOffset * Buffers.SIZEOF_FLOAT);
 							gl.glEnableVertexAttribArray(attribLoc.intValue());
-							vAttrOffset += vertexAttrSizes[index];
+							vAttrOffset += vertexAttrSizes [index];
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
@@ -692,19 +610,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 				}
 
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-				{
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0) {
 					boolean[] texSetsBound = new boolean[texCoordSetMapLen];
-					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetMapLen; texUnit++)
-					{
-						int texSet = texCoordSetMap[texUnit];
-						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
-						{
-							texSetsBound[texSet] = true;
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetMapLen; texUnit++) {
+						int texSet = texCoordSetMap [texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1 && !texSetsBound [texSet]) {
+							texSetsBound [texSet] = true;
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texSize, GL2ES2.GL_FLOAT, true, bstride,
-									(startVertex + texCoordoff + texCoordSetMapOffset[texUnit]) * Buffers.SIZEOF_FLOAT);
-							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
+							gl.glVertexAttribPointer(locs.glMultiTexCoord [texUnit], texSize, GL2ES2.GL_FLOAT, true,
+									bstride, (startVertex + texCoordoff + texCoordSetMapOffset [texUnit])
+												* Buffers.SIZEOF_FLOAT);
+							gl.glEnableVertexAttribArray(locs.glMultiTexCoord [texUnit]);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
@@ -722,8 +638,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			//////////////////////////////////////////////
 
 			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-			{
+				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET) {
 				int primType = 0;
 
 				// FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
@@ -731,24 +646,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
-					primType = GL2ES2.GL_TRIANGLE_STRIP;
-					break;
-				case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
-					primType = GL2ES2.GL_TRIANGLE_FAN;
-					break;
-				case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
-					primType = GL2ES2.GL_LINE_LOOP;
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
+						primType = GL2ES2.GL_TRIANGLE_STRIP;
+						break;
+					case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
+						primType = GL2ES2.GL_TRIANGLE_FAN;
+						break;
+					case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
+						primType = GL2ES2.GL_LINE_LOOP;
+						break;
 				}
 
-				for (int i = 0; i < sarray.length; i++)
-				{
-					if (sarray[i] > 0)
-					{
-						gl.glDrawArrays(primType, start_array[i], sarray[i]);
+				for (int i = 0; i < sarray.length; i++) {
+					if (sarray [i] > 0) {
+						gl.glDrawArrays(primType, start_array [i], sarray [i]);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						if (OUTPUT_PER_FRAME_STATS)
@@ -757,29 +669,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripArrays++;
-			}
-			else
-			{
+			} else {
 				//need to override if polygonAttributes says so
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_SET;
 				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
 					geo_type = GeometryRetained.GEO_TYPE_POINT_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
-				case GeometryRetained.GEO_TYPE_TRI_SET:
-					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
-					break;
-				case GeometryRetained.GEO_TYPE_POINT_SET:
-					gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vcount);
-					break;
-				case GeometryRetained.GEO_TYPE_LINE_SET:
-					gl.glDrawArrays(GL2ES2.GL_LINES, 0, vcount);
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_QUAD_SET:
+						//QUADS not supported render as triangles just to get something on screen
+						gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
+					case GeometryRetained.GEO_TYPE_TRI_SET:
+						gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vcount);
+						break;
+					case GeometryRetained.GEO_TYPE_POINT_SET:
+						gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vcount);
+						break;
+					case GeometryRetained.GEO_TYPE_LINE_SET:
+						gl.glDrawArrays(GL2ES2.GL_LINES, 0, vcount);
+						break;
 				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -787,9 +696,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawArrays++;
 			}
-		}
-		else
-		{
+		} else {
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
@@ -807,8 +714,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Private helper methods for GeometryArrayRetained
 	//
 
-	private static String getVertexDescription(int vformat)
-	{
+	private static String getVertexDescription(int vformat) {
 		String res = "";
 		if ((vformat & GeometryArray.COORDINATES) != 0)
 			res += "COORDINATES ";
@@ -831,38 +737,37 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return res;
 	}
 
-	private static String getGeometryDescription(int geo_type)
-	{
-		switch (geo_type)
-		{
-		case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
-			return "GEO_TYPE_TRI_STRIP_SET";
-		case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
-			return "GEO_TYPE_TRI_FAN_SET";
-		case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
-			return "GEO_TYPE_LINE_STRIP_SET";
-		case GeometryRetained.GEO_TYPE_QUAD_SET:
-			return "GEO_TYPE_QUAD_SET";
-		case GeometryRetained.GEO_TYPE_TRI_SET:
-			return "GEO_TYPE_TRI_SET";
-		case GeometryRetained.GEO_TYPE_POINT_SET:
-			return "GEO_TYPE_POINT_SET";
-		case GeometryRetained.GEO_TYPE_LINE_SET:
-			return "GEO_TYPE_LINE_SET";
-		default:
-			return "(unknown " + geo_type + ")";
+	private static String getGeometryDescription(int geo_type) {
+		switch (geo_type) {
+			case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
+				return "GEO_TYPE_TRI_STRIP_SET";
+			case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
+				return "GEO_TYPE_TRI_FAN_SET";
+			case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
+				return "GEO_TYPE_LINE_STRIP_SET";
+			case GeometryRetained.GEO_TYPE_QUAD_SET:
+				return "GEO_TYPE_QUAD_SET";
+			case GeometryRetained.GEO_TYPE_TRI_SET:
+				return "GEO_TYPE_TRI_SET";
+			case GeometryRetained.GEO_TYPE_POINT_SET:
+				return "GEO_TYPE_POINT_SET";
+			case GeometryRetained.GEO_TYPE_LINE_SET:
+				return "GEO_TYPE_LINE_SET";
+			default:
+				return "(unknown " + geo_type + ")";
 		}
 	}
 
 	// used by GeometryArray by Reference with NIO buffer non indexed
 	//texCoords will be an array of FloatBuffer
 	@Override
-	void executeVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors,
-			int vcount, int vformat, int vdefined, int initialCoordIndex, Buffer vcoords, int initialColorIndex, Buffer cdataBuffer,
-			float[] cfdata, byte[] cbdata, int initialNormalIndex, FloatBuffer ndata, int vertexAttrCount, int[] vertexAttrSizes,
-			int[] vertexAttrIndices, FloatBuffer[] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState,
-			int[] texIndex, int texstride, Object[] texCoords, int cdirty)
-	{
+	void executeVABuffer(	Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+							boolean ignoreVertexColors, int vcount, int vformat, int vdefined, int initialCoordIndex,
+							Buffer vcoords, int initialColorIndex, Buffer cdataBuffer, float[] cfdata, byte[] cbdata,
+							int initialNormalIndex, FloatBuffer ndata, int vertexAttrCount, int[] vertexAttrSizes,
+							int[] vertexAttrIndices, FloatBuffer[] vertexAttrData, int texCoordMapLength,
+							int[] texcoordoffset, int numActiveTexUnitState, int[] texIndex, int texstride,
+							Object[] texCoords, int cdirty) {
 
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeVABuffer() ");
@@ -888,29 +793,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			vertexAttrBufs = vertexAttrData;
 
 		// get coordinate array
-		if (floatCoordDefined)
-		{
-			fverts = (FloatBuffer) vcoords;
-		}
-		else if (doubleCoordDefined)
-		{
+		if (floatCoordDefined) {
+			fverts = (FloatBuffer)vcoords;
+		} else if (doubleCoordDefined) {
 			// FIXME: doubles not supported for now
 			throw new UnsupportedOperationException("Double coordinates in use.\n" + VALID_FORMAT_MESSAGE);
 			// dverts = (DoubleBuffer) vcoords;
 		}
 
-		if (fverts == null && dverts == null)
-		{
+		if (fverts == null && dverts == null) {
 			return;
 		}
 
-		if (floatColorsDefined)
-		{
-			fclrs = (FloatBuffer) cdataBuffer;
+		if (floatColorsDefined) {
+			fclrs = (FloatBuffer)cdataBuffer;
 		}
 
-		if (byteColorsDefined)
-		{
+		if (byteColorsDefined) {
 			// FIXME: bytes not supported for now
 			throw new UnsupportedOperationException("byteColorsDefined.\n" + VALID_FORMAT_MESSAGE);
 			// if (cbdata != null)
@@ -920,8 +819,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// get normal array
-		if (normalsDefined)
-		{
+		if (normalsDefined) {
 			norms = ndata;
 		}
 
@@ -929,28 +827,28 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		int[] start_array = null;
 		int strip_len = 0;
 		if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-		{
-			sarray = ((GeometryStripArrayRetained) geo).stripVertexCounts;
+			|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET) {
+			sarray = ((GeometryStripArrayRetained)geo).stripVertexCounts;
 			strip_len = sarray.length;
-			start_array = ((GeometryStripArrayRetained) geo).stripStartOffsetIndices;
+			start_array = ((GeometryStripArrayRetained)geo).stripStartOffsetIndices;
 		}
 
-		executeGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, vcount, vformat, vdefined, initialCoordIndex,
-				fverts, null, dverts, null, initialColorIndex, fclrs, cfdata, bclrs, null, initialNormalIndex, norms, null, vertexAttrCount,
-				vertexAttrSizes, vertexAttrIndices, vertexAttrBufs, null, texCoordMapLength, texcoordoffset, numActiveTexUnitState,
-				texIndex, texstride, texCoords, cdirty, sarray, strip_len, start_array);
+		executeGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, vcount, vformat, vdefined,
+				initialCoordIndex, fverts, null, dverts, null, initialColorIndex, fclrs, cfdata, bclrs, null,
+				initialNormalIndex, norms, null, vertexAttrCount, vertexAttrSizes, vertexAttrIndices, vertexAttrBufs,
+				null, texCoordMapLength, texcoordoffset, numActiveTexUnitState, texIndex, texstride, texCoords, cdirty,
+				sarray, strip_len, start_array);
 	}
 
 	// used by GeometryArray by Reference with java arrays non indexed
 	//Object[] texCoords is an array of float arrays
 	@Override
-	void executeVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean ignoreVertexColors, int vcount,
-			int vformat, int vdefined, int initialCoordIndex, float[] vfcoords, double[] vdcoords, int initialColorIndex, float[] cfdata,
-			byte[] cbdata, int initialNormalIndex, float[] ndata, int vertexAttrCount, int[] vertexAttrSizes, int[] vertexAttrIndices,
-			float[][] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState, int[] texIndex, int texstride,
-			Object[] texCoords, int cdirty)
-	{
+	void executeVA(	Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+					boolean ignoreVertexColors, int vcount, int vformat, int vdefined, int initialCoordIndex,
+					float[] vfcoords, double[] vdcoords, int initialColorIndex, float[] cfdata, byte[] cbdata,
+					int initialNormalIndex, float[] ndata, int vertexAttrCount, int[] vertexAttrSizes,
+					int[] vertexAttrIndices, float[][] vertexAttrData, int texCoordMapLength, int[] texcoordoffset,
+					int numActiveTexUnitState, int[] texIndex, int texstride, Object[] texCoords, int cdirty) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeVA()");
 
@@ -966,46 +864,45 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		int[] start_array = null;
 		int strip_len = 0;
 		if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-		{
-			sarray = ((GeometryStripArrayRetained) geo).stripVertexCounts;
+			|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET) {
+			sarray = ((GeometryStripArrayRetained)geo).stripVertexCounts;
 			strip_len = sarray.length;
-			start_array = ((GeometryStripArrayRetained) geo).stripStartOffsetIndices;
+			start_array = ((GeometryStripArrayRetained)geo).stripStartOffsetIndices;
 		}
 
-		if (doubleCoordDefined)
-		{
+		if (doubleCoordDefined) {
 			// FIXME: doubles not supported for now
 			throw new UnsupportedOperationException("doubleCoordDefined.\n" + VALID_FORMAT_MESSAGE);
 			// dverts = getVertexArrayBuffer(vdcoords);
 		}
 
-		if (byteColorsDefined)
-		{
+		if (byteColorsDefined) {
 			// FIXME: byte colors not supported for now
 			throw new UnsupportedOperationException("byteColorsDefined.\n" + VALID_FORMAT_MESSAGE);
 			// bclrs = getColorArrayBuffer(cbdata);
 		}
 
-		executeGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, vcount, vformat, vdefined, initialCoordIndex,
-				null, vfcoords, null, vdcoords, initialColorIndex, null, cfdata, null, cbdata, initialNormalIndex, null, ndata,
-				vertexAttrCount, vertexAttrSizes, vertexAttrIndices, null, vertexAttrData, texCoordMapLength, texcoordoffset,
-				numActiveTexUnitState, texIndex, texstride, texCoords, cdirty, sarray, strip_len, start_array);
+		executeGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, vcount, vformat, vdefined,
+				initialCoordIndex, null, vfcoords, null, vdcoords, initialColorIndex, null, cfdata, null, cbdata,
+				initialNormalIndex, null, ndata, vertexAttrCount, vertexAttrSizes, vertexAttrIndices, null,
+				vertexAttrData, texCoordMapLength, texcoordoffset, numActiveTexUnitState, texIndex, texstride,
+				texCoords, cdirty, sarray, strip_len, start_array);
 	}
 
-	private void executeGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean ignoreVertexColors, int vertexCount, int vformat, int vdefined, int initialCoordIndex, FloatBuffer fverts,
-			float[] vfcoords, DoubleBuffer dverts, double[] vdcoords, int initialColorIndex, FloatBuffer fclrs, float[] cfdata,
-			ByteBuffer bclrs, byte[] cbdata, int initialNormalIndex, FloatBuffer norms, float[] ndata, int vertexAttrCount,
-			int[] vertexAttrSizes, int[] vertexAttrIndices, FloatBuffer[] vertexAttrBufs, float[][] vertexAttrData, int texCoordMapLength,
-			int[] texCoordSetMap, int numActiveTexUnitState, int[] texindices, int texStride, Object[] texCoords, int cDirty, int[] sarray,
-			int strip_len, int[] start_array)
-	{
-		Jogl2es2Context ctx = (Jogl2es2Context) absCtx;
+	private void executeGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type,
+										boolean isNonUniformScale, boolean ignoreVertexColors, int vertexCount,
+										int vformat, int vdefined, int initialCoordIndex, FloatBuffer fverts,
+										float[] vfcoords, DoubleBuffer dverts, double[] vdcoords, int initialColorIndex,
+										FloatBuffer fclrs, float[] cfdata, ByteBuffer bclrs, byte[] cbdata,
+										int initialNormalIndex, FloatBuffer norms, float[] ndata, int vertexAttrCount,
+										int[] vertexAttrSizes, int[] vertexAttrIndices, FloatBuffer[] vertexAttrBufs,
+										float[][] vertexAttrData, int texCoordMapLength, int[] texCoordSetMap,
+										int numActiveTexUnitState, int[] texindices, int texStride, Object[] texCoords,
+										int cDirty, int[] sarray, int strip_len, int[] start_array) {
+		Jogl2es2Context ctx = (Jogl2es2Context)absCtx;
 		int shaderProgramId = ctx.shaderProgramId;
 
-		if (shaderProgramId != -1)
-		{
+		if (shaderProgramId != -1) {
 			GL2ES2 gl = ctx.gl2es2();
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
@@ -1013,9 +910,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined, ignoreVertexColors);
 
 			// If any buffers need loading do that now
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, vfcoords, dverts,
-					vdcoords, fclrs, cfdata, bclrs, cbdata, norms, ndata, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, vertexAttrData,
-					texCoordMapLength, texCoordSetMap, texStride, texCoords);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts,
+					vfcoords, dverts, vdcoords, fclrs, cfdata, bclrs, cbdata, norms, ndata, vertexAttrCount,
+					vertexAttrSizes, vertexAttrBufs, vertexAttrData, texCoordMapLength, texCoordSetMap, texStride,
+					texCoords);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -1027,70 +925,64 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			// GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of changeability
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+								|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (gl.isGL2ES3())
-			{
+			if (gl.isGL2ES3()) {
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
-				{
+				Integer vaoIdI = gd.geoToVaoId.get(shaderProgramId);
+				int vaoId = vaoIdI == null ? -1 : vaoIdI.intValue();
+				if (vaoId == -1) {
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
-					gd.vaoId = tmp[0];
-					gd.shaderIdForCurrentVaoId = shaderProgramId;
+					gl2es3.glGenVertexArrays(1, tmp, 0);					
+					vaoId = tmp [0];
+					gd.geoToVaoId.put(shaderProgramId, new Integer(vaoId));
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
+				} else {
+					// don't rebind if this vao was used last time for this geometry
+					if(gd.currentVaoId == vaoId)
+						bindingRequired = false;
 				}
-				else
-				{
-					bindingRequired = false;
-				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(vaoId);
+				gd.currentVaoId = vaoId;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 
 			// Define the data pointers
-			if (locs.glVertex != -1)
-			{
-				if (floatCoordDefined)
-				{
-					if (gd.geoToCoordBuf == -1)
-					{
+			if (locs.glVertex != -1) {
+				if (floatCoordDefined) {
+					if (gd.geoToCoordBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						// rather than the morphable system above we should be able to use cDirty, but it appears to be wrong
 						// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
-						if (morphable)
-						{
+						if (morphable) {
 							//if I have vfcoords instead of fverts need to get a fverts buff now
-							if (vfcoords != null)
-							{
+							if (vfcoords != null) {
 								fverts = getVertexArrayBuffer(vfcoords);
 							}
 
 							int coordoff = 3 * initialCoordIndex;
 							fverts.position(coordoff);
 							// Sometime the FloatBuffer is swapped out for bigger or smaller 
-							if (gd.geoToCoordBufSize != fverts.remaining())
-							{
-								System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
-										+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
-										+ geo.source + ", this is not nessasarily a problem");
+							if (gd.geoToCoordBufSize != fverts.remaining()) {
+								System.err.println("Morphable buffer changed "	+ gd.geoToCoordBufSize + " != "
+													+ fverts.remaining() + " un indexed ((GeometryArray) geo.source) "
+													+ ((GeometryArray)geo.source).getName() + " " + geo.source
+													+ ", this is not nessasarily a problem");
 
 								int prevBufId1 = gd.geoToCoordBuf1;// record these in order to delete after re-bind
 								int prevBufId2 = gd.geoToCoordBuf2;
 
 								int[] tmp = new int[2];
 								gl.glGenBuffers(2, tmp, 0);
-								gd.geoToCoordBuf = tmp[0];
-								gd.geoToCoordBuf1 = tmp[0];
-								gd.geoToCoordBuf2 = tmp[1];
+								gd.geoToCoordBuf = tmp [0];
+								gd.geoToCoordBuf1 = tmp [0];
+								gd.geoToCoordBuf2 = tmp [1];
 
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
 								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts,
@@ -1122,25 +1014,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 								if (OUTPUT_PER_FRAME_STATS)
 									ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-								gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
+								gl.glDeleteBuffers(1, new int[] {prevBufId1, prevBufId2}, 0);
 								if (DO_OUTPUT_ERRORS)
 									outputErrors(ctx);
-							}
-							else
-							{
+							} else {
 								// work out the buffer to update and buffer to swap to
-								if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
-								{
+								if (gd.geoToCoordBuf == gd.geoToCoordBuf1) {
 									// update 1 but set to draw 2
 									gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
-									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8),
+											fverts);
 									gd.geoToCoordBuf = gd.geoToCoordBuf2;
-								}
-								else
-								{
+								} else {
 									// update 2 but set to draw 1
 									gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
-									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8),
+											fverts);
 									gd.geoToCoordBuf = gd.geoToCoordBuf1;
 								}
 
@@ -1154,31 +1043,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 					}
 
-				}
-				else if (doubleCoordDefined)
-				{
+				} else if (doubleCoordDefined) {
 					throw new UnsupportedOperationException("doubleCoordDefined.\n" + VALID_FORMAT_MESSAGE);
-				}
-				else
-				{
+				} else {
 					throw new UnsupportedOperationException("No coords defined.\n" + VALID_FORMAT_MESSAGE);
 				}
-			}
-			else
-			{
+			} else {
 				throw new UnsupportedOperationException("Shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
 			}
 
 			// update other attributes if required
-			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-			{
+			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
 				// if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
-				if (changable)
-				{
+				if (changable) {
 					//if I have cfdata instead of fclrs need to get a fclrs buff now
-					if (cfdata != null)
-					{
+					if (cfdata != null) {
 						fclrs = getColorArrayBuffer(cfdata);
 					}
 
@@ -1187,15 +1067,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
 				}
 			}
-			if (normalsDefined && locs.glNormal != -1)
-			{
+			if (normalsDefined && locs.glNormal != -1) {
 				// if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
-				if (changable)
-				{
+				if (changable) {
 					//if I have ndata instead of norms need to get a norms buff now
-					if (ndata != null)
-					{
+					if (ndata != null) {
 						norms = getNormalArrayBuffer(ndata);
 					}
 					norms.position(0);
@@ -1204,49 +1081,40 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 			}
 
-			if (vattrDefined)
-			{
-				if (vertexAttrData != null)
-				{
+			if (vattrDefined) {
+				if (vertexAttrData != null) {
 					vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrData);
 				}
-				for (int index = 0; index < vertexAttrCount; index++)
-				{
+				for (int index = 0; index < vertexAttrCount; index++) {
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
-					if (attribLoc != null && attribLoc.intValue() != -1)
-					{
+					if (attribLoc != null && attribLoc.intValue() != -1) {
 						// if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
 						boolean changable = geo.source.getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE);
-						if (changable)
-						{
-							FloatBuffer vertexAttrs = vertexAttrBufs[index];
+						if (changable) {
+							FloatBuffer vertexAttrs = vertexAttrBufs [index];
 							vertexAttrs.position(0);
 							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
 							Integer bufId = bufIds.get(index);
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8,
+									vertexAttrs);
 						}
 					}
 				}
 			}
 
-			if (textureDefined)
-			{
+			if (textureDefined) {
 				// convert from float[][] to FloatBuffer[]
-				if (!(texCoords[0] instanceof FloatBuffer))
-				{
+				if (!(texCoords [0] instanceof FloatBuffer)) {
 					texCoords = getTexCoordSetBuffer(texCoords);
 				}
 				boolean[] texSetsBound = new boolean[texCoords.length];
-				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
-				{
-					int texSet = texCoordSetMap[texUnit];
-					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
-					{
+				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++) {
+					int texSet = texCoordSetMap [texUnit];
+					if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1 && !texSetsBound [texSet]) {
 						boolean changable = geo.source.getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
-						if (changable)
-						{
-							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+						if (changable) {
+							FloatBuffer buf = (FloatBuffer)texCoords [texSet];
 							buf.position(0);
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 							Integer bufId = bufIds.get(texUnit);
@@ -1258,8 +1126,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 
 			// notice morphables must always rebind each frame as coord buffers are swapped
-			if (bindingRequired || morphable)
-			{
+			if (bindingRequired || morphable) {
 				// always do coords
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
@@ -1273,16 +1140,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 			}
 
-			if (bindingRequired)
-			{
-				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-				{
-					if (gd.geoToColorBuf == -1)
-					{
+			if (bindingRequired) {
+				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
+					if (gd.geoToColorBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						int coloroff;
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 
@@ -1299,9 +1161,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerColor++;
 					}
-				}
-				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-				{
+				} else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
 					//FIXME: byteColors not supported for now, but I want them a lot
 					throw new UnsupportedOperationException("byteColorsDefined.\n" + VALID_FORMAT_MESSAGE);
 					/*int coloroff;
@@ -1318,23 +1178,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 					bclrs.position(coloroff);
 					gl.glColorPointer(sz, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);*/
-				}
-				else if (locs.glColor != -1)
-				{
+				} else if (locs.glColor != -1) {
 					// ignoreVertexcolors will have been set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
 
-				if (normalsDefined && locs.glNormal != -1)
-				{
-					if (gd.geoToNormalBuf == -1)
-					{
+				if (normalsDefined && locs.glNormal != -1) {
+					if (gd.geoToNormalBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
 						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, 0, 0);
 						gl.glEnableVertexAttribArray(locs.glNormal);//must be called after Pointer above
@@ -1344,38 +1198,28 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerNormals++;
 					}
-				}
-				else
-				{
-					if (locs.glNormal != -1)
-					{
+				} else {
+					if (locs.glNormal != -1) {
 						gl.glDisableVertexAttribArray(locs.glNormal);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
 
-				if (vattrDefined)
-				{
-					for (int index = 0; index < vertexAttrCount; index++)
-					{
+				if (vattrDefined) {
+					for (int index = 0; index < vertexAttrCount; index++) {
 						Integer attribLoc = locs.genAttIndexToLoc.get(index);
-						if (attribLoc != null && attribLoc.intValue() != -1)
-						{
+						if (attribLoc != null && attribLoc.intValue() != -1) {
 							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
-							if (bufIds == null)
-							{
+							if (bufIds == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
 							}
 
 							Integer bufId = bufIds.get(index);
-							if (bufId == null)
-							{
+							if (bufId == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
-							}
-							else
-							{
-								int sz = vertexAttrSizes[index];
+							} else {
+								int sz = vertexAttrSizes [index];
 
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
@@ -1390,31 +1234,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 				}
 
-				if (textureDefined)
-				{
+				if (textureDefined) {
 					boolean[] texSetsBound = new boolean[texCoords.length];
-					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
-					{
-						int texSet = texCoordSetMap[texUnit];
-						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
-						{
-							texSetsBound[texSet] = true;
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++) {
+						int texSet = texCoordSetMap [texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1 && !texSetsBound [texSet]) {
+							texSetsBound [texSet] = true;
 
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
-							if (bufIds == null)
-							{
+							if (bufIds == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
 							}
 							Integer bufId = bufIds.get(texUnit);
-							if (bufId == null)
-							{
+							if (bufId == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
-							}
-							else
-							{
+							} else {
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-								gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
-								gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
+								gl.glVertexAttribPointer(locs.glMultiTexCoord [texUnit], texStride, GL2ES2.GL_FLOAT,
+										true, 0, 0);
+								gl.glEnableVertexAttribArray(locs.glMultiTexCoord [texUnit]);
 								if (DO_OUTPUT_ERRORS)
 									outputErrors(ctx);
 
@@ -1430,8 +1268,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 
 			if (geo_type == GeometryRetained.GEO_TYPE_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET)
-			{
+				|| geo_type == GeometryRetained.GEO_TYPE_LINE_STRIP_SET) {
 				int primType = 0;
 
 				// FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
@@ -1439,24 +1276,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_STRIP_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
-					primType = GL2ES2.GL_TRIANGLE_STRIP;
-					break;
-				case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
-					primType = GL2ES2.GL_TRIANGLE_FAN;
-					break;
-				case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
-					primType = GL2ES2.GL_LINE_LOOP;
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_TRI_STRIP_SET:
+						primType = GL2ES2.GL_TRIANGLE_STRIP;
+						break;
+					case GeometryRetained.GEO_TYPE_TRI_FAN_SET:
+						primType = GL2ES2.GL_TRIANGLE_FAN;
+						break;
+					case GeometryRetained.GEO_TYPE_LINE_STRIP_SET:
+						primType = GL2ES2.GL_LINE_LOOP;
+						break;
 				}
 
-				for (int i = 0; i < strip_len; i++)
-				{
-					if (sarray[i] > 0)
-					{
-						gl.glDrawArrays(primType, start_array[i], sarray[i]);
+				for (int i = 0; i < strip_len; i++) {
+					if (sarray [i] > 0) {
+						gl.glDrawArrays(primType, start_array [i], sarray [i]);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						if (OUTPUT_PER_FRAME_STATS)
@@ -1465,29 +1299,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawStripArrays++;
-			}
-			else
-			{
+			} else {
 				// need to override if polygonAttributes says so
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_LINE_SET;
 				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
 					geo_type = GeometryRetained.GEO_TYPE_POINT_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_QUAD_SET:
-					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
-				case GeometryRetained.GEO_TYPE_TRI_SET:
-					gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
-					break;
-				case GeometryRetained.GEO_TYPE_POINT_SET:
-					gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vertexCount);
-					break;
-				case GeometryRetained.GEO_TYPE_LINE_SET:
-					gl.glDrawArrays(GL2ES2.GL_LINES, 0, vertexCount);
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_QUAD_SET:
+						//QUADS not supported render as triangles just to get something on screen
+						gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
+					case GeometryRetained.GEO_TYPE_TRI_SET:
+						gl.glDrawArrays(GL2ES2.GL_TRIANGLES, 0, vertexCount);
+						break;
+					case GeometryRetained.GEO_TYPE_POINT_SET:
+						gl.glDrawArrays(GL2ES2.GL_POINTS, 0, vertexCount);
+						break;
+					case GeometryRetained.GEO_TYPE_LINE_SET:
+						gl.glDrawArrays(GL2ES2.GL_LINES, 0, vertexCount);
+						break;
 				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -1495,9 +1326,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawArrays++;
 			}
-		}
-		else
-		{
+		} else {
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
@@ -1519,32 +1348,35 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// by-copy or interleaved, by reference, Java arrays
 	@Override
-	void executeIndexedGeometry(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat, int vertexAttrCount,
-			int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset,
-			int numActiveTexUnitState, float[] varray, float[] carray, int cdirty, int[] indexCoord)
-	{
+	void executeIndexedGeometry(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+								boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex, int indexCount,
+								int vertexCount, int vformat, int vertexAttrCount, int[] vertexAttrSizes,
+								int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
+								int[] texCoordSetOffset, int numActiveTexUnitState, float[] varray, float[] carray,
+								int cdirty, int[] indexCoord) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeIndexedGeometry()");
 
-		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, initialIndexIndex, indexCount,
-				vertexCount, vformat, vertexAttrCount, vertexAttrSizes, texCoordSetCount, texCoordSetMap, texCoordSetMapLen,
-				texCoordSetOffset, numActiveTexUnitState, varray, null, carray, cdirty, indexCoord);
+		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors,
+				initialIndexIndex, indexCount, vertexCount, vformat, vertexAttrCount, vertexAttrSizes, texCoordSetCount,
+				texCoordSetMap, texCoordSetMapLen, texCoordSetOffset, numActiveTexUnitState, varray, null, carray,
+				cdirty, indexCoord);
 	}
 
 	// interleaved, by reference, nio buffer
 	@Override
-	void executeIndexedGeometryBuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale, boolean useAlpha,
-			boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vertexCount, int vformat, int texCoordSetCount,
-			int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset, int numActiveTexUnitState, FloatBuffer vdata,
-			float[] carray, int cDirty, int[] indexCoord)
-	{
+	void executeIndexedGeometryBuffer(	Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+										boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex,
+										int indexCount, int vertexCount, int vformat, int texCoordSetCount,
+										int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset,
+										int numActiveTexUnitState, FloatBuffer vdata, float[] carray, int cDirty,
+										int[] indexCoord) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeIndexedGeometryBuffer()");
 
-		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors, initialIndexIndex, indexCount,
-				vertexCount, vformat, 0, null, texCoordSetCount, texCoordSetMap, texCoordSetMapLen, texCoordSetOffset,
-				numActiveTexUnitState, null, vdata, carray, cDirty, indexCoord);
+		executeIndexedGeometryArray(ctx, geo, geo_type, isNonUniformScale, useAlpha, ignoreVertexColors,
+				initialIndexIndex, indexCount, vertexCount, vformat, 0, null, texCoordSetCount, texCoordSetMap,
+				texCoordSetMapLen, texCoordSetOffset, numActiveTexUnitState, null, vdata, carray, cDirty, indexCoord);
 	}
 
 	//----------------------------------------------------------------------
@@ -1552,21 +1384,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Helper routines for IndexedGeometryArrayRetained
 	//
 
-	private void executeIndexedGeometryArray(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean useAlpha, boolean ignoreVertexColors, int initialIndexIndex, int indexCount, int vcount, int vformat,
-			int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount, int[] texCoordSetMap, int texCoordSetMapLen,
-			int[] texCoordSetOffset, int numActiveTexUnitState, float[] varray, FloatBuffer vdata, float[] carray, int cDirty,
-			int[] indexCoord)
-	{
+	private void executeIndexedGeometryArray(	Context absCtx, GeometryArrayRetained geo, int geo_type,
+												boolean isNonUniformScale, boolean useAlpha, boolean ignoreVertexColors,
+												int initialIndexIndex, int indexCount, int vcount, int vformat,
+												int vertexAttrCount, int[] vertexAttrSizes, int texCoordSetCount,
+												int[] texCoordSetMap, int texCoordSetMapLen, int[] texCoordSetOffset,
+												int numActiveTexUnitState, float[] varray, FloatBuffer vdata,
+												float[] carray, int cDirty, int[] indexCoord) {
 
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeIndexedGeometryArray()");
 
-		Jogl2es2Context ctx = (Jogl2es2Context) absCtx;
+		Jogl2es2Context ctx = (Jogl2es2Context)absCtx;
 		int shaderProgramId = ctx.shaderProgramId;
 
-		if (shaderProgramId != -1)
-		{
+		if (shaderProgramId != -1) {
 			GL2ES2 gl = ctx.gl2es2();
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
@@ -1582,40 +1414,30 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			int[] sarray = null;
 			int strip_len = 0;
 
-			if (EXTRA_DEBUGGING)
-			{
+			if (EXTRA_DEBUGGING) {
 				System.err.println("Vertex format: " + getVertexDescription(vformat));
 				System.err.println("Geometry type: " + getGeometryDescription(geo_type));
-				if (carray != null)
-				{
+				if (carray != null) {
 					System.err.println("  Separate color array");
-				}
-				else
-				{
+				} else {
 					System.err.println("  Colors (if any) interleaved");
 				}
 			}
 
-			if ((vformat & GeometryArray.COORDINATES) != 0)
-			{
+			if ((vformat & GeometryArray.COORDINATES) != 0) {
 				stride += 3;
 			}
-			if ((vformat & GeometryArray.NORMALS) != 0)
-			{
+			if ((vformat & GeometryArray.NORMALS) != 0) {
 				stride += 3;
 				coordoff += 3;
 			}
 
-			if ((vformat & GeometryArray.COLOR) != 0)
-			{
-				if ((vformat & GeometryArray.WITH_ALPHA) != 0)
-				{
+			if ((vformat & GeometryArray.COLOR) != 0) {
+				if ((vformat & GeometryArray.WITH_ALPHA) != 0) {
 					stride += 4;
 					normoff += 4;
 					coordoff += 4;
-				}
-				else
-				{
+				} else {
 					// Handle the case of executeInterleaved 3f
 					stride += 3;
 					normoff += 3;
@@ -1623,20 +1445,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 			}
 
-			if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-			{
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0)
-				{
+			if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0) {
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
 					texSize = 2;
 					texStride = 2 * texCoordSetCount;
-				}
-				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0)
-				{
+				} else if ((vformat & GeometryArray.TEXTURE_COORDINATE_3) != 0) {
 					texSize = 3;
 					texStride = 3 * texCoordSetCount;
-				}
-				else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0)
-				{
+				} else if ((vformat & GeometryArray.TEXTURE_COORDINATE_4) != 0) {
 					texSize = 4;
 					texStride = 4 * texCoordSetCount;
 				}
@@ -1646,11 +1462,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				coordoff += texStride;
 			}
 
-			if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-			{
-				for (int i = 0; i < vertexAttrCount; i++)
-				{
-					vAttrStride += vertexAttrSizes[i];
+			if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0) {
+				for (int i = 0; i < vertexAttrCount; i++) {
+					vAttrStride += vertexAttrSizes [i];
 				}
 				stride += vAttrStride;
 				normoff += vAttrStride;
@@ -1661,24 +1475,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			bstride = stride * Buffers.SIZEOF_FLOAT;
 
-			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-			{
-				sarray = ((IndexedGeometryStripArrayRetained) geo).stripIndexCounts;
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET) {
+				sarray = ((IndexedGeometryStripArrayRetained)geo).stripIndexCounts;
 				strip_len = sarray.length;
 			}
 
 			// using byRef interleaved array and has a separate pointer, then ..
 			int cstride = stride;
-			if (carray != null)
-			{
+			if (carray != null) {
 				cstride = 4;
 			}
 
 			cbstride = cstride * Buffers.SIZEOF_FLOAT;
 
-			if (EXTRA_DEBUGGING)
-			{
+			if (EXTRA_DEBUGGING) {
 				System.err.println("  initialIndexIndex: " + initialIndexIndex);
 				System.err.println("  stride: " + stride);
 				System.err.println("  bstride: " + bstride);
@@ -1688,82 +1500,77 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				System.err.println("  texCoordoff: " + texCoordoff);
 			}
 
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, vdata, varray, 0, vdata, carray,
-					0);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vcount, vformat, vformat, vdata, varray,
+					0, vdata, carray, 0);
 
 			// GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of changeability
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+								|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (gl.isGL2ES3())
-			{
-				GL2ES3 gl2es3 = (GL2ES3)gl;				
-				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
-				{
+			if (gl.isGL2ES3()) {
+				GL2ES3 gl2es3 = (GL2ES3)gl;
+				Integer vaoIdI = gd.geoToVaoId.get(shaderProgramId);
+				int vaoId = vaoIdI == null ? -1 : vaoIdI.intValue();
+				if (vaoId == -1) {
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
-					gd.vaoId = tmp[0];
-					gd.shaderIdForCurrentVaoId = shaderProgramId;
+					gl2es3.glGenVertexArrays(1, tmp, 0);					
+					vaoId = tmp [0];
+					gd.geoToVaoId.put(shaderProgramId, new Integer(vaoId));
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
+				} else {
+					// don't rebind if this vao was used last time for this geometry
+					if(gd.currentVaoId == vaoId)
+						bindingRequired = false;
 				}
-				else
-				{
-					bindingRequired = false;
-				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(vaoId);
+				gd.currentVaoId = vaoId;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 			// refill the buffers in case of writeable data
-			if (locs.glVertex != -1)
-			{
+			if (locs.glVertex != -1) {
 
-				if (gd.geoToCoordBuf == -1)
-				{
+				if (gd.geoToCoordBuf == -1) {
 					new Throwable("Buffer load issue!").printStackTrace();
-				}
-				else
-				{
+				} else {
 					// if ((cDirty & GeometryArrayRetained.COORDINATE_CHANGED) != 0)
-					if (morphable)
-					{
+					if (morphable) {
 						FloatBuffer verts = null;
 
 						// do we need to covert a float[]
-						if (varray != null)
-						{
+						if (varray != null) {
 							verts = getVertexArrayBuffer(varray);
-						}
-						else
-						{
+						} else {
 							verts = vdata;
 						}
 
 						verts.position(0);
 						// Sometime the FloatBuffer is swapped out for bigger or smaller 
-						if (gd.geoToCoordBufSize != verts.remaining())
-						{
-							System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + verts.remaining()
-									+ " un indexed ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " "
-									+ geo.source + ", this is not nessasarily a problem");
+						if (gd.geoToCoordBufSize != verts.remaining()) {
+							System.err.println("Morphable buffer changed "	+ gd.geoToCoordBufSize + " != "
+												+ verts.remaining() + " un indexed ((GeometryArray) geo.source) "
+												+ ((GeometryArray)geo.source).getName() + " " + geo.source
+												+ ", this is not nessasarily a problem");
 
 							int prevBufId1 = gd.geoToCoordBuf1;// record these in order to delete after re-bind
 							int prevBufId2 = gd.geoToCoordBuf2;
 
 							int[] tmp = new int[2];
 							gl.glGenBuffers(2, tmp, 0);
-							gd.geoToCoordBuf = tmp[0];
-							gd.geoToCoordBuf1 = tmp[0];
-							gd.geoToCoordBuf2 = tmp[1];
+							gd.geoToCoordBuf = tmp [0];
+							gd.geoToCoordBuf1 = tmp [0];
+							gd.geoToCoordBuf2 = tmp [1];
 
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts,
+									GL2ES2.GL_DYNAMIC_DRAW);
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
-							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts, GL2ES2.GL_DYNAMIC_DRAW);
+							gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (verts.remaining() * Float.SIZE / 8), verts,
+									GL2ES2.GL_DYNAMIC_DRAW);
 
 							gd.geoToCoordBufSize = verts.remaining();
 
@@ -1788,25 +1595,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 							if (OUTPUT_PER_FRAME_STATS)
 								ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-							gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
+							gl.glDeleteBuffers(1, new int[] {prevBufId1, prevBufId2}, 0);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
-						}
-						else
-						{
+						} else {
 							// work out the buffer to update and buffer to swap to
-							if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
-							{
+							if (gd.geoToCoordBuf == gd.geoToCoordBuf1) {
 								// update 1 but set to draw 2
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8),
+										verts);
 								gd.geoToCoordBuf = gd.geoToCoordBuf2;
-							}
-							else
-							{
+							} else {
 								// update 2 but set to draw 1
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
-								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8), verts);
+								gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (verts.remaining() * Float.SIZE / 8),
+										verts);
 								gd.geoToCoordBuf = gd.geoToCoordBuf1;
 							}
 
@@ -1820,38 +1624,28 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				}
 
-			}
-			else
-			{
+			} else {
 				throw new UnsupportedOperationException("Shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
 			}
 
 			// update other attributes if required
-			if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
-			{
+			if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors) {
 				// if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
-				if (changable)
-				{
+				if (changable) {
 					// clrs in the vdata, unless seperate
 					FloatBuffer clrs = null;
 					FloatBuffer verts = null;
 
 					// do we need to covert a float[]
-					if (varray != null)
-					{
+					if (varray != null) {
 						verts = getVertexArrayBuffer(varray);
-					}
-					else
-					{
+					} else {
 						verts = vdata;
 					}
-					if (carray != null)
-					{
+					if (carray != null) {
 						clrs = getColorArrayBuffer(carray);
-					}
-					else
-					{
+					} else {
 						clrs = verts;
 					}
 					clrs.position(0);
@@ -1861,11 +1655,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 
 			// notice morphables must always rebind each frame as coord buffers are swapped
-			if (bindingRequired || morphable)
-			{
+			if (bindingRequired || morphable) {
 				// always do coords 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, bstride, coordoff * Buffers.SIZEOF_FLOAT);
+				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, bstride,
+						coordoff * Buffers.SIZEOF_FLOAT);
 				gl.glEnableVertexAttribArray(locs.glVertex);
 
 				if (DO_OUTPUT_ERRORS)
@@ -1877,20 +1671,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 			}
 
-			if (bindingRequired)
-			{
-				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors)
-				{
-					if (gd.geoToColorBuf == -1)
-					{
+			if (bindingRequired) {
+				if (((vformat & GeometryArray.COLOR) != 0) && locs.glColor != -1 && !ignoreVertexColors) {
+					if (gd.geoToColorBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
-						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, cbstride, coloroff * Buffers.SIZEOF_FLOAT);
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, false, cbstride,
+								coloroff * Buffers.SIZEOF_FLOAT);
 						gl.glEnableVertexAttribArray(locs.glColor);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
@@ -1898,25 +1688,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerColor++;
 					}
-				}
-				else if (locs.glColor != -1)
-				{
+				} else if (locs.glColor != -1) {
 					// ignoreVertexcolors will have been set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
 
-				if (((vformat & GeometryArray.NORMALS) != 0) && locs.glNormal != -1)
-				{
-					if (gd.geoToCoordBuf == -1)
-					{
+				if (((vformat & GeometryArray.NORMALS) != 0) && locs.glNormal != -1) {
+					if (gd.geoToCoordBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, bstride, normoff * Buffers.SIZEOF_FLOAT);
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, false, bstride,
+								normoff * Buffers.SIZEOF_FLOAT);
 						gl.glEnableVertexAttribArray(locs.glNormal);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
@@ -1924,33 +1709,27 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glVertexAttribPointerNormals++;
 					}
-				}
-				else
-				{
-					if (locs.glNormal != -1)
-					{
+				} else {
+					if (locs.glNormal != -1) {
 						gl.glDisableVertexAttribArray(locs.glNormal);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
 
-				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0)
-				{
+				if ((vformat & GeometryArray.VERTEX_ATTRIBUTES) != 0) {
 
 					int vAttrOffset = vAttrOff;
-					for (int index = 0; index < vertexAttrCount; index++)
-					{
+					for (int index = 0; index < vertexAttrCount; index++) {
 						Integer attribLoc = locs.genAttIndexToLoc.get(index);
-						if (attribLoc != null && attribLoc.intValue() != -1)
-						{
-							int sz = vertexAttrSizes[index];
+						if (attribLoc != null && attribLoc.intValue() != -1) {
+							int sz = vertexAttrSizes [index];
 
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 							gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, bstride,
 									vAttrOffset * Buffers.SIZEOF_FLOAT);
 							gl.glEnableVertexAttribArray(attribLoc.intValue());
-							vAttrOffset += vertexAttrSizes[index];
+							vAttrOffset += vertexAttrSizes [index];
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
@@ -1961,19 +1740,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 				}
 
-				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0)
-				{
+				if ((vformat & GeometryArray.TEXTURE_COORDINATE) != 0) {
 					boolean[] texSetsBound = new boolean[texCoordSetMapLen];
-					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetMapLen; texUnit++)
-					{
-						int texSet = texCoordSetMap[texUnit];
-						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
-						{
-							texSetsBound[texSet] = true;
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordSetMapLen; texUnit++) {
+						int texSet = texCoordSetMap [texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1 && !texSetsBound [texSet]) {
+							texSetsBound [texSet] = true;
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
-							gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texSize, GL2ES2.GL_FLOAT, true, bstride,
-									texCoordoff * Buffers.SIZEOF_FLOAT);
-							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);
+							gl.glVertexAttribPointer(locs.glMultiTexCoord [texUnit], texSize, GL2ES2.GL_FLOAT, true,
+									bstride, texCoordoff * Buffers.SIZEOF_FLOAT);
+							gl.glEnableVertexAttribArray(locs.glMultiTexCoord [texUnit]);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 
@@ -1989,9 +1765,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 
 			//////////////////////////////////////////////
-			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-			{
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET) {
 				int primType = 0;
 
 				//FIXME: GL_LINE and GL_LINE_STRIP simply go from one vertex to the next drawing a line between
@@ -2000,23 +1776,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
-					primType = GL2ES2.GL_TRIANGLE_STRIP;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
-					primType = GL2ES2.GL_TRIANGLE_FAN;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-					primType = GL2ES2.GL_LINE_LOOP;
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
+						primType = GL2ES2.GL_TRIANGLE_STRIP;
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
+						primType = GL2ES2.GL_TRIANGLE_FAN;
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
+						primType = GL2ES2.GL_LINE_LOOP;
+						break;
 				}
 
 				int[] stripInd = gd.geoToIndStripBuf;
 				// if no index buffers build build them now
-				if (stripInd == null)
-				{
+				if (stripInd == null) {
 					stripInd = new int[strip_len];
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
@@ -2025,16 +1799,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 							.asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indicesBuffer.put(s, (short) indexCoord[s]);*/
-					
+
 					ShortBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
-					for (int i = 0; i < strip_len; i++)
-					{
+					for (int i = 0; i < strip_len; i++) {
 						indicesBuffer.position(offset);
-						int count = sarray[i];
-						int indBufId = stripInd[i];
+						int count = sarray [i];
+						int indBufId = stripInd [i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer,
+								GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						offset += count;
@@ -2046,10 +1820,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gd.geoToIndStripBuf = stripInd;
 				}
 
-				for (int i = 0; i < strip_len; i++)
-				{
-					int count = sarray[i];
-					int indBufId = stripInd[i];
+				for (int i = 0; i < strip_len; i++) {
+					int count = sarray [i];
+					int indBufId = stripInd [i];
 
 					//type Specifies the type of the values in indices. Must be
 					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.    
@@ -2077,13 +1850,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
 
-			}
-			else
-			{
+			} else {
 
 				// bind my indexes ready for the draw call
-				if (gd.geoToIndBuf == -1)
-				{
+				if (gd.geoToIndBuf == -1) {
 					// create and fill index buffer
 					//ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 					//for (int s = 0; s < indexCoord.length; s++)
@@ -2093,9 +1863,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
-					gd.geoToIndBuf = tmp[0];// about to add to map below
+					gd.geoToIndBuf = tmp [0];// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf,
+							GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -2118,29 +1889,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_POINT_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
+						//QUADS not supported render as triangles just to get something on screen
+						gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
+						gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
+						gl.glDrawElements(GL2ES2.GL_POINTS, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
+						gl.glDrawElements(GL2ES2.GL_LINES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
 				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glDrawElements++;
 			}
-		}
-		else
-		{
+		} else {
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
@@ -2156,12 +1924,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// non interleaved, by reference, Java arrays
 	@Override
-	void executeIndexedGeometryVA(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
-			float[] vfcoords, double[] vdcoords, float[] cfdata, byte[] cbdata, float[] ndata, int vertexAttrCount, int[] vertexAttrSizes,
-			float[][] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState, int texStride,
-			Object[] texCoords, int cdirty, int[] indexCoord)
-	{
+	void executeIndexedGeometryVA(	Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
+									boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount,
+									int vertexCount, int vformat, int vdefined, float[] vfcoords, double[] vdcoords,
+									float[] cfdata, byte[] cbdata, float[] ndata, int vertexAttrCount,
+									int[] vertexAttrSizes, float[][] vertexAttrData, int texCoordMapLength,
+									int[] texcoordoffset, int numActiveTexUnitState, int texStride, Object[] texCoords,
+									int cdirty, int[] indexCoord) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeIndexedGeometryVA()");
 
@@ -2175,42 +1944,41 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		int[] sarray = null;
 		int strip_len = 0;
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			sarray = ((IndexedGeometryStripArrayRetained) geo).stripIndexCounts;
+		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET
+			|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+			|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET) {
+			sarray = ((IndexedGeometryStripArrayRetained)geo).stripIndexCounts;
 			strip_len = sarray.length;
 		}
 
-		if (doubleCoordDefined)
-		{
+		if (doubleCoordDefined) {
 			// FIXME: doubles not supported for now
 			throw new UnsupportedOperationException("doubleCoordDefined.\n" + VALID_FORMAT_MESSAGE);
 			// dverts = getVertexArrayBuffer(vdcoords);
 		}
 
-		if (byteColorsDefined)
-		{
+		if (byteColorsDefined) {
 			// FIXME: byte colors not supported for now
 			throw new UnsupportedOperationException("byteColorsDefined.\n" + VALID_FORMAT_MESSAGE);
 			// bclrs = getColorArrayBuffer(cbdata);
 		}
 
-		executeIndexedGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, initialIndexIndex, validIndexCount,
-				vertexCount, vformat, vdefined, null, vfcoords, null, vdcoords, null, cfdata, null, cbdata, null, ndata, vertexAttrCount,
-				vertexAttrSizes, null, vertexAttrData, texCoordMapLength, texcoordoffset, numActiveTexUnitState, texStride, texCoords,
-				cdirty, indexCoord, sarray, strip_len);
+		executeIndexedGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, initialIndexIndex,
+				validIndexCount, vertexCount, vformat, vdefined, null, vfcoords, null, vdcoords, null, cfdata, null,
+				cbdata, null, ndata, vertexAttrCount, vertexAttrSizes, null, vertexAttrData, texCoordMapLength,
+				texcoordoffset, numActiveTexUnitState, texStride, texCoords, cdirty, indexCoord, sarray, strip_len);
 	}
 
 	// non interleaved, by reference, nio buffer
 
 	@Override
 	void executeIndexedGeometryVABuffer(Context ctx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
-			Buffer vcoords, Buffer cdataBuffer, float[] cfdata, byte[] cbdata, FloatBuffer ndata, int vertexAttrCount,
-			int[] vertexAttrSizes, FloatBuffer[] vertexAttrData, int texCoordMapLength, int[] texcoordoffset, int numActiveTexUnitState,
-			int texStride, Object[] texCoords, int cdirty, int[] indexCoord)
-	{
+										boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount,
+										int vertexCount, int vformat, int vdefined, Buffer vcoords, Buffer cdataBuffer,
+										float[] cfdata, byte[] cbdata, FloatBuffer ndata, int vertexAttrCount,
+										int[] vertexAttrSizes, FloatBuffer[] vertexAttrData, int texCoordMapLength,
+										int[] texcoordoffset, int numActiveTexUnitState, int texStride,
+										Object[] texCoords, int cdirty, int[] indexCoord) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeIndexedGeometryVABuffer() ");
 
@@ -2231,44 +1999,36 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		FloatBuffer[] vertexAttrBufs = null;
 
 		// Get vertex attribute arrays
-		if (vattrDefined)
-		{
+		if (vattrDefined) {
 			vertexAttrBufs = vertexAttrData;
 		}
 
 		// get coordinate array
-		if (floatCoordDefined)
-		{
-			fverts = (FloatBuffer) vcoords;
-		}
-		else if (doubleCoordDefined)
-		{
+		if (floatCoordDefined) {
+			fverts = (FloatBuffer)vcoords;
+		} else if (doubleCoordDefined) {
 			// FIXME: doubles not supported for now
 			throw new UnsupportedOperationException("doubleCoordDefined.\n" + VALID_FORMAT_MESSAGE);
 			// dverts = (DoubleBuffer) vcoords;
 		}
 
-		if (fverts == null && dverts == null)
-		{
+		if (fverts == null && dverts == null) {
 			return;
 		}
 
 		int[] sarray = null;
 		int strip_len = 0;
-		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-		{
-			sarray = ((IndexedGeometryStripArrayRetained) geo).stripIndexCounts;
+		if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET
+			|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+			|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET) {
+			sarray = ((IndexedGeometryStripArrayRetained)geo).stripIndexCounts;
 			strip_len = sarray.length;
 		}
 
 		// get color array
-		if (floatColorsDefined)
-		{
-			fclrs = (FloatBuffer) cdataBuffer;
-		}
-		else if (byteColorsDefined)
-		{
+		if (floatColorsDefined) {
+			fclrs = (FloatBuffer)cdataBuffer;
+		} else if (byteColorsDefined) {
 			// FIXME:  not supported for now
 			throw new UnsupportedOperationException("byteColorsDefined.\n" + VALID_FORMAT_MESSAGE);
 
@@ -2279,15 +2039,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// get normal array
-		if (normalsDefined)
-		{
+		if (normalsDefined) {
 			norms = ndata;
 		}
 
-		executeIndexedGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, initialIndexIndex, validIndexCount,
-				vertexCount, vformat, vdefined, fverts, null, dverts, null, fclrs, cfdata, bclrs, null, norms, null, vertexAttrCount,
-				vertexAttrSizes, vertexAttrBufs, null, texCoordMapLength, texcoordoffset, numActiveTexUnitState, texStride, texCoords,
-				cdirty, indexCoord, sarray, strip_len);
+		executeIndexedGeometryArrayVA(ctx, geo, geo_type, isNonUniformScale, ignoreVertexColors, initialIndexIndex,
+				validIndexCount, vertexCount, vformat, vdefined, fverts, null, dverts, null, fclrs, cfdata, bclrs, null,
+				norms, null, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, null, texCoordMapLength, texcoordoffset,
+				numActiveTexUnitState, texStride, texCoords, cdirty, indexCoord, sarray, strip_len);
 	}
 
 	// ----------------------------------------------------------------------
@@ -2295,34 +2054,37 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Helper routines for IndexedGeometryArrayRetained
 	//
 	// careful - isNonUniformScale is always false regardless
-	private void executeIndexedGeometryArrayVA(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
-			FloatBuffer fverts, float[] vfarray, DoubleBuffer dverts, double[] vdarray, FloatBuffer fclrs, float[] cfarray,
-			ByteBuffer bclrs, byte[] cbarray, FloatBuffer norms, float[] fnorms, int vertexAttrCount, int[] vertexAttrSizes,
-			FloatBuffer[] vertexAttrBufs, float[][] vertexAttrArrays, int texCoordMapLength, int[] texCoordSetMap,
-			int numActiveTexUnitState, int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
-	{
+	private void executeIndexedGeometryArrayVA(	Context absCtx, GeometryArrayRetained geo, int geo_type,
+												boolean isNonUniformScale, boolean ignoreVertexColors,
+												int initialIndexIndex, int validIndexCount, int vertexCount,
+												int vformat, int vdefined, FloatBuffer fverts, float[] vfarray,
+												DoubleBuffer dverts, double[] vdarray, FloatBuffer fclrs,
+												float[] cfarray, ByteBuffer bclrs, byte[] cbarray, FloatBuffer norms,
+												float[] fnorms, int vertexAttrCount, int[] vertexAttrSizes,
+												FloatBuffer[] vertexAttrBufs, float[][] vertexAttrArrays,
+												int texCoordMapLength, int[] texCoordSetMap, int numActiveTexUnitState,
+												int texStride, Object[] texCoords, int cDirty, int[] indexCoord,
+												int[] sarray, int strip_len) {
 
-		if (ATTEMPT_OPTIMIZED_VERTICES && executeIndexedGeometryOptimized(absCtx, geo, geo_type, isNonUniformScale, ignoreVertexColors,
-				initialIndexIndex, validIndexCount, vertexCount, vformat, vdefined, fverts, vfarray, dverts, vdarray, fclrs, cfarray, bclrs,
-				cbarray, norms, fnorms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs, vertexAttrArrays, texCoordMapLength,
-				texCoordSetMap, numActiveTexUnitState, texStride, texCoords, cDirty, indexCoord, sarray, strip_len))
-		{
+		if (ATTEMPT_OPTIMIZED_VERTICES && executeIndexedGeometryOptimized(absCtx, geo, geo_type, isNonUniformScale,
+				ignoreVertexColors, initialIndexIndex, validIndexCount, vertexCount, vformat, vdefined, fverts, vfarray,
+				dverts, vdarray, fclrs, cfarray, bclrs, cbarray, norms, fnorms, vertexAttrCount, vertexAttrSizes,
+				vertexAttrBufs, vertexAttrArrays, texCoordMapLength, texCoordSetMap, numActiveTexUnitState, texStride,
+				texCoords, cDirty, indexCoord, sarray, strip_len)) {
 			// on true execute has decided it is possible
 			return;
 		}
-		
-		if(geo instanceof JoglesIndexedTriangleArrayRetained)
-		{
-			System.out.println("JoglesIndexTriangleArrayRetained can't render due to ATTEMPT_OPTIMIZED_VERTICES == false");
+
+		if (geo instanceof JoglesIndexedTriangleArrayRetained) {
+			System.out.println(
+					"JoglesIndexTriangleArrayRetained can't render due to ATTEMPT_OPTIMIZED_VERTICES == false");
 			return;
 		}
 
-		Jogl2es2Context ctx = (Jogl2es2Context) absCtx;
+		Jogl2es2Context ctx = (Jogl2es2Context)absCtx;
 		int shaderProgramId = ctx.shaderProgramId;
 
-		if (shaderProgramId != -1)
-		{
+		if (shaderProgramId != -1) {
 			GL2ES2 gl = ctx.gl2es2();
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
@@ -2330,9 +2092,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			setFFPAttributes(ctx, gl, shaderProgramId, pd, vdefined, ignoreVertexColors);
 
 			// If any buffers need loading do that now 
-			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, vfarray, dverts,
-					vdarray, fclrs, cfarray, bclrs, cbarray, norms, fnorms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs,
-					vertexAttrArrays, texCoordMapLength, texCoordSetMap, texStride, texCoords);
+			GeometryData gd = loadAllBuffers(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts,
+					vfarray, dverts, vdarray, fclrs, cfarray, bclrs, cbarray, norms, fnorms, vertexAttrCount,
+					vertexAttrSizes, vertexAttrBufs, vertexAttrArrays, texCoordMapLength, texCoordSetMap, texStride,
+					texCoords);
 
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
@@ -2344,69 +2107,63 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			// GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of changeability
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+								|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 			// not required second time around for VAO (except morphable coords)
 			boolean bindingRequired = true;
 			// Note although we ask for ES2 we can get ES3, which demands a VAO or nothing renders
-			if (gl.isGL2ES3())
-			{
+			if (gl.isGL2ES3()) {
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
-				{
+				Integer vaoIdI = gd.geoToVaoId.get(shaderProgramId);
+				int vaoId = vaoIdI == null ? -1 : vaoIdI.intValue();
+				if (vaoId == -1) {
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
-					gd.vaoId = tmp[0];
-					gd.shaderIdForCurrentVaoId = shaderProgramId;
+					gl2es3.glGenVertexArrays(1, tmp, 0);					
+					vaoId = tmp [0];
+					gd.geoToVaoId.put(shaderProgramId, new Integer(vaoId));
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
+				} else {
+					// don't rebind if this vao was used last time for this geometry
+					if(gd.currentVaoId == vaoId)
+						bindingRequired = false;
 				}
-				else
-				{
-					bindingRequired = false;
-				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(vaoId);
+				gd.currentVaoId = vaoId;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 
 			// Define the data pointers
-			if (locs.glVertex != -1)
-			{
-				if (floatCoordDefined)
-				{
+			if (locs.glVertex != -1) {
+				if (floatCoordDefined) {
 					// TODO: Building of buffers etc and index buffers should really take place not on the j3d thread if possible
-					if (gd.geoToCoordBuf == -1)
-					{
+					if (gd.geoToCoordBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
-						if (morphable)
-						{
+					} else {
+						if (morphable) {
 
 							//if I have vfcoords instead of fverts need to get a fverts buff now
-							if (vfarray != null)
-							{
+							if (vfarray != null) {
 								fverts = getVertexArrayBuffer(vfarray);
 							}
 
 							fverts.position(0);
 
 							// Sometime the FloatBuffer is swapped out for bigger or smaller 
-							if (gd.geoToCoordBufSize != fverts.remaining())
-							{
-								System.err.println("Morphable buffer changed " + gd.geoToCoordBufSize + " != " + fverts.remaining()
-										+ " ((GeometryArray) geo.source) " + ((GeometryArray) geo.source).getName() + " " + geo.source);
+							if (gd.geoToCoordBufSize != fverts.remaining()) {
+								System.err.println("Morphable buffer changed "	+ gd.geoToCoordBufSize + " != "
+													+ fverts.remaining() + " ((GeometryArray) geo.source) "
+													+ ((GeometryArray)geo.source).getName() + " " + geo.source);
 
 								int prevBufId1 = gd.geoToCoordBuf1;// record these in order to delete below
 								int prevBufId2 = gd.geoToCoordBuf2;
 
 								int[] tmp = new int[2];
 								gl.glGenBuffers(2, tmp, 0);
-								gd.geoToCoordBuf = tmp[0];
-								gd.geoToCoordBuf1 = tmp[0];
-								gd.geoToCoordBuf2 = tmp[1];
+								gd.geoToCoordBuf = tmp [0];
+								gd.geoToCoordBuf1 = tmp [0];
+								gd.geoToCoordBuf2 = tmp [1];
 
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
 								gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts,
@@ -2439,26 +2196,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 								if (OUTPUT_PER_FRAME_STATS)
 									ctx.perFrameStats.coordCount += gd.geoToCoordBufSize;
 
-								gl.glDeleteBuffers(1, new int[] { prevBufId1, prevBufId2 }, 0);
+								gl.glDeleteBuffers(1, new int[] {prevBufId1, prevBufId2}, 0);
 								if (DO_OUTPUT_ERRORS)
 									outputErrors(ctx);
-							}
-							else
-							{
+							} else {
 								// work out the buffer to update and buffer to swap to
-								if (gd.geoToCoordBuf == gd.geoToCoordBuf1)
-								{
+								if (gd.geoToCoordBuf == gd.geoToCoordBuf1) {
 									// update 1 but set to draw 2
 									gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
-									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8),
+											fverts);
 									gd.geoToCoordBuf = gd.geoToCoordBuf2;
 
-								}
-								else
-								{
+								} else {
 									// update 2 but set to draw 1
 									gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
-									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8), fverts);
+									gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, (fverts.remaining() * Float.SIZE / 8),
+											fverts);
 									gd.geoToCoordBuf = gd.geoToCoordBuf1;
 								}
 
@@ -2471,31 +2225,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						}
 
 					}
-				}
-				else if (doubleCoordDefined)
-				{
+				} else if (doubleCoordDefined) {
 					throw new UnsupportedOperationException("doubleCoordDefined.\n" + VALID_FORMAT_MESSAGE);
-				}
-				else
-				{
+				} else {
 					throw new UnsupportedOperationException("No coords defined.\n" + VALID_FORMAT_MESSAGE);
 				}
-			}
-			else
-			{
+			} else {
 				throw new UnsupportedOperationException("Shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
 			}
 
 			// update other attributes if required
-			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-			{
+			if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
 				// if ((cDirty & GeometryArrayRetained.COLOR_CHANGED) != 0)
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_COLOR_WRITE);
-				if (changable)
-				{
+				if (changable) {
 					//if I have cfdata instead of fclrs need to get a fclrs buff now
-					if (cfarray != null)
-					{
+					if (cfarray != null) {
 						fclrs = getColorArrayBuffer(cfarray);
 					}
 
@@ -2504,15 +2249,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, fclrs.remaining() * Float.SIZE / 8, fclrs);
 				}
 			}
-			if (normalsDefined && locs.glNormal != -1)
-			{
+			if (normalsDefined && locs.glNormal != -1) {
 				// if ((cDirty & GeometryArrayRetained.NORMAL_CHANGED) != 0)
 				boolean changable = geo.source.getCapability(GeometryArray.ALLOW_NORMAL_WRITE);
-				if (changable)
-				{
+				if (changable) {
 					//if I have ndata instead of norms need to get a norms buff now
-					if (fnorms != null)
-					{
+					if (fnorms != null) {
 						norms = getNormalArrayBuffer(fnorms);
 					}
 
@@ -2522,51 +2264,43 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 			}
 
-			if (vattrDefined)
-			{
-				if (vertexAttrArrays != null)
-				{
+			if (vattrDefined) {
+				if (vertexAttrArrays != null) {
 					vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrArrays);
 				}
 
-				for (int index = 0; index < vertexAttrCount; index++)
-				{
+				for (int index = 0; index < vertexAttrCount; index++) {
 					Integer attribLoc = locs.genAttIndexToLoc.get(index);
-					if (attribLoc != null && attribLoc.intValue() != -1)
-					{
+					if (attribLoc != null && attribLoc.intValue() != -1) {
 						// if ((cDirty & GeometryArrayRetained.VATTR_CHANGED) != 0)
 						boolean changable = geo.source.getCapability(GeometryArray.ALLOW_VERTEX_ATTR_WRITE);
-						if (changable)
-						{
-							FloatBuffer vertexAttrs = vertexAttrBufs[index];
+						if (changable) {
+							FloatBuffer vertexAttrs = vertexAttrBufs [index];
 							vertexAttrs.position(0);
 							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
 							Integer bufId = bufIds.get(index);
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs);
+							gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, vertexAttrs.remaining() * Float.SIZE / 8,
+									vertexAttrs);
 						}
 					}
 				}
 			}
 
-			if (textureDefined)
-			{
+			if (textureDefined) {
 				// convert from float[][] to FloatBuffer[]
-				if (texCoords instanceof float[][])
-				{
+				if (texCoords instanceof float[][]) {
 					texCoords = getTexCoordSetBuffer(texCoords);
 				}
 				//boolean[] texSetsBound = new boolean[texCoords.length];
-				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
-				{
-					int texSet = texCoordSetMap[texUnit];
-					if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 )//&& !texSetsBound[texSet])
+				for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++) {
+					int texSet = texCoordSetMap [texUnit];
+					if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1)//&& !texSetsBound[texSet])
 					{
 						//texSetsBound[texSet] = true;
 						boolean changable = geo.source.getCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
-						if (changable)
-						{
-							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+						if (changable) {
+							FloatBuffer buf = (FloatBuffer)texCoords [texSet];
 							buf.position(0);
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
 							Integer bufId = bufIds.get(texUnit);
@@ -2578,8 +2312,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 
 			// binding is required for morphables coords as always swappping buffers each second frame
-			if (bindingRequired || morphable)
-			{
+			if (bindingRequired || morphable) {
 				// always coords
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 				gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, 0, 0);
@@ -2595,16 +2328,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			}
 
-			if (bindingRequired)
-			{
-				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-				{
-					if (gd.geoToColorBuf == -1)
-					{
+			if (bindingRequired) {
+				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
+					if (gd.geoToColorBuf == -1) {
 						new Throwable("Buffer load issue!").printStackTrace();
-					}
-					else
-					{
+					} else {
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
 
@@ -2617,9 +2345,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 							ctx.perFrameStats.glVertexAttribPointerColor++;
 					}
 
-				}
-				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-				{
+				} else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
 					//FIXME: byteColors not supported for now
 					throw new UnsupportedOperationException("byteColorsDefined.\n" + VALID_FORMAT_MESSAGE);
 
@@ -2632,25 +2358,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					{
 						gl.glColorPointer(3, GL2ES2.GL_UNSIGNED_BYTE, 0, bclrs);
 					}*/
-				}
-				else if (locs.glColor != -1)
-				{
+				} else if (locs.glColor != -1) {
 					// ignoreVertexcolors will be set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glDisableVertexAttribArray++;
 				}
 
-				if (normalsDefined)
-				{
-					if (locs.glNormal != -1)
-					{
-						if (gd.geoToNormalBuf == -1)
-						{
+				if (normalsDefined) {
+					if (locs.glNormal != -1) {
+						if (gd.geoToNormalBuf == -1) {
 							new Throwable("Buffer load issue!").printStackTrace();
-						}
-						else
-						{
+						} else {
 							gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
 
 							gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, 0, 0);
@@ -2662,40 +2381,30 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 								ctx.perFrameStats.glVertexAttribPointerNormals++;
 						}
 					}
-				}
-				else
-				{
-					if (locs.glNormal != -1)
-					{
+				} else {
+					if (locs.glNormal != -1) {
 						gl.glDisableVertexAttribArray(locs.glNormal);
 						if (OUTPUT_PER_FRAME_STATS)
 							ctx.perFrameStats.glDisableVertexAttribArray++;
 					}
 				}
 
-				if (vattrDefined)
-				{
-					for (int index = 0; index < vertexAttrCount; index++)
-					{
+				if (vattrDefined) {
+					for (int index = 0; index < vertexAttrCount; index++) {
 						Integer attribLoc = locs.genAttIndexToLoc.get(index);
-						if (attribLoc != null && attribLoc.intValue() != -1)
-						{
+						if (attribLoc != null && attribLoc.intValue() != -1) {
 							SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
-							if (bufIds == null)
-							{
+							if (bufIds == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
 							}
 
 							Integer bufId = bufIds.get(index);
-							if (bufId == null)
-							{
+							if (bufId == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
-							}
-							else
-							{
+							} else {
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
 
-								int sz = vertexAttrSizes[index];
+								int sz = vertexAttrSizes [index];
 
 								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, false, 0, 0);
 								gl.glEnableVertexAttribArray(attribLoc.intValue());//must be called after Pointer above
@@ -2709,34 +2418,28 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 				}
 
-				if (textureDefined)
-				{
+				if (textureDefined) {
 					boolean[] texSetsBound = new boolean[texCoords.length];
-					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
-					{
-						int texSet = texCoordSetMap[texUnit];
-						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsBound[texSet])
-						{
-							texSetsBound[texSet] = true;
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++) {
+						int texSet = texCoordSetMap [texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1 && !texSetsBound [texSet]) {
+							texSetsBound [texSet] = true;
 							// stupid interface...
-							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							FloatBuffer buf = (FloatBuffer)texCoords [texSet];
 							buf.position(0);
 
 							SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
-							if (bufIds == null)
-							{
+							if (bufIds == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
 							}
 							Integer bufId = bufIds.get(texUnit);
-							if (bufId == null)
-							{
+							if (bufId == null) {
 								new Throwable("Buffer load issue!").printStackTrace();
-							}
-							else
-							{
+							} else {
 								gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-								gl.glVertexAttribPointer(locs.glMultiTexCoord[texUnit], texStride, GL2ES2.GL_FLOAT, true, 0, 0);
-								gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texUnit]);// must be called after Pointer above
+								gl.glVertexAttribPointer(locs.glMultiTexCoord [texUnit], texStride, GL2ES2.GL_FLOAT,
+										true, 0, 0);
+								gl.glEnableVertexAttribArray(locs.glMultiTexCoord [texUnit]);// must be called after Pointer above
 								if (DO_OUTPUT_ERRORS)
 									outputErrors(ctx);
 
@@ -2752,32 +2455,30 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 			}
 
-			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-			{
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET) {
 				int primType = 0;
 
 				// need to override if polygonAttributes says so
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
-					primType = GL2ES2.GL_TRIANGLE_STRIP;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
-					primType = GL2ES2.GL_TRIANGLE_FAN;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-					primType = GL2ES2.GL_LINES;
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
+						primType = GL2ES2.GL_TRIANGLE_STRIP;
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
+						primType = GL2ES2.GL_TRIANGLE_FAN;
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
+						primType = GL2ES2.GL_LINES;
+						break;
 				}
 
 				int[] stripInd = gd.geoToIndStripBuf;
 				// if no index buffers build build them now
-				if (stripInd == null)
-				{
+				if (stripInd == null) {
 					stripInd = new int[strip_len];
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
@@ -2787,17 +2488,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					 
 					for (int s = 0; s < indexCoord.length; s++)
 						indicesBuffer.put(s, (short) indexCoord[s]);*/
-					
+
 					ShortBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
-					
-					for (int i = 0; i < strip_len; i++)
-					{
+
+					for (int i = 0; i < strip_len; i++) {
 						indicesBuffer.position(offset);
-						int count = sarray[i];
-						int indBufId = stripInd[i];
+						int count = sarray [i];
+						int indBufId = stripInd [i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer,
+								GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						offset += count;
@@ -2807,9 +2508,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 
 					gd.geoToIndStripBuf = stripInd;
-				}
-				else
-				{
+				} else {
 					//a good cDirty and a DYNAMIC_DRAW call needed
 					/*if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
 					{
@@ -2828,10 +2527,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}*/
 				}
 
-				for (int i = 0; i < strip_len; i++)
-				{
-					int count = sarray[i];
-					int indBufId = stripInd[i];
+				for (int i = 0; i < strip_len; i++) {
+					int count = sarray [i];
+					int indBufId = stripInd [i];
 
 					// type Specifies the type of the values in indices. Must be
 					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.    
@@ -2857,33 +2555,29 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
 
-			}
-			else
-			{
+			} else {
 				// bind my indexes ready for the draw call
-				if (gd.geoToIndBuf == -1)
-				{
+				if (gd.geoToIndBuf == -1) {
 					// create and fill index buffer
 					/*ShortBuffer indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 					for (int s = 0; s < indexCoord.length; s++)
 						indBuf.put(s, (short) indexCoord[s]);
 					indBuf.position(initialIndexIndex);*/
-					
+
 					ShortBuffer indBuf = getIndexArrayBuffer(indexCoord);
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
-					gd.geoToIndBuf = tmp[0];// about to add to map below
+					gd.geoToIndBuf = tmp [0];// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf,
+							GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
 					gd.geoToIndBufSize = indBuf.remaining();
 
-				}
-				else
-				{
+				} else {
 					//a good cDirty and a DYNAMIC_DRAW call needed
 					/*if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
 					{
@@ -2909,20 +2603,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_POINT_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
+						//QUADS not supported render as triangles just to get something on screen
+						gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
+						gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
+						gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
+						gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
 				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -2930,9 +2623,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.perFrameStats.glDrawElements++;
 
 			}
-		}
-		else
-		{
+		} else {
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
@@ -2944,16 +2635,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 	}
 
-
 	/**
-	 * Over time we have had things recorded and in FFP they are considered current state
-	 * in programmable we have to push them across manually each time recorded in JoglesContext
+	 * Over time we have had things recorded and in FFP they are considered current state in programmable we have to
+	 * push them across manually each time recorded in JoglesContext
 	 * @param gl
 	 * @param vdefined
 	 */
 
-	private static void setFFPAttributes(Jogl2es2Context ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd, int vdefined, boolean ignoreVertexColors)
-	{
+	private static void setFFPAttributes(	Jogl2es2Context ctx, GL2ES2 gl, int shaderProgramId, ProgramData pd,
+											int vdefined, boolean ignoreVertexColors) {
 
 		LocationData locs = pd.programToLocationData;
 
@@ -2970,12 +2660,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		boolean isGL2ES3 = gl.isGL2ES3();
 		// if shader hasn't changed location of uniform I don't need to reset these (they are cleared to -1 at the start of each swap)
-		if (locs.glProjectionMatrix != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
-			{
+		if (locs.glProjectionMatrix != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram)) {
 				if (isGL2ES3)
-					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat), 0);
+					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMat),
+							0);
 				else
 					gl.glUniformMatrix4fv(locs.glProjectionMatrix, 1, false,
 							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentProjMat)), 0);
@@ -2984,23 +2673,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 			}
 		}
-		if (locs.glProjectionMatrixInverse != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
-			{
+		if (locs.glProjectionMatrixInverse != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram)) {
 				// EXPENSIVE!!!!! only calc if asked for, and even then...
-				try
-				{
+				try {
 					ctx.currentProjMatInverse.set(ctx.currentProjMat);
 					ctx.matrixUtil.invert(ctx.currentProjMatInverse);
-				}
-				catch (SingularMatrixException e)
-				{
+				} catch (SingularMatrixException e) {
 					System.err.println("" + e);
 				}
 
 				if (isGL2ES3)
-					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
+					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, true,
+							ctx.matrixUtil.toArray(ctx.currentProjMatInverse), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glProjectionMatrixInverse, 1, false,
 							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentProjMatInverse)), 0);
@@ -3009,21 +2694,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 			}
 		}
-		if (locs.glViewMatrix != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram))
-			{
+		if (locs.glViewMatrix != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram)) {
 				gl.glUniformMatrix4fv(locs.glViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentViewMat), 0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
 		}
 
-		if (locs.glModelMatrix != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.modelMatrix.m00 == Double.NEGATIVE_INFINITY))
-			{
+		if (locs.glModelMatrix != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.glModelMatrix.m00 == Double.NEGATIVE_INFINITY)) {
 
 				if (isGL2ES3)
 					gl.glUniformMatrix4fv(locs.glModelMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelMat), 0);
@@ -3034,28 +2715,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
-					ctx.gl_state.modelMatrix.m00 = 0;
+					ctx.gl_state.glModelMatrix.m00 = 0;
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.modelMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
+			} else if (OUTPUT_PER_FRAME_STATS) {
 				ctx.perFrameStats.modelMatrixSkipped++;
 			}
 		}
 
-		if (locs.glModelViewMatrix != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glModelViewMatrix.m00 == Double.NEGATIVE_INFINITY))
-			{
+		if (locs.glModelViewMatrix != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.glModelViewMatrix.m00 == Double.NEGATIVE_INFINITY)) {
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 
 				if (isGL2ES3)
-					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
+					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, true,
+							ctx.matrixUtil.toArray(ctx.currentModelViewMat), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelViewMatrix, 1, false,
 							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewMat)), 0);
@@ -3067,30 +2745,27 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.gl_state.glModelViewMatrix.m00 = 0;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
+			} else if (OUTPUT_PER_FRAME_STATS) {
 				ctx.perFrameStats.glModelViewMatrixSkipped++;
 			}
 		}
-		if (locs.glModelViewMatrixInverse != -1)
-		{
+		if (locs.glModelViewMatrixInverse != -1) {
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glModelViewMatrixInverse.m00 == Double.NEGATIVE_INFINITY))
-			{
+				|| (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glModelViewMatrixInverse.m00 == Double.NEGATIVE_INFINITY)) {
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
-				if (ctx.currentModelViewMatInverse.m00 == Double.NEGATIVE_INFINITY)
-				{
+				if (ctx.currentModelViewMatInverse.m00 == Double.NEGATIVE_INFINITY) {
 					ctx.currentModelViewMatInverse.mul(ctx.currentViewMat, ctx.currentModelMat);
 					ctx.matrixUtil.invert(ctx.currentModelViewMatInverse);
 				}
 
-				
 				if (isGL2ES3)
-					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
+					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, true,
+							ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelViewMatrixInverse, 1, false,
-							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse)), 0);
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewMatInverse)),
+							0);
 
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -3099,30 +2774,29 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.gl_state.glModelViewMatrixInverse.m00 = 0;
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewMatrixInverseUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
+			} else if (OUTPUT_PER_FRAME_STATS) {
 				ctx.perFrameStats.glModelViewMatrixInverseSkipped++;
 			}
 		}
 
-		if (locs.glModelViewProjectionMatrix != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| ctx.gl_state.glModelViewProjectionMatrix.m00 == Double.NEGATIVE_INFINITY))
-			{
+		if (locs.glModelViewProjectionMatrix != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP
+				|| (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glModelViewProjectionMatrix.m00 == Double.NEGATIVE_INFINITY)) {
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
 				if (ctx.currentModelViewProjMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewProjMat.mul(ctx.currentProjMat, ctx.currentModelViewMat);
-				
+
 				if (isGL2ES3)
-					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
+					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, true,
+							ctx.matrixUtil.toArray(ctx.currentModelViewProjMat), 0);
 				else
 					gl.glUniformMatrix4fv(locs.glModelViewProjectionMatrix, 1, false,
-							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat)), 0);
-				
+							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentModelViewProjMat)),
+							0);
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -3131,18 +2805,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glModelViewProjectionMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
+			} else if (OUTPUT_PER_FRAME_STATS) {
 				ctx.perFrameStats.glModelViewProjectionMatrixSkipped++;
 			}
 		}
 
-		if (locs.glNormalMatrix != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glNormalMatrix.m00 == Double.NEGATIVE_INFINITY))
-			{
+		if (locs.glNormalMatrix != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.glNormalMatrix.m00 == Double.NEGATIVE_INFINITY)) {
 				// Expensive, only calc if required, not in the setmodelview call, in case unneeded				
 				if (ctx.currentModelViewMat.m00 == Double.NEGATIVE_INFINITY)
 					ctx.currentModelViewMat.mul(ctx.currentViewMat, ctx.currentModelMat);
@@ -3150,11 +2820,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					Jogl2es2MatrixUtil.transposeInvert(ctx.currentModelViewMat, ctx.currentNormalMat);
 
 				if (isGL2ES3)
-					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat), 0);
+					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, true, ctx.matrixUtil.toArray(ctx.currentNormalMat),
+							0);
 				else
 					gl.glUniformMatrix3fv(locs.glNormalMatrix, 1, false,
 							Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentNormalMat)), 0);
-				
+
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
@@ -3162,18 +2833,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.glNormalMatrixUpdated++;
-			}
-			else if (OUTPUT_PER_FRAME_STATS)
-			{
+			} else if (OUTPUT_PER_FRAME_STATS) {
 				ctx.perFrameStats.glNormalMatrixSkipped++;
 			}
 		}
 
 		// if set one of the 2 colors below should be used by the shader (material for lighting)
-		if (locs.ignoreVertexColors != -1)
-		{
+		if (locs.ignoreVertexColors != -1) {
 			// vertex colors MUST be ignored if no glColors set
-			boolean finalIgnoreVertexColors = (!floatColorsDefined && !byteColorsDefined) || ctx.renderingData.ignoreVertexColors == 1;
+			boolean finalIgnoreVertexColors = (!floatColorsDefined && !byteColorsDefined)
+												|| ctx.renderingData.ignoreVertexColors == 1;
 
 			//TODO: the execute calls all have a separate ignore vertex colors bool, but it appears to add no value?
 			// is it just a legacy artifact of some sort?
@@ -3189,8 +2858,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			//note ctx.gl_state.ignoreVertexColors can be -1 for not set
 			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-					|| ctx.gl_state.ignoreVertexColors != finalIgnoreVertexColorsInt))
-			{
+												|| ctx.gl_state.ignoreVertexColors != finalIgnoreVertexColorsInt)) {
 				gl.glUniform1i(locs.ignoreVertexColors, finalIgnoreVertexColorsInt);// note local variable used
 
 				if (DO_OUTPUT_ERRORS)
@@ -3201,47 +2869,46 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// the front material structure
-		if (locs.glFrontMaterial.present)
-		{
+		if (locs.glFrontMaterial.present) {
 			//note != not equals
-			if (locs.glFrontMaterial.lightEnabled != -1 && (shaderProgramId != ctx.prevShaderProgram
-					|| ctx.gl_state.glFrontMaterial.lightEnabled != ctx.materialData.lightEnabled))
-			{
+			if (locs.glFrontMaterial.lightEnabled != -1
+				&& (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.lightEnabled != ctx.materialData.lightEnabled)) {
 				gl.glUniform1i(locs.glFrontMaterial.lightEnabled, ctx.materialData.lightEnabled);
 				ctx.gl_state.glFrontMaterial.lightEnabled = ctx.materialData.lightEnabled;
 			}
 
 			if (locs.glFrontMaterial.ambient != -1
-					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.ambient.x == Float.NEGATIVE_INFINITY))
-			{
+				&& (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.ambient.x == Float.NEGATIVE_INFINITY)) {
 				gl.glUniform4f(locs.glFrontMaterial.ambient, ctx.materialData.ambient.x, ctx.materialData.ambient.y,
 						ctx.materialData.ambient.z, 1f);
 				ctx.gl_state.glFrontMaterial.ambient.x = 0;
 			}
 			if (locs.glFrontMaterial.diffuse != -1
-					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.diffuse.x == Float.NEGATIVE_INFINITY))
-			{
+				&& (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.diffuse.x == Float.NEGATIVE_INFINITY)) {
 				gl.glUniform4f(locs.glFrontMaterial.diffuse, ctx.materialData.diffuse.x, ctx.materialData.diffuse.y,
 						ctx.materialData.diffuse.z, ctx.materialData.diffuse.w);
 				ctx.gl_state.glFrontMaterial.diffuse.x = 0;
 			}
 			if (locs.glFrontMaterial.emission != -1
-					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.emission.x == Float.NEGATIVE_INFINITY))
-			{
+				&& (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.emission.x == Float.NEGATIVE_INFINITY)) {
 				gl.glUniform4f(locs.glFrontMaterial.emission, ctx.materialData.emission.x, ctx.materialData.emission.y,
 						ctx.materialData.emission.z, 1f); // note extra alpha value for ease
 				ctx.gl_state.glFrontMaterial.emission.x = 0;
 			}
 			if (locs.glFrontMaterial.specular != -1
-					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.specular.x == Float.NEGATIVE_INFINITY))
-			{
+				&& (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.specular.x == Float.NEGATIVE_INFINITY)) {
 				gl.glUniform3f(locs.glFrontMaterial.specular, ctx.materialData.specular.x, ctx.materialData.specular.y,
 						ctx.materialData.specular.z);
 				ctx.gl_state.glFrontMaterial.specular.x = 0;
 			}
 			if (locs.glFrontMaterial.shininess != -1
-					&& (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glFrontMaterial.shininess != ctx.materialData.shininess))
-			{
+				&& (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.glFrontMaterial.shininess != ctx.materialData.shininess)) {
 				gl.glUniform1f(locs.glFrontMaterial.shininess, ctx.materialData.shininess);
 				ctx.gl_state.glFrontMaterial.shininess = ctx.materialData.shininess;
 			}
@@ -3251,13 +2918,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// ambient does not come from material notice
-		if (locs.glLightModelambient != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glLightModelambient.x == Float.NEGATIVE_INFINITY))
-			{
-				gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y, ctx.currentAmbientColor.z,
-						ctx.currentAmbientColor.w);
+		if (locs.glLightModelambient != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.glLightModelambient.x == Float.NEGATIVE_INFINITY)) {
+				gl.glUniform4f(locs.glLightModelambient, ctx.currentAmbientColor.x, ctx.currentAmbientColor.y,
+						ctx.currentAmbientColor.z, ctx.currentAmbientColor.w);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
@@ -3266,12 +2931,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// always bind object color, the shader can decide to use it if it's no lighting and no vertex colors
-		if (locs.objectColor != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.objectColor.x == Float.NEGATIVE_INFINITY))
-			{
-				gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z, ctx.objectColor.w);
+		if (locs.objectColor != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.objectColor.x == Float.NEGATIVE_INFINITY)) {
+				gl.glUniform4f(locs.objectColor, ctx.objectColor.x, ctx.objectColor.y, ctx.objectColor.z,
+						ctx.objectColor.w);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 				if (MINIMISE_NATIVE_CALLS_FFP)
@@ -3279,11 +2943,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (locs.transparencyAlpha != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.transparencyAlpha != ctx.transparencyAlpha))
-			{
+		if (locs.transparencyAlpha != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.transparencyAlpha != ctx.transparencyAlpha)) {
 				gl.glUniform1f(locs.transparencyAlpha, ctx.transparencyAlpha);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -3293,12 +2955,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// count of enabled lights currentEnabledLights
-		if (locs.numberOfLights != -1)
-		{
+		if (locs.numberOfLights != -1) {
 			//note ctx.gl_state.numberOfLights can be -1 for not set
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.numberOfLights != ctx.numberOfLights))
-			{
+				|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.numberOfLights != ctx.numberOfLights)) {
 				gl.glUniform1i(locs.numberOfLights, ctx.numberOfLights);
 
 				if (DO_OUTPUT_ERRORS)
@@ -3310,29 +2970,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// the lighting structures 
 		int pipelineLightSlotToUse = 0;
-		for (int shaderLightIndex = 0; shaderLightIndex < ctx.maxLights; shaderLightIndex++)
-		{
-			if (locs.glLightSource[pipelineLightSlotToUse] != null)
-			{
-				glLightSource glLightSource = ctx.glLightSource[shaderLightIndex];
-				if (glLightSource.enabled == 1)
-				{
+		for (int shaderLightIndex = 0; shaderLightIndex < ctx.maxLights; shaderLightIndex++) {
+			if (locs.glLightSource [pipelineLightSlotToUse] != null) {
+				glLightSource glLightSource = ctx.glLightSource [shaderLightIndex];
+				if (glLightSource.enabled == 1) {
 					//Notice use of == as we want to see it's simply the exact same light source or not
 					if (!MINIMISE_NATIVE_CALLS_FFP
-							|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.glLightSource[shaderLightIndex] != glLightSource))
-					{
+						|| (shaderProgramId != ctx.prevShaderProgram
+							|| ctx.gl_state.glLightSource [shaderLightIndex] != glLightSource)) {
 						glLightSource.prevLightSlot = pipelineLightSlotToUse;// record for the equals to check for moved
 
-						glLightSourceLocs glLightSourceLocs = locs.glLightSource[pipelineLightSlotToUse];
+						glLightSourceLocs glLightSourceLocs = locs.glLightSource [pipelineLightSlotToUse];
 						if (glLightSourceLocs.position != -1)
-							gl.glUniform4f(glLightSourceLocs.position, glLightSource.position.x, glLightSource.position.y,
-									glLightSource.position.z, glLightSource.position.w);
+							gl.glUniform4f(glLightSourceLocs.position, glLightSource.position.x,
+									glLightSource.position.y, glLightSource.position.z, glLightSource.position.w);
 						if (glLightSourceLocs.diffuse != -1)
 							gl.glUniform4f(glLightSourceLocs.diffuse, glLightSource.diffuse.x, glLightSource.diffuse.y,
 									glLightSource.diffuse.z, glLightSource.diffuse.w);
 						if (glLightSourceLocs.specular != -1)
-							gl.glUniform4f(glLightSourceLocs.specular, glLightSource.specular.x, glLightSource.specular.y,
-									glLightSource.specular.z, glLightSource.specular.w);
+							gl.glUniform4f(glLightSourceLocs.specular, glLightSource.specular.x,
+									glLightSource.specular.y, glLightSource.specular.z, glLightSource.specular.w);
 						if (glLightSourceLocs.constantAttenuation != -1)
 							gl.glUniform1f(glLightSourceLocs.constantAttenuation, glLightSource.constantAttenuation);
 						if (glLightSourceLocs.linearAttenuation != -1)
@@ -3344,13 +3001,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						if (glLightSourceLocs.spotExponent != -1)
 							gl.glUniform1f(glLightSourceLocs.spotExponent, glLightSource.spotExponent);
 						if (glLightSourceLocs.spotDirection != -1)
-							gl.glUniform3f(glLightSourceLocs.spotDirection, glLightSource.spotDirection.x, glLightSource.spotDirection.y,
-									glLightSource.spotDirection.z);
+							gl.glUniform3f(glLightSourceLocs.spotDirection, glLightSource.spotDirection.x,
+									glLightSource.spotDirection.y, glLightSource.spotDirection.z);
+						if (glLightSourceLocs.shadowMapSamplerId != -1) {
+							//FIXME: this will not ply nice with other textures, I need to be well off into a unique texture unit
+							gl.glActiveTexture(GL2ES2.GL_TEXTURE0);
+							gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, glLightSource.shadowMapSamplerId);
+							gl.glUniform1i(glLightSourceLocs.shadowMapSamplerId, 0);
+						}
+						if (glLightSourceLocs.projMatrix != -1) {
+							if (isGL2ES3)
+								gl.glUniformMatrix4fv(glLightSourceLocs.projMatrix, 1, true, ctx.matrixUtil.toArray(glLightSource.projMatrix), 0);
+							else
+								gl.glUniformMatrix4fv(glLightSourceLocs.projMatrix, 1, false,
+										Jogl2es2MatrixUtil.transposeInPlace(ctx.matrixUtil.toArray(ctx.currentProjMat)), 0);
+						}						
 
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						if (MINIMISE_NATIVE_CALLS_FFP)
-							ctx.gl_state.glLightSource[shaderLightIndex] = glLightSource;
+							ctx.gl_state.glLightSource [shaderLightIndex] = glLightSource;
 					}
 					pipelineLightSlotToUse++;
 
@@ -3358,28 +3028,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (locs.alphaTestEnabled != -1)
-		{
+		if (locs.alphaTestEnabled != -1) {
 			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.alphaTestEnabled != ctx.renderingData.alphaTestEnabled))
-			{
+				|| (shaderProgramId != ctx.prevShaderProgram
+					|| ctx.gl_state.alphaTestEnabled != ctx.renderingData.alphaTestEnabled)) {
 				gl.glUniform1i(locs.alphaTestEnabled, ctx.renderingData.alphaTestEnabled ? 1 : 0);
 				if (MINIMISE_NATIVE_CALLS_FFP)
 					ctx.gl_state.alphaTestEnabled = ctx.renderingData.alphaTestEnabled;
 
-				if (ctx.renderingData.alphaTestEnabled == true)
-				{
-					if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-							|| ctx.gl_state.alphaTestFunction != ctx.renderingData.alphaTestFunction))
-					{
+				if (ctx.renderingData.alphaTestEnabled == true) {
+					if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (shaderProgramId != ctx.prevShaderProgram
+							|| ctx.gl_state.alphaTestFunction != ctx.renderingData.alphaTestFunction)) {
 						gl.glUniform1i(locs.alphaTestFunction, getFunctionValue(ctx.renderingData.alphaTestFunction));
 						if (MINIMISE_NATIVE_CALLS_FFP)
 							ctx.gl_state.alphaTestFunction = ctx.renderingData.alphaTestFunction;
 					}
 
-					if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
-							|| ctx.gl_state.alphaTestValue != ctx.renderingData.alphaTestValue))
-					{
+					if (!MINIMISE_NATIVE_CALLS_FFP
+						|| (shaderProgramId != ctx.prevShaderProgram
+							|| ctx.gl_state.alphaTestValue != ctx.renderingData.alphaTestValue)) {
 						gl.glUniform1f(locs.alphaTestValue, ctx.renderingData.alphaTestValue);
 						if (MINIMISE_NATIVE_CALLS_FFP)
 							ctx.gl_state.alphaTestValue = ctx.renderingData.alphaTestValue;
@@ -3390,11 +3058,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				outputErrors(ctx);
 		}
 
-		if (locs.textureTransform != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP
-					|| (shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.textureTransform.m00 == Double.NEGATIVE_INFINITY))
-			{
+		if (locs.textureTransform != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP || (shaderProgramId != ctx.prevShaderProgram
+												|| ctx.gl_state.textureTransform.m00 == Double.NEGATIVE_INFINITY)) {
 				// gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.toFB(ctx.textureTransform));
 				gl.glUniformMatrix4fv(locs.textureTransform, 1, true, ctx.matrixUtil.toArray(ctx.textureTransform), 0);
 				if (DO_OUTPUT_ERRORS)
@@ -3405,27 +3071,24 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// Fog
-		if (locs.fogData.present && locs.fogData.fogEnabled != -1)
-		{
-			if (!MINIMISE_NATIVE_CALLS_FFP || shaderProgramId != ctx.prevShaderProgram
-					|| ctx.gl_state.fogData.fogEnabled != ctx.fogData.fogEnabled)
-			{
+		if (locs.fogData.present && locs.fogData.fogEnabled != -1) {
+			if (!MINIMISE_NATIVE_CALLS_FFP	|| shaderProgramId != ctx.prevShaderProgram
+				|| ctx.gl_state.fogData.fogEnabled != ctx.fogData.fogEnabled) {
 				gl.glUniform1i(locs.fogData.fogEnabled, ctx.fogData.fogEnabled);
 
 				ctx.gl_state.fogData.fogEnabled = ctx.fogData.fogEnabled;
 
-				if (ctx.fogData.fogEnabled == 1)
-				{
-					if ((shaderProgramId != ctx.prevShaderProgram || ctx.gl_state.fogData.expColor.x == Float.NEGATIVE_INFINITY))
-					{
+				if (ctx.fogData.fogEnabled == 1) {
+					if ((shaderProgramId != ctx.prevShaderProgram
+							|| ctx.gl_state.fogData.expColor.x == Float.NEGATIVE_INFINITY)) {
 						if (locs.fogData.expColor != -1)
-							gl.glUniform4f(locs.fogData.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y, ctx.fogData.expColor.z,
-									1.0f);
+							gl.glUniform4f(locs.fogData.expColor, ctx.fogData.expColor.x, ctx.fogData.expColor.y,
+									ctx.fogData.expColor.z, 1.0f);
 						if (locs.fogData.expDensity != -1)
 							gl.glUniform1f(locs.fogData.expDensity, ctx.fogData.expDensity);
 						if (locs.fogData.linearColor != -1)
-							gl.glUniform4f(locs.fogData.linearColor, ctx.fogData.linearColor.x, ctx.fogData.linearColor.y,
-									ctx.fogData.linearColor.z, 1.0f);
+							gl.glUniform4f(locs.fogData.linearColor, ctx.fogData.linearColor.x,
+									ctx.fogData.linearColor.y, ctx.fogData.linearColor.z, 1.0f);
 						if (locs.fogData.linearStart != -1)
 							gl.glUniform1f(locs.fogData.linearStart, ctx.fogData.linearStart);
 						if (locs.fogData.linearEnd != -1)
@@ -3453,12 +3116,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Private helper methods for GeometryArrayRetained and IndexedGeometryArrayRetained
 	//
 
-	private static void loadLocs(Jogl2es2Context ctx, GL2ES2 gl)
-	{
-		
+	private static void loadLocs(Jogl2es2Context ctx, GL2ES2 gl) {
+
 		ProgramData pd = ctx.programData;
-		if (pd.programToLocationData == null)
-		{			
+		if (pd.programToLocationData == null) {
 			LocationData locs = new LocationData();
 
 			if (OUTPUT_PER_FRAME_STATS)
@@ -3466,15 +3127,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			int shaderProgramId = ctx.shaderProgramId;
 			// shader program can be disabled, but locs still called
-			if (shaderProgramId != -1)
-			{
+			if (shaderProgramId != -1) {
 				locs.glProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrix");
 				locs.glProjectionMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glProjectionMatrixInverse");
 				locs.glModelMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelMatrix");
 				locs.glViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glViewMatrix");
 				locs.glModelViewMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrix");
 				locs.glModelViewMatrixInverse = gl.glGetUniformLocation(shaderProgramId, "glModelViewMatrixInverse");
-				locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId, "glModelViewProjectionMatrix");
+				locs.glModelViewProjectionMatrix = gl.glGetUniformLocation(shaderProgramId,
+						"glModelViewProjectionMatrix");
 				locs.glNormalMatrix = gl.glGetUniformLocation(shaderProgramId, "glNormalMatrix");
 				locs.ignoreVertexColors = gl.glGetUniformLocation(shaderProgramId, "ignoreVertexColors");
 				locs.glLightModelambient = gl.glGetUniformLocation(shaderProgramId, "glLightModelambient");
@@ -3493,7 +3154,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.fogData.linearEnd = gl.glGetUniformLocation(shaderProgramId, "fogData.linearEnd");
 				locs.fogData.setPresent();
 
-				locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.lightEnabled");
+				locs.glFrontMaterial.lightEnabled = gl.glGetUniformLocation(shaderProgramId,
+						"glFrontMaterial.lightEnabled");
 				locs.glFrontMaterial.ambient = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.ambient");
 				locs.glFrontMaterial.diffuse = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.diffuse");
 				locs.glFrontMaterial.emission = gl.glGetUniformLocation(shaderProgramId, "glFrontMaterial.emission");
@@ -3505,29 +3167,33 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				// lights, notice the vertex attribute is made of a string concat
 				// notice we stop once the light loc is not found, as that is the max the shader will accept
-				for (int i = 0; i < locs.glLightSource.length; i++)
-				{
+				for (int i = 0; i < locs.glLightSource.length; i++) {
 					int position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
-					if (position != -1)
-					{
-						locs.glLightSource[i] = new glLightSourceLocs();
-						locs.glLightSource[i].position = position;
-						locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
-						locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
-						locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
+					if (position != -1) {
+						locs.glLightSource [i] = new glLightSourceLocs();
+						locs.glLightSource [i].position = position;
+						locs.glLightSource [i].diffuse = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].diffuse");
+						locs.glLightSource [i].specular = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].specular");
+						locs.glLightSource [i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
 								"glLightSource[" + i + "].constantAttenuation");
-						locs.glLightSource[i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
+						locs.glLightSource [i].linearAttenuation = gl.glGetUniformLocation(shaderProgramId,
 								"glLightSource[" + i + "].linearAttenuation");
-						locs.glLightSource[i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
+						locs.glLightSource [i].quadraticAttenuation = gl.glGetUniformLocation(shaderProgramId,
 								"glLightSource[" + i + "].quadraticAttenuation");
-						locs.glLightSource[i].spotCutoff = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].spotCutoff");
-						locs.glLightSource[i].spotExponent = gl.glGetUniformLocation(shaderProgramId,
+						locs.glLightSource [i].spotCutoff = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].spotCutoff");
+						locs.glLightSource [i].spotExponent = gl.glGetUniformLocation(shaderProgramId,
 								"glLightSource[" + i + "].spotExponent");
-						locs.glLightSource[i].spotDirection = gl.glGetUniformLocation(shaderProgramId,
+						locs.glLightSource [i].spotDirection = gl.glGetUniformLocation(shaderProgramId,
 								"glLightSource[" + i + "].spotDirection");
-					}
-					else
-					{
+						locs.glLightSource [i].projMatrix = gl.glGetUniformLocation(shaderProgramId,
+								"glLightSource[" + i + "].projMatrix");	
+						
+						locs.glLightSource [i].shadowMapSamplerId = gl.glGetUniformLocation(shaderProgramId,
+								"shadowMapSampler[" + i + "]");
+					} else {
 						break;
 					}
 				}
@@ -3538,17 +3204,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				locs.glNormal = gl.glGetAttribLocation(shaderProgramId, "glNormal");
 
 				// tex coords, notice the vertex attribute is made of a string concat
-				for (int i = 0; i < locs.glMultiTexCoord.length; i++)
-				{
-					locs.glMultiTexCoord[i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
+				for (int i = 0; i < locs.glMultiTexCoord.length; i++) {
+					locs.glMultiTexCoord [i] = gl.glGetAttribLocation(shaderProgramId, "glMultiTexCoord" + i);
 				}
 
 				// generic attributes, notice allocated on a program basis not per geom
 				HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
-				if (attToIndex != null)
-				{
-					for (String attrib : attToIndex.keySet())
-					{
+				if (attToIndex != null) {
+					for (String attrib : attToIndex.keySet()) {
 						int index = attToIndex.get(attrib);
 						int attribLoc = gl.glGetAttribLocation(shaderProgramId, attrib);
 						locs.genAttIndexToLoc.put(index, new Integer(attribLoc));
@@ -3564,8 +3227,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	/**
-	 * The buffers will be loaded and pointers set in GeometryData for this geometry native id
-	 * Note however morphable data will also be reloaded (only coords for now)
+	 * The buffers will be loaded and pointers set in GeometryData for this geometry native id Note however morphable
+	 * data will also be reloaded (only coords for now)
 	 * @param ctx
 	 * @param gl
 	 * @param geo
@@ -3579,54 +3242,48 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	 * @param startClrs
 	 * @return
 	 */
-	private static GeometryData loadAllBuffers(Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
-			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, float[] vfarray, int startVertex, FloatBuffer fclrs,
-			float[] cfarray, int startClrs)
-	{
+	private static GeometryData loadAllBuffers(	Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo,
+												boolean ignoreVertexColors, int vertexCount, int vformat, int vdefined,
+												FloatBuffer fverts, float[] vfarray, int startVertex, FloatBuffer fclrs,
+												float[] cfarray, int startClrs) {
 		if (VERBOSE)
 			System.err.println("private static GeometryData loadAllBuffers");
 
 		GeometryData gd = ctx.allGeometryData.get(geo.nativeId);
-		if (gd == null)
-		{
+		if (gd == null) {
 			gd = new GeometryData();
 			geo.nativeId = gd.nativeId;
 			ctx.allGeometryData.put(geo.nativeId, gd);
 		}
 
-		if (gd.geoToCoordBuf == -1)
-		{
+		if (gd.geoToCoordBuf == -1) {
 
 			// do we need to covert a float[]
-			if (vfarray != null)
-			{
+			if (vfarray != null) {
 				fverts = getVertexArrayBuffer(vfarray);
 			}
 			// can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
 			boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-					|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+								|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 			fverts.position(startVertex);
 
-			if (morphable)
-			{
+			if (morphable) {
 				int[] tmp = new int[2];
 				gl.glGenBuffers(2, tmp, 0);
-				gd.geoToCoordBuf = tmp[0];
-				gd.geoToCoordBuf1 = tmp[0];
-				gd.geoToCoordBuf2 = tmp[1];
+				gd.geoToCoordBuf = tmp [0];
+				gd.geoToCoordBuf1 = tmp [0];
+				gd.geoToCoordBuf2 = tmp [1];
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
 				int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
 				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
 				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
-			}
-			else
-			{
+			} else {
 				int[] tmp = new int[1];
 				gl.glGenBuffers(1, tmp, 0);
-				gd.geoToCoordBuf = tmp[0];
+				gd.geoToCoordBuf = tmp [0];
 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 				int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
@@ -3637,8 +3294,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			gd.geoToCoordBufSize = fverts.remaining();
 
-			if (ctx.allGeometryData.size() % 500 == 0)
-			{
+			if (ctx.allGeometryData.size() % 500 == 0) {
 				System.out.println("Coord buffer count " + ctx.allGeometryData.size());
 			}
 
@@ -3646,38 +3302,32 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				ctx.perFrameStats.glBufferData++;
 		}
 
-		if (!ignoreVertexColors)
-		{
-			if (gd.geoToColorBuf == -1)
-			{
-				if((vformat & GeometryArray.COLOR) != 0)
-				{
-					if (cfarray != null)
-					{
+		if (!ignoreVertexColors) {
+			if (gd.geoToColorBuf == -1) {
+				if ((vformat & GeometryArray.COLOR) != 0) {
+					if (cfarray != null) {
 						fclrs = getColorArrayBuffer(cfarray);
 					}
-					if (fclrs != null && (fclrs != fverts))
-					{
+					if (fclrs != null && (fclrs != fverts)) {
 						fclrs.position(startClrs);
 						int[] tmp = new int[1];
 						gl.glGenBuffers(1, tmp, 0);
-						gd.geoToColorBuf = tmp[0];
-	
+						gd.geoToColorBuf = tmp [0];
+
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
-					}
-					else
-					{
+						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs,
+								GL2ES2.GL_STATIC_DRAW);
+					} else {
 						gd.geoToColorBuf = gd.geoToCoordBuf;
 					}
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-	
+
 					if (OUTPUT_PER_FRAME_STATS)
 						ctx.perFrameStats.glBufferData++;
 				}
 			}
-			
+
 		}
 
 		if (DO_OUTPUT_ERRORS)
@@ -3686,19 +3336,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return gd;
 	}
 
-	private static GeometryData loadAllBuffers(Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
-			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, float[] vfcoords, DoubleBuffer dverts, double[] vdcoords,
-			FloatBuffer fclrs, float[] cfarray, ByteBuffer bclrs, byte[] cbdata, FloatBuffer norms, float[] narray, int vertexAttrCount,
-			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, float[][] vertexAttrData, int texCoordMapLength, int[] texCoordSetMap,
-			int texStride, Object[] texCoords)
-	{
+	private static GeometryData loadAllBuffers(	Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo,
+												boolean ignoreVertexColors, int vertexCount, int vformat, int vdefined,
+												FloatBuffer fverts, float[] vfcoords, DoubleBuffer dverts,
+												double[] vdcoords, FloatBuffer fclrs, float[] cfarray, ByteBuffer bclrs,
+												byte[] cbdata, FloatBuffer norms, float[] narray, int vertexAttrCount,
+												int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs,
+												float[][] vertexAttrData, int texCoordMapLength, int[] texCoordSetMap,
+												int texStride, Object[] texCoords) {
 
 		if (VERBOSE)
 			System.err.println("private static GeometryData loadAllBuffers");
 
 		GeometryData gd = ctx.allGeometryData.get(geo.nativeId);
-		if (gd == null)
-		{
+		if (gd == null) {
 			gd = new GeometryData();
 			geo.nativeId = gd.nativeId;
 			ctx.allGeometryData.put(geo.nativeId, gd);
@@ -3712,41 +3363,35 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		boolean vattrDefined = ((vdefined & GeometryArrayRetained.VATTR_FLOAT) != 0);
 		boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
-		if (floatCoordDefined)
-		{
-			if (gd.geoToCoordBuf == -1)
-			{
+		if (floatCoordDefined) {
+			if (gd.geoToCoordBuf == -1) {
 				// do we need to covert a float[]
-				if (vfcoords != null)
-				{
+				if (vfcoords != null) {
 					fverts = getVertexArrayBuffer(vfcoords);
 				}
 
 				// can it change ever? (GeometryArray.ALLOW_REF_DATA_WRITE is just my indicator of this feature)
 				boolean morphable = geo.source.getCapability(GeometryArray.ALLOW_REF_DATA_WRITE)
-						|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+									|| geo.source.getCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
 				fverts.position(0);
 
-				if (morphable)
-				{
+				if (morphable) {
 					int[] tmp = new int[2];
 					gl.glGenBuffers(2, tmp, 0);
-					gd.geoToCoordBuf = tmp[0];
-					gd.geoToCoordBuf1 = tmp[0];
-					gd.geoToCoordBuf2 = tmp[1];
+					gd.geoToCoordBuf = tmp [0];
+					gd.geoToCoordBuf1 = tmp [0];
+					gd.geoToCoordBuf2 = tmp [1];
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf1);
 					int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
 					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf2);
 					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, (fverts.remaining() * Float.SIZE / 8), fverts, usage);
-				}
-				else
-				{
+				} else {
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
-					gd.geoToCoordBuf = tmp[0];
+					gd.geoToCoordBuf = tmp [0];
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToCoordBuf);
 					int usage = morphable ? GL2ES2.GL_DYNAMIC_DRAW : GL2ES2.GL_STATIC_DRAW;
@@ -3757,8 +3402,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				gd.geoToCoordBufSize = fverts.remaining();
 
-				if (ctx.allGeometryData.size() % 500 == 0)
-				{
+				if (ctx.allGeometryData.size() % 500 == 0) {
 					System.out.println("Coord buffer count " + ctx.allGeometryData.size());
 				}
 
@@ -3768,22 +3412,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (floatColorsDefined && !ignoreVertexColors)
-		{
-			if (gd.geoToColorBuf == -1)
-			{
-				if (cfarray != null)
-				{
+		if (floatColorsDefined && !ignoreVertexColors) {
+			if (gd.geoToColorBuf == -1) {
+				if (cfarray != null) {
 					fclrs = getColorArrayBuffer(cfarray);
 				}
 
 				fclrs.position(0);
 				int[] tmp = new int[1];
 				gl.glGenBuffers(1, tmp, 0);
-				gd.geoToColorBuf = tmp[0];
+				gd.geoToColorBuf = tmp [0];
 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToColorBuf);
-				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs, GL2ES2.GL_STATIC_DRAW);
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, fclrs.remaining() * Float.SIZE / 8, fclrs,
+						GL2ES2.GL_STATIC_DRAW);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -3793,26 +3435,24 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (normalsDefined)
-		{
-			if (gd.geoToNormalBuf == -1)
-			{
-				if (narray != null)
-				{
+		if (normalsDefined) {
+			if (gd.geoToNormalBuf == -1) {
+				if (narray != null) {
 					norms = getNormalArrayBuffer(narray);
 				}
-				
-				if(norms==null)
+
+				if (norms == null)
 					System.out.println("norms ==null");
 
 				norms.position(0);
 
 				int[] tmp = new int[1];
 				gl.glGenBuffers(1, tmp, 0);
-				gd.geoToNormalBuf = tmp[0];
+				gd.geoToNormalBuf = tmp [0];
 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.geoToNormalBuf);
-				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms, GL2ES2.GL_STATIC_DRAW);
+				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, norms.remaining() * Float.SIZE / 8, norms,
+						GL2ES2.GL_STATIC_DRAW);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
@@ -3822,35 +3462,31 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (vattrDefined)
-		{
-			if (vertexAttrData != null)
-			{
+		if (vattrDefined) {
+			if (vertexAttrData != null) {
 				vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrData);
 			}
 
-			for (int index = 0; index < vertexAttrCount; index++)
-			{
-				FloatBuffer vertexAttrs = vertexAttrBufs[index];
+			for (int index = 0; index < vertexAttrCount; index++) {
+				FloatBuffer vertexAttrs = vertexAttrBufs [index];
 				vertexAttrs.position(0);
 
 				SparseArray<Integer> bufIds = gd.geoToVertAttribBuf;
-				if (bufIds == null)
-				{
+				if (bufIds == null) {
 					bufIds = new SparseArray<Integer>();
 					gd.geoToVertAttribBuf = bufIds;
 				}
 
 				Integer bufId = bufIds.get(index);
-				if (bufId == null)
-				{
+				if (bufId == null) {
 					int[] tmp2 = new int[1];
 					gl.glGenBuffers(1, tmp2, 0);
-					bufId = new Integer(tmp2[0]);
+					bufId = new Integer(tmp2 [0]);
 					bufIds.put(index, bufId);
 
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, vertexAttrs.remaining() * Float.SIZE / 8, vertexAttrs,
+							GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -3861,42 +3497,37 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (textureDefined)
-		{
+		if (textureDefined) {
 			// convert from float[][] to FloatBuffer[]
 			//WOW careful java has a hard time knowing what an Object[] contains can't check float[][]
-			if (!(texCoords[0] instanceof FloatBuffer))
-			{
+			if (!(texCoords [0] instanceof FloatBuffer)) {
 				texCoords = getTexCoordSetBuffer(texCoords);
 			}
 
 			boolean[] texSetsLoaded = new boolean[texCoords.length];
-			for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
-			{
-				int texSet = texCoordSetMap[texUnit];
-				if (texSet != -1 && !texSetsLoaded[texSet])
-				{
-					texSetsLoaded[texSet] = true;
+			for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++) {
+				int texSet = texCoordSetMap [texUnit];
+				if (texSet != -1 && !texSetsLoaded [texSet]) {
+					texSetsLoaded [texSet] = true;
 					// stupid interface...					
-					FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+					FloatBuffer buf = (FloatBuffer)texCoords [texSet];
 					buf.position(0);
 
 					SparseArray<Integer> bufIds = gd.geoToTexCoordsBuf;
-					if (bufIds == null)
-					{
+					if (bufIds == null) {
 						bufIds = new SparseArray<Integer>();
 						gd.geoToTexCoordsBuf = bufIds;
 					}
 
 					Integer bufId = bufIds.get(texUnit);
-					if (bufId == null)
-					{
+					if (bufId == null) {
 						int[] tmp = new int[1];
 						gl.glGenBuffers(1, tmp, 0);
-						bufId = new Integer(tmp[0]);
+						bufId = new Integer(tmp [0]);
 
 						gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, bufId.intValue());
-						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, buf.remaining() * Float.SIZE / 8, buf, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, buf.remaining() * Float.SIZE / 8, buf,
+								GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						bufIds.put(texUnit, bufId);
@@ -3914,11 +3545,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return gd;
 	}
 
-
 	//--Noop
 	@Override
-	void setVertexFormat(Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha, boolean ignoreVertexColors)
-	{
+	void setVertexFormat(	Context ctx, GeometryArrayRetained geo, int vformat, boolean useAlpha,
+							boolean ignoreVertexColors) {
 		// if (VERBOSE)
 		// System.err.println("JoglPipeline.setVertexFormat()");
 	}
@@ -3926,10 +3556,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ---------------------------------------------------------------------
 	// Native method for readRaster
 	@Override
-	void readRaster(Context ctx, int type, int xSrcOffset, int ySrcOffset, int width, int height, int hCanvas, int imageDataType,
-			int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer)
-	{
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+	void readRaster(Context ctx, int type, int xSrcOffset, int ySrcOffset, int width, int height, int hCanvas,
+					int imageDataType, int imageFormat, Object imageBuffer, int depthFormat, Object depthBuffer) {
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
 
 		//gl.glPixelStorei(GL2.GL_PACK_ROW_LENGTH, width);
@@ -3938,86 +3567,78 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 		int yAdjusted = hCanvas - height - ySrcOffset;
 
-		if ((type & Raster.RASTER_COLOR) != 0)
-		{
+		if ((type & Raster.RASTER_COLOR) != 0) {
 			int format = 0;
-			if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-			{
+			if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY) {
 
-				switch (imageFormat)
-				{
-				case ImageComponentRetained.TYPE_BYTE_BGR:
-					format = GL2ES2.GL_BGR;
-					break;
-				case ImageComponentRetained.TYPE_BYTE_RGB:
-					format = GL2ES2.GL_RGB;
-					break;
-				case ImageComponentRetained.TYPE_BYTE_ABGR:
-					format = GL2ES2.GL_RGBA;
-					break;
-				case ImageComponentRetained.TYPE_BYTE_RGBA:
-					// all RGB types are stored as RGBA
-					format = GL2ES2.GL_RGBA;
-					break;
-				case ImageComponentRetained.TYPE_BYTE_LA:
-					// all LA types are stored as LA8
-					format = GL2ES2.GL_LUMINANCE_ALPHA;
-					break;
-				case ImageComponentRetained.TYPE_BYTE_GRAY:
-				case ImageComponentRetained.TYPE_USHORT_GRAY:
-				case ImageComponentRetained.TYPE_INT_BGR:
-				case ImageComponentRetained.TYPE_INT_RGB:
-				case ImageComponentRetained.TYPE_INT_ARGB:
-				default:
-					assert false;
-					return;
+				switch (imageFormat) {
+					case ImageComponentRetained.TYPE_BYTE_BGR:
+						format = GL2ES2.GL_BGR;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_RGB:
+						format = GL2ES2.GL_RGB;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_ABGR:
+						format = GL2ES2.GL_RGBA;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_RGBA:
+						// all RGB types are stored as RGBA
+						format = GL2ES2.GL_RGBA;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_LA:
+						// all LA types are stored as LA8
+						format = GL2ES2.GL_LUMINANCE_ALPHA;
+						break;
+					case ImageComponentRetained.TYPE_BYTE_GRAY:
+					case ImageComponentRetained.TYPE_USHORT_GRAY:
+					case ImageComponentRetained.TYPE_INT_BGR:
+					case ImageComponentRetained.TYPE_INT_RGB:
+					case ImageComponentRetained.TYPE_INT_ARGB:
+					default:
+						assert false;
+						return;
 				}
 
 				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, format, GL2ES2.GL_UNSIGNED_BYTE,
-						ByteBuffer.wrap((byte[]) imageBuffer));
+						ByteBuffer.wrap((byte[])imageBuffer));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-			}
-			else if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-			{
-				switch (imageFormat)
-				{
-				case ImageComponentRetained.TYPE_INT_BGR:
-					//PJ does this work correctly?
-					format = GL2ES2.GL_RGB;
-					break;
-				case ImageComponentRetained.TYPE_INT_RGB:
-					format = GL2ES2.GL_RGB;
-					break;
-				case ImageComponentRetained.TYPE_INT_ARGB:
-					format = GL2ES2.GL_RGBA;
-					break;
-				// This method only supports 3 and 4 components formats and INT types.			
-				case ImageComponentRetained.TYPE_BYTE_LA:
-				case ImageComponentRetained.TYPE_BYTE_GRAY:
-				case ImageComponentRetained.TYPE_USHORT_GRAY:
-				case ImageComponentRetained.TYPE_BYTE_BGR:
-				case ImageComponentRetained.TYPE_BYTE_RGB:
-				case ImageComponentRetained.TYPE_BYTE_RGBA:
-				case ImageComponentRetained.TYPE_BYTE_ABGR:
-				default:
-					assert false;
-					return;
+			} else if (imageDataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY) {
+				switch (imageFormat) {
+					case ImageComponentRetained.TYPE_INT_BGR:
+						//PJ does this work correctly?
+						format = GL2ES2.GL_RGB;
+						break;
+					case ImageComponentRetained.TYPE_INT_RGB:
+						format = GL2ES2.GL_RGB;
+						break;
+					case ImageComponentRetained.TYPE_INT_ARGB:
+						format = GL2ES2.GL_RGBA;
+						break;
+					// This method only supports 3 and 4 components formats and INT types.			
+					case ImageComponentRetained.TYPE_BYTE_LA:
+					case ImageComponentRetained.TYPE_BYTE_GRAY:
+					case ImageComponentRetained.TYPE_USHORT_GRAY:
+					case ImageComponentRetained.TYPE_BYTE_BGR:
+					case ImageComponentRetained.TYPE_BYTE_RGB:
+					case ImageComponentRetained.TYPE_BYTE_RGBA:
+					case ImageComponentRetained.TYPE_BYTE_ABGR:
+					default:
+						assert false;
+						return;
 				}
 
-				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, format, GL2ES2.GL_UNSIGNED_BYTE, IntBuffer.wrap((int[]) imageBuffer));
+				gl.glReadPixels(xSrcOffset, yAdjusted, width, height, format, GL2ES2.GL_UNSIGNED_BYTE,
+						IntBuffer.wrap((int[])imageBuffer));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
-			}
-			else
-			{
+			} else {
 				assert false;
 			}
 		}
 
-		if ((type & Raster.RASTER_DEPTH) != 0)
-		{
+		if ((type & Raster.RASTER_DEPTH) != 0) {
 			throw new UnsupportedOperationException(
 					"To get depth you should use a shader that return depth info for gl2es2 then read from color");
 			/*if (depthFormat == DepthComponentRetained.DEPTH_COMPONENT_TYPE_INT)
@@ -4050,142 +3671,140 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ShaderAttributeValue methods
 
 	@Override
-	ShaderError setGLSLUniform1i(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int value)
-	{
+	ShaderError setGLSLUniform1i(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									int value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform1i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value=" + value + ")");
+			System.err.println("JoglPipeline.setGLSLUniform1i(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value=" + value + ")");
 
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
 		int loc = unbox(uniformLocation);
-		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1i[loc] != value)
-		{
+		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1i [loc] != value) {
 			gl.glUniform1i(loc, value);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 			if (MINIMISE_NATIVE_SHADER)
-				joglesctx.gl_state.setGLSLUniform1i[loc] = value;
+				joglesctx.gl_state.setGLSLUniform1i [loc] = value;
 		}
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform1f(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, float value)
-	{
+	ShaderError setGLSLUniform1f(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									float value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform1f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value=" + value + ")");
+			System.err.println("JoglPipeline.setGLSLUniform1f(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value=" + value + ")");
 
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = joglesctx.gl2es2();
 		int loc = unbox(uniformLocation);
-		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1f[loc] != value)
-		{
+		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1f [loc] != value) {
 			gl.glUniform1f(loc, value);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 			if (MINIMISE_NATIVE_SHADER)
-				joglesctx.gl_state.setGLSLUniform1f[loc] = value;
+				joglesctx.gl_state.setGLSLUniform1f [loc] = value;
 		}
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform2i(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int[] value)
-	{
+	ShaderError setGLSLUniform2i(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									int[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform2i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniform2i(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniform2i(unbox(uniformLocation), value[0], value[1]);
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniform2i(unbox(uniformLocation), value [0], value [1]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform2f(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, float[] value)
-	{
+	ShaderError setGLSLUniform2f(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									float[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform2f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniform2f(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniform2f(unbox(uniformLocation), value[0], value[1]);
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniform2f(unbox(uniformLocation), value [0], value [1]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform3i(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int[] value)
-	{
+	ShaderError setGLSLUniform3i(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									int[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform3i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniform3i(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniform3i(unbox(uniformLocation), value[0], value[1], value[2]);
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniform3i(unbox(uniformLocation), value [0], value [1], value [2]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform3f(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, float[] value)
-	{
+	ShaderError setGLSLUniform3f(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									float[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform3f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniform3f(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniform3f(unbox(uniformLocation), value[0], value[1], value[2]);
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniform3f(unbox(uniformLocation), value [0], value [1], value [2]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform4i(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int[] value)
-	{
+	ShaderError setGLSLUniform4i(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									int[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform4i(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniform4i(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniform4i(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniform4i(unbox(uniformLocation), value [0], value [1], value [2], value [3]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniform4f(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, float[] value)
-	{
+	ShaderError setGLSLUniform4f(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									float[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniform4f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniform4f(shaderProgramId = "	+ unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniform4f(unbox(uniformLocation), value[0], value[1], value[2], value[3]);
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniform4f(unbox(uniformLocation), value [0], value [1], value [2], value [3]);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		return null;
 	}
 
 	@Override
-	ShaderError setGLSLUniformMatrix3f(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, float[] value)
-	{
+	ShaderError setGLSLUniformMatrix3f(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										float[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniformMatrix3f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniformMatrix3f(shaderProgramId = " + unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniformMatrix3fv(unbox(uniformLocation), 1, false, ((Jogl2es2Context) ctx).matrixUtil.toFB3(value));
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniformMatrix3fv(unbox(uniformLocation), 1, false, ((Jogl2es2Context)ctx).matrixUtil.toFB3(value));
 		// gl.glUniformMatrix3fv(unbox(uniformLocation), 1, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4193,16 +3812,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniformMatrix4f(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, float[] value)
-	{
+	ShaderError setGLSLUniformMatrix4f(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										float[] value) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setGLSLUniformMatrix4f(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
-					+ unbox(uniformLocation) + ",value[0]=" + value[0] + ")");
+			System.err.println("JoglPipeline.setGLSLUniformMatrix4f(shaderProgramId = " + unbox(shaderProgramId)
+								+ ",uniformLocation=" + unbox(uniformLocation) + ",value[0]=" + value [0] + ")");
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-		gl.glUniformMatrix4fv(unbox(uniformLocation), 1, false, ((Jogl2es2Context) ctx).matrixUtil.toFB4(value));
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+		gl.glUniformMatrix4fv(unbox(uniformLocation), 1, false, ((Jogl2es2Context)ctx).matrixUtil.toFB4(value));
 		// gl.glUniformMatrix4fv(unbox(uniformLocation), 1, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4212,13 +3831,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ShaderAttributeArray methods
 
 	@Override
-	ShaderError setGLSLUniform1iArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			int[] value)
-	{
+	ShaderError setGLSLUniform1iArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, int[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform1iArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform1iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4226,13 +3844,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform1fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			float[] value)
-	{
+	ShaderError setGLSLUniform1fArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, float[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform1fArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform1fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4240,13 +3857,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform2iArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			int[] value)
-	{
+	ShaderError setGLSLUniform2iArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, int[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform2iArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform2iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4254,13 +3870,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform2fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			float[] value)
-	{
+	ShaderError setGLSLUniform2fArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, float[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform2fArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform2fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4268,13 +3883,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform3iArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			int[] value)
-	{
+	ShaderError setGLSLUniform3iArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, int[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform3iArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform3iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4282,13 +3896,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform3fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			float[] value)
-	{
+	ShaderError setGLSLUniform3fArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, float[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform3fArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform3fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4296,13 +3909,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform4iArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			int[] value)
-	{
+	ShaderError setGLSLUniform4iArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, int[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform4iArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform4iv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4310,13 +3922,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniform4fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			float[] value)
-	{
+	ShaderError setGLSLUniform4fArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, float[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniform4fArray()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniform4fv(unbox(uniformLocation), numElements, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4324,15 +3935,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniformMatrix3fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			float[] value)
-	{
+	ShaderError setGLSLUniformMatrix3fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+											int numElements, float[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniformMatrix3fArray()");
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniformMatrix3fv(unbox(uniformLocation), numElements, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4340,15 +3950,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError setGLSLUniformMatrix4fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
-			float[] value)
-	{
+	ShaderError setGLSLUniformMatrix4fArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+											int numElements, float[] value) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setGLSLUniformMatrix4fArray()");
 
 		// Load attribute
 		// transpose is true : each matrix is supplied in row major order
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glUniformMatrix4fv(unbox(uniformLocation), numElements, true, value, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4357,46 +3966,40 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// interfaces for shader compilation, etc.
 	@Override
-	ShaderError createGLSLShader(Context ctx, int shaderType, ShaderId[] shaderId)
-	{
+	ShaderError createGLSLShader(Context ctx, int shaderType, ShaderId[] shaderId) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createGLSLShader()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.createGLSLShader++;
+			((Jogl2es2Context)ctx).perFrameStats.createGLSLShader++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		int shaderHandle = 0;
-		if (shaderType == Shader.SHADER_TYPE_VERTEX)
-		{
+		if (shaderType == Shader.SHADER_TYPE_VERTEX) {
 			shaderHandle = gl.glCreateShader(GL2ES2.GL_VERTEX_SHADER);
-		}
-		else if (shaderType == Shader.SHADER_TYPE_FRAGMENT)
-		{
+		} else if (shaderType == Shader.SHADER_TYPE_FRAGMENT) {
 			shaderHandle = gl.glCreateShader(GL2ES2.GL_FRAGMENT_SHADER);
 		}
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
-		if (shaderHandle == 0)
-		{
+		if (shaderHandle == 0) {
 			return new ShaderError(ShaderError.COMPILE_ERROR, "Unable to create native shader object");
 		}
 
-		shaderId[0] = new JoglShaderObject(shaderHandle);
+		shaderId [0] = new JoglShaderObject(shaderHandle);
 
 		return null;
 	}
 
 	@Override
-	ShaderError destroyGLSLShader(Context ctx, ShaderId shaderId)
-	{
+	ShaderError destroyGLSLShader(Context ctx, ShaderId shaderId) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.destroyGLSLShader()");
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.destroyGLSLShader++;
+			((Jogl2es2Context)ctx).perFrameStats.destroyGLSLShader++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glDeleteShader(unbox(shaderId));
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -4404,28 +4007,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError compileGLSLShader(Context ctx, ShaderId shaderId, String program)
-	{
+	ShaderError compileGLSLShader(Context ctx, ShaderId shaderId, String program) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.compileGLSLShader()");
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.compileGLSLShader++;
+			((Jogl2es2Context)ctx).perFrameStats.compileGLSLShader++;
 
 		int id = unbox(shaderId);
-		if (id == 0)
-		{
+		if (id == 0) {
 			throw new AssertionError("shaderId == 0");
 		}
 
-		if (program == null)
-		{
+		if (program == null) {
 			throw new AssertionError("shader program string is null");
 		}
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
-		gl.glShaderSource(id, 1, new String[] { program }, null, 0);
+		gl.glShaderSource(id, 1, new String[] {program}, null, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		gl.glCompileShader(id);
@@ -4433,8 +4033,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 		int[] status = new int[1];
 		gl.glGetShaderiv(id, GL2ES2.GL_COMPILE_STATUS, status, 0);
-		if (status[0] == 0)
-		{
+		if (status [0] == 0) {
 			String detailMsg = getShaderInfoLog(gl, id);
 			ShaderError res = new ShaderError(ShaderError.COMPILE_ERROR, "GLSL shader compile error");
 			res.setDetailMessage(detailMsg);
@@ -4444,62 +4043,57 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError createGLSLShaderProgram(Context ctx, ShaderProgramId[] shaderProgramId)
-	{
+	ShaderError createGLSLShaderProgram(Context ctx, ShaderProgramId[] shaderProgramId) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createGLSLShaderProgram()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.createGLSLShaderProgram++;
+			((Jogl2es2Context)ctx).perFrameStats.createGLSLShaderProgram++;
 
 		int shaderProgramHandle = gl.glCreateProgram();
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
-		if (shaderProgramHandle == 0)
-		{
+		if (shaderProgramHandle == 0) {
 			return new ShaderError(ShaderError.LINK_ERROR, "Unable to create native shader program object");
 		}
-		shaderProgramId[0] = new JoglShaderObject(shaderProgramHandle);
+		shaderProgramId [0] = new JoglShaderObject(shaderProgramHandle);
 
 		return null;
 	}
 
 	@Override
-	ShaderError destroyGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId)
-	{
+	ShaderError destroyGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.destroyGLSLShaderProgram()");
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.destroyGLSLShaderProgram++;
+			((Jogl2es2Context)ctx).perFrameStats.destroyGLSLShaderProgram++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glDeleteShader(unbox(shaderProgramId));
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 
 		// just dump data
-		((Jogl2es2Context) ctx).allProgramData.remove(unbox(shaderProgramId));
+		((Jogl2es2Context)ctx).allProgramData.remove(unbox(shaderProgramId));
 
 		return null;
 	}
 
 	@Override
-	ShaderError linkGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId, ShaderId[] shaderIds)
-	{
+	ShaderError linkGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId, ShaderId[] shaderIds) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.linkGLSLShaderProgram()");
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.linkGLSLShaderProgram++;
+			((Jogl2es2Context)ctx).perFrameStats.linkGLSLShaderProgram++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		int id = unbox(shaderProgramId);
-		for (int i = 0; i < shaderIds.length; i++)
-		{
-			gl.glAttachShader(id, unbox(shaderIds[i]));
+		for (int i = 0; i < shaderIds.length; i++) {
+			gl.glAttachShader(id, unbox(shaderIds [i]));
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 		}
@@ -4508,8 +4102,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 		int[] status = new int[1];
 		gl.glGetProgramiv(id, GL2ES2.GL_LINK_STATUS, status, 0);
-		if (status[0] == 0)
-		{
+		if (status [0] == 0) {
 			String detailMsg = getProgramInfoLog(gl, id);
 			ShaderError res = new ShaderError(ShaderError.LINK_ERROR, "GLSL shader program link error");
 			res.setDetailMessage(detailMsg);
@@ -4519,29 +4112,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	ShaderError bindGLSLVertexAttrName(Context ctx, ShaderProgramId shaderProgramId, String attrName, int attrIndex)
-	{
+	ShaderError bindGLSLVertexAttrName(Context ctx, ShaderProgramId shaderProgramId, String attrName, int attrIndex) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.bindGLSLVertexAttrName()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.bindGLSLVertexAttrName++;
+			((Jogl2es2Context)ctx).perFrameStats.bindGLSLVertexAttrName++;
 
 		// GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 		// gl.glBindAttribLocation(unbox(shaderProgramId), attrIndex + VirtualUniverse.mc.glslVertexAttrOffset, attrName);
 
 		// record this for later, we'll get real locations in the locationData setup
 		int progId = unbox(shaderProgramId);
-		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
 		ProgramData pd = joglesContext.allProgramData.get(progId);
-		if (pd == null)
-		{
+		if (pd == null) {
 			pd = new ProgramData();
 			joglesContext.allProgramData.put(progId, pd);
 		}
 
 		HashMap<String, Integer> attToIndex = pd.progToGenVertAttNameToGenVertAttIndex;
-		if (attToIndex == null)
-		{
+		if (attToIndex == null) {
 			attToIndex = new HashMap<String, Integer>();
 			pd.progToGenVertAttNameToGenVertAttIndex = attToIndex;
 		}
@@ -4552,22 +4142,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void lookupGLSLShaderAttrNames(Context ctx, ShaderProgramId shaderProgramId, int numAttrNames, String[] attrNames,
-			ShaderAttrLoc[] locArr, int[] typeArr, int[] sizeArr, boolean[] isArrayArr)
-	{
+	void lookupGLSLShaderAttrNames(	Context ctx, ShaderProgramId shaderProgramId, int numAttrNames, String[] attrNames,
+									ShaderAttrLoc[] locArr, int[] typeArr, int[] sizeArr, boolean[] isArrayArr) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.lookupGLSLShaderAttrNames()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.lookupGLSLShaderAttrNames++;
+			((Jogl2es2Context)ctx).perFrameStats.lookupGLSLShaderAttrNames++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		// set the loc, type, and size arrays to out-of-bound values
-		for (int i = 0; i < attrNames.length; i++)
-		{
-			locArr[i] = null;
-			typeArr[i] = -1;
-			sizeArr[i] = -1;
+		for (int i = 0; i < attrNames.length; i++) {
+			locArr [i] = null;
+			typeArr [i] = -1;
+			sizeArr [i] = -1;
 		}
 
 		// Loop through the list of active uniform variables, one at a
@@ -4585,60 +4173,49 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		int[] tmp3 = new int[1];
 
 		gl.glGetProgramiv(id, GL2ES2.GL_ACTIVE_UNIFORMS, tmp, 0);
-		int numActiveUniforms = tmp[0];
+		int numActiveUniforms = tmp [0];
 		gl.glGetProgramiv(id, GL2ES2.GL_ACTIVE_UNIFORM_MAX_LENGTH, tmp, 0);
-		int maxStrLen = tmp[0];
+		int maxStrLen = tmp [0];
 		byte[] nameBuf = new byte[maxStrLen];
 
-		for (int i = 0; i < numActiveUniforms; i++)
-		{
+		for (int i = 0; i < numActiveUniforms; i++) {
 			gl.glGetActiveUniform(id, i, maxStrLen, tmp3, 0, tmp, 0, tmp2, 0, nameBuf, 0);
-			int size = tmp[0];
-			int type = tmp2[0];
+			int size = tmp [0];
+			int type = tmp2 [0];
 			String name = null;
-			try
-			{
-				name = new String(nameBuf, 0, tmp3[0], "US-ASCII");
-			}
-			catch (UnsupportedEncodingException e)
-			{
+			try {
+				name = new String(nameBuf, 0, tmp3 [0], "US-ASCII");
+			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}
 
 			// Issue 247 - we need to workaround an ATI bug where they erroneously
 			// report individual elements of arrays rather than the array itself
-			if (name.length() >= 3 && name.endsWith("]"))
-			{
-				if (name.endsWith("[0]"))
-				{
+			if (name.length() >= 3 && name.endsWith("]")) {
+				if (name.endsWith("[0]")) {
 					name = name.substring(0, name.length() - 3);
-				}
-				else
-				{
+				} else {
 					// Ignore this name
 					continue;
 				}
 			}
 
 			// Now try to find the name
-			for (int j = 0; j < numAttrNames; j++)
-			{
-				if (name.equals(attrNames[j]))
-				{
-					sizeArr[j] = size;
-					isArrayArr[j] = (size > 1);
-					typeArr[j] = glslToJ3dType(type);
+			for (int j = 0; j < numAttrNames; j++) {
+				if (name.equals(attrNames [j])) {
+					sizeArr [j] = size;
+					isArrayArr [j] = (size > 1);
+					typeArr [j] = glslToJ3dType(type);
 					break;
 				}
 			}
 		}
 
 		// Now lookup the location of each name in the attrNames array
-		for (int i = 0; i < numAttrNames; i++)
-		{
+		for (int i = 0; i < numAttrNames; i++) {
 			// Get uniform attribute location
-			int loc = gl.glGetUniformLocation(id, attrNames[i]);
-			locArr[i] = new JoglShaderObject(loc);
+			int loc = gl.glGetUniformLocation(id, attrNames [i]);
+			locArr [i] = new JoglShaderObject(loc);
 		}
 
 		if (DO_OUTPUT_ERRORS)
@@ -4650,30 +4227,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	private boolean USE_NULL_SHADER_WARNING_GIVEN = false;
 
 	@Override
-	ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId inShaderProgramId)
-	{
+	ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId inShaderProgramId) {
 		int shaderProgramId = unbox(inShaderProgramId);
 		if (VERBOSE)
 			System.err.println("JoglPipeline.useGLSLShaderProgram(shaderProgramId=" + shaderProgramId + ")");
 
-		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
-		if (OUTPUT_PER_FRAME_STATS)
-		{
-			if (joglesContext.gl_state.currentProgramId == shaderProgramId)
-			{
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
+		//shadow passes uses depth only shader		
+		if (!useShadowShaderOverride) {
+		if (OUTPUT_PER_FRAME_STATS) {
+			if (joglesContext.gl_state.currentProgramId == shaderProgramId) {
 				joglesContext.perFrameStats.redundantUseProgram++;
-			}
-			else
-			{
+			} else {
 				joglesContext.perFrameStats.useGLSLShaderProgram++;
 				joglesContext.perFrameStats.usedPrograms.add(inShaderProgramId);
 			}
 		}
 
-		if (!MINIMISE_NATIVE_SHADER || joglesContext.gl_state.currentProgramId != shaderProgramId)
-		{
-			if (shaderProgramId == -1)
-			{
+		if (!MINIMISE_NATIVE_SHADER || joglesContext.gl_state.currentProgramId != shaderProgramId) {
+			if (shaderProgramId == -1) {
 				if (!USE_NULL_SHADER_WARNING_GIVEN)
 					System.err.println("Null shader passed for use");
 				USE_NULL_SHADER_WARNING_GIVEN = true;
@@ -4685,12 +4257,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 
-			joglesContext.setShaderProgram((JoglShaderObject) inShaderProgramId);
+			joglesContext.setShaderProgram((JoglShaderObject)inShaderProgramId);
 			loadLocs(joglesContext, gl);
 
 			if (MINIMISE_NATIVE_SHADER)
 				joglesContext.gl_state.currentProgramId = shaderProgramId;
 
+		}
 		}
 		return null;
 	}
@@ -4698,119 +4271,104 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ----------------------------------------------------------------------
 	// Helper methods for above shader routines
 	//
-	private static int unbox(ShaderAttrLoc loc)
-	{
+	private static int unbox(ShaderAttrLoc loc) {
 		if (loc == null)
 			return -1;//0 is a valid location
-		return ((JoglShaderObject) loc).getValue();
+		return ((JoglShaderObject)loc).getValue();
 	}
 
-	private static int unbox(ShaderProgramId id)
-	{
+	private static int unbox(ShaderProgramId id) {
 		if (id == null)
 			return 0;
-		return ((JoglShaderObject) id).getValue();
+		return ((JoglShaderObject)id).getValue();
 	}
 
-	private static int unbox(ShaderId id)
-	{
+	private static int unbox(ShaderId id) {
 		if (id == null)
 			return 0;
-		return ((JoglShaderObject) id).getValue();
+		return ((JoglShaderObject)id).getValue();
 	}
 
-	private static String getShaderInfoLog(GL2ES2 gl, int id)
-	{
+	private static String getShaderInfoLog(GL2ES2 gl, int id) {
 		int[] infoLogLength = new int[1];
 		gl.glGetShaderiv(id, GL2ES2.GL_INFO_LOG_LENGTH, infoLogLength, 0);
-		if (infoLogLength[0] > 0)
-		{
-			byte[] storage = new byte[infoLogLength[0]];
+		if (infoLogLength [0] > 0) {
+			byte[] storage = new byte[infoLogLength [0]];
 			int[] len = new int[1];
-			gl.glGetShaderInfoLog(id, infoLogLength[0], len, 0, storage, 0);
-			try
-			{
-				return new String(storage, 0, len[0], "US-ASCII");
-			}
-			catch (UnsupportedEncodingException e)
-			{
+			gl.glGetShaderInfoLog(id, infoLogLength [0], len, 0, storage, 0);
+			try {
+				return new String(storage, 0, len [0], "US-ASCII");
+			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		return null;
 	}
 
-	private static String getProgramInfoLog(GL2ES2 gl, int id)
-	{
+	private static String getProgramInfoLog(GL2ES2 gl, int id) {
 		int[] infoLogLength = new int[1];
 		gl.glGetProgramiv(id, GL2ES2.GL_INFO_LOG_LENGTH, infoLogLength, 0);
-		if (infoLogLength[0] > 0)
-		{
-			byte[] storage = new byte[infoLogLength[0]];
+		if (infoLogLength [0] > 0) {
+			byte[] storage = new byte[infoLogLength [0]];
 			int[] len = new int[1];
-			gl.glGetProgramInfoLog(id, infoLogLength[0], len, 0, storage, 0);
-			try
-			{
-				return new String(storage, 0, len[0], "US-ASCII");
-			}
-			catch (UnsupportedEncodingException e)
-			{
+			gl.glGetProgramInfoLog(id, infoLogLength [0], len, 0, storage, 0);
+			try {
+				return new String(storage, 0, len [0], "US-ASCII");
+			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		return null;
 	}
 
-	private static int glslToJ3dType(int type)
-	{
-		switch (type)
-		{
-		case GL2ES2.GL_BOOL:
-		case GL2ES2.GL_INT:
-		case GL2ES2.GL_SAMPLER_2D:
-		case GL2ES2.GL_SAMPLER_3D:
-		case GL2ES2.GL_SAMPLER_CUBE:
-			return ShaderAttributeObjectRetained.TYPE_INTEGER;
+	private static int glslToJ3dType(int type) {
+		switch (type) {
+			case GL2ES2.GL_BOOL:
+			case GL2ES2.GL_INT:
+			case GL2ES2.GL_SAMPLER_2D:
+			case GL2ES2.GL_SAMPLER_3D:
+			case GL2ES2.GL_SAMPLER_CUBE:
+				return ShaderAttributeObjectRetained.TYPE_INTEGER;
 
-		case GL2ES2.GL_FLOAT:
-			return ShaderAttributeObjectRetained.TYPE_FLOAT;
+			case GL2ES2.GL_FLOAT:
+				return ShaderAttributeObjectRetained.TYPE_FLOAT;
 
-		case GL2ES2.GL_INT_VEC2:
-		case GL2ES2.GL_BOOL_VEC2:
-			return ShaderAttributeObjectRetained.TYPE_TUPLE2I;
+			case GL2ES2.GL_INT_VEC2:
+			case GL2ES2.GL_BOOL_VEC2:
+				return ShaderAttributeObjectRetained.TYPE_TUPLE2I;
 
-		case GL2ES2.GL_FLOAT_VEC2:
-			return ShaderAttributeObjectRetained.TYPE_TUPLE2F;
+			case GL2ES2.GL_FLOAT_VEC2:
+				return ShaderAttributeObjectRetained.TYPE_TUPLE2F;
 
-		case GL2ES2.GL_INT_VEC3:
-		case GL2ES2.GL_BOOL_VEC3:
-			return ShaderAttributeObjectRetained.TYPE_TUPLE3I;
+			case GL2ES2.GL_INT_VEC3:
+			case GL2ES2.GL_BOOL_VEC3:
+				return ShaderAttributeObjectRetained.TYPE_TUPLE3I;
 
-		case GL2ES2.GL_FLOAT_VEC3:
-			return ShaderAttributeObjectRetained.TYPE_TUPLE3F;
+			case GL2ES2.GL_FLOAT_VEC3:
+				return ShaderAttributeObjectRetained.TYPE_TUPLE3F;
 
-		case GL2ES2.GL_INT_VEC4:
-		case GL2ES2.GL_BOOL_VEC4:
-			return ShaderAttributeObjectRetained.TYPE_TUPLE4I;
+			case GL2ES2.GL_INT_VEC4:
+			case GL2ES2.GL_BOOL_VEC4:
+				return ShaderAttributeObjectRetained.TYPE_TUPLE4I;
 
-		case GL2ES2.GL_FLOAT_VEC4:
-			return ShaderAttributeObjectRetained.TYPE_TUPLE4F;
+			case GL2ES2.GL_FLOAT_VEC4:
+				return ShaderAttributeObjectRetained.TYPE_TUPLE4F;
 
-		// case GL2ES2.GL_FLOAT_MAT2:
+			// case GL2ES2.GL_FLOAT_MAT2:
 
-		case GL2ES2.GL_FLOAT_MAT3:
-			return ShaderAttributeObjectRetained.TYPE_MATRIX3F;
+			case GL2ES2.GL_FLOAT_MAT3:
+				return ShaderAttributeObjectRetained.TYPE_MATRIX3F;
 
-		case GL2ES2.GL_FLOAT_MAT4:
-			return ShaderAttributeObjectRetained.TYPE_MATRIX4F;
+			case GL2ES2.GL_FLOAT_MAT4:
+				return ShaderAttributeObjectRetained.TYPE_MATRIX4F;
 
-		// Java 3D does not support the following sampler types:
-		//
-		// case GL2ES2.GL_SAMPLER_1D_ARB:
-		// case GL2ES2.GL_SAMPLER_1D_SHADOW_ARB:
-		// case GL2ES2.GL_SAMPLER_2D_SHADOW_ARB:
-		// case GL2ES2.GL_SAMPLER_2D_RECT_ARB:
-		// case GL2ES2.GL_SAMPLER_2D_RECT_SHADOW_ARB:
+			// Java 3D does not support the following sampler types:
+			//
+			// case GL2ES2.GL_SAMPLER_1D_ARB:
+			// case GL2ES2.GL_SAMPLER_1D_SHADOW_ARB:
+			// case GL2ES2.GL_SAMPLER_2D_SHADOW_ARB:
+			// case GL2ES2.GL_SAMPLER_2D_RECT_ARB:
+			// case GL2ES2.GL_SAMPLER_2D_RECT_SHADOW_ARB:
 		}
 
 		return -1;
@@ -4824,47 +4382,54 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// DirectionalLightRetained methods
 	//
 	@Override
-	void updateDirectionalLight(Context ctx, int lightSlot, float red, float green, float blue, float dirx, float diry, float dirz)
-	{
+	void updateDirectionalLight(Context ctx, int lightSlot, float red, float green, float blue, float dirx, float diry,
+								float dirz, int shadowMapSamplerId, double[] projMatrix) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.updateDirectionalLight() " + lightSlot + " " + red + " " + green + " " + blue + " " + dirx
-					+ " " + diry + " " + dirz);
+			System.err.println("JoglPipeline.updateDirectionalLight() " + lightSlot + " " + red + " " + green + " "
+								+ blue + " " + dirx + " " + diry + " " + dirz);
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateDirectionalLight++;
+			((Jogl2es2Context)ctx).perFrameStats.updateDirectionalLight++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		
-		//lights are only used in calcs in eye space
-		// for directional lights I need to rotate but not translate
-		Vector3f dir = joglesctx.matrixUtil.transform(joglesctx.currentViewMat, dirx, diry, dirz);
-		 
-		
-		if (joglesctx.glLightSource[lightSlot] == null)
-		{
-			joglesctx.glLightSource[lightSlot] = new glLightSource();
-			joglesctx.gl_state.glLightSource[lightSlot] = null;
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+
+		// note the current state of MV MUST be used by the lights when setting position!
+		// https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
+
+		// note can't use the modelview as it's calced late
+
+		//TODO:? possibly directional should only take the view mat, but surely I'd get a blank model??
+		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, -dirx,
+				-diry, -dirz, 0f);
+
+		if (joglesctx.glLightSource [lightSlot] == null) {
+			joglesctx.glLightSource [lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource [lightSlot] = null;
 		}
 
-		joglesctx.glLightSource[lightSlot].diffuse.x = red;
-		joglesctx.glLightSource[lightSlot].diffuse.y = green;
-		joglesctx.glLightSource[lightSlot].diffuse.z = blue;
-		joglesctx.glLightSource[lightSlot].diffuse.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].specular.x = red;
-		joglesctx.glLightSource[lightSlot].specular.y = green;
-		joglesctx.glLightSource[lightSlot].specular.z = blue;
-		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = -dir.x;// world space
-		joglesctx.glLightSource[lightSlot].position.y = -dir.y;
-		joglesctx.glLightSource[lightSlot].position.z = -dir.z;
-		joglesctx.glLightSource[lightSlot].position.w = 0.0f;// 0 means directional light
+		joglesctx.glLightSource [lightSlot].diffuse.x = red;
+		joglesctx.glLightSource [lightSlot].diffuse.y = green;
+		joglesctx.glLightSource [lightSlot].diffuse.z = blue;
+		joglesctx.glLightSource [lightSlot].diffuse.w = 1.0f;
+		joglesctx.glLightSource [lightSlot].specular.x = red;
+		joglesctx.glLightSource [lightSlot].specular.y = green;
+		joglesctx.glLightSource [lightSlot].specular.z = blue;
+		joglesctx.glLightSource [lightSlot].specular.w = 1.0f;
+		joglesctx.glLightSource [lightSlot].position.x = lightPos.x;
+		joglesctx.glLightSource [lightSlot].position.y = lightPos.y;
+		joglesctx.glLightSource [lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource [lightSlot].position.w = 0.0f;// 0 means directional light
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
 		// joglesctx.glLightSource[lightSlot].GL_POSITION = 1.0f; // what is this?
-		joglesctx.glLightSource[lightSlot].constantAttenuation = 1.0f;
-		joglesctx.glLightSource[lightSlot].linearAttenuation = 0.0f;
-		joglesctx.glLightSource[lightSlot].quadraticAttenuation = 0.0f;
-		joglesctx.glLightSource[lightSlot].spotExponent = 0.0f;
-		joglesctx.glLightSource[lightSlot].spotCutoff = 180.0f;
+		joglesctx.glLightSource [lightSlot].constantAttenuation = 1.0f;
+		joglesctx.glLightSource [lightSlot].linearAttenuation = 0.0f;
+		joglesctx.glLightSource [lightSlot].quadraticAttenuation = 0.0f;
+		joglesctx.glLightSource [lightSlot].spotExponent = 0.0f;
+		joglesctx.glLightSource [lightSlot].spotCutoff = 180.0f;
+		joglesctx.glLightSource [lightSlot].shadowMapSamplerId = shadowMapSamplerId;
+		if( shadowMapSamplerId != -1) {
+			joglesctx.glLightSource [lightSlot].projMatrix.set(projMatrix);
+		}
 	}
 
 	// ---------------------------------------------------------------------
@@ -4873,44 +4438,49 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// PointLightRetained methods
 	//
 	@Override
-	void updatePointLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
-			float posx, float posy, float posz)
-	{
+	void updatePointLight(	Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny,
+							float attenz, float posx, float posy, float posz, int shadowMapSamplerId, double[] projMatrix) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updatePointLight()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updatePointLight++;
+			((Jogl2es2Context)ctx).perFrameStats.updatePointLight++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		
-		//note the LightBin had to be modified so the view mat would appear here now. 
-		//lights are only used in calcs in eye space
-		Vector4f pos = joglesctx.matrixUtil.transform(joglesctx.currentViewMat, posx, posy, posz, 1.0f);		
-		
-		if (joglesctx.glLightSource[lightSlot] == null)
-		{
-			joglesctx.glLightSource[lightSlot] = new glLightSource();
-			joglesctx.gl_state.glLightSource[lightSlot] = null;
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+
+		// note the current state of MV MUST be used by the lights when setting position!
+		// https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
+
+		// note can't use the modelview as it's calced late		
+		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx,
+				posy, posz, 1.0f);
+
+		if (joglesctx.glLightSource [lightSlot] == null) {
+			joglesctx.glLightSource [lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource [lightSlot] = null;
 		}
 
-		joglesctx.glLightSource[lightSlot].diffuse.x = red;
-		joglesctx.glLightSource[lightSlot].diffuse.y = green;
-		joglesctx.glLightSource[lightSlot].diffuse.z = blue;
-		joglesctx.glLightSource[lightSlot].diffuse.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].specular.x = red;
-		joglesctx.glLightSource[lightSlot].specular.y = green;
-		joglesctx.glLightSource[lightSlot].specular.z = blue;
-		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = pos.x; // world space
-		joglesctx.glLightSource[lightSlot].position.y = pos.y;
-		joglesctx.glLightSource[lightSlot].position.z = pos.z;
-		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
+		joglesctx.glLightSource [lightSlot].diffuse.x = red;
+		joglesctx.glLightSource [lightSlot].diffuse.y = green;
+		joglesctx.glLightSource [lightSlot].diffuse.z = blue;
+		joglesctx.glLightSource [lightSlot].diffuse.w = 1.0f;
+		joglesctx.glLightSource [lightSlot].specular.x = red;
+		joglesctx.glLightSource [lightSlot].specular.y = green;
+		joglesctx.glLightSource [lightSlot].specular.z = blue;
+		joglesctx.glLightSource [lightSlot].specular.w = 1.0f;
+		joglesctx.glLightSource [lightSlot].position.x = lightPos.x;
+		joglesctx.glLightSource [lightSlot].position.y = lightPos.y;
+		joglesctx.glLightSource [lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource [lightSlot].position.w = 1.0f;// 1 mean pos not dir
 		//joglesctx.pointLight[lightSlot].ambient = black;// odd
-		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
-		joglesctx.glLightSource[lightSlot].linearAttenuation = atteny;
-		joglesctx.glLightSource[lightSlot].quadraticAttenuation = attenz;
-		joglesctx.glLightSource[lightSlot].spotExponent = 0.0f;
-		joglesctx.glLightSource[lightSlot].spotCutoff = 180.0f;
+		joglesctx.glLightSource [lightSlot].constantAttenuation = attenx;
+		joglesctx.glLightSource [lightSlot].linearAttenuation = atteny;
+		joglesctx.glLightSource [lightSlot].quadraticAttenuation = attenz;
+		joglesctx.glLightSource [lightSlot].spotExponent = 0.0f;
+		joglesctx.glLightSource [lightSlot].spotCutoff = 180.0f;
+		joglesctx.glLightSource [lightSlot].shadowMapSamplerId = shadowMapSamplerId;
+		if( shadowMapSamplerId != -1) {
+			joglesctx.glLightSource [lightSlot].projMatrix.set(projMatrix);
+		}
 	}
 
 	// ---------------------------------------------------------------------
@@ -4919,46 +4489,53 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// SpotLightRetained methods
 	//
 	@Override
-	void updateSpotLight(Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny, float attenz,
-			float posx, float posy, float posz, float spreadAngle, float concentration, float dirx, float diry, float dirz)
-	{
+	void updateSpotLight(	Context ctx, int lightSlot, float red, float green, float blue, float attenx, float atteny,
+							float attenz, float posx, float posy, float posz, float spreadAngle, float concentration,
+							float dirx, float diry, float dirz, int shadowMapSamplerId, double[] projMatrix) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateSpotLight()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateSpotLight++;
+			((Jogl2es2Context)ctx).perFrameStats.updateSpotLight++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		
-		//lights are only used in calcs in eye space
-		Vector4f pos = joglesctx.matrixUtil.transform(joglesctx.currentViewMat, posx, posy, posz, 1.0f);		
-				
-		if (joglesctx.glLightSource[lightSlot] == null)
-		{
-			joglesctx.glLightSource[lightSlot] = new glLightSource();
-			joglesctx.gl_state.glLightSource[lightSlot] = null;
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+
+		// note the current state of MV MUST be used by the lights when setting position!
+		//https://www.opengl.org/discussion_boards/showthread.php/168706-Light-Position-in-eye-s-cordinate
+
+		// note can't use the modelview as it's  calced late
+		Vector4f lightPos = joglesctx.matrixUtil.transform(joglesctx.currentModelMat, joglesctx.currentViewMat, posx,
+				posy, posz, 1.0f);
+
+		if (joglesctx.glLightSource [lightSlot] == null) {
+			joglesctx.glLightSource [lightSlot] = new glLightSource();
+			joglesctx.gl_state.glLightSource [lightSlot] = null;
 		}
 
-		joglesctx.glLightSource[lightSlot].diffuse.x = red;
-		joglesctx.glLightSource[lightSlot].diffuse.y = green;
-		joglesctx.glLightSource[lightSlot].diffuse.z = blue;
-		joglesctx.glLightSource[lightSlot].diffuse.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].specular.x = red;
-		joglesctx.glLightSource[lightSlot].specular.y = green;
-		joglesctx.glLightSource[lightSlot].specular.z = blue;
-		joglesctx.glLightSource[lightSlot].specular.w = 1.0f;
-		joglesctx.glLightSource[lightSlot].position.x = pos.x;// world space
-		joglesctx.glLightSource[lightSlot].position.y = pos.y;
-		joglesctx.glLightSource[lightSlot].position.z = pos.z;
-		joglesctx.glLightSource[lightSlot].position.w = 1.0f;// 1 mean pos not dir
+		joglesctx.glLightSource [lightSlot].diffuse.x = red;
+		joglesctx.glLightSource [lightSlot].diffuse.y = green;
+		joglesctx.glLightSource [lightSlot].diffuse.z = blue;
+		joglesctx.glLightSource [lightSlot].diffuse.w = 1.0f;
+		joglesctx.glLightSource [lightSlot].specular.x = red;
+		joglesctx.glLightSource [lightSlot].specular.y = green;
+		joglesctx.glLightSource [lightSlot].specular.z = blue;
+		joglesctx.glLightSource [lightSlot].specular.w = 1.0f;
+		joglesctx.glLightSource [lightSlot].position.x = lightPos.x;
+		joglesctx.glLightSource [lightSlot].position.y = lightPos.y;
+		joglesctx.glLightSource [lightSlot].position.z = lightPos.z;
+		joglesctx.glLightSource [lightSlot].position.w = 1.0f;// 1 mean pos not dir
 		//joglesctx.glLightSource[lightSlot].ambient = black;// odd
-		joglesctx.glLightSource[lightSlot].constantAttenuation = attenx;
-		joglesctx.glLightSource[lightSlot].linearAttenuation = atteny;
-		joglesctx.glLightSource[lightSlot].quadraticAttenuation = attenz;
-		joglesctx.glLightSource[lightSlot].spotDirection.x = dirx;// world space
-		joglesctx.glLightSource[lightSlot].spotDirection.y = diry;
-		joglesctx.glLightSource[lightSlot].spotDirection.z = dirz;
-		joglesctx.glLightSource[lightSlot].spotExponent = concentration;
-		joglesctx.glLightSource[lightSlot].spotCutoff = (float) (spreadAngle * 180.0f / Math.PI);
+		joglesctx.glLightSource [lightSlot].constantAttenuation = attenx;
+		joglesctx.glLightSource [lightSlot].linearAttenuation = atteny;
+		joglesctx.glLightSource [lightSlot].quadraticAttenuation = attenz;
+		joglesctx.glLightSource [lightSlot].spotDirection.x = dirx;
+		joglesctx.glLightSource [lightSlot].spotDirection.y = diry;
+		joglesctx.glLightSource [lightSlot].spotDirection.z = dirz;
+		joglesctx.glLightSource [lightSlot].spotExponent = concentration;
+		joglesctx.glLightSource [lightSlot].spotCutoff = (float)(spreadAngle * 180.0f / Math.PI);
+		joglesctx.glLightSource [lightSlot].shadowMapSamplerId = shadowMapSamplerId;
+		if( shadowMapSamplerId != -1) {
+			joglesctx.glLightSource [lightSlot].projMatrix.set(projMatrix);
+		}
 
 	}
 
@@ -4968,14 +4545,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ExponentialFogRetained methods
 	//
 	@Override
-	void updateExponentialFog(Context ctx, float red, float green, float blue, float density)
-	{
+	void updateExponentialFog(Context ctx, float red, float green, float blue, float density) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateExponentialFog()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateExponentialFog++;
+			((Jogl2es2Context)ctx).perFrameStats.updateExponentialFog++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.expColor.x = red;
 		joglesctx.fogData.expColor.y = green;
@@ -4990,50 +4566,47 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// LinearFogRetained methods
 	//
 	@Override
-	void updateLinearFog(Context ctx, float red, float green, float blue, double fdist, double bdist)
-	{
+	void updateLinearFog(Context ctx, float red, float green, float blue, double fdist, double bdist) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateLinearFog()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateLinearFog++;
+			((Jogl2es2Context)ctx).perFrameStats.updateLinearFog++;
 
 		// see
 		// https://www.opengl.org/discussion_boards/showthread.php/151415-Fog-with-pixel-shader-%28arb_fragment_program%29
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.linearColor.x = red;
 		joglesctx.fogData.linearColor.y = green;
 		joglesctx.fogData.linearColor.z = blue;
-		joglesctx.fogData.linearStart = (float) fdist;
-		joglesctx.fogData.linearEnd = (float) bdist;
+		joglesctx.fogData.linearStart = (float)fdist;
+		joglesctx.fogData.linearEnd = (float)bdist;
 		joglesctx.fogData.fogEnabled = 1;
 	}
 
 	// native method for disabling fog
 	@Override
-	void disableFog(Context ctx)
-	{
+	void disableFog(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.disableFog()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.disableFog++;
+			((Jogl2es2Context)ctx).perFrameStats.disableFog++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.fogEnabled = 0;
 	}
 
 	// native method for setting fog enable flag
 	@Override
-	void setFogEnableFlag(Context ctx, boolean enable)
-	{
+	void setFogEnableFlag(Context ctx, boolean enable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setFogEnableFlag()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setFogEnableFlag++;
+			((Jogl2es2Context)ctx).perFrameStats.setFogEnableFlag++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		joglesctx.gl_state.fogData.expColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.fogData.fogEnabled = enable ? 1 : 0;
 	}
@@ -5044,15 +4617,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// LineAttributesRetained methods
 	//
 	@Override
-	void updateLineAttributes(Context ctx, float lineWidth, int linePattern, int linePatternMask, int linePatternScaleFactor,
-			boolean lineAntialiasing)
-	{
+	void updateLineAttributes(	Context ctx, float lineWidth, int linePattern, int linePatternMask,
+								int linePatternScaleFactor, boolean lineAntialiasing) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateLineAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateLineAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updateLineAttributes++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glLineWidth(lineWidth);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -5061,14 +4633,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default LineAttributes
 	@Override
-	void resetLineAttributes(Context ctx)
-	{
+	void resetLineAttributes(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetLineAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetLineAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.resetLineAttributes++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 		gl.glLineWidth(1.0f);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -5080,66 +4651,70 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// MaterialRetained methods
 	//
 	@Override
-	void updateMaterial(Context ctx, float red, float green, float blue, float alpha, float aRed, float aGreen, float aBlue, float eRed,
-			float eGreen, float eBlue, float dRed, float dGreen, float dBlue, float sRed, float sGreen, float sBlue, float shininess,
-			int colorTarget, boolean lightEnable)
-	{
+	void updateMaterial(Context ctx, float red, float green, float blue, float alpha, float aRed, float aGreen,
+						float aBlue, float eRed, float eGreen, float eBlue, float dRed, float dGreen, float dBlue,
+						float sRed, float sGreen, float sBlue, float shininess, int colorTarget, boolean lightEnable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateMaterial()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateMaterial++;
+			((Jogl2es2Context)ctx).perFrameStats.updateMaterial++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		// will we need to repush to shaders?
-		if (joglesctx.objectColor.x != red || joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
-				|| joglesctx.objectColor.w != alpha){
+		if (joglesctx.objectColor.x != red	|| joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
+			|| joglesctx.objectColor.w != alpha) {
 			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
-		joglesctx.objectColor.x = red;
-		joglesctx.objectColor.y = green;
-		joglesctx.objectColor.z = blue;
-		joglesctx.objectColor.w = alpha;}
+			joglesctx.objectColor.x = red;
+			joglesctx.objectColor.y = green;
+			joglesctx.objectColor.z = blue;
+			joglesctx.objectColor.w = alpha;
+		}
 
 		joglesctx.materialData.lightEnabled = lightEnable ? 1 : 0;
 		joglesctx.materialData.shininess = shininess;
-		if (joglesctx.materialData.emission.x != eRed || joglesctx.materialData.emission.y != eGreen
-				|| joglesctx.materialData.emission.z != eBlue){
+		if (joglesctx.materialData.emission.x != eRed	|| joglesctx.materialData.emission.y != eGreen
+			|| joglesctx.materialData.emission.z != eBlue) {
 			joglesctx.gl_state.glFrontMaterial.emission.x = Float.NEGATIVE_INFINITY;
-		joglesctx.materialData.emission.x = eRed;
-		joglesctx.materialData.emission.y = eGreen;
-		joglesctx.materialData.emission.z = eBlue;}
-		if (joglesctx.materialData.ambient.x != aRed || joglesctx.materialData.ambient.y != aGreen
-				|| joglesctx.materialData.ambient.z != aBlue){
+			joglesctx.materialData.emission.x = eRed;
+			joglesctx.materialData.emission.y = eGreen;
+			joglesctx.materialData.emission.z = eBlue;
+		}
+		if (joglesctx.materialData.ambient.x != aRed	|| joglesctx.materialData.ambient.y != aGreen
+			|| joglesctx.materialData.ambient.z != aBlue) {
 			joglesctx.gl_state.glFrontMaterial.ambient.x = Float.NEGATIVE_INFINITY;
-		joglesctx.materialData.ambient.x = aRed;
-		joglesctx.materialData.ambient.y = aGreen;
-		joglesctx.materialData.ambient.z = aBlue;}
-		if (joglesctx.materialData.specular.x != sRed || joglesctx.materialData.specular.y != sGreen
-				|| joglesctx.materialData.specular.z != sBlue){
+			joglesctx.materialData.ambient.x = aRed;
+			joglesctx.materialData.ambient.y = aGreen;
+			joglesctx.materialData.ambient.z = aBlue;
+		}
+		if (joglesctx.materialData.specular.x != sRed	|| joglesctx.materialData.specular.y != sGreen
+			|| joglesctx.materialData.specular.z != sBlue) {
 			joglesctx.gl_state.glFrontMaterial.specular.x = Float.NEGATIVE_INFINITY;
-		joglesctx.materialData.specular.x = sRed;
-		joglesctx.materialData.specular.y = sGreen;
-		joglesctx.materialData.specular.z = sBlue;}
-		if (joglesctx.materialData.diffuse.x != dRed || joglesctx.materialData.diffuse.y != dGreen
-				|| joglesctx.materialData.diffuse.z != dBlue || joglesctx.materialData.diffuse.w != alpha){
+			joglesctx.materialData.specular.x = sRed;
+			joglesctx.materialData.specular.y = sGreen;
+			joglesctx.materialData.specular.z = sBlue;
+		}
+		if (joglesctx.materialData.diffuse.x != dRed	|| joglesctx.materialData.diffuse.y != dGreen
+			|| joglesctx.materialData.diffuse.z != dBlue || joglesctx.materialData.diffuse.w != alpha) {
 			joglesctx.gl_state.glFrontMaterial.diffuse.x = Float.NEGATIVE_INFINITY;
-		joglesctx.materialData.diffuse.x = dRed;
-		joglesctx.materialData.diffuse.y = dGreen;
-		joglesctx.materialData.diffuse.z = dBlue;
-		joglesctx.materialData.diffuse.w = alpha;}
+			joglesctx.materialData.diffuse.x = dRed;
+			joglesctx.materialData.diffuse.y = dGreen;
+			joglesctx.materialData.diffuse.z = dBlue;
+			joglesctx.materialData.diffuse.w = alpha;
+		}
 	}
 
 	// native method for setting Material when no material is present
 	@Override
-	void updateMaterialColor(Context ctx, float r, float g, float b, float a)
-	{
+	void updateMaterialColor(Context ctx, float r, float g, float b, float a) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateMaterialColor()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateMaterialColor++;
+			((Jogl2es2Context)ctx).perFrameStats.updateMaterialColor++;
 
 		// update single color in case where material has color and there are no coloring attributes
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		if (joglesctx.objectColor.x != r || joglesctx.objectColor.y != g || joglesctx.objectColor.z != b || joglesctx.objectColor.w != a)
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+		if (joglesctx.objectColor.x != r	|| joglesctx.objectColor.y != g || joglesctx.objectColor.z != b
+			|| joglesctx.objectColor.w != a)
 			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = r;
 		joglesctx.objectColor.y = g;
@@ -5152,18 +4727,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	//
 	// ColoringAttributesRetained methods
 	@Override
-	void updateColoringAttributes(Context ctx, float dRed, float dGreen, float dBlue, float red, float green, float blue, float alpha,
-			boolean lightEnable, int shadeModel)
-	{
+	void updateColoringAttributes(	Context ctx, float dRed, float dGreen, float dBlue, float red, float green,
+									float blue, float alpha, boolean lightEnable, int shadeModel) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateColoringAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateColoringAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updateColoringAttributes++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		// note we ignore lightEnabled and always pass the object color to the shader if it wants it
-		if (joglesctx.objectColor.x != red || joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
-				|| joglesctx.objectColor.w != alpha)
+		if (joglesctx.objectColor.x != red	|| joglesctx.objectColor.y != green || joglesctx.objectColor.z != blue
+			|| joglesctx.objectColor.w != alpha)
 			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = red;
 		joglesctx.objectColor.y = green;
@@ -5176,15 +4750,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default ColoringAttributes
 	@Override
-	void resetColoringAttributes(Context ctx, float r, float g, float b, float a, boolean enableLight)
-	{
+	void resetColoringAttributes(Context ctx, float r, float g, float b, float a, boolean enableLight) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.resetColoringAttributes() " + r + " " + g + " " + b + " " + a + " " + enableLight);
+			System.err.println(
+					"JoglPipeline.resetColoringAttributes() " + r + " " + g + " " + b + " " + a + " " + enableLight);
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetColoringAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.resetColoringAttributes++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		if (joglesctx.objectColor.x != r || joglesctx.objectColor.y != g || joglesctx.objectColor.z != b || joglesctx.objectColor.w != a)
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+		if (joglesctx.objectColor.x != r	|| joglesctx.objectColor.y != g || joglesctx.objectColor.z != b
+			|| joglesctx.objectColor.w != a)
 			joglesctx.gl_state.objectColor.x = Float.NEGATIVE_INFINITY;
 		joglesctx.objectColor.x = r;
 		joglesctx.objectColor.y = g;
@@ -5203,20 +4778,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// http://stackoverflow.com/questions/3497068/textured-points-in-opengl-es-2-0
 	// http://stackoverflow.com/questions/7237086/opengl-es-2-0-equivalent-for-es-1-0-circles-using-gl-point-smooth
 	@Override
-	void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing)
-	{
+	void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updatePointAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updatePointAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updatePointAttributes++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		joglesctx.pointSize = pointSize;
 
 		// one time enable call
-		if (!pointsEnabled)
-		{
-			GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		if (!pointsEnabled) {
+			GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 			// bug in desktop requiring this to be set still
 			gl.glEnable(0x8642);// GL_VERTEX_PROGRAM_POINT_SIZE
 			gl.glEnable(34913);// GL.GL_POINT_SPRITE);
@@ -5228,14 +4801,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default PointAttributes
 	@Override
-	void resetPointAttributes(Context ctx)
-	{
+	void resetPointAttributes(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetPointAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetPointAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.resetPointAttributes++;
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 		joglesctx.pointSize = 1.0f;
 	}
 
@@ -5245,31 +4817,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// PolygonAttributesRetained methods
 	//
 	@Override
-	void updatePolygonAttributes(Context ctx, int polygonMode, int cullFace, boolean backFaceNormalFlip, float polygonOffset,
-			float polygonOffsetFactor)
-	{
+	void updatePolygonAttributes(	Context ctx, int polygonMode, int cullFace, boolean backFaceNormalFlip,
+									float polygonOffset, float polygonOffsetFactor) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updatePolygonAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updatePolygonAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updatePolygonAttributes++;
 
 		GL2ES2 gl = null;// get only if needed, expensive call
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		if (joglesctx.gl_state.cullFace != cullFace)
-		{
-			gl = ((Jogl2es2Context) ctx).gl2es2();
-			if (cullFace == PolygonAttributes.CULL_NONE)
-			{
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+		if (joglesctx.gl_state.cullFace != cullFace) {
+			gl = ((Jogl2es2Context)ctx).gl2es2();
+			if (cullFace == PolygonAttributes.CULL_NONE) {
 				gl.glDisable(GL2ES2.GL_CULL_FACE);
-			}
-			else
-			{
-				if (cullFace == PolygonAttributes.CULL_BACK)
-				{
+			} else {
+				if (cullFace == PolygonAttributes.CULL_BACK) {
 					gl.glCullFace(GL2ES2.GL_BACK);
-				}
-				else
-				{
+				} else {
 					gl.glCullFace(GL2ES2.GL_FRONT);
 				}
 				gl.glEnable(GL2ES2.GL_CULL_FACE);
@@ -5281,23 +4845,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				joglesctx.gl_state.cullFace = cullFace;
 		}
 
-		if (joglesctx.gl_state.polygonOffsetFactor != polygonOffsetFactor || joglesctx.gl_state.polygonOffset != polygonOffset)
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (joglesctx.gl_state.polygonOffsetFactor != polygonOffsetFactor
+			|| joglesctx.gl_state.polygonOffset != polygonOffset) {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glPolygonOffset(polygonOffsetFactor, polygonOffset);
 
-			if ((polygonOffsetFactor != 0.0f) || (polygonOffset != 0.0f))
-			{
+			if ((polygonOffsetFactor != 0.0f) || (polygonOffset != 0.0f)) {
 				gl.glEnable(GL2ES2.GL_POLYGON_OFFSET_FILL);
-			}
-			else
-			{
+			} else {
 				gl.glDisable(GL2ES2.GL_POLYGON_OFFSET_FILL);
 			}
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS_OTHER)
-			{
+			if (MINIMISE_NATIVE_CALLS_OTHER) {
 				joglesctx.gl_state.polygonOffsetFactor = polygonOffsetFactor;
 				joglesctx.gl_state.polygonOffset = polygonOffset;
 			}
@@ -5307,18 +4867,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default PolygonAttributes
 	@Override
-	void resetPolygonAttributes(Context ctx)
-	{
+	void resetPolygonAttributes(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetPolygonAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetPolygonAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.resetPolygonAttributes++;
 
 		GL2ES2 gl = null;// get only if needed, expensive call
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		if (joglesctx.gl_state.cullFace != PolygonAttributes.CULL_BACK)
-		{
-			gl = ((Jogl2es2Context) ctx).gl2es2();
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+		if (joglesctx.gl_state.cullFace != PolygonAttributes.CULL_BACK) {
+			gl = ((Jogl2es2Context)ctx).gl2es2();
 			gl.glCullFace(GL2ES2.GL_BACK);
 			gl.glEnable(GL2ES2.GL_CULL_FACE);
 			if (DO_OUTPUT_ERRORS)
@@ -5327,15 +4885,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				joglesctx.gl_state.cullFace = PolygonAttributes.CULL_BACK;
 		}
 
-		if (joglesctx.gl_state.polygonOffsetFactor != 0.0f || joglesctx.gl_state.polygonOffset != 0.0f)
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (joglesctx.gl_state.polygonOffsetFactor != 0.0f || joglesctx.gl_state.polygonOffset != 0.0f) {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glPolygonOffset(0.0f, 0.0f);
 			gl.glDisable(GL2ES2.GL_POLYGON_OFFSET_FILL);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS_OTHER)
-			{
+			if (MINIMISE_NATIVE_CALLS_OTHER) {
 				joglesctx.gl_state.polygonOffsetFactor = 0.0f;
 				joglesctx.gl_state.polygonOffset = 0.0f;
 			}
@@ -5350,35 +4906,32 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// RenderingAttributesRetained methods
 	//
 	@Override
-	void updateRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride,
-			boolean depthBufferEnable, boolean depthBufferWriteEnable, int depthTestFunction, float alphaTestValue, int alphaTestFunction,
-			boolean ignoreVertexColors, boolean rasterOpEnable, int rasterOp, boolean userStencilAvailable, boolean stencilEnable,
-			int stencilFailOp, int stencilZFailOp, int stencilZPassOp, int stencilFunction, int stencilReferenceValue,
-			int stencilCompareMask, int stencilWriteMask)
-	{
+	void updateRenderingAttributes(	Context ctx, boolean depthBufferWriteEnableOverride,
+									boolean depthBufferEnableOverride, boolean depthBufferEnable,
+									boolean depthBufferWriteEnable, int depthTestFunction, float alphaTestValue,
+									int alphaTestFunction, boolean ignoreVertexColors, boolean rasterOpEnable,
+									int rasterOp, boolean userStencilAvailable, boolean stencilEnable,
+									int stencilFailOp, int stencilZFailOp, int stencilZPassOp, int stencilFunction,
+									int stencilReferenceValue, int stencilCompareMask, int stencilWriteMask) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateRenderingAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateRenderingAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updateRenderingAttributes++;
 
 		GL2ES2 gl = null;// get late expensive
 
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		if (joglesctx.gl_state.depthBufferEnableOverride != depthBufferEnable || joglesctx.gl_state.depthBufferEnable != depthBufferEnable
-				|| joglesctx.gl_state.depthTestFunction != depthTestFunction)
-		{
-			if (!depthBufferEnableOverride)
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
-				if (depthBufferEnable)
-				{
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+		if (joglesctx.gl_state.depthBufferEnableOverride != depthBufferEnable
+			|| joglesctx.gl_state.depthBufferEnable != depthBufferEnable
+			|| joglesctx.gl_state.depthTestFunction != depthTestFunction) {
+			if (!depthBufferEnableOverride) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
+				if (depthBufferEnable) {
 					gl.glEnable(GL2ES2.GL_DEPTH_TEST);
 					gl.glDepthFunc(getFunctionValue(depthTestFunction));
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-				}
-				else
-				{
+				} else {
 					gl.glDisable(GL2ES2.GL_DEPTH_TEST);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -5393,25 +4946,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				joglesctx.gl_state.depthTestFunction = depthTestFunction;
 		}
 
-		if (!depthBufferWriteEnableOverride)
-		{
-			if (depthBufferWriteEnable)
-			{
-				if (joglesctx.gl_state.glDepthMask != true)
-				{
-					gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (!depthBufferWriteEnableOverride) {
+			if (depthBufferWriteEnable) {
+				if (joglesctx.gl_state.glDepthMask != true) {
+					gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 					gl.glDepthMask(true);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 					if (MINIMISE_NATIVE_CALLS_OTHER)
 						joglesctx.gl_state.glDepthMask = true;
 				}
-			}
-			else
-			{
-				if (joglesctx.gl_state.glDepthMask != false)
-				{
-					gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+			} else {
+				if (joglesctx.gl_state.glDepthMask != false) {
+					gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 					gl.glDepthMask(false);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -5421,12 +4968,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 		}
 
-		if (alphaTestFunction == RenderingAttributes.ALWAYS)
-		{
+		if (alphaTestFunction == RenderingAttributes.ALWAYS) {
 			joglesctx.renderingData.alphaTestEnabled = false;
-		}
-		else
-		{
+		} else {
 			joglesctx.renderingData.alphaTestEnabled = true;
 			joglesctx.renderingData.alphaTestFunction = getFunctionValue(alphaTestFunction);
 			joglesctx.renderingData.alphaTestValue = alphaTestValue;
@@ -5434,25 +4978,24 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		joglesctx.renderingData.ignoreVertexColors = ignoreVertexColors ? 1 : 0;
 
-		if (rasterOpEnable)
-		{
+		if (rasterOpEnable) {
 			System.err.println("rasterOpEnable!!!! no no no!");
 		}
 
-		if (userStencilAvailable)
-		{
-			if (stencilEnable)
-			{
-				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false || joglesctx.gl_state.stencilFailOp != stencilFailOp
-						|| joglesctx.gl_state.stencilZFailOp != stencilZFailOp || joglesctx.gl_state.stencilZPassOp != stencilZPassOp
-						|| joglesctx.gl_state.stencilFunction != stencilFunction
-						|| joglesctx.gl_state.stencilReferenceValue != stencilReferenceValue
-						|| joglesctx.gl_state.stencilCompareMask != stencilCompareMask
-						|| joglesctx.gl_state.stencilWriteMask != stencilWriteMask)
-				{
-					gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (userStencilAvailable) {
+			if (stencilEnable) {
+				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == false
+					|| joglesctx.gl_state.stencilFailOp != stencilFailOp
+					|| joglesctx.gl_state.stencilZFailOp != stencilZFailOp
+					|| joglesctx.gl_state.stencilZPassOp != stencilZPassOp
+					|| joglesctx.gl_state.stencilFunction != stencilFunction
+					|| joglesctx.gl_state.stencilReferenceValue != stencilReferenceValue
+					|| joglesctx.gl_state.stencilCompareMask != stencilCompareMask
+					|| joglesctx.gl_state.stencilWriteMask != stencilWriteMask) {
+					gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 					gl.glEnable(GL2ES2.GL_STENCIL_TEST);
-					gl.glStencilOp(getStencilOpValue(stencilFailOp), getStencilOpValue(stencilZFailOp), getStencilOpValue(stencilZPassOp));
+					gl.glStencilOp(getStencilOpValue(stencilFailOp), getStencilOpValue(stencilZFailOp),
+							getStencilOpValue(stencilZPassOp));
 					gl.glStencilFunc(getFunctionValue(stencilFunction), stencilReferenceValue, stencilCompareMask);
 					gl.glStencilMask(stencilWriteMask);
 					if (DO_OUTPUT_ERRORS)
@@ -5460,12 +5003,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					if (MINIMISE_NATIVE_CALLS_OTHER)
 						joglesctx.gl_state.glEnableGL_STENCIL_TEST = true;
 				}
-			}
-			else
-			{
-				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
-				{
-					gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+			} else {
+				if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true) {
+					gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 					gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -5479,20 +5019,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default RenderingAttributes
 	@Override
-	void resetRenderingAttributes(Context ctx, boolean depthBufferWriteEnableOverride, boolean depthBufferEnableOverride)
-	{
+	void resetRenderingAttributes(	Context ctx, boolean depthBufferWriteEnableOverride,
+									boolean depthBufferEnableOverride) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetRenderingAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetRenderingAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.resetRenderingAttributes++;
 
 		GL2ES2 gl = null; // get late expensive
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
-		if (!depthBufferWriteEnableOverride)
-		{
-			if (joglesctx.gl_state.glDepthMask != true)
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
+		if (!depthBufferWriteEnableOverride) {
+			if (joglesctx.gl_state.glDepthMask != true) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glDepthMask(true);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -5500,11 +5038,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					joglesctx.gl_state.glDepthMask = true;
 			}
 		}
-		if (!depthBufferEnableOverride)
-		{
-			if (joglesctx.gl_state.depthBufferEnable != true)
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (!depthBufferEnableOverride) {
+			if (joglesctx.gl_state.depthBufferEnable != true) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glEnable(GL2ES2.GL_DEPTH_TEST);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -5512,9 +5048,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					joglesctx.gl_state.depthBufferEnable = true;
 			}
 		}
-		if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL)
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (joglesctx.gl_state.depthTestFunction != RenderingAttributes.LESS_OR_EQUAL) {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -5527,9 +5062,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		joglesctx.renderingData.alphaTestValue = 0;
 		joglesctx.renderingData.ignoreVertexColors = 0;
 
-		if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true)
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (joglesctx.gl_state.glEnableGL_STENCIL_TEST == true) {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glDisable(GL2ES2.GL_STENCIL_TEST);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -5540,48 +5074,46 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void updateTransparencyAttributes(Context ctx, float alpha, int geometryType, int polygonMode, boolean lineAA, boolean pointAA,
-			int transparencyMode, int srcBlendFunction, int dstBlendFunction)
-	{
+	void updateTransparencyAttributes(	Context ctx, float alpha, int geometryType, int polygonMode, boolean lineAA,
+										boolean pointAA, int transparencyMode, int srcBlendFunction,
+										int dstBlendFunction) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTransparencyAttributes() " + alpha + " " + geometryType + " " + polygonMode + " "
-					+ lineAA + " " + pointAA + " " + transparencyMode + " " + srcBlendFunction + " " + dstBlendFunction);
+			System.err.println("JoglPipeline.updateTransparencyAttributes() "	+ alpha + " " + geometryType + " "
+								+ polygonMode + " " + lineAA + " " + pointAA + " " + transparencyMode + " "
+								+ srcBlendFunction + " " + dstBlendFunction);
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateTransparencyAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updateTransparencyAttributes++;
 
 		GL2ES2 gl = null;//get late expensive
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 
 		joglesctx.transparencyAlpha = alpha;
 
 		if ((transparencyMode < TransparencyAttributes.SCREEN_DOOR)
-				|| ((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
-				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
-		{
+			|| ((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE))
+				&& lineAA)
+			|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT))
+				&& pointAA)) {
 			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
-					|| joglesctx.gl_state.srcBlendFunction != srcBlendFunction || joglesctx.gl_state.dstBlendFunction != dstBlendFunction))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+														|| joglesctx.gl_state.srcBlendFunction != srcBlendFunction
+														|| joglesctx.gl_state.dstBlendFunction != dstBlendFunction)) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glEnable(GL2ES2.GL_BLEND);
 				// valid range of blendFunction 0..3 is already verified in shared code.
-				gl.glBlendFunc(blendFunctionTable[srcBlendFunction], blendFunctionTable[dstBlendFunction]);
+				gl.glBlendFunc(blendFunctionTable [srcBlendFunction], blendFunctionTable [dstBlendFunction]);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
-				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
-				{
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY) {
 					joglesctx.gl_state.glEnableGL_BLEND = true;
 					joglesctx.gl_state.srcBlendFunction = srcBlendFunction;
 					joglesctx.gl_state.dstBlendFunction = dstBlendFunction;
 				}
 			}
 
-		}
-		else
-		{
-			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != false))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		} else {
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != false)) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glDisable(GL2ES2.GL_BLEND);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -5594,43 +5126,38 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default TransparencyAttributes
 	@Override
-	void resetTransparency(Context ctx, int geometryType, int polygonMode, boolean lineAA, boolean pointAA)
-	{
+	void resetTransparency(Context ctx, int geometryType, int polygonMode, boolean lineAA, boolean pointAA) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetTransparency()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetTransparency++;
+			((Jogl2es2Context)ctx).perFrameStats.resetTransparency++;
 
 		GL2ES2 gl = null; //get late expensive
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 
 		joglesctx.transparencyAlpha = 1.0f;
 
 		if (((((geometryType & RenderMolecule.LINE) != 0) || (polygonMode == PolygonAttributes.POLYGON_LINE)) && lineAA)
-				|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT)) && pointAA))
-		{
-			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
+			|| ((((geometryType & RenderMolecule.POINT) != 0) || (polygonMode == PolygonAttributes.POLYGON_POINT))
+				&& pointAA)) {
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY
+				|| (joglesctx.gl_state.glEnableGL_BLEND != true
 					|| joglesctx.gl_state.srcBlendFunction != TransparencyAttributes.BLEND_SRC_ALPHA
-					|| joglesctx.gl_state.dstBlendFunction != TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+					|| joglesctx.gl_state.dstBlendFunction != TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA)) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glEnable(GL2ES2.GL_BLEND);
 				gl.glBlendFunc(GL2ES2.GL_SRC_ALPHA, GL2ES2.GL_ONE_MINUS_SRC_ALPHA);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
-				{
+				if (MINIMISE_NATIVE_CALLS_TRANSPARENCY) {
 					joglesctx.gl_state.glEnableGL_BLEND = true;
 					joglesctx.gl_state.srcBlendFunction = TransparencyAttributes.BLEND_SRC_ALPHA;
 					joglesctx.gl_state.dstBlendFunction = TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA;
 				}
 			}
-		}
-		else
-		{
-			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != false))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		} else {
+			if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != false)) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glDisable(GL2ES2.GL_BLEND);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -5644,31 +5171,29 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// TextureAttributesRetained methods
 	//
 	@Override
-	void updateTextureAttributes(Context ctx, double[] transform, boolean isIdentity, int textureMode, int perspCorrectionMode,
-			float textureBlendColorRed, float textureBlendColorGreen, float textureBlendColorBlue, float textureBlendColorAlpha,
-			int textureFormat)
-	{
+	void updateTextureAttributes(	Context ctx, double[] transform, boolean isIdentity, int textureMode,
+									int perspCorrectionMode, float textureBlendColorRed, float textureBlendColorGreen,
+									float textureBlendColorBlue, float textureBlendColorAlpha, int textureFormat) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureAttributes() " + lineString(transform));
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateTextureAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.updateTextureAttributes++;
 
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 		joglesctx.gl_state.textureTransform.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.textureTransform.set(transform);
 	}
 
 	// native method for setting default TextureAttributes
 	@Override
-	void resetTextureAttributes(Context ctx)
-	{
+	void resetTextureAttributes(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetTextureAttributes()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetTextureAttributes++;
+			((Jogl2es2Context)ctx).perFrameStats.resetTextureAttributes++;
 
 		// set Identity
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 		joglesctx.gl_state.textureTransform.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.textureTransform.setIdentity();
 
@@ -5678,8 +5203,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default TexCoordGeneration -Noop
 	@Override
-	void resetTexCoordGeneration(Context ctx)
-	{
+	void resetTexCoordGeneration(Context ctx) {
 		// TexCoordGeneration must be done in shaders
 		// if (VERBOSE)
 		// System.err.println("JoglPipeline.resetTexCoordGeneration()");
@@ -5693,21 +5217,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// TextureUnitStateRetained methods
 	//
 	@Override
-	void updateTextureUnitState(Context ctx, int index, boolean enable)
-	{
+	void updateTextureUnitState(Context ctx, int index, boolean enable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureUnitState(index=" + index + ",enable=" + enable + ")");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.updateTextureUnitState++;
+			((Jogl2es2Context)ctx).perFrameStats.updateTextureUnitState++;
 
-		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
 		GL2ES2 gl = null;//get late expensive
 
-		if (index >= 0)
-		{
-			if (!MINIMISE_NATIVE_CALLS_TEXTURE || (joglesContext.gl_state.glActiveTexture != (index + GL2ES2.GL_TEXTURE0)))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (index >= 0) {
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE
+				|| (joglesContext.gl_state.glActiveTexture != (index + GL2ES2.GL_TEXTURE0))) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glActiveTexture(index + GL2ES2.GL_TEXTURE0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -5724,61 +5246,57 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Texture2DRetained methods
 	//
 	@Override
-	void bindTexture2D(Context ctx, int objectId, boolean enable)
-	{
+	void bindTexture2D(Context ctx, int objectId, boolean enable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.bindTexture2D(objectId=" + objectId + ",enable=" + enable + ")");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.bindTexture2D++;
+			((Jogl2es2Context)ctx).perFrameStats.bindTexture2D++;
 
-		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
 		GL2ES2 gl = null;// get late expensive
 
-		if (enable)
-		{
+		if (enable) {
 			if (!MINIMISE_NATIVE_CALLS_TEXTURE
-					|| (joglesContext.gl_state.glBindTextureGL_TEXTURE_2D[joglesContext.gl_state.glActiveTexture] != objectId))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+				|| (joglesContext.gl_state.glBindTextureGL_TEXTURE_2D [joglesContext.gl_state.glActiveTexture] != objectId)) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, objectId);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
 				if (MINIMISE_NATIVE_CALLS_TEXTURE)
-					joglesContext.gl_state.glBindTextureGL_TEXTURE_2D[joglesContext.gl_state.glActiveTexture] = objectId;
+					joglesContext.gl_state.glBindTextureGL_TEXTURE_2D [joglesContext.gl_state.glActiveTexture] = objectId;
 			}
 		}
 	}
 
 	@Override
-	void updateTexture2DImage(Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width, int height,
-			int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
-	{
+	void updateTexture2DImage(	Context ctx, int numLevels, int level, int textureFormat, int imageFormat, int width,
+								int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.updateTexture2DImage(width=" + width + ",height=" + height + ",level=" + level + ")");
+			System.err.println(
+					"JoglPipeline.updateTexture2DImage(width=" + width + ",height=" + height + ",level=" + level + ")");
 
-		updateTexture2DImage(ctx, GL2ES2.GL_TEXTURE_2D, numLevels, level, textureFormat, imageFormat, width, height, boundaryWidth,
-				dataType, data, useAutoMipMap);
+		updateTexture2DImage(ctx, GL2ES2.GL_TEXTURE_2D, numLevels, level, textureFormat, imageFormat, width, height,
+				boundaryWidth, dataType, data, useAutoMipMap);
 	}
 
 	// oddly in use when I press escape twice???
 	@Override
-	void updateTexture2DSubImage(Context ctx, int level, int xoffset, int yoffset, int textureFormat, int imageFormat, int imgXOffset,
-			int imgYOffset, int tilew, int width, int height, int dataType, Object data, boolean useAutoMipMap)
-	{
+	void updateTexture2DSubImage(	Context ctx, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
+									int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType,
+									Object data, boolean useAutoMipMap) {
 
 		// Note: useAutoMipMap is not use for SubImage in the jogl pipe 
 
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTexture2DSubImage()");
 
-		updateTexture2DSubImage(ctx, GL2ES2.GL_TEXTURE_2D, level, xoffset, yoffset, textureFormat, imageFormat, imgXOffset, imgYOffset,
-				tilew, width, height, dataType, data);
+		updateTexture2DSubImage(ctx, GL2ES2.GL_TEXTURE_2D, level, xoffset, yoffset, textureFormat, imageFormat,
+				imgXOffset, imgYOffset, tilew, width, height, dataType, data);
 	}
 
 	@Override
-	void updateTexture2DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
-	{
+	void updateTexture2DLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTexture2DLodRange()");
 
@@ -5786,19 +5304,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void updateTexture2DBoundary(Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed, float boundaryGreen,
-			float boundaryBlue, float boundaryAlpha)
-	{
+	void updateTexture2DBoundary(	Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed,
+									float boundaryGreen, float boundaryBlue, float boundaryAlpha) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTexture2DBoundary()");
 
-		updateTextureBoundary(ctx, GL2ES2.GL_TEXTURE_2D, boundaryModeS, boundaryModeT, -1, boundaryRed, boundaryGreen, boundaryBlue,
-				boundaryAlpha);
+		updateTextureBoundary(ctx, GL2ES2.GL_TEXTURE_2D, boundaryModeS, boundaryModeT, -1, boundaryRed, boundaryGreen,
+				boundaryBlue, boundaryAlpha);
 	}
 
 	@Override
-	void updateTexture2DFilterModes(Context ctx, int minFilter, int magFilter)
-	{
+	void updateTexture2DFilterModes(Context ctx, int minFilter, int magFilter) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTexture2DFilterModes()");
 
@@ -5806,17 +5322,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void updateTexture2DAnisotropicFilter(Context ctx, float degree)
-	{
+	void updateTexture2DAnisotropicFilter(Context ctx, float degree) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTexture2DAnisotropicFilter()");
 
 		updateTextureAnisotropicFilter(ctx, GL2ES2.GL_TEXTURE_2D, degree);
 	}
 
-	private static void updateTextureLodRange(Context ctx, int target, int baseLevel, int maximumLevel, float minimumLOD, float maximumLOD)
-	{
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+	private static void updateTextureLodRange(	Context ctx, int target, int baseLevel, int maximumLevel,
+												float minimumLOD, float maximumLOD) {
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		// I notice these 4 parameters don't appear under GL2ES2
 
@@ -5847,10 +5362,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 	}
 
-	private static void updateTextureAnisotropicFilter(Context ctx, int target, float degree)
-	{
+	private static void updateTextureAnisotropicFilter(Context ctx, int target, float degree) {
 		// FIXME: is this a true thing to send in?
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		// it appears GL_TEXTURE_MAX_ANISOTROPY_EXT is still part of ES2
 		// but not allowed for glTexParameterf
@@ -5871,24 +5385,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// TextureCubeMapRetained methods
 	//
 	@Override
-	void bindTextureCubeMap(Context ctx, int objectId, boolean enable)
-	{
+	void bindTextureCubeMap(Context ctx, int objectId, boolean enable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.bindTextureCubeMap()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.bindTextureCubeMap++;
+			((Jogl2es2Context)ctx).perFrameStats.bindTextureCubeMap++;
 
 		GL2ES2 gl = null;// get late expensive
 
 		// TextureCubeMap will take precedents over 3D Texture so
 		// there is no need to disable 3D Texture here.
-		if (!enable)
-		{
+		if (!enable) {
 			// gl.glDisable(GL2ES2.GL_TEXTURE_CUBE_MAP);
-		}
-		else
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		} else {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glBindTexture(GL2ES2.GL_TEXTURE_CUBE_MAP, objectId);
 			// gl.glEnable(GL2ES2.GL_TEXTURE_CUBE_MAP);
 			if (DO_OUTPUT_ERRORS)
@@ -5897,27 +5407,27 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void updateTextureCubeMapImage(Context ctx, int face, int numLevels, int level, int textureFormat, int imageFormat, int width,
-			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
-	{
+	void updateTextureCubeMapImage(	Context ctx, int face, int numLevels, int level, int textureFormat, int imageFormat,
+									int width, int height, int boundaryWidth, int dataType, Object data,
+									boolean useAutoMipMap) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureCubeMapImage()");
 
-		updateTexture2DImage(ctx, _gl_textureCubeMapFace[face], numLevels, level, textureFormat, imageFormat, width, height, boundaryWidth,
-				dataType, data, useAutoMipMap);
+		updateTexture2DImage(ctx, _gl_textureCubeMapFace [face], numLevels, level, textureFormat, imageFormat, width,
+				height, boundaryWidth, dataType, data, useAutoMipMap);
 	}
 
 	@Override
-	void updateTextureCubeMapSubImage(Context ctx, int face, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
-			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data, boolean useAutoMipMap)
-	{
+	void updateTextureCubeMapSubImage(	Context ctx, int face, int level, int xoffset, int yoffset, int textureFormat,
+										int imageFormat, int imgXOffset, int imgYOffset, int tilew, int width,
+										int height, int dataType, Object data, boolean useAutoMipMap) {
 		// PJ why is this the case? 
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	void updateTextureCubeMapLodRange(Context ctx, int baseLevel, int maximumLevel, float minimumLod, float maximumLod)
-	{
+	void updateTextureCubeMapLodRange(	Context ctx, int baseLevel, int maximumLevel, float minimumLod,
+										float maximumLod) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureCubeMapLodRange()");
 
@@ -5925,19 +5435,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void updateTextureCubeMapBoundary(Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed, float boundaryGreen,
-			float boundaryBlue, float boundaryAlpha)
-	{
+	void updateTextureCubeMapBoundary(	Context ctx, int boundaryModeS, int boundaryModeT, float boundaryRed,
+										float boundaryGreen, float boundaryBlue, float boundaryAlpha) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureCubeMapBoundary()");
 
-		updateTextureBoundary(ctx, GL2ES2.GL_TEXTURE_CUBE_MAP, boundaryModeS, boundaryModeT, -1, boundaryRed, boundaryGreen, boundaryBlue,
-				boundaryAlpha);
+		updateTextureBoundary(ctx, GL2ES2.GL_TEXTURE_CUBE_MAP, boundaryModeS, boundaryModeT, -1, boundaryRed,
+				boundaryGreen, boundaryBlue, boundaryAlpha);
 	}
 
 	@Override
-	void updateTextureCubeMapFilterModes(Context ctx, int minFilter, int magFilter)
-	{
+	void updateTextureCubeMapFilterModes(Context ctx, int minFilter, int magFilter) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureCubeMapFilterModes()");
 
@@ -5945,8 +5453,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void updateTextureCubeMapAnisotropicFilter(Context ctx, float degree)
-	{
+	void updateTextureCubeMapAnisotropicFilter(Context ctx, float degree) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateTextureCubeMapAnisotropicFilter()");
 
@@ -5958,10 +5465,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Helper routines for above texture methods
 	//
 
-	private void updateTexture2DImage(Context ctx, int target, int numLevels, int level, int textureFormat, int imageFormat, int width,
-			int height, int boundaryWidth, int dataType, Object data, boolean useAutoMipMap)
-	{
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+	private void updateTexture2DImage(	Context ctx, int target, int numLevels, int level, int textureFormat,
+										int imageFormat, int width, int height, int boundaryWidth, int dataType,
+										Object data, boolean useAutoMipMap) {
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		// FIXME: there is a new call glGenerateMipmap() which is only in ES2 not GL2 so on pure ES2 
 		// add back in checking for mipmap support under properties, then add that call after bind texture
@@ -5989,223 +5496,196 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		int internalFormat = 0;
 
-		switch (textureFormat)
-		{
-		case Texture.INTENSITY:
-			new Throwable("Texture.INTENSITY not supported").printStackTrace();
-			// internalFormat = GL2.GL_INTENSITY;
-			break;
-		case Texture.LUMINANCE:
-			internalFormat = GL2ES2.GL_LUMINANCE;
-			break;
-		case Texture.ALPHA:
-			internalFormat = GL2ES2.GL_ALPHA;
-			break;
-		case Texture.LUMINANCE_ALPHA:
-			internalFormat = GL2ES2.GL_LUMINANCE_ALPHA;
-			break;
-		case Texture.RGB:
-			internalFormat = GL2ES2.GL_RGB;
-			break;
-		case Texture.RGBA:
-			internalFormat = GL2ES2.GL_RGBA;
-			break;
-		default:
-			assert false;
+		switch (textureFormat) {
+			case Texture.INTENSITY:
+				new Throwable("Texture.INTENSITY not supported").printStackTrace();
+				// internalFormat = GL2.GL_INTENSITY;
+				break;
+			case Texture.LUMINANCE:
+				internalFormat = GL2ES2.GL_LUMINANCE;
+				break;
+			case Texture.ALPHA:
+				internalFormat = GL2ES2.GL_ALPHA;
+				break;
+			case Texture.LUMINANCE_ALPHA:
+				internalFormat = GL2ES2.GL_LUMINANCE_ALPHA;
+				break;
+			case Texture.RGB:
+				internalFormat = GL2ES2.GL_RGB;
+				break;
+			case Texture.RGBA:
+				internalFormat = GL2ES2.GL_RGBA;
+				break;
+			default:
+				assert false;
 		}
-	
+
 		boolean createMipMaps = useAutoMipMap;
 
 		int format = 0;
 
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
-		{
-			switch (imageFormat)
-			{
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-				format = GL2ES2.GL_BGR;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-				format = GL2ES2.GL_RGB;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-				if (isExtensionAvailable.GL_EXT_abgr(gl))
-				{
-					// If its zero, should never come here!
-					format = GL2.GL_ABGR_EXT;
-				}
-				else
-				{
+			|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER)) {
+			switch (imageFormat) {
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+					format = GL2ES2.GL_BGR;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+					format = GL2ES2.GL_RGB;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_ABGR:
+					if (isExtensionAvailable.GL_EXT_abgr(gl)) {
+						// If its zero, should never come here!
+						format = GL2.GL_ABGR_EXT;
+					} else {
+						assert false;
+						return;
+					}
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+					// all RGB types are stored as RGBA
+					format = GL2ES2.GL_RGBA;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_LA:
+					// all LA types are stored as LA8
+					format = GL2ES2.GL_LUMINANCE_ALPHA;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+					if (internalFormat == GL2ES2.GL_ALPHA) {
+						format = GL2ES2.GL_ALPHA;
+					} else {
+						format = GL2ES2.GL_LUMINANCE;
+					}
+					break;
+				/////////////////////////////////////////////////// PJPJPJ////////////////////
+				// DXT uncompressed D3DFMT_A8R8G8B8 indicator
+				case GL2.GL_RGBA_S3TC:
+					internalFormat = GL2ES2.GL_RGBA;
+					format = GL2ES2.GL_RGBA;
+					break;
+				// notice fall through
+				// DXT
+				case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+				case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+				case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+				case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+					// ETC2
+					// https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
+				case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
+				case GL3.GL_COMPRESSED_RGB8_ETC2:
+				case GL3.GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+				case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+				case GL3.GL_COMPRESSED_SRGB8_ETC2:
+				case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+					// ASTC
+				case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_5x4_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_5x5_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_6x5_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_6x6_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_8x5_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_8x6_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_8x8_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_10x5_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_10x6_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_10x8_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_10x10_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_12x10_KHR:
+				case GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR:
+					internalFormat = imageFormat;
+					format = -1;// indicate compressed
+					break;
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_INT_BGR:
+				case ImageComponentRetained.TYPE_INT_RGB:
+				case ImageComponentRetained.TYPE_INT_ARGB:
+				default:
 					assert false;
 					return;
-				}
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-				// all RGB types are stored as RGBA
-				format = GL2ES2.GL_RGBA;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_LA:
-				// all LA types are stored as LA8
-				format = GL2ES2.GL_LUMINANCE_ALPHA;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-				if (internalFormat == GL2ES2.GL_ALPHA)
-				{
-					format = GL2ES2.GL_ALPHA;
-				}
-				else
-				{
-					format = GL2ES2.GL_LUMINANCE;
-				}
-				break;
-			/////////////////////////////////////////////////// PJPJPJ////////////////////
-			// DXT uncompressed D3DFMT_A8R8G8B8 indicator
-			case GL2.GL_RGBA_S3TC:
-				internalFormat = GL2ES2.GL_RGBA;
-				format = GL2ES2.GL_RGBA;
-				break;
-			// notice fall through
-			// DXT
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
-				// ETC2
-				// https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
-			case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
-			case GL3.GL_COMPRESSED_RGB8_ETC2:
-			case GL3.GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-			case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-			case GL3.GL_COMPRESSED_SRGB8_ETC2:
-			case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-				// ASTC
-			case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_5x4_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_5x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_6x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_6x6_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_8x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_8x6_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_8x8_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x6_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x8_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x10_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_12x10_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR:
-				internalFormat = imageFormat;
-				format = -1;// indicate compressed
-				break;
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_INT_BGR:
-			case ImageComponentRetained.TYPE_INT_RGB:
-			case ImageComponentRetained.TYPE_INT_ARGB:
-			default:
-				assert false;
-				return;
 			}
-			
 
-
-			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
-						ByteBuffer.wrap((byte[]) data));
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY) {
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format,
+						GL2ES2.GL_UNSIGNED_BYTE, ByteBuffer.wrap((byte[])data));
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-			}
-			else
-			{
-				if (format == -1)
-				{
+			} else {
+				if (format == -1) {
 					createMipMaps = false; // no auto gen for compressed textures
-					ByteBuffer bb = (ByteBuffer) data;
+					ByteBuffer bb = (ByteBuffer)data;
 
-					gl.glCompressedTexImage2D(target, level, internalFormat, width, height, boundaryWidth, bb.limit(), bb);
+					gl.glCompressedTexImage2D(target, level, internalFormat, width, height, boundaryWidth, bb.limit(),
+							bb);
 
-					if (DO_OUTPUT_ERRORS)
-					{
+					if (DO_OUTPUT_ERRORS) {
 						int err = gl.glGetError();
-						if (err != GL2ES2.GL_NO_ERROR)
-						{
-							System.out.println("glCompressedTexImage2D Error " + err + " target " + target + " level " + level
-									+ " internalFormat " + internalFormat);
-							System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth + " bb.limit() "
-									+ bb.limit());
+						if (err != GL2ES2.GL_NO_ERROR) {
+							System.out.println("glCompressedTexImage2D Error "	+ err + " target " + target + " level "
+												+ level + " internalFormat " + internalFormat);
+							System.out.println("width " + width + " height " + height + " boundaryWidth "
+												+ boundaryWidth + " bb.limit() " + bb.limit());
+							// https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
+						}
+					}
+				} else {
+					gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format,
+							GL2ES2.GL_UNSIGNED_BYTE, (Buffer)data);
+					if (DO_OUTPUT_ERRORS) {
+						int err = gl.glGetError();
+						if (err != GL2ES2.GL_NO_ERROR) {
+							System.out.println("glTexImage2D Error "	+ err + " target " + target + " level " + level
+												+ " internalFormat " + internalFormat);
+							System.out
+									.println("width "	+ width
+												+ " height " + height + " boundaryWidth " + boundaryWidth + " format "
+												+ format + " bb.limit() " + ((Buffer)data).limit());
 							// https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
 						}
 					}
 				}
-				else
-				{
-					gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
-							(Buffer) data);
-					if (DO_OUTPUT_ERRORS)
-					{
-						int err = gl.glGetError();
-						if (err != GL2ES2.GL_NO_ERROR)
-						{
-							System.out.println("glTexImage2D Error " + err + " target " + target + " level " + level + " internalFormat "
-									+ internalFormat);
-							System.out.println("width " + width + " height " + height + " boundaryWidth " + boundaryWidth + " format "
-									+ format + " bb.limit() " + ((Buffer) data).limit());
-							// https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
-						}
-					}
-				}
 			}
-		}
-		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
-		{
-			switch (imageFormat)
-			{
-			case ImageComponentRetained.TYPE_INT_BGR:
-				//PJ does this work correctly?
-				format = GL2ES2.GL_RGB;
-				break;
-			case ImageComponentRetained.TYPE_INT_RGB:
-				format = GL2ES2.GL_RGB;
-				break;
-			case ImageComponentRetained.TYPE_INT_ARGB:
-				format = GL2ES2.GL_RGBA;
-				break;
-			// This method only supports 3 and 4 components formats and INT types.			
-			case ImageComponentRetained.TYPE_BYTE_LA:
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-			default:
-				assert false;
-				return;
+		} else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+					|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER)) {
+			switch (imageFormat) {
+				case ImageComponentRetained.TYPE_INT_BGR:
+					//PJ does this work correctly?
+					format = GL2ES2.GL_RGB;
+					break;
+				case ImageComponentRetained.TYPE_INT_RGB:
+					format = GL2ES2.GL_RGB;
+					break;
+				case ImageComponentRetained.TYPE_INT_ARGB:
+					format = GL2ES2.GL_RGBA;
+					break;
+				// This method only supports 3 and 4 components formats and INT types.			
+				case ImageComponentRetained.TYPE_BYTE_LA:
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+				case ImageComponentRetained.TYPE_BYTE_ABGR:
+				default:
+					assert false;
+					return;
 			}
 
-			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
-						IntBuffer.wrap((int[]) data));
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY) {
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format,
+						GL2ES2.GL_UNSIGNED_BYTE, IntBuffer.wrap((int[])data));
+				if (DO_OUTPUT_ERRORS)
+					outputErrors(ctx);
+			} else {
+				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format,
+						GL2ES2.GL_UNSIGNED_BYTE, (Buffer)data);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
-			else
-			{
-				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
-						(Buffer) data);
-				if (DO_OUTPUT_ERRORS)
-					outputErrors(ctx);
-			}
-		}
-		else
-		{
+		} else {
 			assert false;
 		}
-		
-		if(createMipMaps && level == 0)
-		{
+
+		if (createMipMaps && level == 0) {
 			gl.glHint(GL.GL_GENERATE_MIPMAP_HINT, GL.GL_NICEST);
 			gl.glGenerateMipmap(target);
 			// as a new feature that happens seldom, output errors
@@ -6216,112 +5696,99 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 	}
 
-	private void updateTexture2DSubImage(Context ctx, int target, int level, int xoffset, int yoffset, int textureFormat, int imageFormat,
-			int imgXOffset, int imgYOffset, int tilew, int width, int height, int dataType, Object data)
-	{
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+	private void updateTexture2DSubImage(	Context ctx, int target, int level, int xoffset, int yoffset,
+											int textureFormat, int imageFormat, int imgXOffset, int imgYOffset,
+											int tilew, int width, int height, int dataType, Object data) {
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
-		if (imgXOffset > 0 || (width < tilew))
-		{
+		if (imgXOffset > 0 || (width < tilew)) {
 			// PJ not sure what should be happening here
 			// new Throwable("(imgXOffset > 0 || (width < tilew))").printStackTrace();
 		}
 
 		int internalFormat = 0;
 
-		switch (textureFormat)
-		{
-		case Texture.INTENSITY:
-			// internalFormat = GL2.GL_INTENSITY;
-			new Throwable("Texture.INTENSITY not supported").printStackTrace();
-			break;
-		case Texture.LUMINANCE:
-			internalFormat = GL2ES2.GL_LUMINANCE;
-			break;
-		case Texture.ALPHA:
-			internalFormat = GL2ES2.GL_ALPHA;
-			break;
-		case Texture.LUMINANCE_ALPHA:
-			internalFormat = GL2ES2.GL_LUMINANCE_ALPHA;
-			break;
-		case Texture.RGB:
-			internalFormat = GL2ES2.GL_RGB;
-			break;
-		case Texture.RGBA:
-			internalFormat = GL2ES2.GL_RGBA;
-			break;
-		default:
-			assert false;
+		switch (textureFormat) {
+			case Texture.INTENSITY:
+				// internalFormat = GL2.GL_INTENSITY;
+				new Throwable("Texture.INTENSITY not supported").printStackTrace();
+				break;
+			case Texture.LUMINANCE:
+				internalFormat = GL2ES2.GL_LUMINANCE;
+				break;
+			case Texture.ALPHA:
+				internalFormat = GL2ES2.GL_ALPHA;
+				break;
+			case Texture.LUMINANCE_ALPHA:
+				internalFormat = GL2ES2.GL_LUMINANCE_ALPHA;
+				break;
+			case Texture.RGB:
+				internalFormat = GL2ES2.GL_RGB;
+				break;
+			case Texture.RGBA:
+				internalFormat = GL2ES2.GL_RGBA;
+				break;
+			default:
+				assert false;
 		}
 
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
-		{
+			|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER)) {
 			int format = 0;
 			int numBytes = 0;
 
-			switch (imageFormat)
-			{
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-				format = GL2ES2.GL_BGR;
-				numBytes = 3;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-				format = GL2ES2.GL_RGB;
-				numBytes = 3;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-				if (isExtensionAvailable.GL_EXT_abgr(gl))
-				{
-					// If its zero, should never come here!
-					format = GL2.GL_ABGR_EXT;
+			switch (imageFormat) {
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+					format = GL2ES2.GL_BGR;
+					numBytes = 3;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+					format = GL2ES2.GL_RGB;
+					numBytes = 3;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_ABGR:
+					if (isExtensionAvailable.GL_EXT_abgr(gl)) {
+						// If its zero, should never come here!
+						format = GL2.GL_ABGR_EXT;
+						numBytes = 4;
+					} else {
+						assert false;
+						return;
+					}
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+					// all RGB types are stored as RGBA
+					format = GL2ES2.GL_RGBA;
 					numBytes = 4;
-				}
-				else
-				{
+					break;
+				case ImageComponentRetained.TYPE_BYTE_LA:
+					// all LA types are stored as LA8
+					format = GL2ES2.GL_LUMINANCE_ALPHA;
+					numBytes = 2;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+					if (internalFormat == GL2ES2.GL_ALPHA) {
+						format = GL2ES2.GL_ALPHA;
+						numBytes = 1;
+					} else {
+						format = GL2ES2.GL_LUMINANCE;
+						numBytes = 1;
+					}
+					break;
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_INT_BGR:
+				case ImageComponentRetained.TYPE_INT_RGB:
+				case ImageComponentRetained.TYPE_INT_ARGB:
+				default:
 					assert false;
 					return;
-				}
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-				// all RGB types are stored as RGBA
-				format = GL2ES2.GL_RGBA;
-				numBytes = 4;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_LA:
-				// all LA types are stored as LA8
-				format = GL2ES2.GL_LUMINANCE_ALPHA;
-				numBytes = 2;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-				if (internalFormat == GL2ES2.GL_ALPHA)
-				{
-					format = GL2ES2.GL_ALPHA;
-					numBytes = 1;
-				}
-				else
-				{
-					format = GL2ES2.GL_LUMINANCE;
-					numBytes = 1;
-				}
-				break;
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_INT_BGR:
-			case ImageComponentRetained.TYPE_INT_RGB:
-			case ImageComponentRetained.TYPE_INT_ARGB:
-			default:
-				assert false;
-				return;
 			}
 
 			ByteBuffer buf = null;
-			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-			{
-				buf = ByteBuffer.wrap((byte[]) data);
-			}
-			else
-			{
-				buf = (ByteBuffer) data;
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY) {
+				buf = ByteBuffer.wrap((byte[])data);
+			} else {
+				buf = (ByteBuffer)data;
 			}
 
 			// offset by the imageOffset
@@ -6329,44 +5796,38 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, GL2ES2.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-		}
-		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
-		{
+		} else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+					|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER)) {
 			int format = 0;
-			switch (imageFormat)
-			{
-			case ImageComponentRetained.TYPE_INT_BGR:
-				//PJ does this work correctly?
-				format = GL2ES2.GL_RGB;
-				break;
-			case ImageComponentRetained.TYPE_INT_RGB:
-				format = GL2ES2.GL_RGB;
-				break;
-			case ImageComponentRetained.TYPE_INT_ARGB:
-				format = GL2ES2.GL_RGBA;
-				break;
-			// This method only supports 3 and 4 components formats and INT types.			
-			case ImageComponentRetained.TYPE_BYTE_LA:
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-			default:
-				assert false;
-				return;
+			switch (imageFormat) {
+				case ImageComponentRetained.TYPE_INT_BGR:
+					//PJ does this work correctly?
+					format = GL2ES2.GL_RGB;
+					break;
+				case ImageComponentRetained.TYPE_INT_RGB:
+					format = GL2ES2.GL_RGB;
+					break;
+				case ImageComponentRetained.TYPE_INT_ARGB:
+					format = GL2ES2.GL_RGBA;
+					break;
+				// This method only supports 3 and 4 components formats and INT types.			
+				case ImageComponentRetained.TYPE_BYTE_LA:
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+				case ImageComponentRetained.TYPE_BYTE_ABGR:
+				default:
+					assert false;
+					return;
 			}
 
 			IntBuffer buf = null;
-			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-			{
-				buf = IntBuffer.wrap((int[]) data);
-			}
-			else
-			{
-				buf = (IntBuffer) data;
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY) {
+				buf = IntBuffer.wrap((int[])data);
+			} else {
+				buf = (IntBuffer)data;
 			}
 
 			// offset by the imageOffset
@@ -6374,9 +5835,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, GL2ES2.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-		}
-		else
-		{
+		} else {
 			assert false;
 			return;
 		}
@@ -6386,9 +5845,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	}
 
-	private static void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter)
-	{
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+	private static void updateTextureFilterModes(Context ctx, int target, int minFilter, int magFilter) {
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		// FIXME: unclear whether we really need to set up the enum values
 		// in the JoglContext as is done in the native code depending on
@@ -6396,61 +5854,58 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// behavior of the various Java3D modes
 
 		// set texture min filter
-		switch (minFilter)
-		{
-		case Texture.FASTEST:
-		case Texture.BASE_LEVEL_POINT:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST);
-			break;
-		case Texture.BASE_LEVEL_LINEAR:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR);
-			break;
-		case Texture.MULTI_LEVEL_POINT:		
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST_MIPMAP_NEAREST);
-			break;
-		case Texture.NICEST:
-		case Texture.MULTI_LEVEL_LINEAR:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR_MIPMAP_LINEAR);
-			break;
-		case Texture.FILTER4:
-			// We should never get here as we've disabled the FILTER4 feature
-			// gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER,
-			// GL2ES2.GL_FILTER4_SGIS);
-			break;
+		switch (minFilter) {
+			case Texture.FASTEST:
+			case Texture.BASE_LEVEL_POINT:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST);
+				break;
+			case Texture.BASE_LEVEL_LINEAR:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR);
+				break;
+			case Texture.MULTI_LEVEL_POINT:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_NEAREST_MIPMAP_NEAREST);
+				break;
+			case Texture.NICEST:
+			case Texture.MULTI_LEVEL_LINEAR:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER, GL2ES2.GL_LINEAR_MIPMAP_LINEAR);
+				break;
+			case Texture.FILTER4:
+				// We should never get here as we've disabled the FILTER4 feature
+				// gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MIN_FILTER,
+				// GL2ES2.GL_FILTER4_SGIS);
+				break;
 		}
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		// set texture mag filter
-		switch (magFilter)
-		{
-		case Texture.FASTEST:
-		case Texture.BASE_LEVEL_POINT:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER, GL2ES2.GL_NEAREST);
-			break;
-		case Texture.NICEST:
-		case Texture.BASE_LEVEL_LINEAR:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER, GL2ES2.GL_LINEAR);
-			break;
-		case Texture.LINEAR_SHARPEN:
-		case Texture.LINEAR_SHARPEN_RGB:
-		case Texture.LINEAR_SHARPEN_ALPHA:
-		case Texture2D.LINEAR_DETAIL:
-		case Texture2D.LINEAR_DETAIL_RGB:
-		case Texture2D.LINEAR_DETAIL_ALPHA:
-		case Texture.FILTER4:
-		default:
-			assert false;
-			return;
+		switch (magFilter) {
+			case Texture.FASTEST:
+			case Texture.BASE_LEVEL_POINT:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER, GL2ES2.GL_NEAREST);
+				break;
+			case Texture.NICEST:
+			case Texture.BASE_LEVEL_LINEAR:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_MAG_FILTER, GL2ES2.GL_LINEAR);
+				break;
+			case Texture.LINEAR_SHARPEN:
+			case Texture.LINEAR_SHARPEN_RGB:
+			case Texture.LINEAR_SHARPEN_ALPHA:
+			case Texture2D.LINEAR_DETAIL:
+			case Texture2D.LINEAR_DETAIL_RGB:
+			case Texture2D.LINEAR_DETAIL_ALPHA:
+			case Texture.FILTER4:
+			default:
+				assert false;
+				return;
 		}
-		
+
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 	}
 
-	void updateTextureBoundary(Context ctx, int target, int boundaryModeS, int boundaryModeT, int boundaryModeR, float boundaryRed,
-			float boundaryGreen, float boundaryBlue, float boundaryAlpha)
-	{
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+	void updateTextureBoundary(	Context ctx, int target, int boundaryModeS, int boundaryModeT, int boundaryModeR,
+								float boundaryRed, float boundaryGreen, float boundaryBlue, float boundaryAlpha) {
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		// except the R gear at bottom and boundary color
 		// but I'm dropping 3dtexture support so no probs and who cares about boundary color
@@ -6458,37 +5913,35 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// FIXME: GL_MIRRORED_REPEAT needs to be added
 
 		// set texture wrap parameter
-		switch (boundaryModeS)
-		{
-		case Texture.WRAP:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_REPEAT);
-			break;
-		case Texture.CLAMP:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
-			break;
-		case Texture.CLAMP_TO_EDGE:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
-			break;
-		case Texture.CLAMP_TO_BOUNDARY:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
-			break;
+		switch (boundaryModeS) {
+			case Texture.WRAP:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_REPEAT);
+				break;
+			case Texture.CLAMP:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
+				break;
+			case Texture.CLAMP_TO_EDGE:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
+				break;
+			case Texture.CLAMP_TO_BOUNDARY:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_EDGE);
+				break;
 		}
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
-		switch (boundaryModeT)
-		{
-		case Texture.WRAP:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_REPEAT);
-			break;
-		case Texture.CLAMP:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
-			break;
-		case Texture.CLAMP_TO_EDGE:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
-			break;
-		case Texture.CLAMP_TO_BOUNDARY:
-			gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
-			break;
+		switch (boundaryModeT) {
+			case Texture.WRAP:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_REPEAT);
+				break;
+			case Texture.CLAMP:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
+				break;
+			case Texture.CLAMP_TO_EDGE:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
+				break;
+			case Texture.CLAMP_TO_BOUNDARY:
+				gl.glTexParameteri(target, GL2ES2.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_EDGE);
+				break;
 		}
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
@@ -6530,26 +5983,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	// mapping from java enum to gl enum
-	private static final int[] _gl_textureCubeMapFace = { GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-			GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-			GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, };
+	private static final int[] _gl_textureCubeMapFace = {GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+		GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+		GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL2ES2.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+		GL2ES2.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,};
 
 	// The following three methods are used in multi-pass case
 
 	// native method for setting blend color
 	@Override
-	void setBlendColor(Context ctx, float red, float green, float blue, float alpha)
-	{
+	void setBlendColor(Context ctx, float red, float green, float blue, float alpha) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setBlendColor()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setBlendColor++;
+			((Jogl2es2Context)ctx).perFrameStats.setBlendColor++;
 
 		GL2ES2 gl = null;// get late expensive
 
-		if (isExtensionAvailable.GL_ARB_imaging(gl))
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (isExtensionAvailable.GL_ARB_imaging(gl)) {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glBlendColor(red, green, blue, alpha);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -6559,26 +6011,24 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting blend func
 	@Override
-	void setBlendFunc(Context ctx, int srcBlendFunction, int dstBlendFunction)
-	{
+	void setBlendFunc(Context ctx, int srcBlendFunction, int dstBlendFunction) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setBlendFunc()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setBlendFunc++;
+			((Jogl2es2Context)ctx).perFrameStats.setBlendFunc++;
 
 		GL2ES2 gl = null;// get late expensive
-		Jogl2es2Context joglesctx = ((Jogl2es2Context) ctx);
+		Jogl2es2Context joglesctx = ((Jogl2es2Context)ctx);
 
-		if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY || (joglesctx.gl_state.glEnableGL_BLEND != true
-				|| joglesctx.gl_state.srcBlendFunction != srcBlendFunction || joglesctx.gl_state.dstBlendFunction != dstBlendFunction))
-		{
-			gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (!MINIMISE_NATIVE_CALLS_TRANSPARENCY
+			|| (joglesctx.gl_state.glEnableGL_BLEND != true || joglesctx.gl_state.srcBlendFunction != srcBlendFunction
+				|| joglesctx.gl_state.dstBlendFunction != dstBlendFunction)) {
+			gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 			gl.glEnable(GL2ES2.GL_BLEND);
-			gl.glBlendFunc(blendFunctionTable[srcBlendFunction], blendFunctionTable[dstBlendFunction]);
+			gl.glBlendFunc(blendFunctionTable [srcBlendFunction], blendFunctionTable [dstBlendFunction]);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY)
-			{
+			if (MINIMISE_NATIVE_CALLS_TRANSPARENCY) {
 				joglesctx.gl_state.glEnableGL_BLEND = true;
 				joglesctx.gl_state.srcBlendFunction = srcBlendFunction;
 				joglesctx.gl_state.dstBlendFunction = dstBlendFunction;
@@ -6588,79 +6038,74 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting light enables
 	@Override
-	void setLightEnables(Context ctx, long enableMask, int maxLights)
-	{
+	void setLightEnables(Context ctx, long enableMask, int maxLights) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setLightEnables()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setLightEnables++;
+			((Jogl2es2Context)ctx).perFrameStats.setLightEnables++;
 
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 		joglesctx.maxLights = maxLights;
 		joglesctx.numberOfLights = 0;
-		for (int i = 0; i < maxLights; i++)
-		{
+		for (int i = 0; i < maxLights; i++) {
 			boolean enable = (enableMask & (1 << i)) >> i != 0;
-			if (joglesctx.glLightSource[i] == null)
-			{
-				joglesctx.glLightSource[i] = new glLightSource();
+			if (joglesctx.glLightSource [i] == null) {
+				joglesctx.glLightSource [i] = new glLightSource();
 			}
 
-			joglesctx.glLightSource[i].enabled = enable ? 1 : 0;
+			joglesctx.glLightSource [i].enabled = enable ? 1 : 0;
 			joglesctx.numberOfLights += enable ? 1 : 0;
 
 			// clear gl_state
-			joglesctx.gl_state.glLightSource[i] = null; // this is a pointer not a container
+			joglesctx.gl_state.glLightSource [i] = null; // this is a pointer not a container
 		}
 	}
 
 	// native method for setting scene ambient
 	@Override
-	void setSceneAmbient(Context ctx, float red, float green, float blue)
-	{
+	void setSceneAmbient(Context ctx, float red, float green, float blue) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setSceneAmbient()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setSceneAmbient++;
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+			((Jogl2es2Context)ctx).perFrameStats.setSceneAmbient++;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 
 		// do we need to push onto the shader now?
-		if (joglesctx.currentAmbientColor.x != red || joglesctx.currentAmbientColor.y != green || joglesctx.currentAmbientColor.z != blue)
-		{	joglesctx.gl_state.glLightModelambient.x = Float.NEGATIVE_INFINITY;
+		if (joglesctx.currentAmbientColor.x != red	|| joglesctx.currentAmbientColor.y != green
+			|| joglesctx.currentAmbientColor.z != blue) {
+			joglesctx.gl_state.glLightModelambient.x = Float.NEGATIVE_INFINITY;
 
-		joglesctx.currentAmbientColor.x = red;
-		joglesctx.currentAmbientColor.y = green;
-		joglesctx.currentAmbientColor.z = blue;
-		joglesctx.currentAmbientColor.w = 1.0f;}
+			joglesctx.currentAmbientColor.x = red;
+			joglesctx.currentAmbientColor.y = green;
+			joglesctx.currentAmbientColor.z = blue;
+			joglesctx.currentAmbientColor.w = 1.0f;
+		}
 
 	}
 
 	// native method for disabling modelClip
 	// this is called as a reset
 	@Override
-	void disableModelClip(Context ctx)
-	{
+	void disableModelClip(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.disableModelClip()");
 	}
 
 	// native method for activating a particular texture unit
 	@Override
-	void activeTextureUnit(Context ctx, int texUnitIndex)
-	{
+	void activeTextureUnit(Context ctx, int texUnitIndex) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.activeTextureUnit(texUnitIndex= " + texUnitIndex + ")");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.activeTextureUnit++;
+			((Jogl2es2Context)ctx).perFrameStats.activeTextureUnit++;
 
-		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
 		GL2ES2 gl = null;// get late expensive
 
-		if (texUnitIndex >= 0)
-		{
-			if (!MINIMISE_NATIVE_CALLS_TEXTURE || (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0)))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (texUnitIndex >= 0) {
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE
+				|| (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0))) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glActiveTexture(texUnitIndex + GL2ES2.GL_TEXTURE0);
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -6672,21 +6117,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// native method for setting default texture
 	@Override
-	void resetTextureNative(Context ctx, int texUnitIndex)
-	{
+	void resetTextureNative(Context ctx, int texUnitIndex) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.resetTextureNative(texUnitIndex=" + texUnitIndex + ")");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.resetTextureNative++;
+			((Jogl2es2Context)ctx).perFrameStats.resetTextureNative++;
 
-		Jogl2es2Context joglesContext = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
 		GL2ES2 gl = null;// get late expensive
 
-		if (texUnitIndex >= 0)
-		{
-			if (!MINIMISE_NATIVE_CALLS_TEXTURE || (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0)))
-			{
-				gl = gl == null ? ((Jogl2es2Context) ctx).gl2es2() : gl;
+		if (texUnitIndex >= 0) {
+			if (!MINIMISE_NATIVE_CALLS_TEXTURE
+				|| (joglesContext.gl_state.glActiveTexture != (texUnitIndex + GL2ES2.GL_TEXTURE0))) {
+				gl = gl == null ? ((Jogl2es2Context)ctx).gl2es2() : gl;
 				gl.glActiveTexture(texUnitIndex + GL2ES2.GL_TEXTURE0);
 				// TODO: should I bind these to 0?
 				// gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, 0);//-1 is no texture , 0 is default
@@ -6701,15 +6144,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// The native method for setting the ModelView matrix.
 	@Override
-	void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix)
-	{
+	void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix) {
 		if (VERBOSE)
-			System.err.println("JoglPipeline.setModelViewMatrix(viewMatrix= " + lineString(viewMatrix) + " modelMatrix= "
-					+ lineString(modelMatrix) + ")");
+			System.err.println("JoglPipeline.setModelViewMatrix(viewMatrix= "	+ lineString(viewMatrix)
+								+ " modelMatrix= " + lineString(modelMatrix) + ")");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setModelViewMatrix++;
+			((Jogl2es2Context)ctx).perFrameStats.setModelViewMatrix++;
 
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 
 		//joglesctx.matrixUtil.deburnV.set(viewMatrix);
 		//joglesctx.matrixUtil.deburnV.transpose();// now done in ffp by call to native
@@ -6719,7 +6161,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		//joglesctx.matrixUtil.deburnM.transpose();// now done in ffp by call to native
 		joglesctx.currentModelMat.set(modelMatrix);
 
-		joglesctx.gl_state.modelMatrix.m00 = Double.NEGATIVE_INFINITY;// indicate needs pushing onto shader	
+		joglesctx.gl_state.glModelMatrix.m00 = Double.NEGATIVE_INFINITY;// indicate needs pushing onto shader	
 		joglesctx.gl_state.glModelViewMatrix.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.gl_state.glModelViewMatrixInverse.m00 = Double.NEGATIVE_INFINITY;
 		joglesctx.gl_state.glModelViewProjectionMatrix.m00 = Double.NEGATIVE_INFINITY;
@@ -6748,62 +6190,58 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// The native method for setting the Projection matrix.
 	@Override
-	void setProjectionMatrix(Context ctx, double[] projMatrix)
-	{
+	void setProjectionMatrix(Context ctx, double[] projMatrix) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setProjectionMatrix()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setProjectionMatrix++;
+			((Jogl2es2Context)ctx).perFrameStats.setProjectionMatrix++;
 
-		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context joglesctx = (Jogl2es2Context)ctx;
 
 		// Invert the Z value in clipping coordinates because OpenGL uses
 		// left-handed clipping coordinates, while Java3D defines right-handed
 		// coordinates everywhere.
-		projMatrix[8] *= -1.0;
-		projMatrix[9] *= -1.0;
-		projMatrix[10] *= -1.0;
-		projMatrix[11] *= -1.0;
+		projMatrix [8] *= -1.0;
+		projMatrix [9] *= -1.0;
+		projMatrix [10] *= -1.0;
+		projMatrix [11] *= -1.0;
 
 		joglesctx.currentProjMat.set(projMatrix);
 		// joglesctx.currentProjMat.transpose(); // done in set ffp now
 
 		// reverse it back in case others use it
-		projMatrix[8] *= -1.0;
-		projMatrix[9] *= -1.0;
-		projMatrix[10] *= -1.0;
-		projMatrix[11] *= -1.0;
+		projMatrix [8] *= -1.0;
+		projMatrix [9] *= -1.0;
+		projMatrix [10] *= -1.0;
+		projMatrix [11] *= -1.0;
 
 	}
 
 	// The native method for setting the Viewport.
 	@Override
-	void setViewport(Context ctx, int x, int y, int width, int height)
-	{
+	void setViewport(Context ctx, int x, int y, int width, int height) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setViewport()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setViewport++;
+			((Jogl2es2Context)ctx).perFrameStats.setViewport++;
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setViewportTime = System.nanoTime();
+			((Jogl2es2Context)ctx).perFrameStats.setViewportTime = System.nanoTime();
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		gl.glViewport(x, y, width, height);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 	}
 
-	private static String lineString(double[] da)
-	{
+	private static String lineString(double[] da) {
 		String ret = "double[";
 		for (double d : da)
 			ret += " " + d;
 		return ret + "]";
 	}
 
-	private static String lineString(float[] fa)
-	{
+	private static String lineString(float[] fa) {
 		String ret = "float[";
 		for (float f : fa)
 			ret += " " + f;
@@ -6811,56 +6249,51 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void freeTexture(Context ctx, int id)
-	{
+	void freeTexture(Context ctx, int id) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.freeTexture()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.freeTexture++;
+			((Jogl2es2Context)ctx).perFrameStats.freeTexture++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
-		if (id > 0)
-		{
+		if (id > 0) {
 			int[] tmp = new int[1];
-			tmp[0] = id;
+			tmp [0] = id;
 			gl.glDeleteTextures(1, tmp, 0);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-		}
-		else
-		{
+		} else {
 			System.err.println("tried to delete tex with texid <= 0");
 		}
 	}
 
 	@Override
-	int generateTexID(Context ctx)
-	{
+	int generateTexID(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.generateTexID()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.generateTexID++;
+			((Jogl2es2Context)ctx).perFrameStats.generateTexID++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
-		int[] tmp = new int[] { -1 };
+		int[] tmp = new int[] {-1};
 		gl.glGenTextures(1, tmp, 0);
 
-		if (tmp[0] < 1)
+		if (tmp [0] < 1)
 			return -1;
 
-		return tmp[0];
+		return tmp [0];
 	}
 
 	@Override
-	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth, int texHeight, int rasWidth,
-			int format, int objectId, byte[] imageYdown, int winWidth, int winHeight)
-	{
+	void texturemapping(Context ctx, int px, int py, int minX, int minY, int maxX, int maxY, int texWidth,
+						int texHeight, int rasWidth, int format, int objectId, byte[] imageYdown, int winWidth,
+						int winHeight) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.texturemapping()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		int glType = GL.GL_RGBA;
 
@@ -6878,30 +6311,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		gl.glEnable(GL.GL_BLEND);
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 
-		if (isExtensionAvailable.GL_EXT_abgr(gl))
-		{
+		if (isExtensionAvailable.GL_EXT_abgr(gl)) {
 			glType = GL2.GL_ABGR_EXT;
-		}
-		else
-		{
-			switch (format)
-			{
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-				glType = GL.GL_RGBA;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-				glType = GL.GL_RGB;
-				break;
+		} else {
+			switch (format) {
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+					glType = GL.GL_RGBA;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+					glType = GL.GL_RGB;
+					break;
 			}
 		}
 
 		gl.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, minX, minY, maxX - minX, maxY - minY, glType, GL.GL_UNSIGNED_BYTE,
 				ByteBuffer.wrap(imageYdown));
 
-		float texMinU = (float) minX / (float) texWidth;
-		float texMinV = (float) minY / (float) texHeight;
-		float texMaxU = (float) maxX / (float) texWidth;
-		float texMaxV = (float) maxY / (float) texHeight;
+		float texMinU = (float)minX / (float)texWidth;
+		float texMinV = (float)minY / (float)texHeight;
+		float texMaxU = (float)maxX / (float)texWidth;
+		float texMaxV = (float)maxY / (float)texHeight;
 		float halfWidth = winWidth / 2.0f;
 		float halfHeight = winHeight / 2.0f;
 
@@ -6921,22 +6350,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId)
-	{
+	boolean initTexturemapping(Context ctx, int texWidth, int texHeight, int objectId) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.initTexturemapping()");
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
 		gl.glBindTexture(GL.GL_TEXTURE_2D, objectId);
 
 		int glType = GL.GL_RGBA;
-		if (isExtensionAvailable.GL_EXT_abgr(gl))
-		{
+		if (isExtensionAvailable.GL_EXT_abgr(gl)) {
 			glType = GL2.GL_ABGR_EXT;
-		}
-		else
-		{
+		} else {
 			glType = GL.GL_RGBA;
 		}
 		//some sort of memory space check below?
@@ -6958,21 +6383,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Set glDepthMask.
 	@Override
-	void setDepthBufferWriteEnable(Context ctx, boolean mode)
-	{
+	void setDepthBufferWriteEnable(Context ctx, boolean mode) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setDepthBufferWriteEnable()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setDepthBufferWriteEnable++;
+			((Jogl2es2Context)ctx).perFrameStats.setDepthBufferWriteEnable++;
 
-		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 
-		if (mode)
-		{
+		if (mode) {
 			gl.glDepthMask(true);
-		}
-		else
-		{
+		} else {
 			gl.glDepthMask(false);
 		}
 		if (DO_OUTPUT_ERRORS)
@@ -6985,8 +6406,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// FIELD_RIGHT. The boolean doubleBuffer is TRUE for double buffered mode, FALSE
 	// for single buffering.
 	@Override
-	void setRenderMode(Context ctx, int mode, boolean doubleBuffer)
-	{
+	void setRenderMode(Context ctx, int mode, boolean doubleBuffer) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setRenderMode()");
 
@@ -6995,9 +6415,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// geoms are drawn
 		// so I take the opportunity to unbind the vertex array
 
-		GL2ES3 gl2es3 = ((Jogl2es2Context) ctx).gl2es3();
-		if (gl2es3 != null)
-		{
+		GL2ES3 gl2es3 = ((Jogl2es2Context)ctx).gl2es3();
+		if (gl2es3 != null) {
 			gl2es3.glBindVertexArray(0);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -7044,61 +6463,57 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glDrawBuffer(drawBuf);*/
 	}
 
-	private static int getFunctionValue(int func)
-	{
-		switch (func)
-		{
-		case RenderingAttributes.ALWAYS:
-			func = GL2ES2.GL_ALWAYS;
-			break;
-		case RenderingAttributes.NEVER:
-			func = GL2ES2.GL_NEVER;
-			break;
-		case RenderingAttributes.EQUAL:
-			func = GL2ES2.GL_EQUAL;
-			break;
-		case RenderingAttributes.NOT_EQUAL:
-			func = GL2ES2.GL_NOTEQUAL;
-			break;
-		case RenderingAttributes.LESS:
-			func = GL2ES2.GL_LESS;
-			break;
-		case RenderingAttributes.LESS_OR_EQUAL:
-			func = GL2ES2.GL_LEQUAL;
-			break;
-		case RenderingAttributes.GREATER:
-			func = GL2ES2.GL_GREATER;
-			break;
-		case RenderingAttributes.GREATER_OR_EQUAL:
-			func = GL2ES2.GL_GEQUAL;
-			break;
+	private static int getFunctionValue(int func) {
+		switch (func) {
+			case RenderingAttributes.ALWAYS:
+				func = GL2ES2.GL_ALWAYS;
+				break;
+			case RenderingAttributes.NEVER:
+				func = GL2ES2.GL_NEVER;
+				break;
+			case RenderingAttributes.EQUAL:
+				func = GL2ES2.GL_EQUAL;
+				break;
+			case RenderingAttributes.NOT_EQUAL:
+				func = GL2ES2.GL_NOTEQUAL;
+				break;
+			case RenderingAttributes.LESS:
+				func = GL2ES2.GL_LESS;
+				break;
+			case RenderingAttributes.LESS_OR_EQUAL:
+				func = GL2ES2.GL_LEQUAL;
+				break;
+			case RenderingAttributes.GREATER:
+				func = GL2ES2.GL_GREATER;
+				break;
+			case RenderingAttributes.GREATER_OR_EQUAL:
+				func = GL2ES2.GL_GEQUAL;
+				break;
 		}
 
 		return func;
 	}
 
-	private static int getStencilOpValue(int op)
-	{
-		switch (op)
-		{
-		case RenderingAttributes.STENCIL_KEEP:
-			op = GL2ES2.GL_KEEP;
-			break;
-		case RenderingAttributes.STENCIL_ZERO:
-			op = GL2ES2.GL_ZERO;
-			break;
-		case RenderingAttributes.STENCIL_REPLACE:
-			op = GL2ES2.GL_REPLACE;
-			break;
-		case RenderingAttributes.STENCIL_INCR:
-			op = GL2ES2.GL_INCR;
-			break;
-		case RenderingAttributes.STENCIL_DECR:
-			op = GL2ES2.GL_DECR;
-			break;
-		case RenderingAttributes.STENCIL_INVERT:
-			op = GL2ES2.GL_INVERT;
-			break;
+	private static int getStencilOpValue(int op) {
+		switch (op) {
+			case RenderingAttributes.STENCIL_KEEP:
+				op = GL2ES2.GL_KEEP;
+				break;
+			case RenderingAttributes.STENCIL_ZERO:
+				op = GL2ES2.GL_ZERO;
+				break;
+			case RenderingAttributes.STENCIL_REPLACE:
+				op = GL2ES2.GL_REPLACE;
+				break;
+			case RenderingAttributes.STENCIL_INCR:
+				op = GL2ES2.GL_INCR;
+				break;
+			case RenderingAttributes.STENCIL_DECR:
+				op = GL2ES2.GL_DECR;
+				break;
+			case RenderingAttributes.STENCIL_INVERT:
+				op = GL2ES2.GL_INVERT;
+				break;
 		}
 
 		return op;
@@ -7112,98 +6527,84 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	private static final int[] blendFunctionTable = new int[TransparencyAttributes.MAX_BLEND_FUNC_TABLE_SIZE];
 
-	static
-	{
-		blendFunctionTable[TransparencyAttributes.BLEND_ZERO] = GL2ES2.GL_ZERO;
-		blendFunctionTable[TransparencyAttributes.BLEND_ONE] = GL2ES2.GL_ONE;
-		blendFunctionTable[TransparencyAttributes.BLEND_SRC_ALPHA] = GL2ES2.GL_SRC_ALPHA;
-		blendFunctionTable[TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA] = GL2ES2.GL_ONE_MINUS_SRC_ALPHA;
-		blendFunctionTable[TransparencyAttributes.BLEND_DST_COLOR] = GL2ES2.GL_DST_COLOR;
-		blendFunctionTable[TransparencyAttributes.BLEND_ONE_MINUS_DST_COLOR] = GL2ES2.GL_ONE_MINUS_DST_COLOR;
-		blendFunctionTable[TransparencyAttributes.BLEND_SRC_COLOR] = GL2ES2.GL_SRC_COLOR;
-		blendFunctionTable[TransparencyAttributes.BLEND_ONE_MINUS_SRC_COLOR] = GL2ES2.GL_ONE_MINUS_SRC_COLOR;
-		blendFunctionTable[TransparencyAttributes.BLEND_CONSTANT_COLOR] = GL2ES2.GL_CONSTANT_COLOR;
+	static {
+		blendFunctionTable [TransparencyAttributes.BLEND_ZERO] = GL2ES2.GL_ZERO;
+		blendFunctionTable [TransparencyAttributes.BLEND_ONE] = GL2ES2.GL_ONE;
+		blendFunctionTable [TransparencyAttributes.BLEND_SRC_ALPHA] = GL2ES2.GL_SRC_ALPHA;
+		blendFunctionTable [TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA] = GL2ES2.GL_ONE_MINUS_SRC_ALPHA;
+		blendFunctionTable [TransparencyAttributes.BLEND_DST_COLOR] = GL2ES2.GL_DST_COLOR;
+		blendFunctionTable [TransparencyAttributes.BLEND_ONE_MINUS_DST_COLOR] = GL2ES2.GL_ONE_MINUS_DST_COLOR;
+		blendFunctionTable [TransparencyAttributes.BLEND_SRC_COLOR] = GL2ES2.GL_SRC_COLOR;
+		blendFunctionTable [TransparencyAttributes.BLEND_ONE_MINUS_SRC_COLOR] = GL2ES2.GL_ONE_MINUS_SRC_COLOR;
+		blendFunctionTable [TransparencyAttributes.BLEND_CONSTANT_COLOR] = GL2ES2.GL_CONSTANT_COLOR;
 	}
 
 	// ----------------------------------------------------------------------
 	// Helper private functions for Canvas3D
 	//
 	// USED BY CONTEXT QUERIER BELOW which is used for create new context
-	private static boolean getPropertiesFromCurrentContext(JoglContext ctx, GL2ES2 gl)
-	{
+	private static boolean getPropertiesFromCurrentContext(JoglContext ctx, GL2ES2 gl) {
 		// FIXME: this is a heavily abridged set of the stuff in Canvas3D.c;
 		// probably need to pull much more in
 		int[] tmp = new int[1];
 		gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_IMAGE_UNITS, tmp, 0);
-		ctx.setMaxTexCoordSets(tmp[0]);
-		if (VirtualUniverse.mc.transparentOffScreen)
-		{
+		ctx.setMaxTexCoordSets(tmp [0]);
+		if (VirtualUniverse.mc.transparentOffScreen) {
 			ctx.setAlphaClearValue(0.0f);
-		}
-		else
-		{
+		} else {
 			ctx.setAlphaClearValue(1.0f);
 		}
 		return true;
 	}
 
 	// Used by createNewContext below
-	private static int[] extractVersionInfo(String versionString)
-	{
+	private static int[] extractVersionInfo(String versionString) {
 		// FIXME: use the second flash regex system to get the first number out
 		// examples
 		// OpenGL ES 3.0 V@136.0 AU@ (GIT@I3fa967cfef)
 		// 4.5.0 NVIDIA 353.82
 		// Kindle Fire HDX 8.9 returns the below so V is also a separator
 		// OpenGL ES 3.1V@104.0 (GIT@I7e535e0385)
-		 //System.err.println("versionString: " + versionString);
+		//System.err.println("versionString: " + versionString);
 		if (versionString.startsWith("OpenGL ES "))
 			versionString = versionString.substring("OpenGL ES ".length());
 		StringTokenizer tok = new StringTokenizer(versionString, ". V");
 		int major = Integer.valueOf(tok.nextToken()).intValue();
 		int minor = Integer.valueOf(tok.nextToken()).intValue();
 
-	
 		// See if there's vendor-specific information which might
 		// imply a more recent OpenGL version
 		tok = new StringTokenizer(versionString, " ");
-		if (tok.hasMoreTokens())
-		{
+		if (tok.hasMoreTokens()) {
 			tok.nextToken();
-			if (tok.hasMoreTokens())
-			{
+			if (tok.hasMoreTokens()) {
 				Pattern p = Pattern.compile("\\D*(\\d+)\\.(\\d+)\\.?(\\d*).*");
 				Matcher m = p.matcher(tok.nextToken());
-				if (m.matches())
-				{
+				if (m.matches()) {
 					int altMajor = Integer.valueOf(m.group(1)).intValue();
 					int altMinor = Integer.valueOf(m.group(2)).intValue();
 					// Avoid possibly confusing situations by requiring
 					// major version to match
-					if (altMajor == major && altMinor > minor)
-					{
+					if (altMajor == major && altMinor > minor) {
 						minor = altMinor;
 					}
 				}
 			}
 		}
-		
 
-		return new int[] { major, minor };
+		return new int[] {major, minor};
 	}
 
 	// Used by createNewContext below
-	private static void checkTextureExtensions(Canvas3D cv, JoglContext ctx, GL2ES2 gl, boolean gl13)
-	{
-		if (gl13)
-		{
+	private static void checkTextureExtensions(Canvas3D cv, JoglContext ctx, GL2ES2 gl, boolean gl13) {
+		if (gl13) {
 
 			// FIXME: setting this to cv.maxTexCoordSets = 8; and cutting the rest out doesn't work!
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_MULTI_TEXTURE;
 			cv.multiTexAccelerated = true;
 			int[] tmp = new int[1];
 			gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_IMAGE_UNITS, tmp, 0);
-			cv.maxTextureUnits = tmp[0];
+			cv.maxTextureUnits = tmp [0];
 			cv.maxTexCoordSets = cv.maxTextureUnits;
 		}
 
@@ -7223,23 +6624,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_COMBINE_DOT3;
 		}*/
 
-		if (gl13)
-		{
+		if (gl13) {
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_CUBE_MAP;
 		}
 
-		if (gl.isExtensionAvailable("GL_EXT_texture_filter_anisotropic"))
-		{
+		if (gl.isExtensionAvailable("GL_EXT_texture_filter_anisotropic")) {
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_ANISOTROPIC_FILTER;
 			float[] tmp = new float[1];
 			gl.glGetFloatv(GL2ES2.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, tmp, 0);
-			cv.anisotropicDegreeMax = tmp[0];
+			cv.anisotropicDegreeMax = tmp [0];
 		}
 
 		//Gles uses the GL_OES_texture_npot extension 
-		if (!VirtualUniverse.mc.enforcePowerOfTwo
-				&& (gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two") || gl.isExtensionAvailable("GL_OES_texture_npot")))
-		{
+		if (!VirtualUniverse.mc.enforcePowerOfTwo && (gl.isExtensionAvailable("GL_ARB_texture_non_power_of_two")
+														|| gl.isExtensionAvailable("GL_OES_texture_npot"))) {
 			cv.textureExtendedFeatures |= Canvas3D.TEXTURE_NON_POWER_OF_TWO;
 		}
 
@@ -7252,8 +6650,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	// Used by createNewContext above
-	private static void checkGLSLShaderExtensions(Canvas3D cv, JoglContext ctx, GL2ES2 gl, boolean hasgl13)
-	{
+	private static void checkGLSLShaderExtensions(Canvas3D cv, JoglContext ctx, GL2ES2 gl, boolean hasgl13) {
 
 		//PJPJ Gl2ES2 MUST support shaders, and the support is NOT an extension
 		// Force shaders to be disabled, since no multitexture support
@@ -7270,33 +6667,31 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// related to vertex attributes
 			int[] tmp = new int[1];
 			gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_IMAGE_UNITS, tmp, 0);
-			cv.maxTextureImageUnits = tmp[0];
+			cv.maxTextureImageUnits = tmp [0];
 			gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, tmp, 0);
-			cv.maxVertexTextureImageUnits = tmp[0];
+			cv.maxVertexTextureImageUnits = tmp [0];
 			gl.glGetIntegerv(GL2ES2.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, tmp, 0);
-			cv.maxCombinedTextureImageUnits = tmp[0];
+			cv.maxCombinedTextureImageUnits = tmp [0];
 			int vertexAttrOffset = VirtualUniverse.mc.glslVertexAttrOffset;
 			ctx.setGLSLVertexAttrOffset(vertexAttrOffset);
 			gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_ATTRIBS, tmp, 0);
-			cv.maxVertexAttrs = tmp[0];
+			cv.maxVertexAttrs = tmp [0];
 			// decr count to allow for reserved vertex attrs
 			cv.maxVertexAttrs -= vertexAttrOffset;
-			if (cv.maxVertexAttrs < 0)
-			{
+			if (cv.maxVertexAttrs < 0) {
 				cv.maxVertexAttrs = 0;
 			}
 
 			//http://stackoverflow.com/questions/26682631/webgl-shaders-maximum-number-of-varying-variables
 			gl.glGetIntegerv(GL2ES2.GL_MAX_VARYING_VECTORS, tmp, 0);
-			cv.maxVaryingVectors = tmp[0];
+			cv.maxVaryingVectors = tmp [0];
 
 			cv.shadingLanguageGLSL = true;
 		}
 	}
 
 	// Used by createNewContext below
-	private static void setupCanvasProperties(Canvas3D cv, JoglContext ctx, GL2ES2 gl)
-	{
+	private static void setupCanvasProperties(Canvas3D cv, JoglContext ctx, GL2ES2 gl) {
 		// Note: this includes relevant portions from both the
 		// NativePipeline's getPropertiesFromCurrentContext and setupCanvasProperties
 
@@ -7337,8 +6732,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// find out the version, major and minor version number
 		int[] versionNumbers = extractVersionInfo(glVersion);
-		int major = versionNumbers[0];
-		int minor = versionNumbers[1];
+		int major = versionNumbers [0];
+		int minor = versionNumbers [1];
 
 		///////////////////////////////////////////
 		// setup the graphics context properties //
@@ -7351,8 +6746,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// are available in OpenGL 1.3, specifically multitexture, multisample,
 		// and cube map textures.
 
-		if (major < 1 || (major == 1 && minor < 2))
-		{
+		if (major < 1 || (major == 1 && minor < 2)) {
 			// In some double createNewContext uses or where getPreferredConfiguration is called before a Frame is constructed
 			// the disabling of D3D can cause this issue
 			// see Bug 1201 - Crash with option "sun.java2d.d3d=false"
@@ -7365,31 +6759,39 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			// So we will detect Win10/Oracle Jre  u > 51 and offer advice to down grade jre
 
 			if (glVendor.equalsIgnoreCase("Microsoft Corporation") && //
-					glRenderer.equalsIgnoreCase("GDI Generic") && //
-					glVersion.equalsIgnoreCase("1.1.0"))
-			{
+				glRenderer.equalsIgnoreCase("GDI Generic") && //
+				glVersion.equalsIgnoreCase("1.1.0")) {
 				System.err.println("Java3D - GDI Generic Driver use detected.");
 				System.err.println("This may be caused by any of the following issues.");
 
 				if (System.getProperty("sun.java2d.noddraw", "false").equals("true")
-						|| System.getProperty("sun.java2d.d3d", "true").equals("false"))
-				{
+					|| System.getProperty("sun.java2d.d3d", "true").equals("false")) {
 					System.err.println("Issue: Use of System.setProperty(\"sun.java2d.noddraw\", \"true\");");
 					System.err.println("or System.setProperty(\"sun.java2d.d3d\", \"false\");");
-					System.err.println("If either of these are being used please try either reversing or removing them,");
-					System.err.println("or if they are required else where try adding System.setProperty(\"sun.awt.nopixfmt\", \"true\");");
+					System.err
+							.println("If either of these are being used please try either reversing or removing them,");
+					System.err.println(
+							"or if they are required else where try adding System.setProperty(\"sun.awt.nopixfmt\", \"true\");");
 				}
 
 				if (Platform.getOSName().equalsIgnoreCase("Windows 10") && //win10
-						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) > 0) || // 1.9 or 1.8 > 51 //Version 19 was swapped to version 9 due to JEP 223 in jogl 2.4.0
-						(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) >= 0 && Platform.JAVA_VERSION_UPDATE > 51) && //
-								Platform.getJavaVMName().toLowerCase().startsWith("java hotspot(tm)"))// e.g. Java HotSpot(TM) 64-Bit Server VM ; OpenJDK would give OpenJDK 64-Bit Server VM
+					(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) > 0) || // 1.9 or 1.8 > 51 //Version 19 was swapped to version 9 due to JEP 223 in jogl 2.4.0
+					(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) >= 0
+						&& Platform.JAVA_VERSION_UPDATE > 51) && //
+																						Platform.getJavaVMName()
+																								.toLowerCase()
+																								.startsWith(
+																										"java hotspot(tm)"))// e.g. Java HotSpot(TM) 64-Bit Server VM ; OpenJDK would give OpenJDK 64-Bit Server VM
 				{
-					System.err.println("Issue: The use of an Intel HD2000/3000 driver in combination with Windows 10 and");
-					System.err.println("a JRE greater than 1.8 update 51. Please downgrade the JRE in use to JRE 1.8u51 or lower.");
-					System.err.println("For more information please see https://jogamp.org/bugzilla/show_bug.cgi?id=1278.");
+					System.err.println(
+							"Issue: The use of an Intel HD2000/3000 driver in combination with Windows 10 and");
+					System.err.println(
+							"a JRE greater than 1.8 update 51. Please downgrade the JRE in use to JRE 1.8u51 or lower.");
+					System.err.println(
+							"For more information please see https://jogamp.org/bugzilla/show_bug.cgi?id=1278.");
 				}
-				System.err.println("If this software has been supplied to you and you are unable to modify it's configuration");
+				System.err.println(
+						"If this software has been supplied to you and you are unable to modify it's configuration");
 				System.err.println("please contact the suppler of this software with this entire message.");
 			}
 
@@ -7401,22 +6803,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		boolean gl14 = false;
 		boolean gl13 = false;
 
-		if (major == 1)
-		{
-			if (minor == 2)
-			{
+		if (major == 1) {
+			if (minor == 2) {
 				System.err.println("JAVA 3D: OpenGL 1.2 detected; will run with reduced functionality");
 			}
-			if (minor >= 3)
-			{
+			if (minor >= 3) {
 				gl13 = true;
 			}
-			if (minor >= 4)
-			{
+			if (minor >= 4) {
 				gl14 = true;
 			}
-		}
-		else
+		} else
 		// major >= 2
 		{
 			gl13 = true;
@@ -7424,21 +6821,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl20 = true;
 		}
 
-		if (gl20)
-		{
+		if (gl20) {
 			assert gl13;
 			assert gl14;
 			assert gl.isExtensionAvailable("GL_VERSION_2_0");
 		}
 
-		if (gl14)
-		{
+		if (gl14) {
 			assert gl13;
 			assert gl.isExtensionAvailable("GL_VERSION_1_4");
 		}
 
-		if (gl13)
-		{
+		if (gl13) {
 			assert gl.isExtensionAvailable("GL_VERSION_1_3");
 		}
 
@@ -7466,8 +6860,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// }
 
 		// Setup GL_EXT_abgr
-		if (gl.isExtensionAvailable("GL_EXT_abgr"))
-		{
+		if (gl.isExtensionAvailable("GL_EXT_abgr")) {
 			cv.extensionsSupported |= Canvas3D.EXT_ABGR;
 		}
 
@@ -7480,14 +6873,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// ES2 has new enable/disable on GL_SAMPLE_ALPHA_TO_COVERAGE and GL_SAMPLE_COVERAGE
 		// and GL2 and ES2 both have glSampleCoverage calls
 		// Renderer line 1158 is the guy that goes for accum if this is not set
-		if (gl13)
-		{
+		if (gl13) {
 			cv.extensionsSupported |= Canvas3D.MULTISAMPLE;
 			ctx.setHasMultisample(true);
 		}
 
-		if ((cv.extensionsSupported & Canvas3D.MULTISAMPLE) != 0 && !VirtualUniverse.mc.implicitAntialiasing)
-		{
+		if ((cv.extensionsSupported & Canvas3D.MULTISAMPLE) != 0 && !VirtualUniverse.mc.implicitAntialiasing) {
 			//with a bit of luck ES2 will ignore this call and leave sampling on
 			//gl.glDisable(GL2ES2.GL_MULTISAMPLE);
 		}
@@ -7500,30 +6891,26 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		int[] tmp = new int[1];
 		gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_SIZE, tmp, 0);
-		cv.textureWidthMax = tmp[0];
-		cv.textureHeightMax = tmp[0];
-		
-		
+		cv.textureWidthMax = tmp [0];
+		cv.textureHeightMax = tmp [0];
+
 		// Write these values out, as they are very useful for es development
 		gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_ATTRIBS, tmp, 0);
-		System.out.println("GL_MAX_VERTEX_ATTRIBS " + tmp[0]);
+		System.out.println("GL_MAX_VERTEX_ATTRIBS " + tmp [0]);
 		gl.glGetIntegerv(GL2ES2.GL_MAX_VARYING_VECTORS, tmp, 0);
-		System.out.println("GL_MAX_VARYING_VECTORS " + tmp[0]);
+		System.out.println("GL_MAX_VARYING_VECTORS " + tmp [0]);
 		gl.glGetIntegerv(GL2ES2.GL_MAX_VERTEX_UNIFORM_VECTORS, tmp, 0);
-		System.out.println("GL_MAX_VERTEX_UNIFORM_VECTORS " + tmp[0]);
+		System.out.println("GL_MAX_VERTEX_UNIFORM_VECTORS " + tmp [0]);
 		gl.glGetIntegerv(GL2ES2.GL_MAX_FRAGMENT_UNIFORM_VECTORS, tmp, 0);
-		System.out.println("GL_MAX_FRAGMENT_UNIFORM_VECTORS " + tmp[0]);
-		System.out.println("GL_VERSION " + gl.glGetString(GL2ES2.GL_VERSION ));
-		System.out.println("GL_SHADING_LANGUAGE_VERSION " + gl.glGetString(GL2ES2.GL_SHADING_LANGUAGE_VERSION ));
+		System.out.println("GL_MAX_FRAGMENT_UNIFORM_VECTORS " + tmp [0]);
+		System.out.println("GL_VERSION " + gl.glGetString(GL2ES2.GL_VERSION));
+		System.out.println("GL_SHADING_LANGUAGE_VERSION " + gl.glGetString(GL2ES2.GL_SHADING_LANGUAGE_VERSION));
 		gl.glGetIntegerv(GL2ES2.GL_MAX_TEXTURE_SIZE, tmp, 0);
-		System.out.println("GL_MAX_TEXTURE_SIZE " + tmp[0]);
-					 
-					
-					
+		System.out.println("GL_MAX_TEXTURE_SIZE " + tmp [0]);
+
 	}
 
-	private static void disableAttribFor2D(GL2ES2 gl)
-	{
+	private static void disableAttribFor2D(GL2ES2 gl) {
 		gl.glDisable(GL.GL_BLEND);
 		gl.glDisable(GL.GL_CULL_FACE);
 		gl.glDisable(GL.GL_DEPTH_TEST);
@@ -7531,42 +6918,39 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		gl.glDisable(GL.GL_STENCIL_TEST);
 	}
 
-	private static void disableAttribForRaster(GL2ES2 gl)
-	{
+	private static void disableAttribForRaster(GL2ES2 gl) {
 		gl.glDisable(GL.GL_CULL_FACE);
 		gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
 	}
 
 	// Not needed generally as transpose can be called on the interface with gl
-	public static void copyTranspose(double[] src, double[] dst)
-	{
-		dst[0] = src[0];
-		dst[1] = src[4];
-		dst[2] = src[8];
-		dst[3] = src[12];
-		dst[4] = src[1];
-		dst[5] = src[5];
-		dst[6] = src[9];
-		dst[7] = src[13];
-		dst[8] = src[2];
-		dst[9] = src[6];
-		dst[10] = src[10];
-		dst[11] = src[14];
-		dst[12] = src[3];
-		dst[13] = src[7];
-		dst[14] = src[11];
-		dst[15] = src[15];
+	public static void copyTranspose(double[] src, double[] dst) {
+		dst [0] = src [0];
+		dst [1] = src [4];
+		dst [2] = src [8];
+		dst [3] = src [12];
+		dst [4] = src [1];
+		dst [5] = src [5];
+		dst [6] = src [9];
+		dst [7] = src [13];
+		dst [8] = src [2];
+		dst [9] = src [6];
+		dst [10] = src [10];
+		dst [11] = src [14];
+		dst [12] = src [3];
+		dst [13] = src [7];
+		dst [14] = src [11];
+		dst [15] = src [15];
 	}
 
 	@Override
-	void clear(Context ctx, float r, float g, float b, boolean clearStencil)
-	{
+	void clear(Context ctx, float r, float g, float b, boolean clearStencil) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.clear()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.clear++;
+			((Jogl2es2Context)ctx).perFrameStats.clear++;
 
-		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context jctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = jctx.gl2es2();
 
 		// Mask of which buffers to clear, this always includes color & depth
@@ -7581,8 +6965,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 	}
 
-	private static int createSimpleTextureShaderProgram(Context ctx)
-	{
+	private static int createSimpleTextureShaderProgram(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createSimpleTextureShaderProgram()");
 
@@ -7609,7 +6992,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		int programId = createShaderProgram(ctx, vertexProgram, fragmentProgram);
 
 		// now record the locations
-		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context jctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = jctx.gl2es2();
 		jctx.simpleTextureShaderProgramVertLoc = gl.glGetAttribLocation(programId, "glVertex");
 		jctx.simpleTextureShaderProgramTexCoordLoc = gl.glGetAttribLocation(programId, "glMultiTexCoord0");
@@ -7618,12 +7001,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return programId;
 	}
 
-	private static int createShaderProgram(Context ctx, String vertexProgram, String fragmentProgram)
-	{
+	private static int createShaderProgram(Context ctx, String vertexProgram, String fragmentProgram) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createShaderProgram()");
 
-		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context jctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = jctx.gl2es2();
 
 		int shaderHandleV = gl.glCreateShader(GL2ES2.GL_VERTEX_SHADER);
@@ -7636,7 +7018,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 
-		gl.glShaderSource(shaderHandleV, 1, new String[] { vertexProgram }, null, 0);
+		gl.glShaderSource(shaderHandleV, 1, new String[] {vertexProgram}, null, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		gl.glCompileShader(shaderHandleV);
@@ -7644,20 +7026,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 		int[] status = new int[1];
 		gl.glGetShaderiv(shaderHandleV, GL2ES2.GL_COMPILE_STATUS, status, 0);
-		if (status[0] == 0)
-		{
+		if (status [0] == 0) {
 			String detailMsg = getShaderInfoLog(gl, shaderHandleV);
 			System.err.println(detailMsg);
 		}
-		gl.glShaderSource(shaderHandleF, 1, new String[] { fragmentProgram }, null, 0);
+		gl.glShaderSource(shaderHandleF, 1, new String[] {fragmentProgram}, null, 0);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		gl.glCompileShader(shaderHandleF);
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		gl.glGetShaderiv(shaderHandleF, GL2ES2.GL_COMPILE_STATUS, status, 0);
-		if (status[0] == 0)
-		{
+		if (status [0] == 0) {
 			String detailMsg = getShaderInfoLog(gl, shaderHandleF);
 			System.err.println(detailMsg);
 		}
@@ -7667,8 +7047,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			outputErrors(ctx);
 
 		gl.glGetProgramiv(shaderProgramHandle, GL2ES2.GL_LINK_STATUS, status, 0);
-		if (status[0] == 0)
-		{
+		if (status [0] == 0) {
 			String detailMsg = getProgramInfoLog(gl, shaderProgramHandle);
 			System.err.println(detailMsg);
 		}
@@ -7678,21 +7057,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	/**
 	 * Texture 0 must be bound by now
-	 * @param texMinU 
+	 * @param texMinU
 	 */
-	private static void renderTexturedQuad(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX,
-			float mapMaxX, float mapMinY, float mapMaxY, float mapZ)
-	{
+	private static void renderTexturedQuad(	Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
+											float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, float mapZ) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.renderTexturedQuad()");
 
-		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context jctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = jctx.gl2es2();
 
 		//NOTE .order(ByteOrder.nativeOrder())!!!
 		int vcount = 6;
-		FloatBuffer verts = ByteBuffer.allocateDirect(Float.SIZE / 8 * 3 * vcount).order(ByteOrder.nativeOrder()).asFloatBuffer();
-		FloatBuffer tcs = ByteBuffer.allocateDirect(Float.SIZE / 8 * 2 * vcount).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		FloatBuffer verts = ByteBuffer.allocateDirect(Float.SIZE / 8 * 3 * vcount).order(ByteOrder.nativeOrder())
+				.asFloatBuffer();
+		FloatBuffer tcs = ByteBuffer.allocateDirect(Float.SIZE / 8 * 2 * vcount).order(ByteOrder.nativeOrder())
+				.asFloatBuffer();
 
 		//CCW windings for fun (cull face should make unnecessary
 		tcs.put(texMinU).put(texMinV);
@@ -7714,8 +7094,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		int[] tmp = new int[2];
 		gl.glGenBuffers(2, tmp, 0);
-		int vertBufId = tmp[0];
-		int tcBufId = tmp[1];
+		int vertBufId = tmp [0];
+		int tcBufId = tmp [1];
 		if (DO_OUTPUT_ERRORS)
 			outputErrors(ctx);
 		gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, vertBufId);
@@ -7739,19 +7119,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// always create a new one
 		int vaoId = -1;
-		if (gl.isGL2ES3())
-		{
+		if (gl.isGL2ES3()) {
 			GL2ES3 gl2es3 = (GL2ES3)gl;
-			if (vaoId == -1)
-			{
+			if (vaoId == -1) {
 				int[] tmp2 = new int[1];
 				gl2es3.glGenVertexArrays(1, tmp2, 0);
-				vaoId = tmp2[0];
+				vaoId = tmp2 [0];
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
-			}
-			else
-			{
+			} else {
 				bindingRequired = false;
 			}
 			gl2es3.glBindVertexArray(vaoId);
@@ -7759,10 +7135,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				outputErrors(ctx);
 		}
 
-		if (bindingRequired)
-		{
-			if (jctx.simpleTextureShaderProgramVertLoc != -1)
-			{
+		if (bindingRequired) {
+			if (jctx.simpleTextureShaderProgramVertLoc != -1) {
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, vertBufId);
 				gl.glVertexAttribPointer(jctx.simpleTextureShaderProgramVertLoc, 3, GL2ES2.GL_FLOAT, false, 0, 0);
 				gl.glEnableVertexAttribArray(jctx.simpleTextureShaderProgramVertLoc);
@@ -7770,8 +7144,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 			}
 
-			if (jctx.simpleTextureShaderProgramTexCoordLoc != -1)
-			{
+			if (jctx.simpleTextureShaderProgramTexCoordLoc != -1) {
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, tcBufId);
 				gl.glVertexAttribPointer(jctx.simpleTextureShaderProgramTexCoordLoc, 2, GL2ES2.GL_FLOAT, false, 0, 0);
 				gl.glEnableVertexAttribArray(jctx.simpleTextureShaderProgramTexCoordLoc);
@@ -7782,8 +7155,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				outputErrors(ctx);
 		}
 
-		if (jctx.simpleTextureShaderProgramBaseMapLoc != -1)
-		{
+		if (jctx.simpleTextureShaderProgramBaseMapLoc != -1) {
 			gl.glUniform1i(jctx.simpleTextureShaderProgramBaseMapLoc, 0);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
@@ -7795,30 +7167,28 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// clean u as we have to recreate each pass
 		if (vaoId != -1)
-			((GL2ES3)gl).glDeleteVertexArrays(1, new int[] { vaoId }, 0);
+			((GL2ES3)gl).glDeleteVertexArrays(1, new int[] {vaoId}, 0);
 
 		if (vertBufId != -1)
-			gl.glDeleteBuffers(1, new int[] { vertBufId }, 0);
+			gl.glDeleteBuffers(1, new int[] {vertBufId}, 0);
 
 		if (tcBufId != -1)
-			gl.glDeleteBuffers(1, new int[] { tcBufId }, 0);
+			gl.glDeleteBuffers(1, new int[] {tcBufId}, 0);
 	}
 
 	@Override
-	void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
-			float mapMinY, float mapMaxY, boolean useBilinearFilter)
-	{
+	void textureFillBackground(	Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX,
+								float mapMaxX, float mapMinY, float mapMaxY, boolean useBilinearFilter) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.textureFillBackground()");
 
-		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context jctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = jctx.gl2es2();
 
 		disableAttribFor2D(gl);
 
 		// Setup filter mode if needed 
-		if (useBilinearFilter)
-		{
+		if (useBilinearFilter) {
 			// System.err.println("JoglPipeline - Raster  : use bilinear filter\n");
 			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
 			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
@@ -7843,21 +7213,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX, float mapMaxX,
-			float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBilinearFilter)
-	{
+	void textureFillRaster(	Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV, float mapMinX,
+							float mapMaxX, float mapMinY, float mapMaxY, float mapZ, float alpha,
+							boolean useBilinearFilter) {
 
 		if (VERBOSE)
 			System.err.println("JoglPipeline.textureFillRaster()");
 
-		Jogl2es2Context jctx = (Jogl2es2Context) ctx;
+		Jogl2es2Context jctx = (Jogl2es2Context)ctx;
 		GL2ES2 gl = jctx.gl2es2();
 
 		disableAttribForRaster(gl);
 
 		// Setup filter mode if needed 
-		if (useBilinearFilter)
-		{
+		if (useBilinearFilter) {
 			// System.err.println("JoglPipeline - Raster  : use bilinear filter\n");
 			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
 			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
@@ -7880,18 +7249,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY, int rasterWidth,
-			int rasterHeight, int depthWidth, int depthHeight, int depthFormat, Object depthData)
-	{
+	void executeRasterDepth(Context ctx, float posX, float posY, float posZ, int srcOffsetX, int srcOffsetY,
+							int rasterWidth, int rasterHeight, int depthWidth, int depthHeight, int depthFormat,
+							Object depthData) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.executeRasterDepth()");
-		
+
 		//Jogl2es2Context jctx = (Jogl2es2Context) ctx;
 		//GL2ES2 gl = jctx.gl2es2();
-		
+
 		throw new UnsupportedOperationException(
 				"To get depth you should use a shader that return depth info for gl2es2 then read from color");
-		
+
 		/*
 		gl.glRasterPos3f(posX, posY, posZ);
 		
@@ -7958,58 +7327,52 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	/**
-	 * This native method makes sure that the rendering for this canvas gets
-	 * done now.
+	 * This native method makes sure that the rendering for this canvas gets done now.
 	 */
 	@Override
 	// render is it's own thread so finish stops nothing
-	void syncRender(Context ctx, boolean wait)
-	{
+	void syncRender(Context ctx, boolean wait) {
 
 		if (VERBOSE)
 			System.err.println("JoglPipeline.syncRender() " + wait);
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.syncRenderTime = System.nanoTime();
-		
+			((Jogl2es2Context)ctx).perFrameStats.syncRenderTime = System.nanoTime();
+
 		// clean up any buffers that need freeing
 		doClearBuffers(ctx);
 
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).outputPerFrameData();
+			((Jogl2es2Context)ctx).outputPerFrameData();
 
 		// cut out as slows things down
-	/*	if (!LATE_RELEASE_CONTEXT)
-		{
-			GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-			if (wait)
-				gl.glFinish();
-			else
-				gl.glFlush();
-		}*/
+		/*	if (!LATE_RELEASE_CONTEXT)
+			{
+				GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+				if (wait)
+					gl.glFinish();
+				else
+					gl.glFlush();
+			}*/
 
 	}
 
 	// The native method for swapBuffers - onscreen only
 	@Override
-	void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable)
-	{
+	void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.swapBuffers()");
-	
+
 		GLDrawable draw = drawable(drawable);
 		draw.swapBuffers();
 
-		((Jogl2es2Context) ctx).gl_state.clear();
+		((Jogl2es2Context)ctx).gl_state.clear();
 	}
 
-	private static void outputErrors(Context ctx)
-	{
-		if (DO_OUTPUT_ERRORS)
-		{
-			GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+	private static void outputErrors(Context ctx) {
+		if (DO_OUTPUT_ERRORS) {
+			GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
 			int err = gl.glGetError();
-			if (err != GL2ES2.GL_NO_ERROR)
-			{
+			if (err != GL2ES2.GL_NO_ERROR) {
 				// GL_NO_ERROR = 0x0
 				// GL_INVALID_ENUM = 0x500; 1280
 				// GL_INVALID_VALUE = 0x501; 1281
@@ -8020,19 +7383,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				// GL_STACK_OVERFLOW 504?
 
 				// check for no current shader program (likely a switch between scenes or something)
-				if (err == GL2ES2.GL_INVALID_OPERATION)
-				{
+				if (err == GL2ES2.GL_INVALID_OPERATION) {
 					int[] res = new int[1];
 					gl.glGetIntegerv(GL2ES2.GL_CURRENT_PROGRAM, res, 0);
 					// 0 is no current program
-					if (res[0] == 0)
+					if (res [0] == 0)
 						return;
 				}
 
 				System.err.println("JoglesPipeline GL error reported " + err);
 				StackTraceElement[] st = new Throwable().getStackTrace();
 				if (st.length > 1)
-					System.err.println("Occured in " + st[1]);
+					System.err.println("Occured in " + st [1]);
 
 				// seems to produce heaps?
 				/*err = gl.glGetError();
@@ -8051,50 +7413,41 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// The native method that sets this ctx to be the current one
 	@Override
-	boolean useCtx(Context ctx, Drawable drawable)
-	{
+	boolean useCtx(Context ctx, Drawable drawable) {
 
 		if (VERBOSE)
 			System.err.println("JoglPipeline.useCtx()**********************************");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.useCtx++;
+			((Jogl2es2Context)ctx).perFrameStats.useCtx++;
 
 		GLContext context = context(ctx);
 
 		if (context.getGLDrawable() == null)
 			System.out.println("context.getGLDrawable() == null!");
 
-		if (!LATE_RELEASE_CONTEXT)
-		{
+		if (!LATE_RELEASE_CONTEXT) {
 			int res = context.makeCurrent();
-			
-			if(res == GLContext.CONTEXT_CURRENT_NEW)
-				System.err.println("res == GLContext.CONTEXT_CURRENT_NEW if this happens more than once think about it");
+
+			if (res == GLContext.CONTEXT_CURRENT_NEW)
+				System.err
+						.println("res == GLContext.CONTEXT_CURRENT_NEW if this happens more than once think about it");
 			return (res != GLContext.CONTEXT_NOT_CURRENT);
-		}
-		else
-		{
+		} else {
 			// first time through
-			if (current_context == null)
-			{
+			if (current_context == null) {
 				int res = context.makeCurrent();
 				current_context = context;
 				return (res != GLContext.CONTEXT_NOT_CURRENT);
-			}
-			else
-			{
+			} else {
 				// if new context is the current one, release and make
-				if (current_context != context)
-				{
+				if (current_context != context) {
 					if (current_context.isCurrent())
 						current_context.release();
 
 					int res = context.makeCurrent();
 					current_context = context;
 					return (res != GLContext.CONTEXT_NOT_CURRENT);
-				}
-				else
-				{
+				} else {
 					// other wise the use is for the current anyway
 					return true;
 				}
@@ -8106,14 +7459,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Optionally release the context. Returns true if the context was released.
 	@Override
-	boolean releaseCtx(Context ctx)
-	{
-		if (!LATE_RELEASE_CONTEXT)
-		{
+	boolean releaseCtx(Context ctx) {
+		if (!LATE_RELEASE_CONTEXT) {
 			if (VERBOSE)
 				System.err.println("JoglPipeline.releaseCtx()");
 			if (OUTPUT_PER_FRAME_STATS)
-				((Jogl2es2Context) ctx).perFrameStats.releaseCtx++;
+				((Jogl2es2Context)ctx).perFrameStats.releaseCtx++;
 			GLContext context = context(ctx);
 
 			if (context.isCurrent())
@@ -8131,8 +7482,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Maximum lights supported by the native API
 	@Override
-	int getMaximumLights()
-	{
+	int getMaximumLights() {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.getMaximumLights()");
 
@@ -8143,24 +7493,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// This is the native for reading the image from the offscreen buffer
 	@Override
-	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height)
-	{
+	void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int dataType, Object data, int width, int height) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.readOffScreenBuffer()");
 
-		GLDrawable glDrawable = ((JoglDrawable) cv.drawable).getGLDrawable();
+		GLDrawable glDrawable = ((JoglDrawable)cv.drawable).getGLDrawable();
 		GLCapabilitiesImmutable chosenCaps = glDrawable.getChosenGLCapabilities();
 		GLFBODrawable fboDrawable = null;
 
 		GL2ES2 gl = context(ctx).getGL().getGL2ES2();
 
 		// If FBO
-		if (chosenCaps.isFBO())
-		{
-			fboDrawable = (GLFBODrawable) glDrawable;
+		if (chosenCaps.isFBO()) {
+			fboDrawable = (GLFBODrawable)glDrawable;
 
-			if (chosenCaps.getDoubleBuffered())
-			{
+			if (chosenCaps.getDoubleBuffered()) {
 				// swap = resolve multisampling or flip back/front FBO
 				fboDrawable.swapBuffers();
 				// unbind texture render target, we read from FBO
@@ -8182,114 +7529,98 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		int type = 0;
 
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
-		{
+			|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER)) {
 
-			switch (format)
-			{
-			// GL_BGR
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-				type = GL2.GL_BGR;// not ok
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-				type = GL.GL_RGB;//ok
-				break;
-			// GL_ABGR_EXT
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-				if (isExtensionAvailable.GL_EXT_abgr(gl))
-				{ // If false, should never come here!  
-					type = GL2.GL_ABGR_EXT; //ok
-				}
-				else
-				{
-					assert false;
-					return;
-				}
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-				type = GL.GL_RGBA;// this a valid case for GL2ES2
-				break;
+			switch (format) {
+				// GL_BGR
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+					type = GL2.GL_BGR;// not ok
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+					type = GL.GL_RGB;//ok
+					break;
+				// GL_ABGR_EXT
+				case ImageComponentRetained.TYPE_BYTE_ABGR:
+					if (isExtensionAvailable.GL_EXT_abgr(gl)) { // If false, should never come here!  
+						type = GL2.GL_ABGR_EXT; //ok
+					} else {
+						assert false;
+						return;
+					}
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+					type = GL.GL_RGBA;// this a valid case for GL2ES2
+					break;
 
-			/*
-			 * This method only supports 3 and 4 components formats and BYTE
-			 * types.
-			 */
-			case ImageComponentRetained.TYPE_BYTE_LA:
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_INT_BGR:
-			case ImageComponentRetained.TYPE_INT_RGB:
-			case ImageComponentRetained.TYPE_INT_ARGB:
-			default:
-				throw new AssertionError("illegal format " + format);
+				/*
+				 * This method only supports 3 and 4 components formats and BYTE
+				 * types.
+				 */
+				case ImageComponentRetained.TYPE_BYTE_LA:
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_INT_BGR:
+				case ImageComponentRetained.TYPE_INT_RGB:
+				case ImageComponentRetained.TYPE_INT_ARGB:
+				default:
+					throw new AssertionError("illegal format " + format);
 			}
 
 			ByteBuffer buf = null;
-			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
-			{
-				buf = ByteBuffer.wrap((byte[]) data);
-			}
-			else
-			{
-				buf = (ByteBuffer) data;
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY) {
+				buf = ByteBuffer.wrap((byte[])data);
+			} else {
+				buf = (ByteBuffer)data;
 			}
 
 			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-		}
-		else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER))
-		{
-			switch (format)
-			{
-			// GL_BGR
-			case ImageComponentRetained.TYPE_INT_BGR:
-				type = GL2.GL_BGR;// not ok
-				break;
-			case ImageComponentRetained.TYPE_INT_RGB:
-				type = GL.GL_RGB;//ok
-				break;
-			case ImageComponentRetained.TYPE_INT_ARGB:
-				type = GL.GL_RGBA;// this a valid case for GL2ES2
-				break;
+		} else if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
+					|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_BUFFER)) {
+			switch (format) {
+				// GL_BGR
+				case ImageComponentRetained.TYPE_INT_BGR:
+					type = GL2.GL_BGR;// not ok
+					break;
+				case ImageComponentRetained.TYPE_INT_RGB:
+					type = GL.GL_RGB;//ok
+					break;
+				case ImageComponentRetained.TYPE_INT_ARGB:
+					type = GL.GL_RGBA;// this a valid case for GL2ES2
+					break;
 
-			/*
-			 * This method only supports 3 and 4 components formats and INT
-			 * types.
-			 */
-			case ImageComponentRetained.TYPE_BYTE_LA:
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-			default:
-				throw new AssertionError("illegal format " + format);
+				/*
+				 * This method only supports 3 and 4 components formats and INT
+				 * types.
+				 */
+				case ImageComponentRetained.TYPE_BYTE_LA:
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+				default:
+					throw new AssertionError("illegal format " + format);
 			}
 
 			IntBuffer buf = null;
-			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY)
-			{
-				buf = IntBuffer.wrap((int[]) data);
-			}
-			else
-			{
-				buf = (IntBuffer) data;
+			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_INT_ARRAY) {
+				buf = IntBuffer.wrap((int[])data);
+			} else {
+				buf = (IntBuffer)data;
 			}
 
 			gl.glReadPixels(0, 0, width, height, type, GL.GL_UNSIGNED_BYTE, buf);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
-		}
-		else
-		{
-			throw new AssertionError("illegal image data type " + dataType + " Try creating a BufferedImage of type TYPE_3BYTE_BGR");
+		} else {
+			throw new AssertionError(
+					"illegal image data type " + dataType + " Try creating a BufferedImage of type TYPE_3BYTE_BGR");
 		}
 
 		// If FBO
-		if (chosenCaps.isFBO())
-		{
+		if (chosenCaps.isFBO()) {
 			// bind FBO for drawing
 			fboDrawable.getFBObject(GL.GL_BACK).bind(gl);
 		}
@@ -8299,21 +7630,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	@Override
 	@Deprecated
-	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height)
-	{
+	void createQueryContext(Canvas3D cv, Drawable drawable, boolean offScreen, int width, int height) {
 		throw new UnsupportedOperationException("Not supported in the GL2ES2 pipeline.\n" + VALID_FORMAT_MESSAGE);
 	}
 
 	//Offscreen rendering methods below -----------------------
-	static boolean isOffscreenLayerSurfaceEnabled(Canvas3D cv)
-	{
+	static boolean isOffscreenLayerSurfaceEnabled(Canvas3D cv) {
 		if (cv.drawable == null || cv.offScreen)
 			return false;
 
-		JoglDrawable joglDrawble = (JoglDrawable) cv.drawable;
-		if (joglDrawble.getNativeWindow() instanceof OffscreenLayerOption)
-		{
-			OffscreenLayerOption olo = (OffscreenLayerOption) joglDrawble.getNativeWindow();
+		JoglDrawable joglDrawble = (JoglDrawable)cv.drawable;
+		if (joglDrawble.getNativeWindow() instanceof OffscreenLayerOption) {
+			OffscreenLayerOption olo = (OffscreenLayerOption)joglDrawble.getNativeWindow();
 			if (olo == null)
 				return false;
 			else
@@ -8322,12 +7650,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return false;
 	}
 
-	static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
-	{
+	static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height) {
 		if (!(jdraw.getGLDrawable() instanceof GLFBODrawable))
 			return false;
 
-		FBObject fboBack = ((GLFBODrawable) jdraw.getGLDrawable()).getFBObject(GL.GL_BACK);
+		FBObject fboBack = ((GLFBODrawable)jdraw.getGLDrawable()).getFBObject(GL.GL_BACK);
 		if (fboBack == null)
 			return false;
 
@@ -8338,12 +7665,11 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Implementation follows the approach in
 	// jogamp.opengl.GLDrawableHelper.resizeOffscreenDrawable(..)
 	@Override
-	void resizeOffscreenLayer(Canvas3D cv, int cvWidth, int cvHeight)
-	{
+	void resizeOffscreenLayer(Canvas3D cv, int cvWidth, int cvHeight) {
 		if (!isOffscreenLayerSurfaceEnabled(cv))
 			return;
 
-		JoglDrawable joglDrawable = (JoglDrawable) cv.drawable;
+		JoglDrawable joglDrawable = (JoglDrawable)cv.drawable;
 		if (!hasFBObjectSizeChanged(joglDrawable, cvWidth, cvHeight))
 			return;
 
@@ -8356,19 +7682,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// Assuming glContext != null
 
 		final NativeSurface surface = glDrawble.getNativeSurface();
-		final ProxySurface proxySurface = (surface instanceof ProxySurface) ? (ProxySurface) surface : null;
+		final ProxySurface proxySurface = (surface instanceof ProxySurface) ? (ProxySurface)surface : null;
 
 		final int lockRes = surface.lockSurface();
 
-		try
-		{
+		try {
 			// propagate new size - seems not relevant here
-			if (proxySurface != null)
-			{
+			if (proxySurface != null) {
 				final UpstreamSurfaceHook ush = proxySurface.getUpstreamSurfaceHook();
-				if (ush instanceof UpstreamSurfaceHook.MutableSize)
-				{
-					((UpstreamSurfaceHook.MutableSize) ush).setSurfaceSize(newWidth, newHeight);
+				if (ush instanceof UpstreamSurfaceHook.MutableSize) {
+					((UpstreamSurfaceHook.MutableSize)ush).setSurfaceSize(newWidth, newHeight);
 				}
 			}
 			/*
@@ -8381,8 +7704,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			GL2ES2 gl = glContext.getGL().getGL2ES2();
 
 			// FBO : should be the default case on Mac OS X
-			if (glDrawble instanceof GLFBODrawable)
-			{
+			if (glDrawble instanceof GLFBODrawable) {
 
 				// Resize GLFBODrawable
 				// TODO msaa gets lost
@@ -8391,8 +7713,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				// Alternative: resize GL_BACK FBObject directly,
 				// if multisampled the FBO sink (GL_FRONT) will be resized
 				// before the swap is executed
-				int numSamples = ((GLFBODrawable) glDrawble).getChosenGLCapabilities().getNumSamples();
-				FBObject fboObjectBack = ((GLFBODrawable) glDrawble).getFBObject(GL.GL_BACK);
+				int numSamples = ((GLFBODrawable)glDrawble).getChosenGLCapabilities().getNumSamples();
+				FBObject fboObjectBack = ((GLFBODrawable)glDrawble).getFBObject(GL.GL_BACK);
 				fboObjectBack.reset(gl, newWidth, newHeight, numSamples/* , false */); // false = don't reset
 				// SamplingSinkFBO
 				// immediately
@@ -8402,8 +7724,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				// will be resized by glDrawble after the next swap-call
 			}
 			// pbuffer - not tested because Mac OS X 10.7+ supports FBO
-			else
-			{
+			else {
 				// Create new GLDrawable (pbuffer) and update the coresponding
 				// GLContext
 
@@ -8411,31 +7732,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				final GLDrawableFactory factory = glDrawble.getFactory();
 
 				// Ensure to sync GL command stream
-				if (currentContext != glContext)
-				{
+				if (currentContext != glContext) {
 					glContext.makeCurrent();
 				}
 				gl.glFinish();
 				glContext.release();
 
-				if (proxySurface != null)
-				{
+				if (proxySurface != null) {
 					proxySurface.enableUpstreamSurfaceHookLifecycle(false);
 				}
 
-				try
-				{
+				try {
 					glDrawble.setRealized(false);
 					// New GLDrawable
 					glDrawble = factory.createGLDrawable(surface);
 					glDrawble.setRealized(true);
 
 					joglDrawable.setGLDrawable(glDrawble);
-				}
-				finally
-				{
-					if (proxySurface != null)
-					{
+				} finally {
+					if (proxySurface != null) {
 						proxySurface.enableUpstreamSurfaceHookLifecycle(true);
 					}
 				}
@@ -8443,22 +7758,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				glContext.setGLDrawable(glDrawble, true); // re-association
 
 				// make current last current context
-				if (currentContext != null)
-				{
+				if (currentContext != null) {
 					currentContext.makeCurrent();
 				}
 			}
-		}
-		finally
-		{
+		} finally {
 			surface.unlockSurface();
 		}
 	}
 
 	// This is the native for creating an offscreen buffer
 	@Override
-	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height)
-	{
+	Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height) {
 
 		//OK general problem, 2 calls to setOffscreen buffer o a canvas3d will call this method once, attaching a
 		// a new drawable all good, but
@@ -8484,7 +7795,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// AbstractGraphicsDevice device = awtConfig.getScreen().getDevice(); //
 		// throws exception
 		// Alternative: default graphics device
-		AbstractGraphicsDevice device = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).getDefaultDevice();
+		AbstractGraphicsDevice device = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2))
+				.getDefaultDevice();
 
 		// Offscreen Canvas3D's capabilites, determined in
 		// 'getBestConfiguration'
@@ -8507,8 +7819,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		// double bufffering only if scene antialiasing is required/preferred
 		// and supported
-		if (offCaps.getSampleBuffers() == false)
-		{
+		if (offCaps.getSampleBuffers() == false) {
 			offCaps.setDoubleBuffered(false);
 			offCaps.setNumSamples(0);
 		}
@@ -8521,13 +7832,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// if this quirk then pBuffers only
 		//GLDrawableFactory glDrawableFactory = GLDrawableFactory.getFactory(GLProfile.get(null));		
 		//if (glDrawableFactory.getRendererQuirks(device, GLProfile.get(null)).exist(GLRendererQuirks.NoSurfacelessCtx))
-		if (VirtualUniverse.mc.usePbuffer)
-		{
+		if (VirtualUniverse.mc.usePbuffer) {
 			offCaps.setFBO(false);
 			offCaps.setPBuffer(true);
-		}
-		else
-		{
+		} else {
 			// Set preferred offscreen drawable : framebuffer object (FBO) or pbuffer	
 			offCaps.setFBO(true); // switches to pbuffer if FBO is not supported
 		}
@@ -8536,8 +7844,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// offscreen drawable
 
 		// If FBO : 'offDrawable' is of type com.jogamp.opengl.GLFBODrawable
-		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2)).createOffscreenDrawable(device, offCaps,
-				null, width, height);
+		GLDrawable offDrawable = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2ES2))
+				.createOffscreenDrawable(device, offCaps, null, width, height);
 
 		// !! these chosen caps are not final as long as the corresponding
 		// context is made current
@@ -8549,8 +7857,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// 'destroyContext' is called first if context exists
 	@Override
-	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable)
-	{
+	void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.destroyOffScreenBuffer()");
 
@@ -8560,30 +7867,25 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
 	@Override
 	// looks like one time call in renderer.doWork
-	void setFullSceneAntialiasing(Context ctx, boolean enable)
-	{
+	void setFullSceneAntialiasing(Context ctx, boolean enable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.setFullSceneAntialiasing()");
 		if (OUTPUT_PER_FRAME_STATS)
-			((Jogl2es2Context) ctx).perFrameStats.setFullSceneAntialiasing++;
+			((Jogl2es2Context)ctx).perFrameStats.setFullSceneAntialiasing++;
 
-		JoglContext joglctx = (JoglContext) ctx;
-		
+		JoglContext joglctx = (JoglContext)ctx;
+
 		// not supported in ES2, part of the caps setsamplebuffers true
 		// http://stackoverflow.com/questions/27035893/antialiasing-in-opengl-es-2-0
 		// FIXME: This is working under GL2ES2 but will need to change I think
 		// https://github.com/adrian110288/gdc2011-android-opengl/blob/master/src/com/example/gdc11/GDC11Activity.java
 
-		if (joglctx.getHasMultisample() && !VirtualUniverse.mc.implicitAntialiasing)
-		{
-			GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
-			if (enable)
-			{
+		if (joglctx.getHasMultisample() && !VirtualUniverse.mc.implicitAntialiasing) {
+			GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+			if (enable) {
 				System.out.println("I just set MULTISAMPLE just then");
 				gl.glEnable(GL2ES2.GL_MULTISAMPLE);
-			}
-			else
-			{
+			} else {
 				gl.glDisable(GL2ES2.GL_MULTISAMPLE);
 			}
 		}
@@ -8592,8 +7894,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Native method to update separate specular color control
 	// looks like a one time call at the start of renderer.doWork
 	@Override
-	void updateSeparateSpecularColorEnable(Context ctx, boolean enable)
-	{
+	void updateSeparateSpecularColorEnable(Context ctx, boolean enable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.updateSeparateSpecularColorEnable()");
 
@@ -8626,9 +7927,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	 * @param isSharedCtx
 	 * @return
 	 */
-	Context createNewContext(Canvas3D cv, GLDrawable glDrawable, GLContext glContext, Context shareCtx, boolean isSharedCtx,
-			boolean offScreen)
-	{
+	Context createNewContext(	Canvas3D cv, GLDrawable glDrawable, GLContext glContext, Context shareCtx,
+								boolean isSharedCtx, boolean offScreen) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createNewContext()");
 
@@ -8656,13 +7956,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			cv.drawable = new JoglDrawable(glDrawable, nativeWindow);
 			*/
 
-		if (offScreen)
-		{
+		if (offScreen) {
 			glDrawable = drawable(cv.drawable); // cv.drawable != null, set in 'createOffScreenBuffer' 
 			glContext = glDrawable.createContext(context(shareCtx));
-		}
-		else
-		{
+		} else {
 			cv.drawable = new JoglDrawable(glDrawable, null);
 		}
 
@@ -8714,15 +8011,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		//		if (buff.get(0) < Canvas3D.graphicsConfigTable.get(cv.graphicsConfiguration).getGraphicsConfigTemplate3D().getDepthSize())
 		//			System.err.println("Warning depth buffer smaller than requested: " + buff.get(0));
 
-		try
-		{
-			if (!getPropertiesFromCurrentContext(ctx, gl))
-			{
+		try {
+			if (!getPropertiesFromCurrentContext(ctx, gl)) {
 				throw new IllegalRenderingStateException("Unable to fetch properties from current OpenGL context");
 			}
 
-			if (!isSharedCtx)
-			{
+			if (!isSharedCtx) {
 				// Set up fields in Canvas3D
 				setupCanvasProperties(cv, ctx, gl);
 			}
@@ -8736,7 +8030,6 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			gl.glDepthFunc(GL2ES2.GL_LEQUAL);
 			//gl.glEnable(GL2ES2.GL_COLOR_MATERIAL);//FIXME: once materials and gl_Color working
 
-			  
 			/*
 			OpenGL specs:
 			   glReadBuffer specifies a color buffer as the source for subsequent glReadPixels.
@@ -8756,22 +8049,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 			// Mac OS X / JRE 7 : onscreen rendering = offscreen rendering
 			// bind FBO
-			if (glDrawable instanceof GLFBODrawable)
-			{
-				GLFBODrawable fboDrawable = (GLFBODrawable) glDrawable;
+			if (glDrawable instanceof GLFBODrawable) {
+				GLFBODrawable fboDrawable = (GLFBODrawable)glDrawable;
 				// bind GLFBODrawable's drawing FBObject
 				// GL_BACK returns the correct FBOObject for single/double buffering, incl. multisampling
 				fboDrawable.getFBObject(GL2ES2.GL_BACK).bind(gl);
 			}
 
 			//Note offscreen uses the above call in all cases where appropriate
-			
-			
-			
 
-		}
-		finally
-		{
+		} finally {
 			glContext.release();
 		}
 
@@ -8782,18 +8069,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	//Once NewtWindow is working this becomes a simple unsupported operation
 	@Override
 	@Deprecated
-	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen)
-	{
+	Context createNewContext(Canvas3D cv, Drawable drawable, Context shareCtx, boolean isSharedCtx, boolean offScreen) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	void destroyContext(Drawable drawable, Context ctx)
-	{
+	void destroyContext(Drawable drawable, Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.destroyContext()");
 
-		JoglDrawable joglDrawable = (JoglDrawable) drawable;
+		JoglDrawable joglDrawable = (JoglDrawable)drawable;
 		GLContext context = context(ctx);
 
 		// google below and see its a bug on marshmallow
@@ -8805,49 +8090,40 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// gets a
 		// com.jogamp.opengl.GLException: Error swapping buffers, eglError 0x300d, jogamp.opengl.egl.EGLDrawable[realized true,
 
-		if (joglDrawable != null)
-		{			
-			
-			if (!LATE_RELEASE_CONTEXT)
-			{
+		if (joglDrawable != null) {
+
+			if (!LATE_RELEASE_CONTEXT) {
 				if (GLContext.getCurrent() == context)
-					context.release();				
-			}
-			else
-			{				
+					context.release();
+			} else {
 				// if new context is the current one, release and make
-				if (current_context != context)
-				{
+				if (current_context != context) {
 					if (current_context.isCurrent())
-						current_context.release();	
-					
-					
+						current_context.release();
+
 				}
-				
-				if(context.isCurrent())
-					context.release();		
-				
+
+				if (context.isCurrent())
+					context.release();
+
 				current_context = null;
 			}
-			
-			
-			
-			if(!VirtualUniverse.mc.noDestroyContext)
+
+			if (!VirtualUniverse.mc.noDestroyContext)
 				context.destroy();
 
 			// assuming this is the right point at which to make this call
 			joglDrawable.getGLDrawable().setRealized(false);
-			
-			if(!VirtualUniverse.mc.noDestroyContext)
+
+			if (!VirtualUniverse.mc.noDestroyContext)
 				joglDrawable.destroyNativeWindow();
 		}
 	}
-	
+
 	// This is the native method for getting the number of lights the underlying
 	// native library can support.
 	@Override
-	int getNumCtxLights(Context ctx)
-	{
+	int getNumCtxLights(Context ctx) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.getNumCtxLights()");
 
@@ -8864,8 +8140,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// False under windows when display mode <= 8 bit
 	@Override
 	// probably pointless?
-	boolean validGraphicsMode()
-	{
+	boolean validGraphicsMode() {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.validGraphicsMode()");
 
@@ -8886,8 +8161,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Native method for eye lighting
 	@Override
-	void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable)
-	{
+	void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.ctxUpdateEyeLightingEnable()");
 
@@ -8913,8 +8187,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Method to construct a new DrawingSurfaceObject
 	@Override
-	DrawingSurfaceObject createDrawingSurfaceObject(Canvas3D cv)
-	{
+	DrawingSurfaceObject createDrawingSurfaceObject(Canvas3D cv) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.createDrawingSurfaceObject()");
 		return new JoglDrawingSurfaceObject(cv);
@@ -8923,8 +8196,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Method to free the drawing surface object
 	@Override
 	// NOOP
-	void freeDrawingSurface(Canvas3D cv, DrawingSurfaceObject drawingSurfaceObject)
-	{
+	void freeDrawingSurface(Canvas3D cv, DrawingSurfaceObject drawingSurfaceObject) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.freeDrawingSurface()");
 		// This method is a no-op
@@ -8933,8 +8205,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Method to free the native drawing surface object
 	@Override
 	// NOOP
-	void freeDrawingSurfaceNative(Object o)
-	{
+	void freeDrawingSurfaceNative(Object o) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.freeDrawingSurfaceNative()");
 		// This method is a no-op
@@ -8946,168 +8217,138 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Helper used everywhere
 	// USED heaps
-	private static GLContext context(Context ctx)
-	{
+	private static GLContext context(Context ctx) {
 		if (ctx == null)
 			return null;
-		return ((JoglContext) ctx).getGLContext();
+		return ((JoglContext)ctx).getGLContext();
 	}
 
 	// Helper used everywhere
 	// USED a small amount
-	private static GLDrawable drawable(Drawable drawable)
-	{
+	private static GLDrawable drawable(Drawable drawable) {
 		if (drawable == null)
 			return null;
-		return ((JoglDrawable) drawable).getGLDrawable();
+		return ((JoglDrawable)drawable).getGLDrawable();
 	}
 
 	// ----------------------------------------------------------------------
 	// General helper routines
 	//
-	private static ThreadLocal<ShortBuffer> nioIndexTemp = new ThreadLocal<ShortBuffer>();
-	private static ThreadLocal<FloatBuffer> nioVertexTemp = new ThreadLocal<FloatBuffer>();
-	private static ThreadLocal<DoubleBuffer> nioVertexDoubleTemp = new ThreadLocal<DoubleBuffer>();
-	private static ThreadLocal<FloatBuffer> nioColorTemp = new ThreadLocal<FloatBuffer>();
-	private static ThreadLocal<ByteBuffer> nioColorByteTemp = new ThreadLocal<ByteBuffer>();
-	private static ThreadLocal<FloatBuffer> nioNormalTemp = new ThreadLocal<FloatBuffer>();
-	private static ThreadLocal<FloatBuffer[]> nioTexCoordSetTemp = new ThreadLocal<FloatBuffer[]>();
-	private static ThreadLocal<FloatBuffer[]> nioVertexAttrSetTemp = new ThreadLocal<FloatBuffer[]>();
+	private static ThreadLocal<ShortBuffer>		nioIndexTemp			= new ThreadLocal<ShortBuffer>();
+	private static ThreadLocal<FloatBuffer>		nioVertexTemp			= new ThreadLocal<FloatBuffer>();
+	private static ThreadLocal<DoubleBuffer>	nioVertexDoubleTemp		= new ThreadLocal<DoubleBuffer>();
+	private static ThreadLocal<FloatBuffer>		nioColorTemp			= new ThreadLocal<FloatBuffer>();
+	private static ThreadLocal<ByteBuffer>		nioColorByteTemp		= new ThreadLocal<ByteBuffer>();
+	private static ThreadLocal<FloatBuffer>		nioNormalTemp			= new ThreadLocal<FloatBuffer>();
+	private static ThreadLocal<FloatBuffer[]>	nioTexCoordSetTemp		= new ThreadLocal<FloatBuffer[]>();
+	private static ThreadLocal<FloatBuffer[]>	nioVertexAttrSetTemp	= new ThreadLocal<FloatBuffer[]>();
 
 	// I think these are not used often as nio buffers sort it out
 	// but they are used a bit mind you
-	
-	private static ShortBuffer getIndexArrayBuffer(int[] indexArray)
-	{
+
+	private static ShortBuffer getIndexArrayBuffer(int[] indexArray) {
 		return getIndexArrayBuffer(indexArray, true);
 	}
 
-	private static ShortBuffer getIndexArrayBuffer(int[] indexArray, boolean copyData)
-	{
+	private static ShortBuffer getIndexArrayBuffer(int[] indexArray, boolean copyData) {
 		return getNIOBuffer(indexArray, nioIndexTemp, copyData);
 	}
-	
-	private static FloatBuffer getVertexArrayBuffer(float[] vertexArray)
-	{
+
+	private static FloatBuffer getVertexArrayBuffer(float[] vertexArray) {
 		return getVertexArrayBuffer(vertexArray, true);
 	}
 
-	private static FloatBuffer getVertexArrayBuffer(float[] vertexArray, boolean copyData)
-	{
+	private static FloatBuffer getVertexArrayBuffer(float[] vertexArray, boolean copyData) {
 		return getNIOBuffer(vertexArray, nioVertexTemp, copyData);
 	}
 
-	private static DoubleBuffer getVertexArrayBuffer(double[] vertexArray)
-	{
+	private static DoubleBuffer getVertexArrayBuffer(double[] vertexArray) {
 		return getVertexArrayBuffer(vertexArray, true);
 	}
 
-	private static DoubleBuffer getVertexArrayBuffer(double[] vertexArray, boolean copyData)
-	{
+	private static DoubleBuffer getVertexArrayBuffer(double[] vertexArray, boolean copyData) {
 		return getNIOBuffer(vertexArray, nioVertexDoubleTemp, true);
 	}
 
-	private static FloatBuffer getColorArrayBuffer(float[] colorArray)
-	{
+	private static FloatBuffer getColorArrayBuffer(float[] colorArray) {
 		return getColorArrayBuffer(colorArray, true);
 	}
 
-	private static FloatBuffer getColorArrayBuffer(float[] colorArray, boolean copyData)
-	{
+	private static FloatBuffer getColorArrayBuffer(float[] colorArray, boolean copyData) {
 		return getNIOBuffer(colorArray, nioColorTemp, true);
 	}
 
-	private static ByteBuffer getColorArrayBuffer(byte[] colorArray)
-	{
+	private static ByteBuffer getColorArrayBuffer(byte[] colorArray) {
 		return getColorArrayBuffer(colorArray, true);
 	}
 
-	private static ByteBuffer getColorArrayBuffer(byte[] colorArray, boolean copyData)
-	{
+	private static ByteBuffer getColorArrayBuffer(byte[] colorArray, boolean copyData) {
 		return getNIOBuffer(colorArray, nioColorByteTemp, true);
 	}
 
-	private static FloatBuffer getNormalArrayBuffer(float[] normalArray)
-	{
+	private static FloatBuffer getNormalArrayBuffer(float[] normalArray) {
 		return getNormalArrayBuffer(normalArray, true);
 	}
 
-	private static FloatBuffer getNormalArrayBuffer(float[] normalArray, boolean copyData)
-	{
+	private static FloatBuffer getNormalArrayBuffer(float[] normalArray, boolean copyData) {
 		return getNIOBuffer(normalArray, nioNormalTemp, true);
 	}
 
-	private static FloatBuffer[] getTexCoordSetBuffer(Object[] texCoordSet)
-	{
+	private static FloatBuffer[] getTexCoordSetBuffer(Object[] texCoordSet) {
 		return getNIOBuffer(texCoordSet, nioTexCoordSetTemp);
 	}
 
-	private static FloatBuffer[] getVertexAttrSetBuffer(Object[] vertexAttrSet)
-	{
+	private static FloatBuffer[] getVertexAttrSetBuffer(Object[] vertexAttrSet) {
 		return getNIOBuffer(vertexAttrSet, nioVertexAttrSetTemp);
 	}
-	
+
 	//NOTE! int array copied, ShortBuffer returned
-	private static ShortBuffer getNIOBuffer(int[] array, ThreadLocal<ShortBuffer> threadLocal, boolean copyData)
-	{
-		if (array == null)
-		{
+	private static ShortBuffer getNIOBuffer(int[] array, ThreadLocal<ShortBuffer> threadLocal, boolean copyData) {
+		if (array == null) {
 			return null;
 		}
 		ShortBuffer buf = threadLocal.get();
-		if (buf == null)
-		{
+		if (buf == null) {
 			buf = Buffers.newDirectShortBuffer(array.length);
 			threadLocal.set(buf);
-		}
-		else
-		{
+		} else {
 			buf.rewind();
-			if (buf.remaining() < array.length)
-			{
+			if (buf.remaining() < array.length) {
 				int newSize = Math.max(2 * buf.remaining(), array.length);
 				buf = Buffers.newDirectShortBuffer(newSize);
 				threadLocal.set(buf);
 			}
 		}
-		if (copyData)
-		{
+		if (copyData) {
 			//NOTE! int array copied			
 			short[] shorts = new short[array.length];
-			for(int i=0;i<array.length;i++)
-				shorts[i] = (short)array[i];
-			
+			for (int i = 0; i < array.length; i++)
+				shorts [i] = (short)array [i];
+
 			buf.put(shorts);
 			buf.rewind();
 			buf.limit(array.length);
 		}
 		return buf;
 	}
-	
-	private static FloatBuffer getNIOBuffer(float[] array, ThreadLocal<FloatBuffer> threadLocal, boolean copyData)
-	{
-		if (array == null)
-		{
+
+	private static FloatBuffer getNIOBuffer(float[] array, ThreadLocal<FloatBuffer> threadLocal, boolean copyData) {
+		if (array == null) {
 			return null;
 		}
 		FloatBuffer buf = threadLocal.get();
-		if (buf == null)
-		{
+		if (buf == null) {
 			buf = Buffers.newDirectFloatBuffer(array.length);
 			threadLocal.set(buf);
-		}
-		else
-		{
+		} else {
 			buf.rewind();
-			if (buf.remaining() < array.length)
-			{
+			if (buf.remaining() < array.length) {
 				int newSize = Math.max(2 * buf.remaining(), array.length);
 				buf = Buffers.newDirectFloatBuffer(newSize);
 				threadLocal.set(buf);
 			}
 		}
-		if (copyData)
-		{
+		if (copyData) {
 			buf.put(array);
 			buf.rewind();
 			buf.limit(array.length);
@@ -9115,30 +8356,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return buf;
 	}
 
-	private static DoubleBuffer getNIOBuffer(double[] array, ThreadLocal<DoubleBuffer> threadLocal, boolean copyData)
-	{
-		if (array == null)
-		{
+	private static DoubleBuffer getNIOBuffer(double[] array, ThreadLocal<DoubleBuffer> threadLocal, boolean copyData) {
+		if (array == null) {
 			return null;
 		}
 		DoubleBuffer buf = threadLocal.get();
-		if (buf == null)
-		{
+		if (buf == null) {
 			buf = Buffers.newDirectDoubleBuffer(array.length);
 			threadLocal.set(buf);
-		}
-		else
-		{
+		} else {
 			buf.rewind();
-			if (buf.remaining() < array.length)
-			{
+			if (buf.remaining() < array.length) {
 				int newSize = Math.max(2 * buf.remaining(), array.length);
 				buf = Buffers.newDirectDoubleBuffer(newSize);
 				threadLocal.set(buf);
 			}
 		}
-		if (copyData)
-		{
+		if (copyData) {
 			buf.put(array);
 			buf.rewind();
 			buf.limit(array.length);
@@ -9146,30 +8380,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return buf;
 	}
 
-	private static ByteBuffer getNIOBuffer(byte[] array, ThreadLocal<ByteBuffer> threadLocal, boolean copyData)
-	{
-		if (array == null)
-		{
+	private static ByteBuffer getNIOBuffer(byte[] array, ThreadLocal<ByteBuffer> threadLocal, boolean copyData) {
+		if (array == null) {
 			return null;
 		}
 		ByteBuffer buf = threadLocal.get();
-		if (buf == null)
-		{
+		if (buf == null) {
 			buf = Buffers.newDirectByteBuffer(array.length);
 			threadLocal.set(buf);
-		}
-		else
-		{
+		} else {
 			buf.rewind();
-			if (buf.remaining() < array.length)
-			{
+			if (buf.remaining() < array.length) {
 				int newSize = Math.max(2 * buf.remaining(), array.length);
 				buf = Buffers.newDirectByteBuffer(newSize);
 				threadLocal.set(buf);
 			}
 		}
-		if (copyData)
-		{
+		if (copyData) {
 			buf.put(array);
 			buf.rewind();
 			buf.limit(array.length);
@@ -9177,22 +8404,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return buf;
 	}
 
-	private static FloatBuffer[] getNIOBuffer(Object[] array, ThreadLocal<FloatBuffer[]> threadLocal)
-	{
-		if (array == null)
-		{
+	private static FloatBuffer[] getNIOBuffer(Object[] array, ThreadLocal<FloatBuffer[]> threadLocal) {
+		if (array == null) {
 			return null;
 		}
 		FloatBuffer[] bufs = threadLocal.get();
 
 		// First resize array of FloatBuffers
-		if (bufs == null)
-		{
+		if (bufs == null) {
 			bufs = new FloatBuffer[array.length];
 			threadLocal.set(bufs);
-		}
-		else if (bufs.length < array.length)
-		{
+		} else if (bufs.length < array.length) {
 			FloatBuffer[] newBufs = new FloatBuffer[array.length];
 			System.arraycopy(bufs, 0, newBufs, 0, bufs.length);
 			bufs = newBufs;
@@ -9200,23 +8422,18 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		// Now go down array of arrays, converting each into a direct FloatBuffer
-		for (int i = 0; i < array.length; i++)
-		{
-			float[] cur = (float[]) array[i];
-			FloatBuffer buf = bufs[i];
-			if (buf == null)
-			{
+		for (int i = 0; i < array.length; i++) {
+			float[] cur = (float[])array [i];
+			FloatBuffer buf = bufs [i];
+			if (buf == null) {
 				buf = Buffers.newDirectFloatBuffer(cur.length);
-				bufs[i] = buf;
-			}
-			else
-			{
+				bufs [i] = buf;
+			} else {
 				buf.rewind();
-				if (buf.remaining() < cur.length)
-				{
+				if (buf.remaining() < cur.length) {
 					int newSize = Math.max(2 * buf.remaining(), cur.length);
 					buf = Buffers.newDirectFloatBuffer(newSize);
-					bufs[i] = buf;
+					bufs [i] = buf;
 				}
 			}
 			buf.put(cur);
@@ -9231,12 +8448,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// times, so we use a variable that is lazy initialized for each
 	private isExtensionAvailable isExtensionAvailable = new isExtensionAvailable();
 
-	private class isExtensionAvailable
-	{
+	private class isExtensionAvailable {
 		private int GL_EXT_abgr = 0;
 
-		private boolean GL_EXT_abgr(GL2ES2 gl)
-		{
+		private boolean GL_EXT_abgr(GL2ES2 gl) {
 			if (GL_EXT_abgr == 0)
 				GL_EXT_abgr = gl.isExtensionAvailable("GL_EXT_abgr") ? 1 : -1;
 
@@ -9245,8 +8460,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		private int GL_ARB_imaging = 0;
 
-		private boolean GL_ARB_imaging(GL2ES2 gl)
-		{
+		private boolean GL_ARB_imaging(GL2ES2 gl) {
 			if (GL_ARB_imaging == 0)
 				GL_ARB_imaging = gl.isExtensionAvailable("GL_ARB_imaging") ? 1 : -1;
 
@@ -9257,8 +8471,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Methods to get actual capabilities from Canvas3D
 	@Override
-	boolean hasDoubleBuffer(Canvas3D cv)
-	{
+	boolean hasDoubleBuffer(Canvas3D cv) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.hasDoubleBuffer()");
 		if (VERBOSE)
@@ -9267,8 +8480,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	boolean hasStereo(Canvas3D cv)
-	{
+	boolean hasStereo(Canvas3D cv) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.hasStereo()");
 		if (VERBOSE)
@@ -9277,8 +8489,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	int getStencilSize(Canvas3D cv)
-	{
+	int getStencilSize(Canvas3D cv) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.getStencilSize()");
 		if (VERBOSE)
@@ -9287,8 +8498,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	boolean hasSceneAntialiasingMultisample(Canvas3D cv)
-	{
+	boolean hasSceneAntialiasingMultisample(Canvas3D cv) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.hasSceneAntialiasingMultisample()");
 		if (VERBOSE)
@@ -9298,8 +8508,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	@Override
-	boolean hasSceneAntialiasingAccum(Canvas3D cv)
-	{
+	boolean hasSceneAntialiasingAccum(Canvas3D cv) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.hasSceneAntialiasingAccum()");
 		// Accum style antialiasing is gone
@@ -9314,17 +8523,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	// Used to get caps for the canvas3d
-	private static GLCapabilities caps(Canvas3D ctx)
-	{
-		if (ctx.drawable != null)
-		{
+	private static GLCapabilities caps(Canvas3D ctx) {
+		if (ctx.drawable != null) {
 			// latest state for on- and offscreen drawables
-			return (GLCapabilities) drawable(ctx.drawable).getChosenGLCapabilities();
-		}
-		else
-		{
+			return (GLCapabilities)drawable(ctx.drawable).getChosenGLCapabilities();
+		} else {
 			// state at the time of 'getBestConfiguration'
-			return ((JoglGraphicsConfiguration) ctx.graphicsConfiguration).getGLCapabilities();
+			return ((JoglGraphicsConfiguration)ctx.graphicsConfiguration).getGLCapabilities();
 		}
 	}
 
@@ -9335,8 +8540,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 	// Determine whether specified graphics config is supported by pipeline
 	@Override
-	boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct, GraphicsConfiguration gc)
-	{
+	boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct, GraphicsConfiguration gc) {
 		if (VERBOSE)
 			System.err.println("JoglPipeline.isGraphicsConfigSupported()");
 
@@ -9370,8 +8574,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// an exception if one cannot be returned.
 	@Override
 	@Deprecated
-	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig)
-	{
+	GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig) {
 		throw new UnsupportedOperationException();
 		/*if (VERBOSE)
 			System.err.println("JoglPipeline.getGraphicsConfig()");
@@ -9390,8 +8593,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Get best graphics config from pipeline
 	@Override
 	@Deprecated
-	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc)
-	{
+	GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct, GraphicsConfiguration[] gc) {
 		throw new UnsupportedOperationException();
 		/*		if (VERBOSE)
 					System.err.println("JoglPipeline.getBestConfiguration()");
@@ -9580,8 +8782,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// Screen3D class calls during init and that init is only called in the init
 	// of Canvas3D
 	// Notice this is using reflection on the GraphicsDevice!
-	int getScreen(final GraphicsDevice graphicsDevice)
-	{
+	int getScreen(final GraphicsDevice graphicsDevice) {
 
 		//FIXME: this should use the GLWindow business
 		/*	if (VERBOSE)
@@ -9861,22 +9062,32 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}*/
 
 	//----------------------------------------------------------------------
-	private boolean executeIndexedGeometryOptimized(Context absCtx, GeometryArrayRetained geo, int geo_type, boolean isNonUniformScale,
-			boolean ignoreVertexColors, int initialIndexIndex, int validIndexCount, int vertexCount, int vformat, int vdefined,
-			FloatBuffer fverts, float[] vfarray, DoubleBuffer dverts, double[] vdarray, FloatBuffer fclrs, float[] cfarray,
-			ByteBuffer bclrs, byte[] cbarray, FloatBuffer norms, float[] fnorms, int vertexAttrCount, int[] vertexAttrSizes,
-			FloatBuffer[] vertexAttrBufs, float[][] vertexAttrArrays, int texCoordMapLength, int[] texCoordSetMap,
-			int numActiveTexUnitState, int texStride, Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray, int strip_len)
-	{
-		boolean morphable = (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
-				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L
-				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_COLOR_WRITE)) != 0L
-				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_NORMAL_WRITE)) != 0L
-				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_VERTEX_ATTR_WRITE)) != 0L
-				|| (((GeometryArray) geo.source).capabilityBits & (1L << GeometryArray.ALLOW_TEXCOORD_WRITE)) != 0L;
+	private boolean executeIndexedGeometryOptimized(Context absCtx, GeometryArrayRetained geo, int geo_type,
+													boolean isNonUniformScale, boolean ignoreVertexColors,
+													int initialIndexIndex, int validIndexCount, int vertexCount,
+													int vformat, int vdefined, FloatBuffer fverts, float[] vfarray,
+													DoubleBuffer dverts, double[] vdarray, FloatBuffer fclrs,
+													float[] cfarray, ByteBuffer bclrs, byte[] cbarray,
+													FloatBuffer norms, float[] fnorms, int vertexAttrCount,
+													int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs,
+													float[][] vertexAttrArrays, int texCoordMapLength,
+													int[] texCoordSetMap, int numActiveTexUnitState, int texStride,
+													Object[] texCoords, int cDirty, int[] indexCoord, int[] sarray,
+													int strip_len) {
+		boolean morphable = (((GeometryArray)geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_REF_DATA_WRITE)) != 0L
+							|| (((GeometryArray)geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_COORDINATE_WRITE)) != 0L
+							|| (((GeometryArray)geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_COLOR_WRITE)) != 0L
+							|| (((GeometryArray)geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_NORMAL_WRITE)) != 0L
+							|| (((GeometryArray)geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_VERTEX_ATTR_WRITE)) != 0L
+							|| (((GeometryArray)geo.source).capabilityBits
+								& (1L << GeometryArray.ALLOW_TEXCOORD_WRITE)) != 0L;
 
-		if (morphable)
-		{
+		if (morphable) {
 			return false;
 		}
 
@@ -9887,11 +9098,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		// new = 20 bytes (28)
 		// the normalized gear allows me to put byte colors and normals in as a byte across 1,-1, the half floats will be harder
 
-		Jogl2es2Context ctx = (Jogl2es2Context) absCtx;
+		Jogl2es2Context ctx = (Jogl2es2Context)absCtx;
 		int shaderProgramId = ctx.shaderProgramId;
 
-		if (shaderProgramId != -1)
-		{
+		if (shaderProgramId != -1) {
 			GL2ES2 gl = ctx.gl2es2();
 			ProgramData pd = ctx.programData;
 			LocationData locs = pd.programToLocationData;
@@ -9907,153 +9117,123 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			boolean textureDefined = ((vdefined & GeometryArrayRetained.TEXCOORD_FLOAT) != 0);
 
 			//NOTE here we are doing a virtual loadAllBuffers
-			GeometryData gd = loadInterleavedBuffer(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined, fverts, vfarray,
-					dverts, vdarray, fclrs, cfarray, bclrs, cbarray, norms, fnorms, vertexAttrCount, vertexAttrSizes, vertexAttrBufs,
-					vertexAttrArrays, texCoordMapLength, texCoordSetMap, texStride, texCoords);
+			GeometryData gd = loadInterleavedBuffer(ctx, gl, geo, ignoreVertexColors, vertexCount, vformat, vdefined,
+					fverts, vfarray, dverts, vdarray, fclrs, cfarray, bclrs, cbarray, norms, fnorms, vertexAttrCount,
+					vertexAttrSizes, vertexAttrBufs, vertexAttrArrays, texCoordMapLength, texCoordSetMap, texStride,
+					texCoords);
 
 			// if I'm handed a jogles geom then half floats and bytes are loaded waaaaaay back from disk
 			boolean optimizedGeo = (geo instanceof JoglesIndexedTriangleArrayRetained)
-					|| (geo instanceof JoglesIndexedTriangleStripArrayRetained);
+									|| (geo instanceof JoglesIndexedTriangleStripArrayRetained);
 
 			// not required second time around for VAO
 			boolean bindingRequired = true;
-			
-			if (gl.isGL2ES3())
-			{
+
+			if (gl.isGL2ES3()) {
 				GL2ES3 gl2es3 = (GL2ES3)gl;
-				if (gd.vaoId == -1 || gd.shaderIdForCurrentVaoId != shaderProgramId)
-				{
+				Integer vaoIdI = gd.geoToVaoId.get(shaderProgramId);
+				int vaoId = vaoIdI == null ? -1 : vaoIdI.intValue();
+				if (vaoId == -1) {
 					int[] tmp = new int[1];
-					gl2es3.glGenVertexArrays(1, tmp, 0);
-					gd.vaoId = tmp[0];
-					gd.shaderIdForCurrentVaoId = shaderProgramId;
+					gl2es3.glGenVertexArrays(1, tmp, 0);					
+					vaoId = tmp [0];
+					gd.geoToVaoId.put(shaderProgramId, new Integer(vaoId));
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
+				} else {
+					// don't rebind if this vao was used last time for this geometry
+					if(gd.currentVaoId == vaoId)
+						bindingRequired = false;
 				}
-				else
-				{
-					bindingRequired = false;
-				}
-				gl2es3.glBindVertexArray(gd.vaoId);
+				gl2es3.glBindVertexArray(vaoId);
+				gd.currentVaoId = vaoId;
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 			}
-									
-			if (bindingRequired)
-			{
-				if (gd.coordBufId != -1)
-				{
+
+			if (bindingRequired) {
+				if (gd.coordBufId != -1) {
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.coordBufId);
-				}
-				else
-				{
+				} else {
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
 				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
 
-				if (locs.glVertex != -1)
-				{
-					if (floatCoordDefined)
-					{
-						if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
-						{
-							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false, gd.interleavedStride,
+				if (locs.glVertex != -1) {
+					if (floatCoordDefined) {
+						if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)) {
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_HALF_FLOAT, false,
+									gd.interleavedStride, gd.geoToCoordOffset);
+						} else {
+							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride,
 									gd.geoToCoordOffset);
-						}
-						else
-						{
-							gl.glVertexAttribPointer(locs.glVertex, 3, GL2ES2.GL_FLOAT, false, gd.interleavedStride, gd.geoToCoordOffset);
 						}
 						gl.glEnableVertexAttribArray(locs.glVertex);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
-					}
-					else if (doubleCoordDefined)
-					{
+					} else if (doubleCoordDefined) {
 						throw new UnsupportedOperationException("doubleCoordDefined.\n" + VALID_FORMAT_MESSAGE);
-					}
-					else
-					{
+					} else {
 						throw new UnsupportedOperationException("No coords defined.\n" + VALID_FORMAT_MESSAGE);
 					}
-				}
-				else
-				{
+				} else {
 					throw new UnsupportedOperationException("shader has no glVertex.\n" + VALID_FORMAT_MESSAGE);
 				}
 
 				// if we had bound for separate coords above, bind to normal interleave now
-				if (gd.coordBufId != -1)
-				{
+				if (gd.coordBufId != -1) {
 					gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
 				}
 
-				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-				{
+				if (floatColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
-					{
+					if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)) {
 						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_UNSIGNED_BYTE, true, gd.interleavedStride,
 								gd.geoToColorsOffset);
-					}
-					else
-					{
-						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToColorsOffset);
+					} else {
+						gl.glVertexAttribPointer(locs.glColor, sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
+								gd.geoToColorsOffset);
 
 					}
 					gl.glEnableVertexAttribArray(locs.glColor);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
-				}
-				else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors)
-				{
+				} else if (byteColorsDefined && locs.glColor != -1 && !ignoreVertexColors) {
 					throw new UnsupportedOperationException();
-				}
-				else if (locs.glColor != -1)
-				{
+				} else if (locs.glColor != -1) {
 					// ignoreVertexcolors will be set in FFP now as the glColors is unbound
 					gl.glDisableVertexAttribArray(locs.glColor);
 				}
 
-				if (normalsDefined && locs.glNormal != -1)
-				{
-					if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
-					{
-						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride, gd.geoToNormalsOffset);
-					}
-					else
-					{
-						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, gd.interleavedStride, gd.geoToNormalsOffset);
+				if (normalsDefined && locs.glNormal != -1) {
+					if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)) {
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_BYTE, true, gd.interleavedStride,
+								gd.geoToNormalsOffset);
+					} else {
+						gl.glVertexAttribPointer(locs.glNormal, 3, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
+								gd.geoToNormalsOffset);
 					}
 					gl.glEnableVertexAttribArray(locs.glNormal);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
-				}
-				else if (locs.glNormal != -1)
-				{
+				} else if (locs.glNormal != -1) {
 					gl.glDisableVertexAttribArray(locs.glNormal);
 				}
 
-				if (vattrDefined)
-				{
-					for (int index = 0; index < vertexAttrCount; index++)
-					{
+				if (vattrDefined) {
+					for (int index = 0; index < vertexAttrCount; index++) {
 						Integer attribLoc = locs.genAttIndexToLoc.get(index);
-						if (attribLoc != null && attribLoc.intValue() != -1)
-						{
-							int sz = vertexAttrSizes[index];
+						if (attribLoc != null && attribLoc.intValue() != -1) {
+							int sz = vertexAttrSizes [index];
 
-							if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
-							{
-								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true, gd.interleavedStride,
-										gd.geoToVattrOffset[index]);
-							}
-							else
-							{
-								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true, gd.interleavedStride,
-										gd.geoToVattrOffset[index]);
+							if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)) {
+								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_BYTE, true,
+										gd.interleavedStride, gd.geoToVattrOffset [index]);
+							} else {
+								gl.glVertexAttribPointer(attribLoc.intValue(), sz, GL2ES2.GL_FLOAT, true,
+										gd.interleavedStride, gd.geoToVattrOffset [index]);
 							}
 
 							gl.glEnableVertexAttribArray(attribLoc.intValue());
@@ -10063,26 +9243,20 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 				}
 
-				if (textureDefined)
-				{
+				if (textureDefined) {
 					boolean[] texSetsLoaded = new boolean[texCoords.length];
-					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
-					{
-						int texSet = texCoordSetMap[texUnit];
-						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsLoaded[texSet])
-						{
-							texSetsLoaded[texSet] = true;
-							if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo))
-							{
-								gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_HALF_FLOAT, true,
-										gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
+					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++) {
+						int texSet = texCoordSetMap [texUnit];
+						if (texSet != -1 && locs.glMultiTexCoord [texSet] != -1 && !texSetsLoaded [texSet]) {
+							texSetsLoaded [texSet] = true;
+							if (gl.isGL2ES3() && (COMPRESS_OPTIMIZED_VERTICES || optimizedGeo)) {
+								gl.glVertexAttribPointer(locs.glMultiTexCoord [texSet], texStride, GL2ES2.GL_HALF_FLOAT,
+										true, gd.interleavedStride, gd.geoToTexCoordOffset [texSet]);
+							} else {
+								gl.glVertexAttribPointer(locs.glMultiTexCoord [texSet], texStride, GL2ES2.GL_FLOAT,
+										true, gd.interleavedStride, gd.geoToTexCoordOffset [texSet]);
 							}
-							else
-							{
-								gl.glVertexAttribPointer(locs.glMultiTexCoord[texSet], texStride, GL2ES2.GL_FLOAT, true,
-										gd.interleavedStride, gd.geoToTexCoordOffset[texSet]);
-							}
-							gl.glEnableVertexAttribArray(locs.glMultiTexCoord[texSet]);
+							gl.glEnableVertexAttribArray(locs.glMultiTexCoord [texSet]);
 							if (DO_OUTPUT_ERRORS)
 								outputErrors(ctx);
 						}
@@ -10097,32 +9271,30 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					outputErrors(ctx);
 			}
 
-			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET || geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
-					|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET)
-			{
+			if (geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET
+				|| geo_type == GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET) {
 				int primType = 0;
 
 				// need to override if polygonAttributes says so
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
-					primType = GL2ES2.GL_TRIANGLE_STRIP;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
-					primType = GL2ES2.GL_TRIANGLE_FAN;
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
-					primType = GL2ES2.GL_LINES;
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_STRIP_SET:
+						primType = GL2ES2.GL_TRIANGLE_STRIP;
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_FAN_SET:
+						primType = GL2ES2.GL_TRIANGLE_FAN;
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_LINE_STRIP_SET:
+						primType = GL2ES2.GL_LINES;
+						break;
 				}
 
 				int[] stripInd = gd.geoToIndStripBuf;
 				// if no index buffers build build them now
-				if (stripInd == null)
-				{
+				if (stripInd == null) {
 
 					stripInd = new int[strip_len];
 					gl.glGenBuffers(strip_len, stripInd, 0);
@@ -10130,26 +9302,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					int indexOffset = initialIndexIndex;
 					ShortBuffer indicesBuffer = null;
 
-					if (geo instanceof JoglesIndexedTriangleStripArrayRetained)
-					{
-						indicesBuffer = ((JoglesIndexedTriangleStripArrayRetained) geo).indBuf;
-					}
-					else
-					{
+					if (geo instanceof JoglesIndexedTriangleStripArrayRetained) {
+						indicesBuffer = ((JoglesIndexedTriangleStripArrayRetained)geo).indBuf;
+					} else {
 						/*indicesBuffer = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
 						for (int s = 0; s < indexCoord.length; s++)
 							indicesBuffer.put(s, (short) indexCoord[s]);*/
 						indicesBuffer = getIndexArrayBuffer(indexCoord);
 					}
 
-					for (int i = 0; i < strip_len; i++)
-					{
+					for (int i = 0; i < strip_len; i++) {
 						indicesBuffer.position(indexOffset);
-						int count = sarray[i];
-						int indBufId = stripInd[i];
+						int count = sarray [i];
+						int indBufId = stripInd [i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer,
+								GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						indexOffset += count;
@@ -10159,9 +9328,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}
 
 					gd.geoToIndStripBuf = stripInd;
-				}
-				else
-				{
+				} else {
 					//a good cDirty and a DYNAMIC_DRAW call needed
 					/*if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
 					{
@@ -10180,10 +9347,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					}*/
 				}
 
-				for (int i = 0; i < strip_len; i++)
-				{
-					int count = sarray[i];
-					int indBufId = stripInd[i];
+				for (int i = 0; i < strip_len; i++) {
+					int count = sarray [i];
+					int indBufId = stripInd [i];
 					// type Specifies the type of the values in indices. Must be
 					// GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT.    
 					// Apparently ES3 has included GL_UNSIGNED_INT
@@ -10208,19 +9374,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (OUTPUT_PER_FRAME_STATS)
 					ctx.perFrameStats.indexCount += gd.geoToIndBufSize;
 
-			}
-			else
-			{
+			} else {
 				// bind my indexes ready for the draw call
-				if (gd.geoToIndBuf == -1)
-				{
+				if (gd.geoToIndBuf == -1) {
 					ShortBuffer indBuf = null;
-					if (geo instanceof JoglesIndexedTriangleArrayRetained)
-					{
-						indBuf = ((JoglesIndexedTriangleArrayRetained) geo).indBuf;
-					}
-					else
-					{
+					if (geo instanceof JoglesIndexedTriangleArrayRetained) {
+						indBuf = ((JoglesIndexedTriangleArrayRetained)geo).indBuf;
+					} else {
 						//create and fill index buffer
 						//TODO: god damn Indexes have arrived here all the way from the nif file!!!!!
 						/*indBuf = ByteBuffer.allocateDirect(indexCoord.length * 2).order(ByteOrder.nativeOrder()).asShortBuffer();
@@ -10232,17 +9392,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
-					gd.geoToIndBuf = tmp[0];// about to add to map below
+					gd.geoToIndBuf = tmp [0];// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf,
+							GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
 					gd.geoToIndBufSize = indBuf.remaining();
 
-				}
-				else
-				{
+				} else {
 					//a good cDirty and a DYNAMIC_DRAW call needed
 					/*if ((cDirty & GeometryArrayRetained.INDEX_CHANGED) != 0)
 					{
@@ -10252,8 +9411,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						gl.glBufferSubData(GL2ES2.GL_ARRAY_BUFFER, 0, indBuf.remaining() * Integer.SIZE / 8, indBuf);
 					}*/
 				}
-				if (bindingRequired)
-				{
+				if (bindingRequired) {
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
@@ -10270,20 +9428,19 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				else if (ctx.polygonMode == PolygonAttributes.POLYGON_POINT)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_POINT_SET;
 
-				switch (geo_type)
-				{
-				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
-					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
-				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
-					break;
+				switch (geo_type) {
+					case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
+						//QUADS not supported render as triangles just to get something on screen
+						gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
+						gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
+						gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
+					case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
+						gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+						break;
 				}
 				if (DO_OUTPUT_ERRORS)
 					outputErrors(ctx);
@@ -10291,9 +9448,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					ctx.perFrameStats.glDrawElements++;
 
 			}
-		}
-		else
-		{
+		} else {
 			if (!NO_PROGRAM_WARNING_GIVEN)
 				System.err.println("Execute called with no shader Program in use!");
 			NO_PROGRAM_WARNING_GIVEN = true;
@@ -10307,27 +9462,27 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		return true;
 	}
-	
 
-	private static GeometryData loadInterleavedBuffer(Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo, boolean ignoreVertexColors,
-			int vertexCount, int vformat, int vdefined, FloatBuffer fverts, float[] vfcoords, DoubleBuffer dverts, double[] vdcoords,
-			FloatBuffer fclrs, float[] cfarray, ByteBuffer bclrs, byte[] cbarray, FloatBuffer norms, float[] narray, int vertexAttrCount,
-			int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs, float[][] vertexAttrData, int texCoordMapLength, int[] texCoordSetMap,
-			int texStride, Object[] texCoords)
-	{
+	private static GeometryData loadInterleavedBuffer(	Jogl2es2Context ctx, GL2ES2 gl, GeometryArrayRetained geo,
+														boolean ignoreVertexColors, int vertexCount, int vformat,
+														int vdefined, FloatBuffer fverts, float[] vfcoords,
+														DoubleBuffer dverts, double[] vdcoords, FloatBuffer fclrs,
+														float[] cfarray, ByteBuffer bclrs, byte[] cbarray,
+														FloatBuffer norms, float[] narray, int vertexAttrCount,
+														int[] vertexAttrSizes, FloatBuffer[] vertexAttrBufs,
+														float[][] vertexAttrData, int texCoordMapLength,
+														int[] texCoordSetMap, int texStride, Object[] texCoords) {
 		if (VERBOSE)
 			System.err.println("private static GeometryData loadInterleavedBuffer");
 
 		GeometryData gd = ctx.allGeometryData.get(geo.nativeId);
-		if (gd == null)
-		{
+		if (gd == null) {
 			gd = new GeometryData();
 			geo.nativeId = gd.nativeId;
 			ctx.allGeometryData.put(geo.nativeId, gd);
 		}
 
-		if (gd.interleavedBufId == -1)
-		{
+		if (gd.interleavedBufId == -1) {
 			boolean floatCoordDefined = ((vdefined & GeometryArrayRetained.COORD_FLOAT) != 0);
 			boolean doubleCoordDefined = ((vdefined & GeometryArrayRetained.COORD_DOUBLE) != 0);
 			boolean floatColorsDefined = ((vdefined & GeometryArrayRetained.COLOR_FLOAT) != 0);
@@ -10343,9 +9498,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			ByteBuffer interleavedBuffer = null;
 			ByteBuffer coordBuffer = null;
 
-			if (geo instanceof JoglesIndexedTriangleArrayRetained)
-			{
-				JoglesIndexedTriangleArrayRetained src = (JoglesIndexedTriangleArrayRetained) geo;
+			if (geo instanceof JoglesIndexedTriangleArrayRetained) {
+				JoglesIndexedTriangleArrayRetained src = (JoglesIndexedTriangleArrayRetained)geo;
 				gd.interleavedStride = src.interleavedStride;
 				gd.geoToCoordOffset = src.geoToCoordOffset;
 				gd.geoToColorsOffset = src.geoToColorsOffset;
@@ -10354,10 +9508,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				gd.geoToTexCoordOffset = src.geoToTexCoordOffset;
 				interleavedBuffer = src.interleavedBuffer;
 				coordBuffer = src.coordBuffer;
-			}
-			else if (geo instanceof JoglesIndexedTriangleStripArrayRetained)
-			{
-				JoglesIndexedTriangleStripArrayRetained src = (JoglesIndexedTriangleStripArrayRetained) geo;
+			} else if (geo instanceof JoglesIndexedTriangleStripArrayRetained) {
+				JoglesIndexedTriangleStripArrayRetained src = (JoglesIndexedTriangleStripArrayRetained)geo;
 				gd.interleavedStride = src.interleavedStride;
 				gd.geoToCoordOffset = src.geoToCoordOffset;
 				gd.geoToColorsOffset = src.geoToColorsOffset;
@@ -10366,128 +9518,98 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				gd.geoToTexCoordOffset = src.geoToTexCoordOffset;
 				interleavedBuffer = src.interleavedBuffer;
 				coordBuffer = src.coordBuffer;
-			}
-			else
-			{
+			} else {
 				// TODO: morphables can come in here too, just reduce stride and set up the coordBuffer  
 
 				// how big are we going to require?
 				gd.interleavedStride = 0;
 				int offset = 0;
-				if (floatCoordDefined)
-				{
+				if (floatCoordDefined) {
 					// do we need to covert a float[]
-					if (vfcoords != null)
-					{
+					if (vfcoords != null) {
 						fverts = getVertexArrayBuffer(vfcoords);
 					}
 
 					gd.geoToCoordOffset = offset;
-					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-					{
+					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 						offset += 8;// 3 half float = 6 align on 4						
-					}
-					else
-					{
+					} else {
 						offset += 4 * 3;
 					}
 					fverts.position(0);
 				}
 
-				if (floatColorsDefined && !ignoreVertexColors)
-				{
-					if (cfarray != null)
-					{
+				if (floatColorsDefined && !ignoreVertexColors) {
+					if (cfarray != null) {
 						fclrs = getColorArrayBuffer(cfarray);
 					}
 
 					gd.geoToColorsOffset = offset;
 
 					int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-					{
+					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 						offset += 4;// minimum alignment
-					}
-					else
-					{
+					} else {
 						offset += 4 * sz;
 					}
 					fclrs.position(0);
 				}
 
-				if (normalsDefined)
-				{
-					if (narray != null)
-					{
+				if (normalsDefined) {
+					if (narray != null) {
 						norms = getNormalArrayBuffer(narray);
 					}
 
 					gd.geoToNormalsOffset = offset;
-					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-					{
+					if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 						offset += 4;// minimum alignment
-					}
-					else
-					{
+					} else {
 						offset += 4 * 3;
 					}
 					norms.position(0);
 				}
 
-				if (vattrDefined)
-				{
-					if (vertexAttrData != null)
-					{
+				if (vattrDefined) {
+					if (vertexAttrData != null) {
 						vertexAttrBufs = getVertexAttrSetBuffer(vertexAttrData);
 					}
 
-					for (int index = 0; index < vertexAttrCount; index++)
-					{
-						gd.geoToVattrOffset[index] = offset;
+					for (int index = 0; index < vertexAttrCount; index++) {
+						gd.geoToVattrOffset [index] = offset;
 
-						int sz = vertexAttrSizes[index];
-						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-						{
-							offset += 4 * (int) Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
-						}
-						else
-						{
+						int sz = vertexAttrSizes [index];
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
+							offset += 4 * (int)Math.ceil(sz / 4.0);// minimum alignment maths to make it 4 aligned
+						} else {
 							offset += 4 * sz;
 						}
 
-						FloatBuffer vertexAttrs = vertexAttrBufs[index];
+						FloatBuffer vertexAttrs = vertexAttrBufs [index];
 						vertexAttrs.position(0);
 
 					}
 				}
 
-				if (textureDefined)
-				{
+				if (textureDefined) {
 					// convert from float[][] to FloatBuffer[]
-					if (!(texCoords[0] instanceof FloatBuffer))
-					{
+					if (!(texCoords [0] instanceof FloatBuffer)) {
 						texCoords = getTexCoordSetBuffer(texCoords);
 					}
 
 					boolean[] texSetsLoaded = new boolean[texCoords.length];
-					for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
-					{
-						int texSet = texCoordSetMap[texUnit];
-						if (texSet != -1 && !texSetsLoaded[texSet])
-						{
-							texSetsLoaded[texSet] = true;
-							gd.geoToTexCoordOffset[texSet] = offset;
-							if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-							{
+					for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++) {
+						int texSet = texCoordSetMap [texUnit];
+						if (texSet != -1 && !texSetsLoaded [texSet]) {
+							texSetsLoaded [texSet] = true;
+							gd.geoToTexCoordOffset [texSet] = offset;
+							if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 								// note half floats sized
 								int stride = (texStride == 2 ? 4 : 8);// minimum alignment 4 
 								offset += stride;
-							}
-							else
-							{
+							} else {
 								offset += 4 * texStride;
 							}
-							FloatBuffer buf = (FloatBuffer) texCoords[texSet];
+							FloatBuffer buf = (FloatBuffer)texCoords [texSet];
 							buf.position(0);
 						}
 					}
@@ -10495,26 +9617,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 				gd.interleavedStride = offset;
 
-				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride).order(ByteOrder.nativeOrder());
+				interleavedBuffer = ByteBuffer.allocateDirect(vertexCount * gd.interleavedStride)
+						.order(ByteOrder.nativeOrder());
 
-				for (int i = 0; i < vertexCount; i++)
-				{
+				for (int i = 0; i < vertexCount; i++) {
 					interleavedBuffer.position(i * gd.interleavedStride);
-					if (floatCoordDefined)
-					{
-						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-						{
+					if (floatCoordDefined) {
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 							int startPos = interleavedBuffer.position();
-							for (int c = 0; c < 3; c++)
-							{
-								short hf = (short) Jogl2es2MatrixUtil.halfFromFloat(fverts.get());
+							for (int c = 0; c < 3; c++) {
+								short hf = (short)Jogl2es2MatrixUtil.halfFromFloat(fverts.get());
 								interleavedBuffer.putShort(hf);
 							}
 
 							interleavedBuffer.position(startPos + 8);// minimum alignment of 2*3 is 8
-						}
-						else
-						{
+						} else {
 							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
 							for (int c = 0; c < 3; c++)
 								fb.put(fverts.get());
@@ -10523,19 +9640,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						}
 					}
 
-					if (floatColorsDefined && !ignoreVertexColors)
-					{
+					if (floatColorsDefined && !ignoreVertexColors) {
 						int sz = ((vformat & GeometryArray.WITH_ALPHA) != 0) ? 4 : 3;
-						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-						{
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 							int startPos = interleavedBuffer.position();
 							for (int c = 0; c < sz; c++)
-								interleavedBuffer.put((byte) (fclrs.get() * 255));
+								interleavedBuffer.put((byte)(fclrs.get() * 255));
 
 							interleavedBuffer.position(startPos + 4);// minimum alignment
-						}
-						else
-						{
+						} else {
 							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
 							for (int c = 0; c < sz; c++)
 								fb.put(fclrs.get());
@@ -10544,18 +9657,14 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						}
 
 					}
-					if (normalsDefined)
-					{
-						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-						{
+					if (normalsDefined) {
+						if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 							int startPos = interleavedBuffer.position();
 							for (int c = 0; c < 3; c++)
-								interleavedBuffer.put((byte) (((norms.get() * 255) - 1) / 2f));
+								interleavedBuffer.put((byte)(((norms.get() * 255) - 1) / 2f));
 
 							interleavedBuffer.position(startPos + 4);// minimum alignment
-						}
-						else
-						{
+						} else {
 							FloatBuffer fb = interleavedBuffer.asFloatBuffer();
 							for (int c = 0; c < 3; c++)
 								fb.put(norms.get());
@@ -10564,22 +9673,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						}
 					}
 
-					if (vattrDefined)
-					{
-						for (int index = 0; index < vertexAttrCount; index++)
-						{
-							int sz = vertexAttrSizes[index];
-							FloatBuffer vertexAttrs = vertexAttrBufs[index];
-							if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-							{
+					if (vattrDefined) {
+						for (int index = 0; index < vertexAttrCount; index++) {
+							int sz = vertexAttrSizes [index];
+							FloatBuffer vertexAttrs = vertexAttrBufs [index];
+							if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 								int startPos = interleavedBuffer.position();
 								for (int va = 0; va < sz; va++)
-									interleavedBuffer.put((byte) (((vertexAttrs.get() * 255) - 1) / 2f));
+									interleavedBuffer.put((byte)(((vertexAttrs.get() * 255) - 1) / 2f));
 
-								interleavedBuffer.position(startPos + (4 * (int) Math.ceil(sz / 4.0)));// minimum alignment
-							}
-							else
-							{
+								interleavedBuffer.position(startPos + (4 * (int)Math.ceil(sz / 4.0)));// minimum alignment
+							} else {
 								FloatBuffer fb = interleavedBuffer.asFloatBuffer();
 								for (int va = 0; va < sz; va++)
 									fb.put(vertexAttrs.get());
@@ -10589,30 +9693,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						}
 					}
 
-					if (textureDefined)
-					{
+					if (textureDefined) {
 						boolean[] texSetsLoaded = new boolean[texCoords.length];
-						for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
-						{
-							int texSet = texCoordSetMap[texUnit];
-							if (texSet != -1 && !texSetsLoaded[texSet])
-							{
-								texSetsLoaded[texSet] = true;
-								FloatBuffer tcBuf = (FloatBuffer) texCoords[texSet];
+						for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++) {
+							int texSet = texCoordSetMap [texUnit];
+							if (texSet != -1 && !texSetsLoaded [texSet]) {
+								texSetsLoaded [texSet] = true;
+								FloatBuffer tcBuf = (FloatBuffer)texCoords [texSet];
 
-								if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES)
-								{
+								if (gl.isGL2ES3() && COMPRESS_OPTIMIZED_VERTICES) {
 									int startPos = interleavedBuffer.position();
-									for (int c = 0; c < texStride; c++)
-									{
-										short hf = (short) Jogl2es2MatrixUtil.halfFromFloat(tcBuf.get());
+									for (int c = 0; c < texStride; c++) {
+										short hf = (short)Jogl2es2MatrixUtil.halfFromFloat(tcBuf.get());
 										interleavedBuffer.putShort(hf);
 									}
 
 									interleavedBuffer.position(startPos + (texStride == 2 ? 4 : 8));// minimum alignment
-								}
-								else
-								{
+								} else {
 									FloatBuffer fb = interleavedBuffer.asFloatBuffer();
 									for (int tc = 0; tc < texStride; tc++)
 										fb.put(tcBuf.get());
@@ -10628,22 +9725,22 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			interleavedBuffer.position(0);
 			int[] tmp = new int[1];
 			gl.glGenBuffers(1, tmp, 0);
-			gd.interleavedBufId = tmp[0];
+			gd.interleavedBufId = tmp [0];
 
 			gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.interleavedBufId);
-			gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, interleavedBuffer.remaining(), interleavedBuffer, GL2ES2.GL_STATIC_DRAW);
+			gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, interleavedBuffer.remaining(), interleavedBuffer,
+					GL2ES2.GL_STATIC_DRAW);
 			if (DO_OUTPUT_ERRORS)
 				outputErrors(ctx);
 
 			if (OUTPUT_PER_FRAME_STATS)
 				ctx.perFrameStats.interleavedBufferCreated++;
 
-			if (coordBuffer != null)
-			{
+			if (coordBuffer != null) {
 				coordBuffer.position(0);
 				int[] tmp2 = new int[1];
 				gl.glGenBuffers(1, tmp2, 0);
-				gd.coordBufId = tmp2[0];
+				gd.coordBufId = tmp2 [0];
 
 				gl.glBindBuffer(GL2ES2.GL_ARRAY_BUFFER, gd.coordBufId);
 				gl.glBufferData(GL2ES2.GL_ARRAY_BUFFER, coordBuffer.remaining(), coordBuffer, GL2ES2.GL_DYNAMIC_DRAW);
@@ -10654,6 +9751,165 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		}
 
 		return gd;
+
+	}
+	
+	static int	SHADOW_WIDTH	= 1024, SHADOW_HEIGHT = 1024;
+
+	public void bindToShadowDepthBuffer(Context ctx, LightRetained light) {
+
+		//Create the depth buffer to depth texture binding
+		if (light.shadowMapSamplerId == -1) {
+			GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+			light.shadowMapFBOId = generateFrameBufferID(ctx);
+
+			//Next we create a 2D texture that we'll use as the framebuffer's depth buffer:		
+
+			light.shadowMapSamplerId = generateTexID(ctx);
+			gl.glBindTexture(GL.GL_TEXTURE_2D, light.shadowMapSamplerId);
+			gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL2ES2.GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0,
+					GL2ES2.GL_DEPTH_COMPONENT, GL.GL_FLOAT, null);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL2ES2.GL_CLAMP_TO_BORDER);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL2ES2.GL_CLAMP_TO_BORDER);
+			float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			gl.glTexParameterfv(GL.GL_TEXTURE_2D, GL2ES2.GL_TEXTURE_BORDER_COLOR, borderColor, 0);
+			
+			// make it into a shadow map sampler (this require 3d coords in the texture func in the shader
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL2ES2.GL_TEXTURE_COMPARE_MODE, GL2ES2.GL_COMPARE_REF_TO_TEXTURE);
+			gl.glTexParameteri(GL.GL_TEXTURE_2D, GL2.GL_TEXTURE_COMPARE_FUNC, GL2.GL_GREATER);
+			//Generating the depth map shouldn't look too complicated. Because we only care about depth values we specify the texture's formats as GL_DEPTH_COMPONENT. 
+			//We also give the texture a width and height of 1024: this is the resolution of the depth map.
+			//With the generated depth texture we can attach it as the framebuffer's depth buffer:
+
+			gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, light.shadowMapFBOId);
+			gl.glFramebufferTexture2D(GL.GL_FRAMEBUFFER, GL.GL_DEPTH_ATTACHMENT, GL.GL_TEXTURE_2D, light.shadowMapSamplerId, 0);
+			gl.glDrawBuffers(0, null, 0); //no color writes allowed 1, new int[]{GL.GL_NONE},0
+			//possibly ES3 only gl.glReadBuffer(GL.GL_NONE);
+			gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+		}
+	}
+
+	 
+
+	int generateFrameBufferID(Context ctx) {
+		if (VERBOSE)
+			System.err.println("JoglPipeline.generateFrameBufferID()");
+		if (OUTPUT_PER_FRAME_STATS)
+			((Jogl2es2Context) ctx).perFrameStats.generateTexID++;
+
+		GL2ES2 gl = ((Jogl2es2Context)ctx).gl2es2();
+
+		int[] tmp = new int[] {-1};
+		gl.glGenFramebuffers(1, tmp, 0);
+
+		if (tmp [0] < 1)
+			return -1;
+
+		return tmp [0];
+	}
+
+	public ShaderProgramId	shadowShaderId	= null;
+	public boolean			useShadowShaderOverride;
+
+	public void enableOverrideShadowDepthShader(Context ctx, LightRetained light, boolean enable) {
+
+		Jogl2es2Context joglesContext = (Jogl2es2Context)ctx;
+		GL2ES2 gl = joglesContext.gl2es2();
+		if (shadowShaderId == null) {
+			//GL2ES2.GL_SAMPLER_2D_SHADOW; // this is the way we sample the shadow texture see tutorial 16						
+
+			String vertShad = "#version 330 core\n"
+								+ "// Input vertex data, different for all executions of this shader.\n"
+								+ "layout (location = 0) in vec4 glVertex;\n"
+								+ "// Values that stay constant for the whole mesh.\n"
+								+ "uniform mat4 glModelViewProjectionMatrix;\n" //
+								+ "void main(){\n" //
+								+ " gl_Position = glModelViewProjectionMatrix * glVertex;\n" //
+								+ "}";//
+
+			int vertShaderHandleId = gl.glCreateShader(GL2ES2.GL_VERTEX_SHADER);
+			gl.glShaderSource(vertShaderHandleId, 1, new String[] {vertShad}, null, 0);
+			gl.glCompileShader(vertShaderHandleId);
+			int[] status = new int[1];
+			gl.glGetShaderiv(vertShaderHandleId, GL2ES2.GL_COMPILE_STATUS, status, 0);
+			if (status [0] == 0) {
+				String detailMsg = getShaderInfoLog(gl, vertShaderHandleId);
+				System.err.println(detailMsg);
+			}
+			
+			String fragShad = "#version 330 core\n" + "// Ouput data\n"
+								+ "layout(location = 0) out float fragmentdepth;\n" //
+								+ "void main(){\n"//
+								+ "    // Not really needed, OpenGL does it anyway\n"
+								+ "    fragmentdepth = gl_FragCoord.z;\n" //								
+								+ "}";//
+			int fragShaderHandleId = gl.glCreateShader(GL2ES2.GL_FRAGMENT_SHADER);
+			gl.glShaderSource(fragShaderHandleId, 1, new String[] {fragShad}, null, 0);
+			gl.glCompileShader(fragShaderHandleId);
+			gl.glGetShaderiv(fragShaderHandleId, GL2ES2.GL_COMPILE_STATUS, status, 0);
+			if (status [0] == 0) {
+				String detailMsg = getShaderInfoLog(gl, fragShaderHandleId);
+				System.err.println(detailMsg);
+			}
+
+			int shaderProgramHandle = gl.glCreateProgram();
+			if (shaderProgramHandle == 0) {
+				System.err.println("Unable to create native shader program object");
+			}
+			shadowShaderId = new JoglShaderObject(shaderProgramHandle);
+
+			gl.glAttachShader(shaderProgramHandle, vertShaderHandleId);
+			gl.glAttachShader(shaderProgramHandle, fragShaderHandleId);
+
+			gl.glLinkProgram(shaderProgramHandle);
+			gl.glGetProgramiv(shaderProgramHandle, GL2ES2.GL_LINK_STATUS, status, 0);
+			if (status [0] == 0) {
+				String detailMsg = getProgramInfoLog(gl, shaderProgramHandle);
+				System.err.println(detailMsg);
+			}
+
+			joglesContext.setShaderProgram((JoglShaderObject)shadowShaderId);
+			loadLocs(joglesContext, gl);
+		}
+
+		useShadowShaderOverride = enable;
+
+		if (enable) {
+			gl.glUseProgram(unbox(shadowShaderId));
+			joglesContext.setShaderProgram((JoglShaderObject)shadowShaderId);
+			loadLocs(joglesContext, gl);
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+
+			//make render out to depth buffer not screen
+			gl.glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+			gl.glBindFramebuffer(GL2ES2.GL_FRAMEBUFFER, light.shadowMapFBOId);
+			gl.glClear(GL2ES2.GL_DEPTH_BUFFER_BIT);
+			gl.glCullFace(GL2.GL_FRONT);
+
+		} else {
+			// unset the override of shaders
+			gl.glUseProgram(0);
+			joglesContext.setShaderProgram(null);
+			
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+
+			// set render back to screen
+			gl.glBindFramebuffer(GL2ES2.GL_FRAMEBUFFER, 0); 
+ 
+			//clear 			 
+			gl.glClear(GL2ES2.GL_DEPTH_BUFFER_BIT | GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_STENCIL_BUFFER_BIT);
+			gl.glCullFace(GL2.GL_BACK);
+
+			//debug!!! output the depth buffer
+			//gl.glActiveTexture(GL2ES2.GL_TEXTURE0);
+			//gl.glBindTexture(GL2ES2.GL_TEXTURE_2D, light.shadowMapSamplerId);
+			//renderTexturedQuad(ctx, 0, 1, 0, 1, -0.2f, 0, -0.2f, 0, -0.5f);
+		
+		}
 
 	}
 }

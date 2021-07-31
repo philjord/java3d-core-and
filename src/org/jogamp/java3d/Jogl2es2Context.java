@@ -34,28 +34,28 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GLContext;
 
-public class Jogl2es2Context extends JoglContext
-{
+public class Jogl2es2Context extends JoglContext {
 
-	public Jogl2es2Context(GLContext context)
-	{
+	public Jogl2es2Context(GLContext context) {
 		super(context);
 	}
 
-	public GL2ES2 gl2es2()
-	{
+	public GL2ES2 gl2es2() {
 		return context.getGL().getGL2ES2();
 	}
 
-	public GL2ES3 gl2es3()
-	{
+	public GL2ES3 gl2es3() {
 		if(context.getGL().isGL2ES3())
 			return context.getGL().getGL2ES3();
 		else
 			return null;
 	}
 
-	public JoglShaderObject shaderProgram;
+	private JoglShaderObject shaderProgram;
+	@Override
+	public JoglShaderObject getShaderProgram() {
+		return shaderProgram;
+	}
 	public int shaderProgramId = -1;
 	public ProgramData programData;
 
@@ -108,9 +108,9 @@ public class Jogl2es2Context extends JoglContext
 		public int[] geoToTexCoordOffset = new int[10];
 
 		// vertex array object id for this geom
-		public int vaoId = -1;
-		//PJ the gd.vaoId is only valid for one shader program, if we change shader for a geometry then the vao needs to be reset				
-		public int shaderIdForCurrentVaoId = -1;
+		// a vao is only loaded for the corresponding shader
+		public SparseArray<Integer> geoToVaoId = new SparseArray<Integer>();
+		public int currentVaoId = -1;
 
 		//used to identify each geometry as we see it
 		private static int nextNativeId = 0;
@@ -220,7 +220,7 @@ public class Jogl2es2Context extends JoglContext
 
 	/**
 	 *  below here are openGL state tracking to reduce unnecessary native calls
-	 *  Note this is NOT like the "new" or so called current staet above taht needs to be st in the FFP
+	 *  Note this is NOT like the "new" or so called current state above that needs to be set in the FFP
 	 *  call, this is the old or previously set data, that might not need to be updated
 	 * @author phil
 	 *
@@ -263,7 +263,7 @@ public class Jogl2es2Context extends JoglContext
 		public Vector4f objectColor = new Vector4f();
 		public float transparencyAlpha;
 		public Matrix4d textureTransform = new Matrix4d();
-		public Matrix4d modelMatrix = new Matrix4d();
+		public Matrix4d glModelMatrix = new Matrix4d();
 		public Matrix4d glModelViewMatrix = new Matrix4d();
 		public Matrix4d glModelViewMatrixInverse = new Matrix4d();
 		public Matrix4d glModelViewProjectionMatrix = new Matrix4d();
@@ -311,7 +311,7 @@ public class Jogl2es2Context extends JoglContext
 			objectColor.set(Float.NEGATIVE_INFINITY, -999f, -999f, -999f);
 			transparencyAlpha = -1;
 			textureTransform.m00 = Double.NEGATIVE_INFINITY;
-			modelMatrix.m00 = Double.NEGATIVE_INFINITY;
+			glModelMatrix.m00 = Double.NEGATIVE_INFINITY;
 			glModelViewMatrix.m00 = Double.NEGATIVE_INFINITY;
 			glModelViewMatrixInverse.m00 = Double.NEGATIVE_INFINITY;
 			glModelViewProjectionMatrix.m00 = Double.NEGATIVE_INFINITY;
@@ -462,6 +462,8 @@ public class Jogl2es2Context extends JoglContext
 		public float spotCutoff;
 		public float spotExponent;
 		public Vector3f spotDirection = new Vector3f();
+		public int shadowMapSamplerId = -1;
+		public Matrix4d projMatrix = new Matrix4d();
 
 		public void clear()
 		{
@@ -470,12 +472,15 @@ public class Jogl2es2Context extends JoglContext
 			position.set(-999f, -999f, -999f, -999f);
 			diffuse.set(-999f, -999f, -999f, -999f);
 			specular.set(-999f, -999f, -999f, -999f);
-			constantAttenuation = -99;
-			linearAttenuation = -99;
-			quadraticAttenuation = -99;
-			spotCutoff = -99;
-			spotExponent = -99;
+			constantAttenuation = -99f;
+			linearAttenuation = -99f;
+			quadraticAttenuation = -99f;
+			spotCutoff = -99f;
+			spotExponent = -99f;
 			spotDirection.set(-999f, -999f, -999f);
+			shadowMapSamplerId = -1;
+			projMatrix.set(new double[] {-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999f,-999});
+			
 		}
 
 		public void set(glLightSource ogfm)
@@ -491,6 +496,7 @@ public class Jogl2es2Context extends JoglContext
 			spotCutoff = ogfm.spotCutoff;
 			spotExponent = ogfm.spotExponent;
 			spotDirection.set(ogfm.spotDirection);
+			// don't copy opengl ids shadowMapSamplerId or projMatrix
 		}
 
 		@Override
@@ -522,6 +528,8 @@ public class Jogl2es2Context extends JoglContext
 		public int spotCutoff = -1;
 		public int spotExponent = -1;
 		public int spotDirection = -1;
+		public int shadowMapSamplerId = -1;
+		public int projMatrix = -1;
 	}
 
 	// in the shader as follows

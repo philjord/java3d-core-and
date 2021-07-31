@@ -558,7 +558,8 @@ class NoopPipeline extends Pipeline {
     @Override
     void updateDirectionalLight(Context ctx,
             int lightSlot, float red, float green,
-            float blue, float x, float y, float z) {
+            float blue, float x, float y, float z, 
+            int shadowMapSamplerId, double[] projMatrix) {
     }
 
 
@@ -572,7 +573,8 @@ class NoopPipeline extends Pipeline {
     void updatePointLight(Context ctx,
             int lightSlot, float red, float green,
             float blue, float ax, float ay, float az,
-            float px, float py, float pz) {
+            float px, float py, float pz, 
+            int shadowMapSamplerId, double[] projMatrix) {
     }
 
 
@@ -588,7 +590,7 @@ class NoopPipeline extends Pipeline {
             float blue, float ax, float ay, float az,
             float px, float py, float pz, float spreadAngle,
             float concentration, float dx, float dy,
-            float dz) {
+            float dz, int shadowMapSamplerId, double[] projMatrix) {
     }
 
 

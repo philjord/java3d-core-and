@@ -1709,7 +1709,7 @@ public class Canvas3D {//extends Canvas
 			if (graphics2D == null)
 				graphics2D = new J3DGraphics2DImpl(this);
 		}
-
+   
 		return graphics2D;
 	}
 
@@ -3770,16 +3770,16 @@ public class Canvas3D {//extends Canvas
 		keys.add("stereoAvailable");
 		values.add(new Boolean(stereoAvailable));
 
-		keys.add("sceneAntialiasingAvailable");
-		values.add(new Boolean(sceneAntialiasingAvailable));
+	//keys.add("sceneAntialiasingAvailable");
+	//values.add(new Boolean(sceneAntialiasingAvailable));
 
-		keys.add("sceneAntialiasingNumPasses");
+	//keys.add("sceneAntialiasingNumPasses");
 
-	if (sceneAntialiasingAvailable) {
-	    pass = (sceneAntialiasingMultiSamplesAvailable ?
-		    1: Renderer.NUM_ACCUMULATION_SAMPLES);
-		}
-		values.add(new Integer(pass));
+	//if (sceneAntialiasingAvailable) {
+	 //   pass = (sceneAntialiasingMultiSamplesAvailable ?
+	//	    1: Renderer.NUM_ACCUMULATION_SAMPLES);
+	//}
+	//values.add(new Integer(pass));
 
 		keys.add("stencilSize");
 		// Return the actual stencil size if the user owns it, otherwise
@@ -4787,19 +4787,19 @@ void swapBuffers(Context ctx, Drawable drawable) {
 	}
 
 	// This is the native method for doing accumulation.
-    void accum(Context ctx, float value) {
-		Pipeline.getPipeline().accum(ctx, value);
-	}
+   // void accum(Context ctx, float value) {
+    //    Pipeline.getPipeline().accum(ctx, value);
+    //}
 
 	// This is the native method for doing accumulation return.
-    void accumReturn(Context ctx) {
-		Pipeline.getPipeline().accumReturn(ctx);
-	}
+    //void accumReturn(Context ctx) {
+    //    Pipeline.getPipeline().accumReturn(ctx);
+    //}
 
 	// This is the native method for clearing the accumulation buffer.
-    void clearAccum(Context ctx) {
-		Pipeline.getPipeline().clearAccum(ctx);
-	}
+    //void clearAccum(Context ctx) {
+    //    Pipeline.getPipeline().clearAccum(ctx);
+    //}
 
 	// This is the native method for getting the number of lights the underlying
 	// native library can support.
@@ -4846,15 +4846,15 @@ void swapBuffers(Context ctx, Drawable drawable) {
 		Pipeline.getPipeline().setFogEnableFlag(ctx, enableFlag);
 	}
 
-boolean isAntialiasingSet() {
-		return antialiasingSet;
-	}
+//boolean isAntialiasingSet() {
+//	return antialiasingSet;
+//}
 
 	// Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
-    void setFullSceneAntialiasing(Context ctx, boolean enable) {
-		Pipeline.getPipeline().setFullSceneAntialiasing(ctx, enable);
-		antialiasingSet = enable;
-	}
+//    void setFullSceneAntialiasing(Context ctx, boolean enable) {
+//        Pipeline.getPipeline().setFullSceneAntialiasing(ctx, enable);
+//        antialiasingSet = enable;
+//    }
 
 	// Native method to update separate specular color control
     void updateSeparateSpecularColorEnable(Context ctx, boolean control) {
