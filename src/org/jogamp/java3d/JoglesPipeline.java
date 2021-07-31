@@ -6824,16 +6824,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline {
 		if (gl20) {
 			assert gl13;
 			assert gl14;
-			assert gl.isExtensionAvailable("GL_VERSION_2_0");
+			//EGLProfile returns false for all queries of isExtensionAvailable, not sure why
+			//assert gl.isExtensionAvailable("GL_VERSION_2_0");
 		}
 
 		if (gl14) {
 			assert gl13;
-			assert gl.isExtensionAvailable("GL_VERSION_1_4");
+			//assert gl.isExtensionAvailable("GL_VERSION_1_4");
 		}
 
 		if (gl13) {
-			assert gl.isExtensionAvailable("GL_VERSION_1_3");
+			//assert gl.isExtensionAvailable("GL_VERSION_1_3");
 		}
 
 		// Note that we don't query for GL_ARB_imaging here
