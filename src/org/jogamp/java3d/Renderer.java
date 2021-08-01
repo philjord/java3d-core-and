@@ -31,14 +31,13 @@ import javaawt.image.BufferedImage;
 import javaawt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector3f;
 
 class Renderer extends J3dThread {
 
@@ -1013,29 +1012,34 @@ class Renderer extends J3dThread {
 							// must be the frustum plus the frustum projected at the light
 
 							//TODO: check if shadowmap enabled, by having a variable based on shadow enabled lights in scene
+							// then by finding out if any light has shadow maps turned on first?
 							boolean doShadowPass = Pipeline.getPipeline() instanceof JoglesPipeline;
 							if (doShadowPass) {
 
 								// get allLights 
 								HashSet<LightRetained> allLights = new HashSet<LightRetained>();
 								// get all lights from renderbin that influence view frustum render atoms
-								
+																				
 								//TODO: optimize?
-								ArrayList<RenderAtom> raCopy = (ArrayList<RenderAtom>)renderBin.renderAtoms.clone();
-								int sz = raCopy.size();
-								for (int n = 0; n < sz; n++) {
-									if(raCopy.size() < sz)System.out.println("odd size just changed " + sz + " " +raCopy.size());
-									RenderAtom ra = raCopy.get(n);
-
-									if (!ra.inRenderBin())
-										continue;
-
-									LightRetained[] lights = renderBin.universe.renderingEnvironmentStructure
-											.getInfluencingLights(ra, view);
-									for (i = 0; i < lights.length; i++) {
-										LightRetained light = lights [i];
-										allLights.add(light);										 
+								List<RenderAtom> raCopy = (ArrayList<RenderAtom>)renderBin.renderAtoms.clone();		
+								try {
+									for (int n = 0; n < raCopy.size(); n++) {	
+																						
+										
+										RenderAtom ra = raCopy.get(n);
+										if (ra == null || !ra.inRenderBin())
+											continue;
+	
+										LightRetained[] lights = renderBin.universe.renderingEnvironmentStructure
+												.getInfluencingLights(ra, view);
+										for (i = 0; i < lights.length; i++) {
+											LightRetained light = lights [i];
+											allLights.add(light);										 
+										}
 									}
+								}
+								catch(ArrayIndexOutOfBoundsException e) {
+									//lord knows how I get an array index of out bounds no one should/could touch the array! aahhhh!
 								}
 								
 								for (LightRetained light : allLights) {									
@@ -1043,16 +1047,16 @@ class Renderer extends J3dThread {
 										if (light instanceof DirectionalLightRetained) {
 											DirectionalLightRetained dlr = (DirectionalLightRetained)light;
 
-											//FIXME: all calls here taht use the pipeline should ask teh canvas3d to do the actual call
+											//FIXME: all calls here that use the pipeline should ask the canvas3d to do the actual call
 											//TODO: check if shadow map supported on pipeline (not for ffp)
 											JoglesPipeline joglesPipeline = ((JoglesPipeline)Pipeline
 													.getPipeline());
 
-											// TODO :give the canvas the depth buffer details so we are rendering to aFBO not the screen
+											// TODO :give the canvas the depth buffer details so we are rendering to an FBO not the screen
 											joglesPipeline.bindToShadowDepthBuffer(canvas.ctx, light);
 
-											//TODO: the light should have a frustum near far and a bias figre, or the bias 
-											// uniform should be handed in based on near far?, no bias is about where in the depthi is all is
+											//TODO: the light should have a frustum near far and a bias figure, or the bias 
+											// uniform should be handed in based on near far?, note bias is about where in the depth is all is
 
 											//TODO:canvas3d frustum are used by the rendermethod for culling
 											//TODO: dirty hack instead of setting the canvas to a no clip plane set
