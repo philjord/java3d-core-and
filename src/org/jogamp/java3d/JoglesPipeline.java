@@ -42,6 +42,7 @@ import org.jogamp.vecmath.Vector4f;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.common.os.Platform;
+import com.jogamp.common.util.VersionNumber;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.NativeSurface;
 import com.jogamp.nativewindow.OffscreenLayerOption;
@@ -6775,8 +6776,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline {
 				}
 
 				if (Platform.getOSName().equalsIgnoreCase("Windows 10") && //win10
-					(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) > 0) || // 1.9 or 1.8 > 51 //Version 19 was swapped to version 9 due to JEP 223 in jogl 2.4.0
-					(Platform.JAVA_VERSION_NUMBER.compareTo(Platform.Version18) >= 0
+					(Platform.JAVA_VERSION_NUMBER.compareTo(new VersionNumber(1, 8, 0)) > 0) || // 1.9 or 1.8 > 51 //Version 19 was swapped to version 9 due to JEP 223 in jogl 2.4.0
+					(Platform.JAVA_VERSION_NUMBER.compareTo(new VersionNumber(1, 8, 0)) >= 0
 						&& Platform.JAVA_VERSION_UPDATE > 51) && //
 																						Platform.getJavaVMName()
 																								.toLowerCase()
