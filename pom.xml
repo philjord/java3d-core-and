@@ -87,26 +87,7 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>java3d-jogamp-natives-android</artifactId>
 			<version>${jogamp.version}</version>
-		</dependency>
-
-		<!-- NOTE! this dependency should be in the pom file, however eclipse m2e has a bug
-		and the runtime scope is not respected, which build the maven build into an infinite loop
-		https://stackoverflow.com/questions/25865592/maven-eclipse-how-can-eclipse-honor-maven-runtime-scope
-		the solution for gradle is to explicitly include the embedded jar file's dependency
-		like so
-			implementation 'org.jogamp.java3d:java3d-core-and:1.7.1'
-    		implementation 'org.jogamp.java3d:java3d-core-and:1.7.1:natives-android2.4.0'
-    	which looks like rubbish but gets the natives library embedded without creating more maven projects
-    	
-		</dependency>
-	           <dependency>	
-			<groupId>${project.groupId}</groupId>
-			<artifactId>java3d-core-and</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-android2.4.0</classifier>                        
-			<scope>runtime</scope><!-  not needed to compile, but needed in an android project to run->
-		-->
-				
+		</dependency>		
 	</dependencies>
 	
   <build>
