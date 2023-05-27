@@ -66,20 +66,38 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>vecmath</artifactId>
 			<version>${project.version}</version>
-		</dependency>
+		</dependency>	
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>java3d-core</artifactId>
 			<version>${project.version}</version>
 			<optional>true</optional> <!-- otherwise dependent project will pull this in, but we actually merge it into the output -->			
-		<!-- NOTE! this dependancy should be in the pom file, however eclipse m2e has a bug
+		</dependency>		
+		<dependency>
+			<groupId>org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt-android</artifactId>
+			<version>${jogamp.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.jogl</groupId>
+			<artifactId>jogl-all-android</artifactId>
+			<version>${jogamp.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>java3d-jogamp-natives-android</artifactId>
+			<version>${jogamp.version}</version>
+		</dependency>
+
+		<!-- NOTE! this dependency should be in the pom file, however eclipse m2e has a bug
 		and the runtime scope is not respected, which build the maven build into an infinite loop
 		https://stackoverflow.com/questions/25865592/maven-eclipse-how-can-eclipse-honor-maven-runtime-scope
-		the solution for gradle is to explicitly include the embedded jar file's dependancy
+		the solution for gradle is to explicitly include the embedded jar file's dependency
 		like so
 			implementation 'org.jogamp.java3d:java3d-core-and:1.7.1'
     		implementation 'org.jogamp.java3d:java3d-core-and:1.7.1:natives-android2.4.0'
-    		which looks like rubbish but gets the natives library embedded without creating more maven projects
+    	which looks like rubbish but gets the natives library embedded without creating more maven projects
+    	
 		</dependency>
 	           <dependency>	
 			<groupId>${project.groupId}</groupId>
@@ -88,20 +106,7 @@
 			<classifier>natives-android2.4.0</classifier>                        
 			<scope>runtime</scope><!-  not needed to compile, but needed in an android project to run->
 		-->
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-android</artifactId>
-			<version>${jogamp.version}</version>
-			<scope>runtime</scope><!-- not needed to compile, but needed in an android project to run-->
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-android</artifactId>
-			<version>${jogamp.version}</version>
-			<scope>runtime</scope><!-- not needed to compile, but needed in an android project to run-->
-		</dependency>
-		
+				
 	</dependencies>
 	
   <build>
