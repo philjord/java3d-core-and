@@ -74,19 +74,9 @@
 			<optional>true</optional> <!-- otherwise dependent project will pull this in, but we actually merge it into the output -->			
 		</dependency>		
 		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-android</artifactId>
-			<version>${jogamp.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-android</artifactId>
-			<version>${jogamp.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>java3d-jogamp-natives-android</artifactId>
-			<version>${jogamp.version}</version>
+			<artifactId>java3d-jogamp-and</artifactId>
+			<version>${project.version}</version>
 		</dependency>		
 	</dependencies>
 	
