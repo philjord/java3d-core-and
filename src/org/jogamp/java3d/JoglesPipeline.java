@@ -7429,18 +7429,21 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		{
 			assert gl13;
 			assert gl14;
-			assert gl.isExtensionAvailable("GL_VERSION_2_0");
+			//Apparently some GLES version support the interface but don't publish the extension string			 
+			//assert gl.isExtensionAvailable("GL_VERSION_2_0");
 		}
 
 		if (gl14)
 		{
 			assert gl13;
-			assert gl.isExtensionAvailable("GL_VERSION_1_4");
+			//Apparently some GLES version support the interface but don't publish the extension string	
+			//assert gl.isExtensionAvailable("GL_VERSION_1_4");
 		}
 
 		if (gl13)
 		{
-			assert gl.isExtensionAvailable("GL_VERSION_1_3");
+			//Apparently some GLES version support the interface but don't publish the extension string	
+			//assert gl.isExtensionAvailable("GL_VERSION_1_3");
 		}
 
 		// Note that we don't query for GL_ARB_imaging here
@@ -8667,12 +8670,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			cv.drawable = new JoglDrawable(glDrawable, null);
 		}
 
-		// assuming that this only gets called after addNotify has been called
-		glDrawable.setRealized(true);
-
-		// Apparently we are supposed to make the context current at this point
-		// and set up a bunch of properties
-		glContext.makeCurrent();
+		try {
+			// assuming that this only gets called after addNotify has been called
+			glDrawable.setRealized(true);
+	
+			// Apparently we are supposed to make the context current at this point
+			// and set up a bunch of properties
+			glContext.makeCurrent();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		// Work around for some low end graphics driver bug, such as Intel Chipset.
 		// Issue 324 : Lockup J3D program and throw exception using JOGL renderer
@@ -8770,6 +8777,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			
 			
 
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
 		finally
 		{
