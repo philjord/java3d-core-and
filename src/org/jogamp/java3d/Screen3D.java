@@ -358,12 +358,9 @@ synchronized void notifyUsers() {
 	    System.err.println("Screen3D: screen " + screen + " hashcode " +
 			       this.hashCode());
 
-	if (!offScreen) {
-			// Store the information in this screen object
-			Rectangle bounds = new Rectangle((int) graphicsConfiguration.getBounds().getX(), (int) graphicsConfiguration.getBounds().getY(),
-					(int) graphicsConfiguration.getBounds().getWidth(), (int) graphicsConfiguration.getBounds().getHeight());
-			screenSize.width = bounds.width;
-			screenSize.height = bounds.height;
+		if (!offScreen) {
+			screenSize.width = graphicsDevice.getDisplayMode().getWidth();
+			screenSize.height = graphicsDevice.getDisplayMode().getWidth();
 		}
 
 		// Set the default physical size based on size in pixels
@@ -462,7 +459,17 @@ synchronized void notifyUsers() {
 	 * Update the view cache associated with this screen.
 	 */
     void updateViewCache() {
-	synchronized(this) {
+		synchronized(this) {
+			//Android WindowDriver is async so this info can be updated much after construction
+			if (!offScreen) {
+				screenSize.width = graphicsDevice.getDisplayMode().getWidth();
+				screenSize.height = graphicsDevice.getDisplayMode().getWidth();
+			}
+	
+			// Set the default physical size based on size in pixels
+			physicalScreenWidth = screenSize.width * METERS_PER_PIXEL;
+			physicalScreenHeight = screenSize.height * METERS_PER_PIXEL;
+		
 			screenViewCache.snapshot();
 		}
 	}

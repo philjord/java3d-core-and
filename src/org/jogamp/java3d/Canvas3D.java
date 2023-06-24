@@ -918,10 +918,33 @@ public class Canvas3D {//extends Canvas
 
 	/**
 	 * glwindow MUST be visible at this point!
-	 * @param win
+	 * On Android you will need to wait for the GLWindow to async finish displaying before starting the Canvas3D Renderer
+	 * like this:
+	 * this.glwindow.addGLEventListener(new GLEventListener() {
+	 * 			@Override
+	 * 			public void init(GLAutoDrawable drawable) {}
+	 * 				@Override
+	 *  				public void dispose(GLAutoDrawable drawable) {}
+	 * 
+	 * 				@Override
+	 *				public void display(GLAutoDrawable drawable) {
+	 *					try {
+	 *		                // Both of these calls need the JOGL system to be fully running, so they are call backs.
+	 *		                addNotify();
+	 *		                startRenderer();
+	 *		            } catch (Exception e) {
+	 *		                e.printStackTrace();
+	 *		            }						
+	 *				}
+	 *
+	 *				@Override
+	 *				public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {}					
+	 *			});
+	 * @param win create and set visible a glwindow as per usual in JOGL
 	 */
 	public Canvas3D(GLWindow win)
 	{
+		assert win.isVisible();
 		this.glwindow = win;
 		autoCreateGlwindow = false;
 		this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
@@ -975,6 +998,7 @@ public class Canvas3D {//extends Canvas
 
 	public Canvas3D(GLProfile pro, GLCapabilities cap, boolean fullscreen, boolean offScreen)
 	{
+		boolean isAndroid = false;
 		// allow no opts option
 		if (pro == null)
 		{
@@ -985,7 +1009,8 @@ public class Canvas3D {//extends Canvas
 			cap = new GLCapabilities(pro);
 			cap.setHardwareAccelerated(true);
 			
-
+			isAndroid = pro.usesNativeGLES() || pro.usesNativeGLES1() || pro.usesNativeGLES2() || pro.usesNativeGLES3();
+	
 			// improved values
 			if (!offScreen)
 			{
@@ -993,7 +1018,8 @@ public class Canvas3D {//extends Canvas
 				cap.setStencilBits(8);
 				cap.setSampleBuffers(true);
 				cap.setNumSamples(2);
-				fullscreen = false;
+				// Android MUST be fullscreen, desktops no
+				fullscreen = isAndroid;				
 			}
 			else
 			{
@@ -1025,8 +1051,33 @@ public class Canvas3D {//extends Canvas
 		if (!offScreen)
 		{
 			this.glwindow.setVisible(true);
-			//MUST set visible before new GraphicsConfiguration(this.glwindow); or size and everything buggered
-			this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);
+			//On desktop the setVisible call is synchronous and so by the time it returns the glWindow is ready
+			//On android it is not finished and requires some threading considerations
+			this.graphicsConfiguration = new GraphicsConfiguration(this.glwindow);		
+			
+			//For android we will call addNotify and startRenderer to make it appear seamless
+			if(isAndroid) {
+				this.glwindow.addGLEventListener(new GLEventListener() {
+					@Override
+					public void init(GLAutoDrawable drawable) {}
+					@Override
+					public void dispose(GLAutoDrawable drawable) {}
+
+					@Override
+					public void display(GLAutoDrawable drawable) {
+						try {
+			                // Both of these calls need the JOGL system to be fully running, so they are call backs.
+			                addNotify();
+			                startRenderer();
+			            } catch (Exception e) {
+			                e.printStackTrace();
+			            }						
+					}
+
+					@Override
+					public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {}					
+				});
+			}
 		}
 		else
 		{
@@ -1098,8 +1149,7 @@ public class Canvas3D {//extends Canvas
 			// canvasViewEventCatcher = new CanvasViewEventCatcher(this);
 			// }
 		} else {
-			GraphicsDevice graphicsDevice;
-			graphicsDevice = graphicsConfiguration.getDevice();
+			GraphicsDevice graphicsDevice = graphicsConfiguration.getDevice();
 
 			//		eventCatcher = new EventCatcher(this);
 			//		canvasViewEventCatcher = new CanvasViewEventCatcher(this);

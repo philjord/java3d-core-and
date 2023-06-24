@@ -130,6 +130,19 @@
 	        </execution>
 	    </executions>
 	 </plugin>
+	  <!-- This project overrides a few of the classes in it's parent, but this javadoc will only be for the changed files, a bit rubbish -->
+	 <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-source-plugin</artifactId>
+		<executions>
+			<execution>
+				<id>attach-sources</id>
+				<goals>
+					<goal>jar</goal>
+				</goals>
+			</execution>
+		</executions>
+	</plugin>
       <!-- This project overrides a few of the classes in it's parent, but must publish the merged jar as an artifact -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
