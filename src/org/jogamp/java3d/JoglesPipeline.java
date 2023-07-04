@@ -2553,7 +2553,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (textureDefined)
 			{
 				// convert from float[][] to FloatBuffer[]
-				if (texCoords instanceof float[][])
+				//WOW careful java has a hard time knowing what an Object[] contains can't check float[][]
+				if (!(texCoords[0] instanceof FloatBuffer))
 				{
 					texCoords = getTexCoordSetBuffer(texCoords);
 				}
