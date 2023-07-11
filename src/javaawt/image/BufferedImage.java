@@ -70,16 +70,15 @@ public class BufferedImage extends Image implements WritableRenderedImage, Trans
 	{
 		//For use by DDS bufferedImage, and any sub class that doesn't need the delegate system
 	}
-	 
+		 
 	
 	public BufferedImage(int i, int j, int typeIntArgb)
 	{
 		if (delegateClass != null)
 		{
-		//	Constructor<?>[] consss = delegateClass.getConstructors();
-			Constructor<?> cons = delegateClass.getConstructors()[0];
 			try
 			{
+				Constructor<?> cons = delegateClass.getConstructor(int.class, int.class, int.class);
 				Object obj = cons.newInstance(new Integer(i), new Integer(j), new Integer(typeIntArgb));
 				delegate = (BufferedImage) obj;
 			}
@@ -96,6 +95,10 @@ public class BufferedImage extends Image implements WritableRenderedImage, Trans
 				e.printStackTrace();
 			}
 			catch (InvocationTargetException e)
+			{
+				e.printStackTrace();
+			}
+			catch (NoSuchMethodException e)
 			{
 				e.printStackTrace();
 			}

@@ -28,6 +28,7 @@ package org.jogamp.java3d;
 
 //import java.awt.AlphaComposite;
 import javaawt.Color;
+import javaawt.Composite;
 //import javaawt.Composite;
 import javaawt.Font;
 //import java.awt.FontMetrics;
@@ -35,6 +36,7 @@ import javaawt.Graphics;
 import javaawt.Graphics2D;
 import javaawt.GraphicsConfiguration;
 import javaawt.Image;
+import javaawt.Paint;
 //import javaawt.Paint;
 import javaawt.Point;
 //import java.awt.Polygon;
@@ -42,6 +44,7 @@ import javaawt.Rectangle;
 import javaawt.RenderingHints;
 import javaawt.RenderingHints.Key;
 import javaawt.Shape;
+import javaawt.Stroke;
 //import javaawt.Stroke;
 //import java.awt.font.FontRenderContext;
 //import java.awt.font.GlyphVector;
@@ -1278,16 +1281,37 @@ final class J3DGraphics2DImpl extends J3DGraphics2D {
 	    threadWaiting = false;
 	}
     }
-//PJ
-/*	@Override
-	public void setComposite(Composite comp)
-	{
-		throw new UnsupportedOperationException();
-	}*/
 
-/*	@Override
-	public Composite getComposite()
-	{
+
+    //these are to match the Graphics2S interface
+	@Override
+	public void setComposite(Composite comp) {
 		throw new UnsupportedOperationException();
-	}*/	
+	}
+
+	@Override
+	public void setPaint(Paint paint) {
+		throw new UnsupportedOperationException();
+		
+	}
+
+	@Override
+	public void setStroke(Stroke s) {
+		throw new UnsupportedOperationException();		
+	}
+
+	@Override
+	public Paint getPaint() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Composite getComposite() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stroke getStroke() {
+		throw new UnsupportedOperationException();
+	}
 }

@@ -18,4 +18,6 @@ public interface ColorModel
 
 	public ColorSpace getColorSpace();
 
+	public int getTransparency();
+
 }

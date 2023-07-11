@@ -3823,13 +3823,12 @@ public class AffineTransform implements Cloneable, java.io.Serializable {
      * of the transformed <code>Shape</code>, or null if {@code pSrc} is null.
      * @since 1.2
      */
-//PJPJPJPJPJPJPJPJ Differs from awtgeom project!
-/*    public Shape createTransformedShape(Shape pSrc) {
+    public Shape createTransformedShape(Shape pSrc) {
         if (pSrc == null) {
             return null;
         }
         return new Path2D.Double(pSrc, this);
-    }*/
+    }
 
     // Round values to sane precision for printing
     // Note that Math.sin(Math.PI) has an error of about 10^-16

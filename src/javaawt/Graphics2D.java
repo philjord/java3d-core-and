@@ -27,9 +27,9 @@ package javaawt;
 
 import javaawt.RenderingHints.Key;
 import javaawt.geom.AffineTransform;
-import javaawt.image.BufferedImage;
-import javaawt.image.BufferedImageOp;
 import javaawt.image.ImageObserver;
+import javaawt.image.BufferedImageOp;
+import javaawt.image.BufferedImage;
 import javaawt.image.RenderedImage;
 ///import javaawt.image.renderable.RenderableImage;
 //import javaawt.font.GlyphVector;
@@ -136,13 +136,13 @@ public interface Graphics2D extends Graphics {
     public abstract GraphicsConfiguration getDeviceConfiguration();
 
     
-//    public abstract void setComposite(Composite comp);
+    public abstract void setComposite(Composite comp);
 
     
-//    public abstract void setPaint( Paint paint );
+    public abstract void setPaint( Paint paint );
 
     
- //   public abstract void setStroke(Stroke s);
+    public abstract void setStroke(Stroke s);
 
     
     public abstract void setRenderingHint(Key hintKey, Object hintValue);
@@ -184,10 +184,10 @@ public interface Graphics2D extends Graphics {
     public abstract AffineTransform getTransform();
 
     
-//    public abstract Paint getPaint();
+    public abstract Paint getPaint();
 
     
-//    public abstract Composite getComposite();
+    public abstract Composite getComposite();
 
     
     public abstract void setBackground(Color color);
@@ -196,7 +196,7 @@ public interface Graphics2D extends Graphics {
     public abstract Color getBackground();
 
     
-//    public abstract Stroke getStroke();
+    public abstract Stroke getStroke();
 
     
      public abstract void clip(Shape s);
