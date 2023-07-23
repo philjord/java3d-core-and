@@ -5,6 +5,7 @@
   <groupId>org.jogamp.java3d</groupId>
   <artifactId>java3d-core-and</artifactId>
   <version>1.7.1</version>
+  <!-- <packaging>aar</packaging>  for use when publishing-->
   
   <name>Java 3D Core for Android</name>
   <description>Extension of the Java 3D Graphics API</description>

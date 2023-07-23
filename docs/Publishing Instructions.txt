@@ -1,0 +1,20 @@
+In order to contribute proguard exclusion to a dependent project, this project must be published as an .aar file.
+
+Apparently all the support for creating and publishing aar file exists for AndroidStudio/Gradle not Eclipse with Maven.
+
+So the publishing now requires these extra steps:
+
+1 The pom.xml file must have  <packaging>aar</packaging> under the first details like so:
+  <groupId>org.jogamp.java3d</groupId>
+  <artifactId>java3d-core-and</artifactId>
+  <version>1.7.1</version>
+  <packaging>aar</packaging> 
+  
+2  The jar file java3d-core-and-1.7.1.jar must be renamed 
+  And then 
+2a	classes.jar
+2b  AndroidManifest.xml
+2c  proguard.txt
+  must be in the root of a zip file named
+3  java3d-core-and-1.7.1.aar
+4  Which together with the slightly modified pom file above are what needs to be uploaded to the maven server

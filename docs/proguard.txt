@@ -1,0 +1,25 @@
+#jogl
+-dontwarn jogamp.opengl.**
+-dontwarn com.jogamp.opengl.**
+-dontwarn com.jogamp.common.util.awt.**
+-dontwarn com.jogamp.nativewindow.**
+
+
+#gluegen-rt-android.jar
+-keep class jogamp.common.os.android.AndroidUtilsImpl { *; }
+
+#joal-android.jar
+-keep class com.jogamp.openal.** { *; }
+-keep class jogamp.openal.** { *; }
+
+#jogl-all-android.jar
+-keep class com.jogamp.nativewindow.egl.EGLGraphicsDevice { *; }
+-keep class com.jogamp.opengl.egl.** { *; }
+
+-keep class jogamp.graph.font.typecast.TypecastFontConstructor { *; }
+-keep class jogamp.graph.curve.opengl.shader.** { *; }
+
+-keep class jogamp.newt.driver.** { *; }
+-keep class jogamp.opengl.** { *; }
+
+
