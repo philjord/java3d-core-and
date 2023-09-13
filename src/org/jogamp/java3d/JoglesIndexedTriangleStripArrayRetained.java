@@ -2,13 +2,14 @@ package org.jogamp.java3d;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 public class JoglesIndexedTriangleStripArrayRetained extends IndexedTriangleStripArrayRetained
 {
 
 	private static FloatBuffer dummyBuffer = FloatBuffer.allocate(0);
-	ShortBuffer indBuf;
+	IntBuffer indBuf;
 
 	int interleavedStride = -1;
 	int geoToCoordOffset = -1;
@@ -22,7 +23,7 @@ public class JoglesIndexedTriangleStripArrayRetained extends IndexedTriangleStri
 
 	private int vdefined = 0;
 
-	final void setCoordIndicesRefBuffer(ShortBuffer indBuf)
+	final void setCoordIndicesRefBuffer(IntBuffer indBuf)
 	{
 		int newMax = 0;
 

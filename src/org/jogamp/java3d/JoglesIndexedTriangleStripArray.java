@@ -1,7 +1,7 @@
 package org.jogamp.java3d;
 
 import java.nio.ByteBuffer;
-import java.nio.ShortBuffer;
+import java.nio.IntBuffer;
 
 public class JoglesIndexedTriangleStripArray extends IndexedTriangleStripArray
 {
@@ -28,7 +28,7 @@ public class JoglesIndexedTriangleStripArray extends IndexedTriangleStripArray
 		this.retained.setSource(this);
 	}
 
-	public void setCoordIndicesRefBuffer(ShortBuffer indBuf)
+	public void setCoordIndicesRefBuffer(IntBuffer indBuf)
 	{
 		if (isLiveOrCompiled())
 			if (!this.getCapability(ALLOW_REF_DATA_WRITE))

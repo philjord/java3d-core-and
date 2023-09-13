@@ -29,7 +29,6 @@ import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -40,7 +39,6 @@ import org.jogamp.java3d.Jogl2es2Context.LocationData;
 import org.jogamp.java3d.Jogl2es2Context.ProgramData;
 import org.jogamp.java3d.Jogl2es2Context.glLightSource;
 import org.jogamp.java3d.Jogl2es2Context.glLightSourceLocs;
-import org.jogamp.vecmath.Matrix3d;
 import org.jogamp.vecmath.SingularMatrixException;
 import org.jogamp.vecmath.Vector3f;
 import org.jogamp.vecmath.Vector4f;
@@ -2027,7 +2025,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					for (int s = 0; s < indexCoord.length; s++)
 						indicesBuffer.put(s, (short) indexCoord[s]);*/
 					
-					ShortBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
+					IntBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
 					for (int i = 0; i < strip_len; i++)
 					{
 						indicesBuffer.position(offset);
@@ -2035,7 +2033,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						int indBufId = stripInd[i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						offset += count;
@@ -2060,7 +2058,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					//GL_UNSIGNED_INT
 
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_INT, 0);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -2090,13 +2088,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					//for (int s = 0; s < indexCoord.length; s++)
 					//	indBuf.put(s, (short) indexCoord[s]);
 					//indBuf.position(initialIndexIndex);
-					ShortBuffer indBuf = getIndexArrayBuffer(indexCoord);
+					IntBuffer indBuf = getIndexArrayBuffer(indexCoord);
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
 					gd.geoToIndBuf = tmp[0];// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -2123,15 +2121,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
 					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, indexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_POINTS, indexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, indexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_LINES, indexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				}
 				if (DO_OUTPUT_ERRORS)
@@ -2790,7 +2788,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					for (int s = 0; s < indexCoord.length; s++)
 						indicesBuffer.put(s, (short) indexCoord[s]);*/
 					
-					ShortBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
+					IntBuffer indicesBuffer = getIndexArrayBuffer(indexCoord);
 					
 					for (int i = 0; i < strip_len; i++)
 					{
@@ -2799,7 +2797,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						int indBufId = stripInd[i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						offset += count;
@@ -2843,7 +2841,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					// GL_UNSIGNED_INT
 
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_INT, 0);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -2871,13 +2869,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						indBuf.put(s, (short) indexCoord[s]);
 					indBuf.position(initialIndexIndex);*/
 					
-					ShortBuffer indBuf = getIndexArrayBuffer(indexCoord);
+					IntBuffer indBuf = getIndexArrayBuffer(indexCoord);
 
 					int[] tmp = new int[1];
 					gl.glGenBuffers(1, tmp, 0);
 					gd.geoToIndBuf = tmp[0];// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -2915,15 +2913,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
 					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				}
 				if (DO_OUTPUT_ERRORS)
@@ -8976,7 +8974,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// ----------------------------------------------------------------------
 	// General helper routines
 	//
-	private static ThreadLocal<ShortBuffer> nioIndexTemp = new ThreadLocal<ShortBuffer>();
+	private static ThreadLocal<IntBuffer> nioIndexTemp = new ThreadLocal<IntBuffer>();
 	private static ThreadLocal<FloatBuffer> nioVertexTemp = new ThreadLocal<FloatBuffer>();
 	private static ThreadLocal<DoubleBuffer> nioVertexDoubleTemp = new ThreadLocal<DoubleBuffer>();
 	private static ThreadLocal<FloatBuffer> nioColorTemp = new ThreadLocal<FloatBuffer>();
@@ -8988,12 +8986,12 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	// I think these are not used often as nio buffers sort it out
 	// but they are used a bit mind you
 	
-	private static ShortBuffer getIndexArrayBuffer(int[] indexArray)
+	private static IntBuffer getIndexArrayBuffer(int[] indexArray)
 	{
 		return getIndexArrayBuffer(indexArray, true);
 	}
 
-	private static ShortBuffer getIndexArrayBuffer(int[] indexArray, boolean copyData)
+	private static IntBuffer getIndexArrayBuffer(int[] indexArray, boolean copyData)
 	{
 		return getNIOBuffer(indexArray, nioIndexTemp, copyData);
 	}
@@ -9058,17 +9056,16 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		return getNIOBuffer(vertexAttrSet, nioVertexAttrSetTemp);
 	}
 	
-	//NOTE! int array copied, ShortBuffer returned
-	private static ShortBuffer getNIOBuffer(int[] array, ThreadLocal<ShortBuffer> threadLocal, boolean copyData)
+	private static IntBuffer getNIOBuffer(int[] array, ThreadLocal<IntBuffer> threadLocal, boolean copyData)
 	{
 		if (array == null)
 		{
 			return null;
 		}
-		ShortBuffer buf = threadLocal.get();
+		IntBuffer buf = threadLocal.get();
 		if (buf == null)
 		{
-			buf = Buffers.newDirectShortBuffer(array.length);
+			buf = Buffers.newDirectIntBuffer(array.length);
 			threadLocal.set(buf);
 		}
 		else
@@ -9077,18 +9074,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			if (buf.remaining() < array.length)
 			{
 				int newSize = Math.max(2 * buf.remaining(), array.length);
-				buf = Buffers.newDirectShortBuffer(newSize);
+				buf = Buffers.newDirectIntBuffer(newSize);
 				threadLocal.set(buf);
 			}
 		}
 		if (copyData)
 		{
-			//NOTE! int array copied			
-			short[] shorts = new short[array.length];
-			for(int i=0;i<array.length;i++)
-				shorts[i] = (short)array[i];
-			
-			buf.put(shorts);
+			buf.put(array);
 			buf.rewind();
 			buf.limit(array.length);
 		}
@@ -10139,7 +10131,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gl.glGenBuffers(strip_len, stripInd, 0);
 
 					int indexOffset = initialIndexIndex;
-					ShortBuffer indicesBuffer = null;
+					IntBuffer indicesBuffer = null;
 
 					if (geo instanceof JoglesIndexedTriangleStripArrayRetained)
 					{
@@ -10160,7 +10152,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 						int indBufId = stripInd[i];
 
 						gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Short.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
+						gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, count * Integer.SIZE / 8, indicesBuffer, GL2ES2.GL_STATIC_DRAW);
 						if (DO_OUTPUT_ERRORS)
 							outputErrors(ctx);
 						indexOffset += count;
@@ -10203,7 +10195,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					// GL_UNSIGNED_INT
 
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBufId);
-					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(primType, count, GL2ES2.GL_UNSIGNED_INT, 0);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -10225,7 +10217,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				// bind my indexes ready for the draw call
 				if (gd.geoToIndBuf == -1)
 				{
-					ShortBuffer indBuf = null;
+					IntBuffer indBuf = null;
 					if (geo instanceof JoglesIndexedTriangleArrayRetained)
 					{
 						indBuf = ((JoglesIndexedTriangleArrayRetained) geo).indBuf;
@@ -10245,7 +10237,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					gl.glGenBuffers(1, tmp, 0);
 					gd.geoToIndBuf = tmp[0];// about to add to map below
 					gl.glBindBuffer(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, gd.geoToIndBuf);
-					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Short.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
+					gl.glBufferData(GL2ES2.GL_ELEMENT_ARRAY_BUFFER, indBuf.remaining() * Integer.SIZE / 8, indBuf, GL2ES2.GL_STATIC_DRAW);
 					if (DO_OUTPUT_ERRORS)
 						outputErrors(ctx);
 
@@ -10285,15 +10277,15 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				{
 				case GeometryRetained.GEO_TYPE_INDEXED_QUAD_SET:
 					//QUADS not supported render as triangles just to get something on screen
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 				case GeometryRetained.GEO_TYPE_INDEXED_TRI_SET:
-					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_TRIANGLES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_POINT_SET:
-					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_POINTS, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				case GeometryRetained.GEO_TYPE_INDEXED_LINE_SET:
-					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_SHORT, 0);
+					gl.glDrawElements(GL2ES2.GL_LINES, validIndexCount, GL2ES2.GL_UNSIGNED_INT, 0);
 					break;
 				}
 				if (DO_OUTPUT_ERRORS)
