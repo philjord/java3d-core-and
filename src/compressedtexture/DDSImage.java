@@ -158,7 +158,11 @@ public class DDSImage  extends CompressedImage
 
 	public static final int D3DFMT_X8R8G8B8 = 22;
 	
+	public static final int D3DFMT_A4R4G4B4 = 26;
+	
 	public static final int D3DFMT_L8 = 50;
+	
+	public static final int D3DFMT_A8L8  = 51;
 
 	public static final int DDS_A16B16G16R16F = 113;//added by phil quite late http:
 
@@ -344,7 +348,12 @@ public class DDSImage  extends CompressedImage
 						&& header.pfBBitMask == 0x000000FF && header.pfABitMask == 0xFF000000)
 				{
 					return D3DFMT_A8R8G8B8;
-				}
+				} 
+				else if (getDepth() == 16 && header.pfRBitMask == 0x0F00 && header.pfGBitMask == 0x00F0
+						&& header.pfBBitMask == 0x000F)
+				{
+					return D3DFMT_A4R4G4B4;
+				}  
 			}
 			else
 			{
@@ -359,9 +368,18 @@ public class DDSImage  extends CompressedImage
 					return D3DFMT_X8R8G8B8;
 				}
 			}
-		} else {
+		} 
+		else if (isPixelFormatFlagSet(DDPF_ALPHAPIXELS)) 
+		{
 			if (getDepth() == 8 && header.pfRBitMask == 0x000000FF)
 			{
+				// luminosity stored in the A channel
+				return D3DFMT_L8;
+			}  
+		} else  {
+			if (getDepth() == 8 && header.pfRBitMask == 0x00FF0000)
+			{
+				// luminosity stored in the R channel
 				return D3DFMT_L8;
 			}  
 		}
