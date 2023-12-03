@@ -157,6 +157,8 @@ public class DDSImage  extends CompressedImage
 	public static final int D3DFMT_A8R8G8B8 = 21;
 
 	public static final int D3DFMT_X8R8G8B8 = 22;
+	
+	public static final int D3DFMT_L8 = 50;
 
 	public static final int DDS_A16B16G16R16F = 113;//added by phil quite late http:
 
@@ -357,6 +359,11 @@ public class DDSImage  extends CompressedImage
 					return D3DFMT_X8R8G8B8;
 				}
 			}
+		} else {
+			if (getDepth() == 8 && header.pfRBitMask == 0x000000FF)
+			{
+				return D3DFMT_L8;
+			}  
 		}
 
 		return D3DFMT_UNKNOWN;
