@@ -158,6 +158,8 @@ public class DDSImage  extends CompressedImage
 
 	public static final int D3DFMT_X8R8G8B8 = 22;
 	
+	public static final int D3DFMT_R5G6B5 = 23;
+	
 	public static final int D3DFMT_A4R4G4B4 = 26;
 	
 	public static final int D3DFMT_L8 = 50;
@@ -366,23 +368,22 @@ public class DDSImage  extends CompressedImage
 						&& header.pfBBitMask == 0x000000FF)
 				{
 					return D3DFMT_X8R8G8B8;
+				} 
+				else if (getDepth() == 16 && header.pfRBitMask == 0xF800 && header.pfGBitMask == 0x07E0
+						&& header.pfBBitMask == 0x001F)
+				{
+					return D3DFMT_R5G6B5;
 				}
 			}
 		} 
-		else if (isPixelFormatFlagSet(DDPF_ALPHAPIXELS)) 
+		else  
 		{
 			if (getDepth() == 8 && header.pfRBitMask == 0x000000FF)
 			{
-				// luminosity stored in the A channel
+				// luminosity stored in the A channel; isPixelFormatFlagSet(DDPF_ALPHAPIXELS) may be true or false
 				return D3DFMT_L8;
 			}  
-		} else  {
-			if (getDepth() == 8 && header.pfRBitMask == 0x00FF0000)
-			{
-				// luminosity stored in the R channel
-				return D3DFMT_L8;
-			}  
-		}
+		}  
 
 		return D3DFMT_UNKNOWN;
 	}
