@@ -1,5 +1,6 @@
 package compressedtexture;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class ASTCImage extends CompressedImage
@@ -74,7 +75,7 @@ public class ASTCImage extends CompressedImage
 		}
 	}
 
-	public ASTCImage(ByteBuffer bb)
+	public ASTCImage(ByteBuffer bb) throws IOException
 	{
 		this.hdr = new AstcHeader();
 		this.byteBuffer = bb;
@@ -85,11 +86,9 @@ public class ASTCImage extends CompressedImage
 
 		//hdr.magic = bb.getInt();
 
-		if (hdr.magic != MAGIC_FILE_CONSTANT)
+		if (hdr.magic != MAGIC_FILE_CONSTANT) 
 		{
-
-			System.out.println("File not recognized\n");
-			return;
+			throw new IOException("File not recognized ");
 		}
 
 		hdr.blockdim_x = (bb.get() & 0xff);
@@ -102,9 +101,8 @@ public class ASTCImage extends CompressedImage
 
 		if (xdim < 3 || xdim > 12 || ydim < 3 || ydim > 12 || (zdim < 3 && zdim != 1) || zdim > 12)
 		{
+			throw new IOException("File %s not recognized %d %d %d\n" + xdim + " " + ydim + " " + zdim);
 
-			System.out.println("File %s not recognized %d %d %d\n" + xdim + " " + ydim + " " + zdim);
-			return;
 		}
 
 		tmp = new byte[3];
