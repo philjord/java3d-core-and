@@ -182,7 +182,11 @@ public class DDSImage  extends CompressedImage
 
 	public static final int D3DFMT_DXT5 = 0x35545844;
 	
-	public static final int D3DFMT_ATI2 = 843666497;
+	public static final int D3DFMT_ATI2 = 843666497;//0x32495441
+	
+	//https://www.panda3d.org/reference/cxx/texture_8cxx_source.html suggest same as ATI2
+	public static final int D3DFMT_BC5U = 1429553986; // 0x55354342  
+	
 
 	/**
 	 * Reads a DirectDraw surface from the specified file name, returning the resulting DDSImage.
@@ -596,6 +600,9 @@ public class DDSImage  extends CompressedImage
 	//
 
 	private static final int MAGIC = 0x20534444;
+	
+	// appears in FO76 with sRGB images
+	private static final int MAGIC_76 = 0x5a485aa8;
 
 	public static class Header
 	{
@@ -671,9 +678,10 @@ public class DDSImage  extends CompressedImage
 		void read(ByteBuffer buf) throws IOException
 		{
 			int magic = buf.getInt();
-			if (magic != MAGIC)
+			if (magic != MAGIC && magic != MAGIC_76)
 			{
-				throw new IOException("Incorrect magic number 0x" + Integer.toHexString(magic) + " (expected " + MAGIC + ")");
+				throw new IOException("Incorrect magic number 0x" + Integer.toHexString(magic) + " (expected 0x" + Integer.toHexString(MAGIC) + ")"
+						+ " or 0x" + Integer.toHexString(MAGIC_76) + ")");
 			}
 
 			size = buf.getInt();

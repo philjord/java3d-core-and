@@ -242,8 +242,17 @@ public class CompressedImageComponent2DRetained extends ImageComponent2DRetained
 			{
 				return GL2.GL_RGBA_S3TC;
 			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2)
+			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || ddsImage.getPixelFormat() == DDSImage.D3DFMT_BC5U)
 			{
+				//seen in textures\shared\flatflat_n.dds
+				// more info here https://www.panda3d.org/reference/cxx/texture_8cxx_source.html
+				// normal with rg seems right
+				//case 0x32495441:   // 'ATI2'
+			    //case 0x55354342:   // 'BC5U'
+			    //   compression = CM_rgtc;
+			    //   func = read_dds_level_bc5;
+			    //   format = F_rg;
+			    //   break;
 				//System.out.println("GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT image type, is this fallout4?");
 				return GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
 			}
