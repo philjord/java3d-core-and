@@ -386,6 +386,7 @@ public class CompressedBufferedImage extends BufferedImage
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT5 || //
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_R8G8B8 || //
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8R8G8B8 || //
+						ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8B8G8R8 || //
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_X8R8G8B8 || //
 						ddsImage.getPixelFormat() == DDSImage.DDS_A16B16G16R16F || //
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || //

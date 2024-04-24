@@ -167,7 +167,8 @@ public class DDSImage  extends CompressedImage
 	public static final int D3DFMT_A8L8  = 51;
 
 	public static final int DDS_A16B16G16R16F = 113;//added by phil quite late http:
-
+	public static final int D3DFMT_A8B8G8R8 = 32;
+	public static final int D3DFMT_X8B8G8R8 = 33;
 	//msdn.microsoft.com/en-us/library/windows/desktop/bb172558%28v=vs.85%29.aspx
 	//D3DFMT_A16B16G16R16F	113	64-bit float format using 16 bits for the each channel (alpha, blue, green, red).
 
@@ -359,7 +360,12 @@ public class DDSImage  extends CompressedImage
 						&& header.pfBBitMask == 0x000F)
 				{
 					return D3DFMT_A4R4G4B4;
-				}  
+				} 
+				else if (getDepth() == 32 && header.pfRBitMask == 0x000000FF && header.pfGBitMask == 0x0000FF00
+					&& header.pfBBitMask == 0x00FF0000 && header.pfABitMask == 0xFF000000)
+				{
+					return D3DFMT_A8B8G8R8;
+				} 				 
 			}
 			else
 			{

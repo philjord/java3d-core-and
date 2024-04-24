@@ -242,6 +242,10 @@ public class CompressedImageComponent2DRetained extends ImageComponent2DRetained
 			{
 				return GL2.GL_RGBA_S3TC;
 			}
+			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8B8G8R8)
+			{
+				return GL2.GL_RGBA_S3TC;
+			}
 			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || ddsImage.getPixelFormat() == DDSImage.D3DFMT_BC5U)
 			{
 				//seen in textures\shared\flatflat_n.dds
