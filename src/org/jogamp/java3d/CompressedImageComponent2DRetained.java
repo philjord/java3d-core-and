@@ -167,10 +167,12 @@ public class CompressedImageComponent2DRetained extends ImageComponent2DRetained
 	@Override
 	int getImageFormatTypeIntValue(boolean powerOfTwoData)
 	{
+		// - as of jogl 2.6 ASTC removed from the GL2ES3 header https://community.khronos.org/t/astc-is-dead-for-now/105056/2
+		
 		if (_byRefImage instanceof CompressedBufferedImage.ASTC)
-		{
+		{		
 			ASTCImage astcImage = ((CompressedBufferedImage.ASTC) _byRefImage).astcImage;
-			if (astcImage.hdr.blockdim_z == 1)
+			/*if (astcImage.hdr.blockdim_z == 1)
 			{
 				if (astcImage.hdr.blockdim_x == 4)
 				{
@@ -218,7 +220,7 @@ public class CompressedImageComponent2DRetained extends ImageComponent2DRetained
 					else if (astcImage.hdr.blockdim_y == 12)
 						return GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
 				}
-			}
+			}*/
 
 			System.out.println("Bad ASTC format (for now) " + astcImage.hdr + " in " + _byRefImage.getImageName());
 			return -1;

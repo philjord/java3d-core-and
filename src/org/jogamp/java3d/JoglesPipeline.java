@@ -6079,8 +6079,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
 			case GL3.GL_COMPRESSED_SRGB8_ETC2:
 			case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+				// as of jogl 2.6 ASTC removed from the GL2ES3 header https://community.khronos.org/t/astc-is-dead-for-now/105056/2
 				// ASTC
-			case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
+			/*case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
 			case GL3.GL_COMPRESSED_RGBA_ASTC_5x4_KHR:
 			case GL3.GL_COMPRESSED_RGBA_ASTC_5x5_KHR:
 			case GL3.GL_COMPRESSED_RGBA_ASTC_6x5_KHR:
@@ -6093,7 +6094,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			case GL3.GL_COMPRESSED_RGBA_ASTC_10x8_KHR:
 			case GL3.GL_COMPRESSED_RGBA_ASTC_10x10_KHR:
 			case GL3.GL_COMPRESSED_RGBA_ASTC_12x10_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR:
+			case GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR:*/
 				internalFormat = imageFormat;
 				format = -1;// indicate compressed
 				break;
