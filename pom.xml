@@ -34,10 +34,10 @@
 	</developers>
 	
 	<scm>
-		<connection>scm:git:https://bitbucket.org/philjord/java3d-core-and</connection>
+		<connection>scm:git:https://github.com/philjord/java3d-core-and</connection>
 		<developerConnection></developerConnection>
 		<tag>HEAD</tag>
-		<url>https://bitbucket.org/philjord/java3d-core-and</url>
+		<url>https://github.com/philjord/java3d-core-and</url>
 	</scm>
 	
 	<properties>
@@ -90,10 +90,7 @@
           <exclude>**/*.java</exclude>
           <exclude>**/package.html</exclude>
         </excludes>
-      </resource>
-      <resource>
-      	<directory>${project.basedir}/lib</directory>  
-      </resource>      
+      </resource>  
     </resources>
     <plugins>
       <plugin>
@@ -106,27 +103,27 @@
       </plugin>           
       
 	  <!-- This project overrides a few of the classes in it's parent, for now swap javadoc back to parent, this is not a merge -->
-	  <plugin>
+      <plugin>
 	    <groupId>org.codehaus.mojo</groupId>
 	    <artifactId>build-helper-maven-plugin</artifactId>
 	    <version>3.4.0</version>
-	    <executions>
-	        <execution>
-	            <id>attach</id>
-	            <phase>package</phase>
-	            <goals>
-	                <goal>attach-artifact</goal>
-	            </goals>
-	            <configuration>
-	               <artifacts>
-	                  <artifact>
-	                      <file>../java3d-core/target/java3d-core-${project.version}-javadoc.jar</file>
-	                      <type>jar</type>
-	                      <classifier>javadoc</classifier>
-	                  </artifact>
-	               </artifacts>
-	            </configuration>
-	        </execution>
+        <executions>
+          <execution>
+              <id>attach</id>
+              <phase>package</phase>
+            <goals>
+	          <goal>attach-artifact</goal>
+            </goals>         
+            <configuration>	        	                          
+               <artifacts>
+                  <artifact>
+                      <file>../java3d-core/target/java3d-core-${project.version}-javadoc.jar</file>
+                      <type>jar</type>
+                      <classifier>javadoc</classifier>
+                  </artifact>
+               </artifacts>
+            </configuration>
+          </execution>
 	    </executions>
 	 </plugin>
 	  <!-- This project overrides a few of the classes in it's parent, but this javadoc will only be for the changed files, a bit rubbish -->
@@ -135,7 +132,7 @@
 		<artifactId>maven-source-plugin</artifactId>
 		<version>3.3.1</version>
 		<executions>
-			<execution>
+          <execution>
 				<id>attach-sources</id>
 				<goals>
 					<goal>jar</goal>
@@ -150,19 +147,35 @@
         <version>3.4.1</version>
         <executions>
           <execution>
-            <goals>
-              <goal>shade</goal>
-            </goals>         
-            <configuration>	        	                          
-		        <artifactSet>
-	                <includes>
-	               		<include>${project.groupId}:java3d-core-and:jar:</include>
-	                    <include>${project.groupId}:java3d-core:jar:</include>      	
-	                </includes>
-	            </artifactSet>   	             
-	            <createDependencyReducedPom>false</createDependencyReducedPom>                      
-            </configuration>
-          </execution>
+	        <goals>
+	          <goal>shade</goal>
+	        </goals>
+	        <configuration>
+	          <artifactSet>
+	            <includes>
+	              <include>${project.groupId}:java3d-core-and:jar:</include>
+	              <include>${project.groupId}:java3d-core:jar:</include>
+	            </includes>
+	          </artifactSet>
+	          <createDependencyReducedPom>false</createDependencyReducedPom>
+	        </configuration>
+	      </execution>
+	      <execution>
+	        <id>source-jar</id>
+	        <goals>
+	          <goal>shade</goal>
+	        </goals>
+	        <configuration>
+	          <createSourcesJar>true</createSourcesJar>
+	          <artifactSet>
+	            <includes>
+	              <include>${project.groupId}:java3d-core-and:jar:</include>
+	              <include>${project.groupId}:java3d-core:jar:</include>
+	            </includes>
+	          </artifactSet>
+	          <createDependencyReducedPom>false</createDependencyReducedPom>
+	        </configuration>
+	      </execution>
         </executions>
       </plugin>
     </plugins>
