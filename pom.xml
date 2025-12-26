@@ -126,6 +126,7 @@
 			</execution>
 		</executions>
 	</plugin>
+	
       <!-- This project overrides a few of the classes in it's parent, but must publish the merged jar as an artifact -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -164,6 +165,21 @@
 	      </execution>
         </executions>
       </plugin>
+      
+      <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-gpg-plugin</artifactId>
+		<version>3.2.8</version>
+		<executions>
+			<execution>
+				<id>sign-artifacts</id>
+				<phase>verify</phase>
+				<goals>
+					<goal>sign</goal>
+				</goals>
+			</execution>
+		</executions>
+	</plugin>
     </plugins>
   </build>
 </project>
