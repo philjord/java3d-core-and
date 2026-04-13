@@ -183,6 +183,8 @@ public class DDSImage  extends CompressedImage
 
 	public static final int D3DFMT_DXT5 = 0x35545844;
 	
+	public static final int D3DFMT_ATI1 = 826889281;
+	
 	public static final int D3DFMT_ATI2 = 843666497;//0x32495441
 	
 	//https://www.panda3d.org/reference/cxx/texture_8cxx_source.html suggest same as ATI2
@@ -937,6 +939,7 @@ public class DDSImage  extends CompressedImage
 		switch (compressionFormat)
 		{
 			case D3DFMT_DXT1:
+			case D3DFMT_ATI1:
 				blockSize *= 8;
 				break;
 			default:
@@ -972,8 +975,7 @@ public class DDSImage  extends CompressedImage
 		int height = mipMapHeight(map);
 		if (isCompressed())
 		{
-			int blockSize = (getCompressionFormat() == D3DFMT_DXT1 ? 8 : 16);
-			return ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+			return computeCompressedBlockSize(width, height, 1, getCompressionFormat());
 		}
 		else
 		{

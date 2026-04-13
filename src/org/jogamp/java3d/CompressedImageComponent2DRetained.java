@@ -262,6 +262,10 @@ public class CompressedImageComponent2DRetained extends ImageComponent2DRetained
 				//System.out.println("GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT image type, is this fallout4?");
 				return GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
 			}
+			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI1 )
+			{
+				return GL2.GL_COMPRESSED_LUMINANCE_LATC1_EXT ; 
+			}
 			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_R8G8B8 || //
 					ddsImage.getPixelFormat() == DDSImage.D3DFMT_X8R8G8B8 || //
 					ddsImage.getPixelFormat() == DDSImage.DDS_A16B16G16R16F)

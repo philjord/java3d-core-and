@@ -368,7 +368,6 @@ public class CompressedBufferedImage extends BufferedImage
 			}
 			else
 			{
-
 				if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT2)
 				{
 					System.out.println("DXT2 not supported; " + imageName + "; mip num = " + mipNumber);
@@ -389,7 +388,8 @@ public class CompressedBufferedImage extends BufferedImage
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8B8G8R8 || //
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_X8R8G8B8 || //
 						ddsImage.getPixelFormat() == DDSImage.DDS_A16B16G16R16F || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || //
+						ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI1 || //
+						ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || //						
 						ddsImage.getPixelFormat() == DDSImage.D3DFMT_BC5U)
 				{
 					//good
