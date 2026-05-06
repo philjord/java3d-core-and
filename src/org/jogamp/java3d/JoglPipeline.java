@@ -148,6 +148,12 @@ public class JoglPipeline extends Pipeline {
 	}
 
 	@Override
+	ShaderError setGLSLUniform1b(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+									boolean value) {
+		return null;
+	}
+	
+	@Override
 	ShaderError setGLSLUniform1i(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
 									int value) {
 		return null;
@@ -207,6 +213,12 @@ public class JoglPipeline extends Pipeline {
 		return null;
 	}
 
+	@Override
+	ShaderError setGLSLUniform1bArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
+										int numElements, boolean[] value) {
+		return null;
+	}
+	
 	@Override
 	ShaderError setGLSLUniform1iArray(	Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation,
 										int numElements, int[] value) {

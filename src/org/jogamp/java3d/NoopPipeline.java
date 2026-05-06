@@ -28,7 +28,6 @@ package org.jogamp.java3d;
 
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsDevice;
-import javaawt.GraphicsEnvironment;
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
 
@@ -316,7 +315,14 @@ class NoopPipeline extends Pipeline {
     //
 
     // ShaderAttributeValue methods
-
+    @Override
+    ShaderError setGLSLUniform1b(Context ctx,
+            ShaderProgramId shaderProgramId,
+            ShaderAttrLoc uniformLocation,
+            boolean value) {
+        return null;
+    }
+    
     @Override
     ShaderError setGLSLUniform1i(Context ctx,
             ShaderProgramId shaderProgramId,
@@ -398,7 +404,15 @@ class NoopPipeline extends Pipeline {
     }
 
     // ShaderAttributeArray methods
-
+    @Override
+    ShaderError setGLSLUniform1bArray(Context ctx,
+            ShaderProgramId shaderProgramId,
+            ShaderAttrLoc uniformLocation,
+            int numElements,
+            boolean[] value) {
+        return null;
+    }
+    
     @Override
     ShaderError setGLSLUniform1iArray(Context ctx,
             ShaderProgramId shaderProgramId,
@@ -1059,9 +1073,10 @@ class NoopPipeline extends Pipeline {
     void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int type, Object data, int width, int height) {
     }
 
-// The native method for swapBuffers
-@Override
-void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {}
+    // The native method for swapBuffers
+    @Override
+    void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {    	
+    }
 
     // native method for setting Material when no material is present
     @Override

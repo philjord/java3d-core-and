@@ -425,7 +425,11 @@ public Pipeline run() {
     //
 
     // ShaderAttributeValue methods
-
+    abstract ShaderError setGLSLUniform1b(Context ctx,
+	          ShaderProgramId shaderProgramId,
+	          ShaderAttrLoc uniformLocation,
+	          boolean value);
+    
     abstract ShaderError setGLSLUniform1i(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
@@ -478,6 +482,12 @@ public Pipeline run() {
 
     // ShaderAttributeArray methods
 
+    abstract ShaderError setGLSLUniform1bArray(Context ctx,
+               ShaderProgramId shaderProgramId,
+               ShaderAttrLoc uniformLocation,
+               int numElements,
+               boolean[] value);
+    
     abstract ShaderError setGLSLUniform1iArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,

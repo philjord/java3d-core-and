@@ -4048,7 +4048,27 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	//
 
 	// ShaderAttributeValue methods
+	@Override
+	ShaderError setGLSLUniform1b(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, boolean value)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.setGLSLUniform1b(shaderProgramId = " + unbox(shaderProgramId) + ",uniformLocation="
+					+ unbox(uniformLocation) + ",value=" + value + ")");
 
+		Jogl2es2Context joglesctx = (Jogl2es2Context) ctx;
+		GL2ES2 gl = joglesctx.gl2es2();
+		int loc = unbox(uniformLocation);
+		if (!MINIMISE_NATIVE_SHADER || joglesctx.gl_state.setGLSLUniform1i[loc] != (value?1:0))
+		{
+			gl.glUniform1i(loc, (value?1:0));
+			if (DO_OUTPUT_ERRORS)
+				outputErrors(ctx);
+			if (MINIMISE_NATIVE_SHADER)
+				joglesctx.gl_state.setGLSLUniform1i[loc] = (value?1:0);
+		}
+		return null;
+	}
+	
 	@Override
 	ShaderError setGLSLUniform1i(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int value)
 	{
@@ -4210,7 +4230,23 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	}
 
 	// ShaderAttributeArray methods
+	@Override
+	ShaderError setGLSLUniform1bArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
+			boolean[] value)
+	{
+		if (VERBOSE)
+			System.err.println("JoglPipeline.setGLSLUniform1iArray()");
 
+		int[] vals = new int[value.length];
+		for (int i = 0; i < value.length; i++)
+			vals [i] = value [i] ? 1 : 0;
+		
+		GL2ES2 gl = ((Jogl2es2Context) ctx).gl2es2();
+		gl.glUniform1iv(unbox(uniformLocation), numElements, vals, 0);
+		if (DO_OUTPUT_ERRORS)
+			outputErrors(ctx);
+		return null;
+	}
 	@Override
 	ShaderError setGLSLUniform1iArray(Context ctx, ShaderProgramId shaderProgramId, ShaderAttrLoc uniformLocation, int numElements,
 			int[] value)
@@ -4766,7 +4802,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 		switch (type)
 		{
 		case GL2ES2.GL_BOOL:
+			return ShaderAttributeObjectRetained.TYPE_BOOL;
 		case GL2ES2.GL_INT:
+			return ShaderAttributeObjectRetained.TYPE_INTEGER;
 		case GL2ES2.GL_SAMPLER_2D:
 		case GL2ES2.GL_SAMPLER_3D:
 		case GL2ES2.GL_SAMPLER_CUBE:
