@@ -10108,7 +10108,9 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				if (textureDefined)
 				{
 					boolean[] texSetsLoaded = new boolean[texCoords.length];
-					for (int texUnit = 0; texUnit < numActiveTexUnitState && texUnit < texCoordMapLength; texUnit++)
+					
+					//texUnit < numActiveTexUnitState test removed, as more that one set of textCoords might be used on a single texture, or other advanced usages
+					for (int texUnit = 0; texUnit < texCoordMapLength; texUnit++)
 					{
 						int texSet = texCoordSetMap[texUnit];
 						if (texSet != -1 && locs.glMultiTexCoord[texSet] != -1 && !texSetsLoaded[texSet])
@@ -10305,7 +10307,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 
 				// Need to override if polygonAttributes says we should be drawing lines
-				// Note these are not poly line just contiguos lines between each pair of points
+				// Note these are not poly line just contiguous lines between each pair of points
 				// So it looks really rubbish
 				if (ctx.polygonMode == PolygonAttributes.POLYGON_LINE)
 					geo_type = GeometryRetained.GEO_TYPE_INDEXED_LINE_SET;
