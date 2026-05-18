@@ -368,35 +368,41 @@ public class CompressedBufferedImage extends BufferedImage
 			}
 			else
 			{
-				if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT2)
+				int pixelFormat = ddsImage.getPixelFormat();
+				if (pixelFormat == DDSImage.D3DFMT_DXT2)
 				{
 					System.out.println("DXT2 not supported; " + imageName + "; mip num = " + mipNumber);
 				}
-				else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT4)
+				else if (pixelFormat == DDSImage.D3DFMT_DXT4)
 				{
 					System.out.println("DXT4 not supported; " + imageName + "; mip num = " + mipNumber);
 				}
-				else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_UNKNOWN)
+				else if (pixelFormat == DDSImage.D3DFMT_UNKNOWN)
 				{
 					System.out.println("D3DFMT_UNKNOWN not supported; " + imageName + "; mip num = " + mipNumber);
 				}
-				else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT1 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT3 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT5 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_R8G8B8 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8R8G8B8 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8B8G8R8 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_X8R8G8B8 || //
-						ddsImage.getPixelFormat() == DDSImage.DDS_A16B16G16R16F || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI1 || //
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || //						
-						ddsImage.getPixelFormat() == DDSImage.D3DFMT_BC5U)
-				{
+				else if (	pixelFormat == DDSImage.D3DFMT_L8 || //
+							pixelFormat == DDSImage.D3DFMT_R8G8B8 || //
+							pixelFormat == DDSImage.D3DFMT_A8R8G8B8 || //
+							pixelFormat == DDSImage.D3DFMT_A8B8G8R8 || //
+							pixelFormat == DDSImage.D3DFMT_X8R8G8B8 || //
+							pixelFormat == DDSImage.D3DFMT_A16B16G16R16F || //
+							
+							pixelFormat == DDSImage.D3DFMT_DXT1 || //
+							pixelFormat == DDSImage.D3DFMT_DXT3 || //
+							pixelFormat == DDSImage.D3DFMT_DXT5 || //
+								
+							pixelFormat == DDSImage.D3DFMT_ATI1 || //
+							pixelFormat == DDSImage.D3DFMT_BC4U || //					
+							pixelFormat == DDSImage.D3DFMT_BC4S || //					
+							pixelFormat == DDSImage.D3DFMT_ATI2 || //						
+							pixelFormat == DDSImage.D3DFMT_BC5U || //						
+							pixelFormat == DDSImage.D3DFMT_BC5S) {
 					//good
 				}
 				else
 				{
-					System.out.println("not DDS format; " + ddsImage.getPixelFormat() + "; " + imageName + "; mip num = " + mipNumber);
+					System.out.println("not DDS format; " + pixelFormat + "; " + imageName + "; mip num = " + mipNumber);
 				}
 			}
 			this.buffer = imageInfo.getData();

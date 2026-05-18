@@ -6029,120 +6029,134 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 
 		switch (textureFormat)
 		{
-		case Texture.INTENSITY:
-			new Throwable("Texture.INTENSITY not supported").printStackTrace();
-			// internalFormat = GL2.GL_INTENSITY;
-			break;
-		case Texture.LUMINANCE:
-			internalFormat = GL2ES2.GL_LUMINANCE;
-			break;
-		case Texture.ALPHA:
-			internalFormat = GL2ES2.GL_ALPHA;
-			break;
-		case Texture.LUMINANCE_ALPHA:
-			internalFormat = GL2ES2.GL_LUMINANCE_ALPHA;
-			break;
-		case Texture.RGB:
-			internalFormat = GL2ES2.GL_RGB;
-			break;
-		case Texture.RGBA:
-			internalFormat = GL2ES2.GL_RGBA;
-			break;
-		default:
-			assert false;
+			case Texture.INTENSITY:
+				new Throwable("Texture.INTENSITY not supported").printStackTrace();
+				// internalFormat = GL2.GL_INTENSITY;
+				break;
+			case Texture.LUMINANCE:			
+				internalFormat = GL2ES2.GL_LUMINANCE;
+				break;
+			case Texture.ALPHA:
+				internalFormat = GL2ES2.GL_ALPHA;
+				break;
+			case Texture.LUMINANCE_ALPHA:
+				internalFormat = GL2ES2.GL_LUMINANCE_ALPHA;
+				break;
+			case Texture.RGB:
+				internalFormat = GL2ES2.GL_RGB;
+				break;
+			case Texture.RGBA:
+				internalFormat = GL2ES2.GL_RGBA;
+				break;
+			default:
+				assert false;
 		}
 	
 		boolean createMipMaps = useAutoMipMap;
 
 		int format = 0;
+		int type = GL2ES2.GL_UNSIGNED_BYTE;
 
 		if ((dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 				|| (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_BUFFER))
 		{
 			switch (imageFormat)
 			{
-			case ImageComponentRetained.TYPE_BYTE_BGR:
-				format = GL2ES2.GL_BGR;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGB:
-				format = GL2ES2.GL_RGB;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_ABGR:
-				if (isExtensionAvailable.GL_EXT_abgr(gl))
-				{
-					// If its zero, should never come here!
-					format = GL2.GL_ABGR_EXT;
-				}
-				else
-				{
+				case ImageComponentRetained.TYPE_BYTE_BGR:
+					format = GL2ES2.GL_BGR;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGB:
+					format = GL2ES2.GL_RGB;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_ABGR:
+					if (isExtensionAvailable.GL_EXT_abgr(gl)) {
+						// If its zero, should never come here!
+						format = GL2.GL_ABGR_EXT;
+					} else {
+						assert false;
+						return;
+					}
+					break;
+				case ImageComponentRetained.TYPE_BYTE_RGBA:
+					// all RGB types are stored as RGBA
+					format = GL2ES2.GL_RGBA;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_LA:
+					// all LA types are stored as LA8
+					format = GL2ES2.GL_LUMINANCE_ALPHA;
+					break;
+				case ImageComponentRetained.TYPE_BYTE_GRAY:
+					if (internalFormat == GL2ES2.GL_ALPHA) {
+						format = GL2ES2.GL_ALPHA;
+					} else {
+						format = GL2ES2.GL_LUMINANCE;
+					}
+					break;
+					
+					
+					
+				/////////////////////////////////////////////////// PJPJPJ////////////////////
+				/// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
+				/// https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
+				/// 
+				/// //TODO the compressed InternalFormat have the srgb encoding in them e.g. GL_COMPRESSED_SRGB_ALPHA
+				
+				//Coded message from DDSImage 
+				case GL.GL_TEXTURE21:
+					internalFormat = GL2ES2.GL_RGB;
+					format = GL2ES2.GL_RGB;
+					type = GL2ES2.GL_UNSIGNED_SHORT_5_6_5;
+					break;
+				 
+				 
+				
+				// notice fall through below
+				//DDS signal for non-compressed but specific format, notice format is not -1 so not loaded as a compressed texture
+				case GL.GL_RGBA:
+				case GL.GL_RGBA4:
+				case GL2.GL_ABGR_EXT:
+				case GL.GL_RGBA16F:
+				case GL2.GL_RGBA16:
+				case GL.GL_RGB:
+				case GL.GL_RG8:			
+				case GL.GL_LUMINANCE:
+				case GL.GL_R8:
+					internalFormat = imageFormat;
+					format = imageFormat;
+					break;
+					 
+				// notice fall through below
+				// DXT
+				case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+				case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+				case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+				case GL2.GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+				case GL2.GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:	
+				case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+				case GL2.GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+					
+				// ETC2
+				case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
+				case GL3.GL_COMPRESSED_RGB8_ETC2:
+				case GL3.GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+				case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+				case GL3.GL_COMPRESSED_SRGB8_ETC2:
+				case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+					
+				// ASTC as of jogl 2.6 ASTC removed from the GL2ES3 header https://community.khronos.org/t/astc-is-dead-for-now/105056/2
+					
+					internalFormat = imageFormat;
+					format = -1;// indicate compressed
+					break;
+					
+				case ImageComponentRetained.TYPE_USHORT_GRAY:
+				case ImageComponentRetained.TYPE_INT_BGR:
+				case ImageComponentRetained.TYPE_INT_RGB:
+				case ImageComponentRetained.TYPE_INT_ARGB:
+				default:
+					//unsupported
 					assert false;
 					return;
-				}
-				break;
-			case ImageComponentRetained.TYPE_BYTE_RGBA:
-				// all RGB types are stored as RGBA
-				format = GL2ES2.GL_RGBA;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_LA:
-				// all LA types are stored as LA8
-				format = GL2ES2.GL_LUMINANCE_ALPHA;
-				break;
-			case ImageComponentRetained.TYPE_BYTE_GRAY:
-				if (internalFormat == GL2ES2.GL_ALPHA)
-				{
-					format = GL2ES2.GL_ALPHA;
-				}
-				else
-				{
-					format = GL2ES2.GL_LUMINANCE;
-				}
-				break;
-			/////////////////////////////////////////////////// PJPJPJ////////////////////
-			// DXT uncompressed D3DFMT_A8R8G8B8 indicator
-			case GL2.GL_RGBA_S3TC:
-				internalFormat = GL2ES2.GL_RGBA;
-				format = GL2ES2.GL_RGBA;
-				break;
-			// notice fall through
-			// DXT
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-			case GL2ES2.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
-				// ETC2
-				// https://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
-			case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
-			case GL3.GL_COMPRESSED_RGB8_ETC2:
-			case GL3.GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-			case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-			case GL3.GL_COMPRESSED_SRGB8_ETC2:
-			case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-				// as of jogl 2.6 ASTC removed from the GL2ES3 header https://community.khronos.org/t/astc-is-dead-for-now/105056/2
-				// ASTC
-			/*case GL3.GL_COMPRESSED_RGBA_ASTC_4x4_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_5x4_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_5x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_6x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_6x6_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_8x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_8x6_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_8x8_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x5_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x6_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x8_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_10x10_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_12x10_KHR:
-			case GL3.GL_COMPRESSED_RGBA_ASTC_12x12_KHR:*/
-				internalFormat = imageFormat;
-				format = -1;// indicate compressed
-				break;
-			case ImageComponentRetained.TYPE_USHORT_GRAY:
-			case ImageComponentRetained.TYPE_INT_BGR:
-			case ImageComponentRetained.TYPE_INT_RGB:
-			case ImageComponentRetained.TYPE_INT_ARGB:
-			default:
-				assert false;
-				return;
 			}
 			
 
@@ -6178,8 +6192,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				}
 				else
 				{
-					gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
-							(Buffer) data);
+					gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, type, (Buffer) data);
 					if (DO_OUTPUT_ERRORS)
 					{
 						int err = gl.glGetError();

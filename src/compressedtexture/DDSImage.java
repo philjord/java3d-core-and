@@ -11,6 +11,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL3;
+
 /**
  * A reader and writer for DirectDraw Surface (.dds) files, which are used to describe textures. These files can contain
  * multiple mipmap levels in one file. This class is currently minimal and does not support all of the possible file
@@ -72,6 +76,8 @@ public class DDSImage  extends CompressedImage
 			return compressionFormat;
 		}
 	}
+	
+	public static boolean OUTPUT_IMAGE_DEBUG = false;
 
 	private FileInputStream fis;
 
@@ -109,6 +115,8 @@ public class DDSImage  extends CompressedImage
 	public static final int DDSD_LINEARSIZE = 0x00080000; // dwLinearSize is valid
 
 	public static final int DDSD_DEPTH = 0x00800000; // dwDepth is valid
+	
+	//Pixel Format flags bit masks
 
 	public static final int DDPF_ALPHAPIXELS = 0x00000001; // Alpha channel is present
 
@@ -120,8 +128,7 @@ public class DDSImage  extends CompressedImage
 
 	public static final int DDPF_PALETTEINDEXEDTO8 = 0x00000010;
 
-	// Surface is indexed into a palette which stores indices
-	// into the destination surface's 8-bit palette
+	// Surface is indexed into a palette which stores indices into the destination surface's 8-bit palette
 	public static final int DDPF_PALETTEINDEXED8 = 0x00000020; // Surface is 8-bit color indexed
 
 	public static final int DDPF_RGB = 0x00000040; // RGB data is present
@@ -132,8 +139,7 @@ public class DDSImage  extends CompressedImage
 	public static final int DDPF_RGBTOYUV = 0x00000100; // Surface will accept RGB data and translate it during
 
 	// the write to YUV data. The format of the data to be written
-	// will be contained in the pixel format structure. The DDPF_RGB
-	// flag will be set.
+	// will be contained in the pixel format structure. The DDPF_RGB flag will be set.
 	public static final int DDPF_YUV = 0x00000200; // Pixel format is YUV - YUV data in pixel format struct is valid
 
 	public static final int DDPF_ZBUFFER = 0x00000400; // Pixel format is a z buffer only surface
@@ -143,11 +149,13 @@ public class DDSImage  extends CompressedImage
 	public static final int DDPF_PALETTEINDEXED2 = 0x00001000; // Surface is 2-bit color indexed
 
 	public static final int DDPF_ZPIXELS = 0x00002000; // Surface contains Z information in the pixels
+	
 
 	// Selected bits in DDS capabilities flags
 	public static final int DDSCAPS_TEXTURE = 0x00001000; // Can be used as a texture
 
 	public static final int DDSCAPS_MIPMAP = 0x00400000; // Is one level of a mip-map
+	
 
 	// Known pixel formats
 	public static final int D3DFMT_UNKNOWN = 0;
@@ -166,12 +174,16 @@ public class DDSImage  extends CompressedImage
 	
 	public static final int D3DFMT_A8L8  = 51;
 
-	public static final int DDS_A16B16G16R16F = 113;//added by phil quite late http:
 	public static final int D3DFMT_A8B8G8R8 = 32;
+	
 	public static final int D3DFMT_X8B8G8R8 = 33;
-	//msdn.microsoft.com/en-us/library/windows/desktop/bb172558%28v=vs.85%29.aspx
-	//D3DFMT_A16B16G16R16F	113	64-bit float format using 16 bits for the each channel (alpha, blue, green, red).
-
+	
+	public static final int D3DFMT_A16B16G16R16 = 36;
+	
+	//added by phil quite late http://msdn.microsoft.com/en-us/library/windows/desktop/bb172558%28v=vs.85%29.aspx	
+	//D3DFMT_A16B16G16R16F	113	64-bit float format using 16 bits for the each channel (alpha, blue, green, red).	
+	public static final int D3DFMT_A16B16G16R16F = 113;
+	
 	// The following are also valid FourCC codes
 	public static final int D3DFMT_DXT1 = 0x31545844;
 
@@ -185,12 +197,26 @@ public class DDSImage  extends CompressedImage
 	
 	public static final int D3DFMT_ATI1 = 826889281;
 	
+	public static final int D3DFMT_BC4U = 1429488450;
+	
+	public static final int D3DFMT_BC4S = 1395934018;
+	
 	public static final int D3DFMT_ATI2 = 843666497;//0x32495441
 	
 	//https://www.panda3d.org/reference/cxx/texture_8cxx_source.html suggest same as ATI2
 	public static final int D3DFMT_BC5U = 1429553986; // 0x55354342  
 	
-
+	public static final int D3DFMT_BC5S = 1395999554; 
+	
+	public static final int D3DFMT_DX10	= 808540228;
+	
+	// here is a reasonable version of the D3D formats
+	//https://github.com/g-truc/gli/blob/master/gli/dx.hpp	
+	
+	//Note can't use this for case expression, run on to find the int
+	public static int MAKEFOURCC(char ch0, char ch1, char ch2, char ch3) {
+		return (ch0 & 0xff) | ((ch1 & 0xff) << 8) | ((ch2 & 0xff) << 16) | ((ch3 & 0xff) << 24);
+	}
 	/**
 	 * Reads a DirectDraw surface from the specified file name, returning the resulting DDSImage.
 	 */
@@ -340,64 +366,106 @@ public class DDSImage  extends CompressedImage
 	}
 
 	/**
-	 * Gets the pixel format of this texture (D3DFMT_*) based on some heuristics. Returns D3DFMT_UNKNOWN if could not
-	 * recognize the pixel format.
+	 * Gets the pixel format of this texture (D3DFMT_*) primarily form the compressed fourCC number, but if uncompressed then based 
+	 * on some heuristics. Returns D3DFMT_UNKNOWN if could not recognize the pixel format.
 	 */
-	public int getPixelFormat()
-	{
-		if (isCompressed())
-		{
+	public int getPixelFormat() {
+		if (isCompressed()) {
 			return getCompressionFormat();
-		}
-		else if (isPixelFormatFlagSet(DDPF_RGB))
-		{
-			if (isPixelFormatFlagSet(DDPF_ALPHAPIXELS))
-			{
+		} else if (isPixelFormatFlagSet(DDPF_RGB)) {
+			if (isPixelFormatFlagSet(DDPF_ALPHAPIXELS)) {
 				if (getDepth() == 32 && header.pfRBitMask == 0x00FF0000 && header.pfGBitMask == 0x0000FF00
-						&& header.pfBBitMask == 0x000000FF && header.pfABitMask == 0xFF000000)
-				{
+					&& header.pfBBitMask == 0x000000FF && header.pfABitMask == 0xFF000000) {
 					return D3DFMT_A8R8G8B8;
-				} 
-				else if (getDepth() == 16 && header.pfRBitMask == 0x0F00 && header.pfGBitMask == 0x00F0
-						&& header.pfBBitMask == 0x000F)
-				{
+				} else if (getDepth() == 16 && header.pfRBitMask == 0x0F00 && header.pfGBitMask == 0x00F0
+							&& header.pfBBitMask == 0x000F) {
 					return D3DFMT_A4R4G4B4;
-				} 
-				else if (getDepth() == 32 && header.pfRBitMask == 0x000000FF && header.pfGBitMask == 0x0000FF00
-					&& header.pfBBitMask == 0x00FF0000 && header.pfABitMask == 0xFF000000)
-				{
+				} else if (getDepth() == 32 && header.pfRBitMask == 0x000000FF && header.pfGBitMask == 0x0000FF00
+							&& header.pfBBitMask == 0x00FF0000 && header.pfABitMask == 0xFF000000) {
 					return D3DFMT_A8B8G8R8;
-				} 				 
-			}
-			else
-			{
-				if (getDepth() == 24 && header.pfRBitMask == 0x00FF0000 && header.pfGBitMask == 0x0000FF00
-						&& header.pfBBitMask == 0x000000FF)
-				{
-					return D3DFMT_R8G8B8;
-				}
-				else if (getDepth() == 32 && header.pfRBitMask == 0x00FF0000 && header.pfGBitMask == 0x0000FF00
-						&& header.pfBBitMask == 0x000000FF)
-				{
-					return D3DFMT_X8R8G8B8;
+				} else if (getDepth() == 64 && header.pfRBitMask == 0x000000FF && header.pfGBitMask == 0x0000FF00
+						&& header.pfBBitMask == 0x00FF0000 && header.pfABitMask == 0xFF000000) {
+					return D3DFMT_A16B16G16R16F;
+				} else if (getDepth() == 64 && header.pfRBitMask == 0xFF000000 && header.pfGBitMask == 0x00FF0000
+						&& header.pfBBitMask == 0x0000FF00 && header.pfABitMask == 0x000000FF) {
+					return D3DFMT_A16B16G16R16;
 				} 
-				else if (getDepth() == 16 && header.pfRBitMask == 0xF800 && header.pfGBitMask == 0x07E0
-						&& header.pfBBitMask == 0x001F)
-				{
+			} else {
+				if (getDepth() == 24 && header.pfRBitMask == 0x00FF0000 && header.pfGBitMask == 0x0000FF00
+					&& header.pfBBitMask == 0x000000FF) {
+					return D3DFMT_R8G8B8;
+				} else if (getDepth() == 32 && header.pfRBitMask == 0x00FF0000 && header.pfGBitMask == 0x0000FF00
+							&& header.pfBBitMask == 0x000000FF) {
+					return D3DFMT_X8R8G8B8;
+				} else if (getDepth() == 16 && header.pfRBitMask == 0xF800 && header.pfGBitMask == 0x07E0
+							&& header.pfBBitMask == 0x001F) {
 					return D3DFMT_R5G6B5;
-				}
+				} else if (getDepth() == 8 && header.pfRBitMask == 0xFF) {
+				return GL.GL_R8;//DXGI_FORMAT_R8_UNORM special code out of here across to internal then out of internal to the pipeline
 			}
-		} 
-		else  
-		{
-			if (getDepth() == 8 && header.pfRBitMask == 0x000000FF)
-			{
+			}
+		} else {
+			if (getDepth() == 8 && header.pfRBitMask == 0x000000FF) {
 				// luminosity stored in the A channel; isPixelFormatFlagSet(DDPF_ALPHAPIXELS) may be true or false
 				return D3DFMT_L8;
-			}  
-		}  
-
+			}
+		}
 		return D3DFMT_UNKNOWN;
+	}
+
+	public int getGLInternalFormat() {
+		if(OUTPUT_IMAGE_DEBUG)
+			debugPrint();
+
+		int pixelFormat = getPixelFormat();
+		
+		// signal the pipeline to load a non compressed but specific format onto the GPU
+		if (pixelFormat == DDSImage.D3DFMT_A8R8G8B8) {
+			return GL2.GL_RGBA;
+		} else if (pixelFormat == DDSImage.D3DFMT_A4R4G4B4) {
+			return GL3.GL_RGBA4;
+		} else if (pixelFormat == DDSImage.D3DFMT_A8B8G8R8) {
+			return GL2.GL_ABGR_EXT;
+		} else  if (pixelFormat == DDSImage.D3DFMT_A16B16G16R16F) {
+			return GL2.GL_RGBA16F;
+		} else  if (pixelFormat == DDSImage.D3DFMT_A16B16G16R16) {
+			return GL2.GL_RGBA16;
+		} else if (pixelFormat == DDSImage.D3DFMT_R8G8B8) {
+			return GL.GL_RGB;
+		} else  if (pixelFormat == DDSImage.D3DFMT_X8R8G8B8) {
+			return GL.GL_RGBA;
+		} else   if (pixelFormat == DDSImage.D3DFMT_R5G6B5) {
+			return GL.GL_TEXTURE21;//coded message to load up RGB but set the type to R5G6B5
+		} else if (pixelFormat == DDSImage.D3DFMT_L8) {
+			return GL.GL_LUMINANCE;
+		} else if (pixelFormat == GL.GL_R8) {
+			return GL.GL_R8;
+		} else 
+			
+			// these are compressed conversion from D3D to OpenGL
+		if (pixelFormat == DDSImage.D3DFMT_DXT1) {
+			return GL.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+		} else if (pixelFormat == DDSImage.D3DFMT_DXT3) {
+			return GL.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+		} else if (pixelFormat == DDSImage.D3DFMT_DXT5) {
+			return GL.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		} else if (pixelFormat == DDSImage.D3DFMT_A8R8G8B8) {
+			return GL2.GL_RGBA_S3TC;
+		} else if (pixelFormat == DDSImage.D3DFMT_A8B8G8R8) {
+			return GL2.GL_RGBA_S3TC;// can't be right surely or does the channel mask fix this?
+		} else if (pixelFormat == DDSImage.D3DFMT_ATI1 || pixelFormat == DDSImage.D3DFMT_BC4U) {
+			return GL2.GL_COMPRESSED_LUMINANCE_LATC1_EXT;			
+		} else if (pixelFormat == DDSImage.D3DFMT_BC4S) {			
+			return GL2.GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT;	
+		} else if (pixelFormat == DDSImage.D3DFMT_ATI2 || pixelFormat == DDSImage.D3DFMT_BC5U) {
+			return GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
+		} else if (pixelFormat == DDSImage.D3DFMT_BC5S) {
+			return GL2.GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT;
+		} else if (pixelFormat == DDSImage.D3DFMT_ATI1) {
+			return GL2.GL_COMPRESSED_LUMINANCE_LATC1_EXT;
+		} 
+
+		return -1; // -1 indicates teh pipeline should use the Texture2D format to work out the format, bad idea
 	}
 
 	/** Indicates whether this texture is compressed. */
@@ -573,11 +641,17 @@ public class DDSImage  extends CompressedImage
 			case D3DFMT_A8R8G8B8:
 				tty.println("D3DFMT_A8R8G8B8");
 				break;
+			case D3DFMT_A8B8G8R8:
+				tty.println("D3DFMT_A8B8G8R8");
+				break;				
 			case D3DFMT_X8R8G8B8:
 				tty.println("D3DFMT_X8R8G8B8");
 				break;
-			case DDS_A16B16G16R16F:
-				tty.println("DDS_A16B16G16R16F");
+			case D3DFMT_A16B16G16R16F:
+				tty.println("D3DFMT_A16B16G16R16F");
+				break;
+			case D3DFMT_A16B16G16R16:
+				tty.println("D3DFMT_A16B16G16R16");
 				break;
 			case D3DFMT_DXT1:
 				tty.println("D3DFMT_DXT1");
@@ -594,13 +668,40 @@ public class DDSImage  extends CompressedImage
 			case D3DFMT_DXT5:
 				tty.println("D3DFMT_DXT5");
 				break;
+			case D3DFMT_ATI1:
+				tty.println("D3DFMT_ATI1");
+				break;
+			case D3DFMT_BC4U:
+				tty.println("D3DFMT_BC4U");
+				break;
+			case D3DFMT_BC4S:
+				tty.println("D3DFMT_BC4S");
+				break;				
+			case D3DFMT_ATI2:
+				tty.println("D3DFMT_ATI2");
+				break;
+			case D3DFMT_BC5U:
+				tty.println("D3DFMT_BC5U");
+				break;
+			case D3DFMT_BC5S:
+				tty.println("D3DFMT_BC5S");
+				break;
+			case D3DFMT_L8:
+				tty.println("D3DFMT_L8");
+				break;				
 			case D3DFMT_UNKNOWN:
 				tty.println("D3DFMT_UNKNOWN");
+				break;				
+			case GL.GL_R8:
+				tty.println(" GL.GL_R8 / DXGI_FORMAT_R8_UNORM");
 				break;
+			case D3DFMT_DX10:
+				tty.println("D3DFMT_DX10");
+				break;	
 			default:
 				tty.println("(unknown pixel format " + fmt + ")");
 				break;
-		}
+		} 
 	}
 
 	// ----------------------------------------------------------------------
@@ -938,8 +1039,11 @@ public class DDSImage  extends CompressedImage
 		int blockSize = ((width + 3) / 4) * ((height + 3) / 4) * ((depth + 3) / 4);
 		switch (compressionFormat)
 		{
+			case D3DFMT_L8:
 			case D3DFMT_DXT1:
 			case D3DFMT_ATI1:
+			case D3DFMT_BC4U:					
+			case D3DFMT_BC4S:	
 				blockSize *= 8;
 				break;
 			default:

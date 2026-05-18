@@ -3,13 +3,10 @@ package org.jogamp.java3d;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.GL3;
-
 import compressedtexture.ASTCImage;
 import compressedtexture.CompressedBufferedImage;
 import compressedtexture.DDSImage;
+import compressedtexture.KTXImage;
 import javaawt.image.RenderedImage;
 
 /**
@@ -224,61 +221,23 @@ public class CompressedImageComponent2DRetained extends ImageComponent2DRetained
 
 			System.out.println("Bad ASTC format (for now) " + astcImage.hdr + " in " + _byRefImage.getImageName());
 			return -1;
-		}
-		else if (_byRefImage instanceof CompressedBufferedImage.DDS)
-		{
-			DDSImage ddsImage = ((CompressedBufferedImage.DDS) _byRefImage).ddsImage;
-			if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT1)
-			{
-				return GL.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+		} else if (_byRefImage instanceof CompressedBufferedImage.DDS) {
+			DDSImage ddsImage = ((CompressedBufferedImage.DDS)_byRefImage).ddsImage;
+			int glInternalFormat = ddsImage.getGLInternalFormat();
+			if (glInternalFormat != -1) {
+				return glInternalFormat;
 			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT3)
-			{
-				return GL.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_DXT5)
-			{
-				return GL.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8R8G8B8)
-			{
-				return GL2.GL_RGBA_S3TC;
-			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_A8B8G8R8)
-			{
-				return GL2.GL_RGBA_S3TC;
-			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI2 || ddsImage.getPixelFormat() == DDSImage.D3DFMT_BC5U)
-			{
-				//seen in textures\shared\flatflat_n.dds
-				// more info here https://www.panda3d.org/reference/cxx/texture_8cxx_source.html
-				// normal with rg seems right
-				//case 0x32495441:   // 'ATI2'
-			    //case 0x55354342:   // 'BC5U'
-			    //   compression = CM_rgtc;
-			    //   func = read_dds_level_bc5;
-			    //   format = F_rg;
-			    //   break;
-				//System.out.println("GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT image type, is this fallout4?");
-				return GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
-			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_ATI1 )
-			{
-				return GL2.GL_COMPRESSED_LUMINANCE_LATC1_EXT ; 
-			}
-			else if (ddsImage.getPixelFormat() == DDSImage.D3DFMT_R8G8B8 || //
-					ddsImage.getPixelFormat() == DDSImage.D3DFMT_X8R8G8B8 || //
-					ddsImage.getPixelFormat() == DDSImage.DDS_A16B16G16R16F)
-			{
-				//not yet supported
-			}
-			System.out.println("Bad DXT format (for now) " + ddsImage.getPixelFormat() + " in " + _byRefImage.getImageName());
+			System.out.println("Bad DXT format (for now) "	+ ddsImage.getPixelFormat() + " GL=" + glInternalFormat
+								+ " in " + _byRefImage.getImageName());
 			return -1;
-		}
-		else if (_byRefImage instanceof CompressedBufferedImage.KTX)
-		{
-
-			return ((CompressedBufferedImage.KTX) _byRefImage).ktxImage.headers.getGLInternalFormat();
+		} else if (_byRefImage instanceof CompressedBufferedImage.KTX) {
+			KTXImage ktxImage = ((CompressedBufferedImage.KTX)_byRefImage).ktxImage;
+			int glInternalFormat = ktxImage.headers.getGLInternalFormat();
+			if (glInternalFormat != -1) {
+				return glInternalFormat;
+			}
+			System.out.println("Bad KTX format (for now) GL=" + glInternalFormat + " in " + _byRefImage.getImageName());
+			return -1;
 		}
 
 		return -1;
