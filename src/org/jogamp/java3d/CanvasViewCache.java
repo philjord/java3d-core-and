@@ -178,6 +178,11 @@ class CanvasViewCache extends Object {
     // coordinates and scales them to physical coordinates
     private double viewPlatformScale;
 
+    
+    // HiDPI scale 
+    private double hiDPIXScale = 1.0;
+    private double hiDPIYScale = 1.0;
+
     // Various derived transforms
 
     private Transform3D leftCcToVworld = new Transform3D();
@@ -568,6 +573,12 @@ class CanvasViewCache extends Object {
 
 	screenWidth = screenViewCache.screenWidth;
 	screenHeight = screenViewCache.screenHeight;
+	
+	
+	float[] s = new float[2];
+	canvas.getGLWindow().getCurrentSurfaceScale(s);
+	hiDPIXScale = s[0];
+	hiDPIYScale = s[1];
 
 	metersPerPixelX = screenViewCache.metersPerPixelX;
 	metersPerPixelY = screenViewCache.metersPerPixelY;
@@ -581,8 +592,8 @@ class CanvasViewCache extends Object {
 	canvasY = awtCanvasY - screenBounds.y;
 
 	// Use awtCanvasWidth and awtCanvasHeight as reported.
-	canvasWidth = awtCanvasWidth;
-	canvasHeight = awtCanvasHeight;
+	canvasWidth = (int)(awtCanvasWidth * hiDPIXScale);
+	canvasHeight = (int)(awtCanvasHeight * hiDPIYScale);
 
 	// Convert the window system ``pixel'' coordinate location and size
 	// of the window into physical units (meters) and coordinate system.
@@ -1776,6 +1787,14 @@ class CanvasViewCache extends Object {
 	return canvasHeight;
     }
 
+    double getHiDPIXScale() {
+    	return hiDPIXScale;
+	}
+
+	double getHiDPIYScale() {
+    	return hiDPIYScale;
+	}
+
     double getPhysicalWindowWidth() {
 	return physicalWindowWidth;
     }
@@ -1906,14 +1925,14 @@ class CanvasViewCache extends Object {
     // Transform the specified X point in AWT window-relative coordinates
     // to image plate coordinates
     double getWindowXInImagePlate(double x) {
-	double xScreen = x + (double)canvasX;
+	double xScreen = (x * hiDPIXScale) + (double)canvasX;
 	return metersPerPixelX * xScreen;
     }
 
     // Transform the specified Y point in AWT window-relative coordinates
     // to image plate coordinates
     double getWindowYInImagePlate(double y) {
-	double yScreen = y + (double)canvasY;
+	double yScreen = (y * hiDPIYScale) + (double)canvasY;
 	return metersPerPixelY * ((double)(screenHeight - 1) - yScreen);
     }
 
@@ -1929,8 +1948,8 @@ class CanvasViewCache extends Object {
     void getPixelLocationInImagePlate(double x, double y, double z,
 				      Point3d imagePlatePoint) {
 
-	double screenx = (x + canvasX)*metersPerPixelX;
-	double screeny = (screenHeight - 1 - canvasY - y)*metersPerPixelY;
+	double screenx = ((x * hiDPIYScale) + canvasX)*metersPerPixelX;
+	double screeny = (screenHeight - 1 - canvasY - (y * hiDPIYScale))*metersPerPixelY;
 
 	if ((viewCache.projectionPolicy == View.PERSPECTIVE_PROJECTION) &&
 	    (centerEyeInImagePlate.z != 0)) {
@@ -1985,9 +2004,9 @@ class CanvasViewCache extends Object {
         // Note: screenPt is in image plate coords, at z=0
 
         // Transform from image plate coords to screen coords
-        pixelLocation.x = (screenX / screenViewCache.metersPerPixelX) - canvasX;
-        pixelLocation.y = screenViewCache.screenHeight - 1 -
-	    (screenY / screenViewCache.metersPerPixelY) - canvasY;
+        pixelLocation.x = ((screenX / screenViewCache.metersPerPixelX) - canvasX) / hiDPIXScale;
+        pixelLocation.y = (screenViewCache.screenHeight - 1 -
+                (screenY / screenViewCache.metersPerPixelY) - canvasY) / hiDPIYScale;
         //System.err.println("pixelLocation = " + pixelLocation);
     }
 
