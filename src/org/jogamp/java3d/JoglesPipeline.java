@@ -6107,16 +6107,28 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					format = GL2ES2.GL_RGB;
 					type = GL2ES2.GL_UNSIGNED_SHORT_5_6_5;
 					break;
-				 
-				 
-				
+					/*
+					 // GL_RGBA16F does not work, better to decompress and create another image format
+					 /// //Note also that com.jogamp.opengl.util.GLBuffers does not have these in the componentCount
+				case GL.GL_RGBA16F:
+					internalFormat = imageFormat;
+					format = GL.GL_RGBA;
+					type = GL.GL_HALF_FLOAT;
+					//GLES2.GL_HALF_FLOAT_OES
+					//GL.GL_HALF_FLOAT; no work https://www.reddit.com/r/opengl/comments/oaynev/opengles2_and_glteximage2d_with_gl_float_help/
+					//https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml GL4 should accept it but I get a blank image
+					break;
+				case GL2.GL_RGBA16:
+					internalFormat = imageFormat;
+					format = GL.GL_RGBA;
+					type = GL2ES2.GL_UNSIGNED_BYTE;
+					break;
+					*/
 				// notice fall through below
 				//DDS signal for non-compressed but specific format, notice format is not -1 so not loaded as a compressed texture
 				case GL.GL_RGBA:
 				case GL.GL_RGBA4:
 				case GL2.GL_ABGR_EXT:
-				case GL.GL_RGBA16F:
-				case GL2.GL_RGBA16:
 				case GL.GL_RGB:
 				case GL.GL_RG8:			
 				case GL.GL_LUMINANCE:
@@ -6160,7 +6172,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 			}
 			
 
-
+			
 			if (dataType == ImageComponentRetained.IMAGE_DATA_TYPE_BYTE_ARRAY)
 			{
 				gl.glTexImage2D(target, level, internalFormat, width, height, boundaryWidth, format, GL2ES2.GL_UNSIGNED_BYTE,
