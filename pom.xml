@@ -167,6 +167,28 @@
         </executions>
       </plugin>
       
+       <!-- Signing below requires pin entry, eclipse can't pop up the dialog, so user must run a cmd, this allows console output -->
+		<plugin>
+			<groupId>org.codehaus.gmaven</groupId>
+			<artifactId>groovy-maven-plugin</artifactId>
+			<version>2.1.1</version>
+			<executions>
+			    <execution>
+			        <phase>validate</phase>
+			        <goals>
+			            <goal>execute</goal>
+			        </goals>
+			        <configuration>
+			            <source>
+			                log.info('********************************************************************')
+			                log.info('If this message appears below => gpg: signing failed: No pinentry')
+			                log.info('run on cmd this => echo "test" | gpg --clearsign')
+			            </source>
+			        </configuration>
+			    </execution>
+			</executions>
+		</plugin>
+		
       <plugin>
 		<groupId>org.apache.maven.plugins</groupId>
 		<artifactId>maven-gpg-plugin</artifactId>
