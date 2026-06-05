@@ -6107,9 +6107,10 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					format = GL2ES2.GL_RGB;
 					type = GL2ES2.GL_UNSIGNED_SHORT_5_6_5;
 					break;
+					
 					/*
 					 // GL_RGBA16F does not work, better to decompress and create another image format
-					 /// //Note also that com.jogamp.opengl.util.GLBuffers does not have these in the componentCount
+					 // Note also that com.jogamp.opengl.util.GLBuffers does not have these in the componentCount
 				case GL.GL_RGBA16F:
 					internalFormat = imageFormat;
 					format = GL.GL_RGBA;
@@ -6124,6 +6125,7 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 					type = GL2ES2.GL_UNSIGNED_BYTE;
 					break;
 					*/
+					
 				// notice fall through below
 				//DDS signal for non-compressed but specific format, notice format is not -1 so not loaded as a compressed texture
 				case GL.GL_RGBA:
@@ -6147,13 +6149,17 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				case GL2.GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
 				case GL2.GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
 					
-				// ETC2
-				case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:
-				case GL3.GL_COMPRESSED_RGB8_ETC2:
-				case GL3.GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-				case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-				case GL3.GL_COMPRESSED_SRGB8_ETC2:
-				case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+				// ETC2 The following ETC2 codecs are mandatory in OpenGL ES 3.0 and OpenGL 4.3
+				case GL3.GL_COMPRESSED_RGB8_ETC2://Compresses RGB888 data, the followup of ETC1
+				case GL3.GL_COMPRESSED_RGBA8_ETC2_EAC:// Compresses RGBA8888 data with full alpha support
+				case GL3.GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2://Compresses RGBA data where pixels are either fully transparent or fully opaque
+				case GL3.GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC://sRGB variant
+				case GL3.GL_COMPRESSED_SRGB8_ETC2://sRGB variant
+				case GL3.GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2://sRGB variant
+				case GL3.GL_COMPRESSED_R11_EAC:// one channel unsigned data
+				case GL3.GL_COMPRESSED_SIGNED_R11_EAC:// one channel signed data
+				case GL3.GL_COMPRESSED_RG11_EAC:// two channel unsigned data
+				case GL3.GL_COMPRESSED_SIGNED_RG11_EAC:// two channel signed data
 					
 				// ASTC as of jogl 2.6 ASTC removed from the GL2ES3 header https://community.khronos.org/t/astc-is-dead-for-now/105056/2
 					
