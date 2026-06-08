@@ -879,7 +879,7 @@ public class DDSImage  extends CompressedImage
 		}
 	}
 
-	private DDSImage()
+	protected DDSImage()
 	{
 	}
 

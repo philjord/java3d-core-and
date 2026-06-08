@@ -3507,12 +3507,13 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 				// notice we stop once the light loc is not found, as that is the max the shader will accept
 				for (int i = 0; i < locs.glLightSource.length; i++)
 				{
-					int position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
-					if (position != -1)
+					// the shader may compile away parts of our light source, so we use the diffuse as a signal
+					int diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
+					if (diffuse != -1)
 					{
 						locs.glLightSource[i] = new glLightSourceLocs();
-						locs.glLightSource[i].position = position;
-						locs.glLightSource[i].diffuse = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].diffuse");
+						locs.glLightSource[i].position = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].position");
+						locs.glLightSource[i].diffuse = diffuse;
 						locs.glLightSource[i].specular = gl.glGetUniformLocation(shaderProgramId, "glLightSource[" + i + "].specular");
 						locs.glLightSource[i].constantAttenuation = gl.glGetUniformLocation(shaderProgramId,
 								"glLightSource[" + i + "].constantAttenuation");
