@@ -111,7 +111,8 @@ public class JoglesPipeline extends Jogl2es2DEPPipeline
 	public static boolean MINIMISE_NATIVE_CALLS_TRANSPARENCY = true;
 	public static boolean MINIMISE_NATIVE_CALLS_TEXTURE = true;
 
-	public static boolean MINIMISE_NATIVE_SHADER = true;
+	//FIXME: this seems to be setting shader values from prior ShaderAttributeSets so rendering flicks about madly
+	public static boolean MINIMISE_NATIVE_SHADER = false;
 	public static boolean MINIMISE_NATIVE_CALLS_OTHER = true;
 
 	// This MUST be true on android fullscreen 
