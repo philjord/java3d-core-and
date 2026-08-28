@@ -575,10 +575,16 @@ class CanvasViewCache extends Object {
 	screenHeight = screenViewCache.screenHeight;
 	
 	
-	float[] s = new float[2];
-	canvas.getGLWindow().getCurrentSurfaceScale(s);
-	hiDPIXScale = s[0];
-	hiDPIYScale = s[1];
+	//Offscreen can have no glwindow
+	if(canvas.getGLWindow() != null) {
+		float[] s = new float[2];
+		canvas.getGLWindow().getCurrentSurfaceScale(s);
+		hiDPIXScale = s[0];
+		hiDPIYScale = s[1];
+	} else {
+		hiDPIXScale = 1.0;
+		hiDPIYScale = 1.0;
+	}
 
 	metersPerPixelX = screenViewCache.metersPerPixelX;
 	metersPerPixelY = screenViewCache.metersPerPixelY;
